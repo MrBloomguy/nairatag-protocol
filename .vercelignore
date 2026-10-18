@@ -1,0 +1,14 @@
+# Vercel Ignore file
+contracts/
+op-stack/
+scratch/
+test/
+bots/
+.vscode/
+*.png
+*.jpg
+!hub/**
+!scanner/**
+deployments/
+config/base-sepolia.env.example
+scripts/

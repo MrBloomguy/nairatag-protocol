@@ -1,0 +1,22 @@
+chainId: 902
+domainId: 902
+name: chain902
+displayName: NairaTag External (Chain 902)
+displayNameShort: External-902
+protocol: ethereum
+rpcUrls:
+  - http: http://127.0.0.1:9546
+nativeToken:
+  name: Ether
+  symbol: ETH
+  decimals: 18
+blockExplorers:
+  - name: Chain 902 Explorer
+    url: http://localhost:4001
+    apiUrl: http://localhost:4001/api
+    family: blockscout
+blocks:
+  confirmations: 1
+  reorgPeriod: 0
+  estimateBlockTime: 2
+isTestnet: true

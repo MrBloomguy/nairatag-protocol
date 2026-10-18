@@ -1,0 +1,2410 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>Swap</title>
+  <meta name="description"
+    content="Instant, non-custodial decentralized token swaps between cNGN, USDC, ETH, and USDT on Base and Chain 901.">
+  <link rel="stylesheet" href="/hub/theme.css">
+  <link rel="stylesheet" href="/hub/notifications.css">
+  <script src="/hub/theme.js"></script>
+  <script src="/hub/notifications.js"></script>
+  <script src="/hub/tag-avatar.js"></script>
+  <script src="https://checkout.flutterwave.com/v3.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Ethers v6 Web3 Provider -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --font-sans: 'Poppins Rounded', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-surface: #f1f5f9;
+      --bg-subtle: #f8fafc;
+      --line: #e2e8f0;
+      --line-subtle: #edf2f7;
+      --ink: #0f172a;
+      --ink-muted: #64748b;
+      --ink-light: #94a3b8;
+
+      --primary: #0052ff;
+      --primary-hover: #0045d8;
+      --primary-soft: #eff6ff;
+      --primary-border: #bfdbfe;
+
+      --success: #10b981;
+      --success-soft: #ecfdf5;
+      --success-text: #065f46;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-pill: 9999px;
+
+      --no-shadow: none !important;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      box-shadow: var(--no-shadow);
+    }
+
+    html,
+    body {
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--ink);
+      font-size: 13.5px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-layout {
+      display: flex;
+      height: 100dvh;
+      max-height: 100dvh;
+      width: 100vw;
+      padding: 6px;
+      gap: 6px;
+      background-color: var(--bg-page);
+    }
+
+    /* Sidebar Navigation */
+    .app-sidebar {
+      width: 220px;
+      min-width: 220px;
+      height: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 9px;
+      flex-shrink: 0;
+      transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.2s cubic-bezier(0.16, 1, 0.3, 1), padding 0.2s ease;
+      overflow: hidden;
+      z-index: 100;
+    }
+
+    .app-sidebar.collapsed {
+      width: 48px;
+      min-width: 48px;
+      padding: 8px 5px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .brand-mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #0052ff;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .brand-text {
+      font-weight: 800;
+      font-size: 13.5px;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      transition: opacity 0.15s ease;
+    }
+
+    .app-sidebar.collapsed .brand-text {
+      display: none;
+    }
+
+    .sidebar-toggle-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--ink-muted);
+      flex-shrink: 0;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: var(--bg-surface);
+      color: var(--ink);
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      margin: 9px -4px;
+      padding: 0 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    .sidebar-nav-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .sidebar-nav-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-light);
+      padding: 3px 7px;
+    }
+
+    .app-sidebar.collapsed .sidebar-nav-title {
+      display: none;
+    }
+
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sidebar-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      text-decoration: none;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .sidebar-menu-item:hover {
+      background: var(--bg-surface);
+      color: var(--ink);
+      border-color: var(--line-subtle);
+    }
+
+    .sidebar-menu-item.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary-border);
+    }
+
+    .menu-icon {
+      font-size: 13.5px;
+      width: 17px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .menu-label {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app-sidebar.collapsed .menu-label,
+    .app-sidebar.collapsed .menu-badge {
+      display: none;
+    }
+
+    .menu-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .sidebar-footer {
+      padding-top: 7px;
+      border-top: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    .sidebar-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 7px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+
+    .app-sidebar.collapsed .sidebar-status-badge .status-text {
+      display: none;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      flex-shrink: 0;
+    }
+
+    /* Main Viewport */
+    .main-viewport {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* App Header */
+    .app-header {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .header-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--ink-muted);
+    }
+
+    .header-breadcrumb a {
+      color: var(--ink-muted);
+      text-decoration: none;
+    }
+
+    .header-breadcrumb a:hover {
+      color: var(--primary);
+    }
+
+    .header-breadcrumb strong {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 11.5px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .header-btn:hover {
+      background: var(--bg-surface);
+    }
+
+    .header-btn.primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* Popover */
+    .header-wallet-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 290px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .header-wallet-popover[hidden] {
+      display: none;
+    }
+
+    .popover-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line-subtle);
+    }
+
+    .popover-user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .popover-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #475569;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .popover-handle {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .popover-addr {
+      font-size: 10.5px;
+      color: var(--ink-muted);
+      font-family: var(--font-mono);
+    }
+
+    .popover-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 12px;
+      color: var(--ink-muted);
+      cursor: pointer;
+    }
+
+    .popover-balances-deck {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .popover-balance-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .popover-balance-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--ink-light);
+      text-transform: uppercase;
+    }
+
+    .popover-balance-num {
+      font-size: 12px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--ink);
+    }
+
+    .popover-status-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      color: var(--ink-muted);
+    }
+
+    .popover-actions-deck {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.2fr;
+      gap: 4px;
+      padding-top: 4px;
+    }
+
+    .popover-action-btn {
+      padding: 5px 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: #ffffff;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .popover-action-btn:hover {
+      background: var(--bg-surface);
+    }
+
+    /* Page Content Scroll - Uniswap 480px Width */
+    .page-content-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 18px 16px 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 480px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .page-content-scroll {
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .page-content-scroll::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    /* Swap Container & Cards */
+    .swap-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .swap-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .swap-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      font-weight: 600;
+    }
+
+    .swap-input-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .swap-amount-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--ink);
+      outline: none;
+    }
+
+    .token-select-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      font-weight: 700;
+      font-size: 13px;
+      color: var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+    }
+
+    .token-select-btn:hover {
+      background: var(--bg-subtle);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .token-select-btn:active {
+      transform: translateY(0) scale(0.97);
+    }
+
+    .token-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #0052ff;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: -6px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn-switch-direction {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--primary);
+      transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn-switch-direction:hover {
+      background: var(--primary-soft);
+      transform: rotate(180deg);
+      box-shadow: 0 0 0 5px var(--primary-soft);
+    }
+
+    .btn-switch-direction:active {
+      transform: rotate(180deg) scale(0.88);
+    }
+
+    .swap-params-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      font-size: 12px;
+    }
+
+    .param-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--ink-muted);
+    }
+
+    .param-val {
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--ink);
+    }
+
+    /* ─── Micro-interaction keyframes ─── */
+    @keyframes fade-in-up {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slide-up-modal {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.97);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes chip-bounce {
+      0% {
+        transform: scale(1);
+      }
+
+      45% {
+        transform: scale(0.86);
+      }
+
+      75% {
+        transform: scale(1.1);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes value-pop {
+      0% {
+        transform: scale(1);
+      }
+
+      40% {
+        transform: scale(1.08);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes ripple-ring {
+      0% {
+        box-shadow: 0 0 0 0 var(--primary-soft);
+        opacity: 1;
+      }
+
+      100% {
+        box-shadow: 0 0 0 10px transparent;
+        opacity: 0;
+      }
+    }
+
+    @keyframes shimmer {
+      0% {
+        background-position: -200px 0;
+      }
+
+      100% {
+        background-position: 200px 0;
+      }
+    }
+
+    @keyframes tab-slide-in {
+      from {
+        opacity: 0;
+        transform: translateX(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes pill-pop {
+      0% {
+        transform: scale(1);
+      }
+
+      30% {
+        transform: scale(0.92);
+      }
+
+      70% {
+        transform: scale(1.08);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .is-loading-shimmer {
+      background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-subtle) 50%, var(--bg-surface) 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.2s infinite linear;
+      color: transparent !important;
+      border-radius: 4px;
+    }
+
+    /* Swap box glow on focus-within */
+    .swap-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .swap-box:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.07);
+    }
+
+    /* Amount input pop */
+    .swap-amount-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--ink);
+      outline: none;
+      transition: color 0.15s ease;
+    }
+
+    .swap-amount-input.value-updated {
+      animation: value-pop 0.22s ease;
+    }
+
+    /* Slippage pills */
+    .slippage-pills {
+      display: flex;
+      gap: 6px;
+    }
+
+    .slip-pill {
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 10.5px;
+      font-weight: 700;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      color: var(--ink-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .slip-pill:hover:not(.active) {
+      color: var(--ink);
+      transform: translateY(-1px);
+    }
+
+    .slip-pill.active {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+      color: var(--primary);
+      animation: chip-bounce 0.28s ease;
+    }
+
+    #pay-header-controls .slip-pill.active {
+      background: #bbf246 !important;
+      border-color: #bbf246 !important;
+      color: #000000 !important;
+      font-weight: 800 !important;
+      animation: chip-bounce 0.28s ease;
+    }
+
+    #pay-header-controls .slip-pill:hover:not(.active) {
+      border-color: #bbf246;
+      color: var(--ink);
+      transform: translateY(-1px);
+    }
+
+    .btn-execute-swap {
+      width: 100%;
+      padding: 13px;
+      border-radius: 20px;
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 14.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.15s ease, transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.15s ease;
+    }
+
+    .btn-execute-swap::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    .btn-execute-swap:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 7px 22px rgba(0, 0, 0, 0.18);
+    }
+
+    .btn-execute-swap:active:not(:disabled) {
+      transform: translateY(0) scale(0.97);
+      box-shadow: none;
+    }
+
+    .btn-execute-swap:disabled {
+      opacity: 0.62;
+      cursor: not-allowed;
+    }
+
+    /* Seamless Card Header Tabs: Swap vs Pay */
+    .card-header-tabs {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 2px;
+    }
+
+    .card-tab-segmented {
+      display: flex;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .card-tab-btn {
+      padding: 4px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid transparent;
+      background: transparent;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .card-tab-btn:hover:not(.active) {
+      color: var(--ink);
+    }
+
+    .card-tab-btn.active {
+      background: #ffffff;
+      border-color: var(--line);
+      color: var(--ink);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      transform: scale(1.04);
+    }
+
+    [data-theme="dark"] .card-tab-segmented {
+      background: #171717;
+      border-color: #262626;
+    }
+
+    [data-theme="dark"] .card-tab-btn {
+      color: #a1a1aa;
+    }
+
+    [data-theme="dark"] .card-tab-btn:hover:not(.active) {
+      color: #ffffff;
+    }
+
+    [data-theme="dark"] .card-tab-btn.active {
+      background: #262626;
+      border-color: #383838;
+      color: #ffffff;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Success Card */
+    .swap-result-card {
+      background: var(--success-soft);
+      border: 1px solid #a7f3d0;
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: fade-in-up 0.3s ease;
+    }
+
+    .swap-result-card[hidden] {
+      display: none;
+    }
+
+    .swap-result-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--success-text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .swap-result-body {
+      font-size: 12px;
+      color: #047857;
+      line-height: 1.5;
+    }
+
+    /* Panel slide-in */
+    #panel-swap-view,
+    #panel-pay-view {
+      animation: tab-slide-in 0.22s ease;
+    }
+
+    .pay-sub-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      padding: 0 2px 2px;
+    }
+
+    .pay-recipient-tag {
+      color: var(--ink);
+      font-weight: 800;
+      font-size: 14.5px;
+    }
+
+    .recipient-token-btn {
+      cursor: default !important;
+      padding: 4px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+    }
+
+    .token-avatar-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: var(--bg-surface);
+      flex-shrink: 0;
+      border: 1px solid var(--line);
+    }
+
+    .token-avatar-circle svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .swap-email-minimal {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      font-size: 11.5px;
+      color: var(--ink);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .swap-email-minimal:focus {
+      border-color: var(--primary);
+    }
+
+    .swap-email-minimal::placeholder {
+      color: var(--ink-light);
+    }
+
+    /* Modal Backdrop & Pay Token Picker */
+    .pay-token-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+
+    .pay-token-modal-backdrop[hidden] {
+      display: none;
+    }
+
+    .pay-token-modal-card {
+      width: 100%;
+      max-width: 360px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .token-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .token-list-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .token-list-item:hover {
+      background: var(--bg-subtle);
+      border-color: var(--line-subtle);
+    }
+
+    .token-list-item.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .token-badge-active {
+      font-size: 10px;
+      font-weight: 700;
+      color: #60a5fa;
+      background: var(--primary-soft);
+      border: 1px solid var(--primary-border);
+      padding: 2px 7px;
+      border-radius: var(--radius-pill);
+    }
+
+    /* Recipient Tag Search Modal Styles */
+    .tag-search-box {
+      position: relative;
+    }
+
+    .tag-search-input {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .tag-search-input:focus {
+      border-color: var(--primary);
+    }
+
+    .tag-search-input::placeholder {
+      color: var(--ink-light);
+    }
+
+    .tag-popular-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .tag-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px 3px 5px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line);
+      background: var(--bg-surface);
+      color: var(--ink);
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .tag-pill-btn:hover {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+      color: #60a5fa;
+    }
+
+    .tag-pill-avatar {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: var(--bg-subtle);
+    }
+
+    .tag-pill-avatar svg {
+      width: 18px;
+      height: 18px;
+      display: block;
+      border-radius: 50%;
+    }
+
+    .tag-list-scroll {
+      max-height: 250px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      scrollbar-width: none;
+    }
+
+    .tag-list-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    /* Market Rates Table */
+    .rates-card {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .rates-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .rates-table th,
+    .rates-table td {
+      padding: 8px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--line-subtle);
+    }
+
+    .rates-table th {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      font-weight: 700;
+    }
+
+    .rates-table tr:last-child td {
+      border-bottom: none;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-layout">
+
+    <!-- ============================================================= -->
+                <!-- Left Sidebar Navigation -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a class="brand-logo" href="/agent">
+          <div class="brand-mark">
+            <img src="/hub/nairatag-icon.png" alt="₦" class="brand-mark-img" />
+          </div>
+          <span class="brand-text">NairaTag</span>
+        </a>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" type="button" title="Collapse sidebar" aria-label="Toggle sidebar">
+          <span id="sidebar-toggle-icon">◨</span>
+        </button>
+      </div>
+
+      <div class="sidebar-scroll">
+        <!-- Protocol Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Protocol</div>
+          <nav class="sidebar-menu" aria-label="Protocol Navigation">
+                        <a class="sidebar-menu-item" id="menu-profile" href="/profile" title="Agent Profile & Streaks">
+              <span class="menu-icon">👤</span>
+              <span class="menu-label">Profile</span>
+            </a>
+<a class="sidebar-menu-item" id="menu-claim" href="/claim" title="Claim ₦Tag">
+              <span class="menu-icon">✦</span>
+              <span class="menu-label">Claim</span>
+              <span class="menu-badge badge-count-claim">1</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-agent" href="/agent" title="Open AI Chat">
+              <span class="menu-icon">💬</span>
+              <span class="menu-label">Chat</span>
+              <span class="menu-badge badge-count-chat">2</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-tasks" href="/tasks" title="Agent Tasks &amp; Bounties">
+              <span class="menu-icon">🎯</span>
+              <span class="menu-label">Tasks</span>
+              <span class="menu-badge badge-count-tasks">5</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-explorer" href="/explorer" title="Identity Explorer">
+              <span class="menu-icon">🌐</span>
+              <span class="menu-label">Explorer</span>
+              
+            </a>
+            <a class="sidebar-menu-item active" id="menu-swap" href="/swap" title="Swap Assets">
+              <span class="menu-icon">⇄</span>
+              <span class="menu-label">Swap</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-earnings" href="/earnings" title="Agent Earnings Leaderboard">
+              <span class="menu-icon">🏆</span>
+              <span class="menu-label">Earnings</span>
+              
+            </a>
+          </nav>
+        </div>
+
+        <!-- Knowledge & Info Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Knowledge &amp; Info</div>
+          <nav class="sidebar-menu" aria-label="Knowledge and Documentation">
+            <a class="sidebar-menu-item" id="menu-about" href="/about" title="About ₦Tag Network">
+              <span class="menu-icon">ℹ</span>
+              <span class="menu-label">About</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-docs" href="/docs" title="Developer Docs &amp; SDK">
+              <span class="menu-icon">📖</span>
+              <span class="menu-label">Docs</span>
+              
+            </a>
+            <a class="sidebar-menu-item" id="menu-faq" href="/faq" title="Frequently Asked Questions">
+              <span class="menu-icon">❓</span>
+              <span class="menu-label">FAQ</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Viewport Container -->
+    <div class="main-viewport">
+      <!-- Top Navigation Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="header-sidebar-btn" id="header-sidebar-btn" type="button" title="Open menu" aria-label="Open menu" style="display:none;">☰</button>
+        </div>
+        <div class="header-right">
+          <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" title="Toggle Theme" aria-label="Toggle dark mode">🌙</button>
+          <button type="button" class="header-auth-btn" id="header-auth-btn" onclick="window.NairaTagSupabase.openAuthModal('signin')" title="Sign In or Sign Up">
+            <span id="auth-btn-icon">👤</span>
+            <span id="auth-btn-text">Sign In</span>
+          </button>
+          <div style="position:relative;">
+            <a href="/wallet" class="header-btn" id="header-wallet-btn" title="Open Wallet Dashboard" style="font-family:var(--font-mono); font-weight:700; text-decoration:none;">
+              <span>👛</span>
+              <span id="header-wallet-balance">0.00 cNGN</span>
+            </a>
+            <!-- Wallet Balance Dropdown Popover -->
+            <div class="header-wallet-popover" id="header-wallet-popover" hidden>
+              <div class="popover-header">
+                <div class="popover-user-info">
+                  <div class="popover-tag" id="popover-active-tag">₦TAG</div>
+                  <div class="popover-addr" id="popover-active-addr">Not connected</div>
+                </div>
+                <div class="popover-status-badge">Active</div>
+              </div>
+              <div class="popover-balance-section">
+                <div class="popover-balance-label">Total Balance</div>
+                <div class="popover-balance-val" id="popover-total-balance">₦ 0.00</div>
+              </div>
+              <div class="popover-actions">
+                <a href="/wallet" class="popover-btn primary" id="popover-open-wallet">Wallet Dashboard</a>
+                <button type="button" class="popover-btn" id="popover-disconnect-btn">Disconnect</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content-scroll">
+        <!-- Swap & Pay Master Card -->
+        <div class="swap-card">
+          <!-- Card Header Mode Tabs: Swap vs Pay -->
+          <div class="card-header-tabs">
+            <div class="card-tab-segmented">
+              <button type="button" class="card-tab-btn active" id="tab-swap-btn"
+                onclick="switchCardTab('swap')">Swap</button>
+              <button type="button" class="card-tab-btn" id="tab-pay-btn" onclick="switchCardTab('pay')">Pay</button>
+            </div>
+
+            <div id="swap-header-controls">
+              <div class="slippage-pills">
+                <button class="slip-pill" type="button" onclick="setSlippage('0.1%')">0.1%</button>
+                <button class="slip-pill active" type="button" onclick="setSlippage('0.5%')">0.5%</button>
+                <button class="slip-pill" type="button" onclick="setSlippage('1.0%')">1.0%</button>
+              </div>
+            </div>
+
+            <div id="pay-header-controls" style="display:none;">
+              <div class="slippage-pills">
+                <button class="slip-pill" type="button" onclick="setPayQuickAmount(5000)">₦5k</button>
+                <button class="slip-pill" type="button" onclick="setPayQuickAmount(10000)">₦10k</button>
+                <button class="slip-pill" type="button" onclick="setPayQuickAmount(25000)">₦25k</button>
+                <button class="slip-pill active" type="button" onclick="setPayQuickAmount(50000)">₦50k</button>
+                <button class="slip-pill" type="button" onclick="setPayQuickAmount(100000)">₦100k</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL 1: SWAP VIEW -->
+          <div id="panel-swap-view" style="display:flex; flex-direction:column; gap:12px;">
+            <!-- You Pay -->
+            <div class="swap-box">
+              <div class="swap-box-header">
+                <span>You Pay</span>
+                <span>Balance: <strong id="from-balance-val">250.00</strong> <a href="javascript:void(0)"
+                    onclick="fillMax()" style="color:var(--primary); text-decoration:none;">MAX</a></span>
+              </div>
+              <div class="swap-input-row">
+                <input type="text" id="input-pay-amount" class="swap-amount-input" value="10.00" autocomplete="off" />
+                <button class="token-select-btn" type="button" id="token-from-btn" onclick="toggleTokenPicker('from')">
+                  <span class="token-icon" id="token-from-icon">$</span>
+                  <span id="token-from-label">USDC</span>
+                  <span style="font-size:10px; color:var(--ink-light);">▼</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Direction Switcher -->
+            <div class="switch-row">
+              <button class="btn-switch-direction" type="button" title="Switch tokens" onclick="switchTokens()">
+                ⇅
+              </button>
+            </div>
+
+            <!-- You Receive -->
+            <div class="swap-box">
+              <div class="swap-box-header">
+                <span>You Receive (Estimated)</span>
+                <span id="exchange-rate-pill" style="font-family:var(--font-mono);">1 USDC ≈ 0.000384 ETH</span>
+              </div>
+              <div class="swap-input-row">
+                <input type="text" id="input-receive-amount" class="swap-amount-input" value="0.00384" readonly />
+                <button class="token-select-btn" type="button" id="token-to-btn" onclick="toggleTokenPicker('to')">
+                  <span class="token-icon" id="token-to-icon" style="background:#627eea;">Ξ</span>
+                  <span id="token-to-label">ETH</span>
+                  <span style="font-size:10px; color:var(--ink-light);">▼</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Action Button with Libraries.dev Metal Effect -->
+            <div data-metal-button data-target-id="btn-swap" data-class="btn-execute-swap" data-action="executeSwap"
+              data-preset="chromatic" data-strength="1">
+              <button type="button" class="btn-execute-swap" id="btn-swap" onclick="executeSwap()">
+                <span>⇄ Execute Swap</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- PANEL 2: PAY VIEW -->
+          <div id="panel-pay-view" style="display:none; flex-direction:column; gap:10px;">
+            <!-- You Pay box -->
+            <div class="swap-box">
+              <div class="swap-box-header">
+                <span>You Pay</span>
+                <span id="pay-fiat-eq" style="font-family:var(--font-mono); font-size:11px; color:var(--ink-muted);">≈
+                  $32.25</span>
+              </div>
+              <div class="swap-input-row">
+                <input type="text" id="pay-input-amount" class="swap-amount-input" value="50,000" autocomplete="off"
+                  inputmode="numeric" placeholder="0" oninput="handlePayAmountInput(this.value)" />
+                <button class="token-select-btn" type="button" id="pay-token-select-btn" onclick="openPayTokenModal()">
+                  <span class="token-icon" id="pay-token-icon" style="background:#10b981;">🇳🇬</span>
+                  <span id="pay-token-label">NGN</span>
+                  <span style="font-size:10px; color:var(--ink-light);">▼</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Center flow switcher / arrow -->
+            <div class="switch-row">
+              <button class="btn-switch-direction" type="button" title="Change Payment Rail"
+                onclick="openPayTokenModal()">
+                ↓
+              </button>
+            </div>
+
+            <!-- Recipient Gets box -->
+            <div class="swap-box">
+              <div class="swap-box-header">
+                <span>Recipient Gets</span>
+              </div>
+              <div class="swap-input-row">
+                <input type="text" id="pay-receive-amount" class="swap-amount-input" value="50,000" readonly />
+                <button type="button" class="token-select-btn" id="pay-recipient-pill" onclick="openRecipientTagModal()"
+                  title="Select Recipient Tag">
+                  <div class="token-avatar-circle" id="pay-recipient-avatar-svg" style="display:none;"></div>
+                  <span id="pay-recipient-tag-label" style="font-weight:800; font-size:13px; color:var(--ink);">Select
+                    Tag</span>
+                  <span style="font-size:10px; color:var(--ink-light);">▼</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Minimal single-line email input -->
+            <input type="email" id="pay-payer-email" class="swap-email-minimal"
+              placeholder="Email for receipt (optional)" />
+
+            <!-- Action button -->
+            <button type="button" class="btn-execute-swap" id="btn-pay-action" onclick="executePayAction()">
+              <span id="btn-pay-action-text">Select a Recipient</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PAY TOKEN / RAIL SELECTION MODAL -->
+        <div class="pay-token-modal-backdrop" id="pay-token-modal" hidden onclick="closePayTokenModal(event)">
+          <div class="pay-token-modal-card" onclick="event.stopPropagation()">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; border-bottom:1px solid var(--line);">
+              <span style="font-size:13.5px; font-weight:800; color:var(--ink);">Select Payment Rail</span>
+              <button type="button" onclick="closePayTokenModal()"
+                style="background:none; border:none; color:var(--ink-muted); font-size:16px; cursor:pointer;">✕</button>
+            </div>
+            <div class="token-list">
+              <div class="token-list-item active" id="pay-opt-ngn" onclick="selectPayRail('local', 'NGN', '🇳🇬')">
+                <div class="token-icon" style="background:#10b981;">🇳🇬</div>
+                <div style="flex:1;">
+                  <div style="font-weight:800; font-size:13px; color:var(--ink);">Local NGN</div>
+                  <div style="font-size:11px; color:var(--ink-muted);">Card · Bank · USSD · OPay</div>
+                </div>
+                <span class="token-badge-active" id="pay-badge-active">Active</span>
+              </div>
+              <div class="token-list-item" id="pay-opt-cngn" onclick="selectPayRail('crypto', 'cNGN', '🪙')">
+                <div class="token-icon" style="background:#0052ff;">🪙</div>
+                <div style="flex:1;">
+                  <div style="font-weight:800; font-size:13px; color:var(--ink);">cNGN</div>
+                  <div style="font-size:11px; color:var(--ink-muted);">Digital Naira (Base)</div>
+                </div>
+              </div>
+              <div class="token-list-item" id="pay-opt-usdc" onclick="selectPayRail('crypto', 'USDC', '💵')">
+                <div class="token-icon" style="background:#2775ca;">💵</div>
+                <div style="flex:1;">
+                  <div style="font-weight:800; font-size:13px; color:var(--ink);">USDC</div>
+                  <div style="font-size:11px; color:var(--ink-muted);">USD Coin (Base)</div>
+                </div>
+              </div>
+              <div class="token-list-item" id="pay-opt-eth" onclick="selectPayRail('crypto', 'ETH', '🔷')">
+                <div class="token-icon" style="background:#627eea;">🔷</div>
+                <div style="flex:1;">
+                  <div style="font-weight:800; font-size:13px; color:var(--ink);">ETH</div>
+                  <div style="font-size:11px; color:var(--ink-muted);">Ethereum (Base)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECIPIENT TAG SELECTION MODAL -->
+        <div class="pay-token-modal-backdrop" id="recipient-tag-modal" hidden onclick="closeRecipientTagModal(event)">
+          <div class="pay-token-modal-card" onclick="event.stopPropagation()"
+            style="animation: slide-up-modal 0.28s cubic-bezier(0.34,1.56,0.64,1);">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; padding-bottom:8px; border-bottom:1px solid var(--line);">
+              <span style="font-size:13.5px; font-weight:800; color:var(--ink);">Select Recipient ₦Tag</span>
+              <button type="button" onclick="closeRecipientTagModal()"
+                style="background:none; border:none; color:var(--ink-muted); font-size:16px; cursor:pointer;">✕</button>
+            </div>
+
+            <div class="tag-search-box">
+              <input type="text" id="recipient-tag-search-input" class="tag-search-input"
+                placeholder="Search ₦tag or enter name..." oninput="handleTagSearch(this.value)" autocomplete="off" />
+            </div>
+
+            <div class="tag-popular-pills" id="tag-popular-pills">
+              <button type="button" class="tag-pill-btn" onclick="selectRecipientTag('asake')">
+                <span class="tag-pill-avatar">₦</span>
+                <span>₦ASAKE</span>
+              </button>
+              <button type="button" class="tag-pill-btn" onclick="selectRecipientTag('burna')">
+                <span class="tag-pill-avatar">₦</span>
+                <span>₦BURNA</span>
+              </button>
+              <button type="button" class="tag-pill-btn" onclick="selectRecipientTag('davido')">
+                <span class="tag-pill-avatar">₦</span>
+                <span>₦DAVIDO</span>
+              </button>
+            </div>
+
+            <div class="tag-list-scroll" id="recipient-tag-list">
+              <!-- Dynamically populated tags -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Message -->
+        <div class="swap-result-card" id="swap-result-card" hidden>
+          <div class="swap-result-title">
+            <span>✅</span>
+            <span id="swap-result-title-text">Swap Executed Successfully!</span>
+          </div>
+          <div class="swap-result-body" id="swap-result-body-text">
+            Swapped 10.00 USDC for 0.00384 ETH. Tokens deposited directly to your account.
+          </div>
+          <div style="display:flex; gap:8px; padding-top:4px;">
+            <a href="/scanner/index.html" target="_blank" class="header-btn"
+              style="background:#ffffff; color:#065f46; border-color:#059669;">Scan Onchain ↗</a>
+            <a href="/agent" class="header-btn primary">Agent Cockpit ↗</a>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:8787';
+    let fromToken = 'USDC';
+    let toToken = 'ETH';
+    const rates = {
+      'USDC_ETH': 0.000384,
+      'ETH_USDC': 2605.50,
+      'USDC_cNGN': 1520.0,
+      'cNGN_USDC': 0.000657,
+      'ETH_cNGN': 3960000.0,
+      'cNGN_ETH': 0.000000252
+    };
+
+    const payInput = document.getElementById('input-pay-amount');
+    const recInput = document.getElementById('input-receive-amount');
+    const ratePill = document.getElementById('exchange-rate-pill');
+    const paramRoute = document.getElementById('param-route');
+    const paramMin = document.getElementById('param-min-rec');
+
+    function calculateOutput() {
+      const val = parseFloat(payInput.value) || 0;
+      const key = `${fromToken}_${toToken}`;
+      const r = rates[key] || 1;
+      const out = val * r;
+      recInput.value = out > 1 ? out.toFixed(2) : out.toFixed(6);
+      ratePill.textContent = `1 ${fromToken} ≈ ${r > 1 ? r.toFixed(2) : r.toFixed(6)} ${toToken}`;
+      paramRoute.textContent = `${fromToken} → Base Pool → ${toToken}`;
+      const min = out * 0.995;
+      paramMin.textContent = `${min > 1 ? min.toFixed(2) : min.toFixed(6)} ${toToken}`;
+    }
+
+    payInput.addEventListener('input', calculateOutput);
+
+    function switchTokens() {
+      const temp = fromToken;
+      fromToken = toToken;
+      toToken = temp;
+      updateTokenUI();
+      calculateOutput();
+    }
+
+    function updateTokenUI() {
+      document.getElementById('token-from-label').textContent = fromToken;
+      document.getElementById('token-to-label').textContent = toToken;
+      document.getElementById('token-from-icon').textContent = fromToken === 'ETH' ? 'Ξ' : fromToken === 'cNGN' ? '₦' : '$';
+      document.getElementById('token-to-icon').textContent = toToken === 'ETH' ? 'Ξ' : toToken === 'cNGN' ? '₦' : '$';
+      document.getElementById('from-balance-val').textContent = fromToken === 'cNGN' ? '12,500.00' : fromToken === 'ETH' ? '0.45' : '250.00';
+    }
+
+    function fillMax() {
+      payInput.value = fromToken === 'cNGN' ? '12500' : fromToken === 'ETH' ? '0.45' : '250';
+      calculateOutput();
+    }
+
+    function setSlippage(val) {
+      document.querySelectorAll('.slip-pill').forEach(p => p.classList.toggle('active', p.textContent === val));
+    }
+
+    function toggleTokenPicker(direction) {
+      const options = ['USDC', 'ETH', 'cNGN', 'USDT'].filter(t => (direction === 'from' ? t !== toToken : t !== fromToken));
+      const next = options[(options.indexOf(direction === 'from' ? fromToken : toToken) + 1) % options.length];
+      if (direction === 'from') fromToken = next;
+      else toToken = next;
+      updateTokenUI();
+      calculateOutput();
+    }
+
+    async function executeSwap() {
+      const btn = document.getElementById('btn-swap');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳ Routing &amp; Swapping...</span>';
+
+      try {
+        let activeAddr = null;
+        try {
+          const activeStored = JSON.parse(localStorage.getItem('nairatag_active_wallet') || 'null');
+          const claimedStored = JSON.parse(localStorage.getItem('nairatag_claimed_tag') || 'null');
+          activeAddr = activeStored?.address || claimedStored?.address;
+        } catch { }
+        if (!activeAddr && window.ethereum?.selectedAddress) {
+          activeAddr = window.ethereum.selectedAddress;
+        }
+        if (!activeAddr) {
+          throw new Error('Please connect your wallet or claim a NairaTag first');
+        }
+
+        const res = await fetch(`${API_BASE}/api/agent/swap`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            walletAddress: activeAddr,
+            fromAsset: fromToken,
+            toAsset: toToken,
+            amount: payInput.value,
+            chain: 'base'
+          })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Swap execution failed');
+
+        const card = document.getElementById('swap-result-card');
+        const title = document.getElementById('swap-result-title-text');
+        const body = document.getElementById('swap-result-body-text');
+
+        title.textContent = `Swap ${payInput.value} ${fromToken} → ${recInput.value} ${toToken} Confirmed!`;
+        body.innerHTML = `Action planned &amp; settled on Base. Router: <code>${data.action?.routerAddress || '0x2626664c2603336E57B271c5C0b26F421741e481'}</code>. Policy check approved.`;
+        card.hidden = false;
+
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+        }
+      } catch (err) {
+        showPaymentToast('Swap Error', err.message || 'Unable to execute swap route.', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>⇄ Execute Swap</span>';
+      }
+    }
+
+    // Header Wallet Popover Handling
+    const walletBtn = document.getElementById('header-wallet-btn');
+    const walletPopover = document.getElementById('header-wallet-popover');
+    const closePopoverBtn = document.getElementById('popover-close-btn');
+
+    walletBtn?.addEventListener('click', (e) => { const isHub = window.location.pathname.startsWith('/hub/'); if (!window.location.pathname.endsWith('/wallet.html') && window.location.pathname !== '/wallet') { window.location.href = isHub ? '/hub/wallet.html' : '/wallet'; } });
+
+    closePopoverBtn?.addEventListener('click', () => { walletPopover.hidden = true; });
+    document.addEventListener('click', (e) => {
+      if (!walletPopover.hidden && !walletPopover.contains(e.target) && e.target !== walletBtn) {
+        walletPopover.hidden = true;
+      }
+    });
+
+    async function updateHeaderWalletBalance() {
+      let activeAddress = localStorage.getItem('nairatag_wallet') || localStorage.getItem('user_address') || '';
+      if (!activeAddress) {
+        const headerBal = document.getElementById('header-wallet-balance');
+        if (headerBal) headerBal.textContent = '0.00 cNGN';
+        return;
+      }
+      try {
+        const stored = localStorage.getItem('nairatag_active_wallet');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.address) activeAddress = parsed.address;
+        } else if (window.ethereum?.selectedAddress) {
+          activeAddress = window.ethereum.selectedAddress;
+        }
+      } catch { }
+      try {
+        const res = await fetch(`${API_BASE}/api/agent/wallet-info?address=${activeAddress}`);
+        const data = await res.json();
+        if (data.ok) {
+          const bal901 = data.balances?.chain901?.formatted || '0.00';
+          const balEth = data.balances?.celoSepolia?.formatted || '0.0000';
+          const headerBal = document.getElementById('header-wallet-balance');
+          if (headerBal) headerBal.textContent = `${bal901} cNGN`;
+          const p901 = document.getElementById('popover-balance-901');
+          if (p901) p901.textContent = `${bal901} cNGN`;
+          const pEth = document.getElementById('popover-balance-eth');
+          if (pEth) pEth.textContent = `${balEth} ETH`;
+          const pAddr = document.getElementById('popover-address');
+          if (pAddr) pAddr.textContent = `${activeAddress.slice(0, 6)}...${activeAddress.slice(-4)}`;
+          const pHandle = document.getElementById('popover-handle');
+          if (pHandle) pHandle.textContent = data.tag ? `₦${data.tag}` : 'Dev Wallet';
+        }
+      } catch (err) { }
+    }
+
+    // Sidebar Toggle
+    const sidebar = document.getElementById('app-sidebar');
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    toggleBtn?.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      const icon = document.getElementById('sidebar-toggle-icon');
+      if (icon) icon.textContent = sidebar.classList.contains('collapsed') ? '◧' : '◨';
+    });
+
+    // ══════════════════════════════════════════════════════════
+    // CARD TAB SWITCHING: SWAP vs PAY
+    // ══════════════════════════════════════════════════════════
+    let currentCardTab = 'swap';
+    let payRail = 'local'; // 'local' | 'crypto'
+    let payAsset = 'NGN';  // 'NGN' | 'cNGN' | 'USDC' | 'ETH'
+    let payAmount = 50000;
+    let payRecipient = ''; // No hardcoded default recipient!
+    let paySession = null;
+    const NGN_USD_RATE = 1550;
+    const ETH_USD_RATE = 2700;
+
+    // GIF avatars map: tag → gif URL
+    const GIF_AVATARS = {
+      'asake': '/hub/avatars/asake.gif',
+      'burna': '/hub/avatars/burna.gif',
+      'davido': '/hub/avatars/davido.gif',
+      'wizkid': '/hub/avatars/wizkid.gif',
+      'tiwa': '/hub/avatars/tiwa.gif',
+      'rema': '/hub/avatars/rema.gif',
+      'olamide': '/hub/avatars/olamide.gif',
+      'michael': '/hub/avatars/michael.gif',
+      'chowdeck': '/hub/avatars/chowdeck.gif',
+      'chickenrepublic': '/hub/avatars/chickenrepublic.gif',
+      'mamajoycanteen': '/hub/avatars/mamajoycanteen.gif',
+      'moniepoint': '/hub/avatars/moniepoint.gif',
+      'theplace': '/hub/avatars/theplace.gif',
+      'paystack': '/hub/avatars/paystack.gif',
+      'opay': '/hub/avatars/opay.gif',
+      'flutterwave': '/hub/avatars/flutterwave.gif',
+      'konga': '/hub/avatars/konga.gif',
+      'jumia': '/hub/avatars/jumia.gif',
+      'cowrywise': '/hub/avatars/cowrywise.gif',
+    };
+
+    // Directory of popular verified tags for dropdown search
+    const DEFAULT_RECIPIENT_TAGS = [
+      // Artists & Creators
+      { tag: 'asake', name: 'Asake', role: 'Afrobeats Artist', type: 'artist' },
+      { tag: 'burna', name: 'Burna Boy', role: 'African Giant', type: 'artist' },
+      { tag: 'davido', name: 'Davido', role: 'Timeless', type: 'artist' },
+      { tag: 'wizkid', name: 'Wizkid', role: 'Starboy', type: 'artist' },
+      { tag: 'tiwa', name: 'Tiwa Savage', role: 'Queen of Afrobeats', type: 'artist' },
+      { tag: 'rema', name: 'Rema', role: 'Rave Lorde', type: 'artist' },
+      { tag: 'olamide', name: 'Olamide', role: 'YBNL', type: 'artist' },
+      { tag: 'kizz', name: 'Kizz Daniel', role: 'Buga', type: 'artist' },
+      { tag: 'tems', name: 'Tems', role: 'Born in the Wild', type: 'artist' },
+      { tag: 'fireboy', name: 'Fireboy DML', role: 'Afrobeats', type: 'artist' },
+      // Food & Restaurants
+      { tag: 'chowdeck', name: 'Chowdeck', role: 'Food Delivery', type: 'business' },
+      { tag: 'chickenrepublic', name: 'Chicken Republic', role: 'Fast Food', type: 'business' },
+      { tag: 'mamajoycanteen', name: 'Mama Joy Canteen', role: 'Homestyle Nigerian', type: 'business' },
+      { tag: 'theplace', name: 'The Place', role: 'Restaurant & Lounge', type: 'business' },
+      { tag: 'tastee', name: 'Tastee Fried Chicken', role: 'Fast Food', type: 'business' },
+      { tag: 'dominos', name: "Domino's Pizza", role: 'Pizza Delivery', type: 'business' },
+      { tag: 'coldstone', name: 'Cold Stone', role: 'Ice Cream & Desserts', type: 'business' },
+      // Fintech & Payments
+      { tag: 'paystack', name: 'Paystack', role: 'Payment Gateway', type: 'fintech' },
+      { tag: 'flutterwave', name: 'Flutterwave', role: 'Global Payments', type: 'fintech' },
+      { tag: 'opay', name: 'OPay', role: 'Mobile Payments', type: 'fintech' },
+      { tag: 'moniepoint', name: 'Moniepoint', role: 'POS & Banking', type: 'fintech' },
+      { tag: 'cowrywise', name: 'Cowrywise', role: 'Savings & Invest.', type: 'fintech' },
+      { tag: 'piggyvest', name: 'PiggyVest', role: 'Save & Invest', type: 'fintech' },
+      // E-commerce & Retail
+      { tag: 'jumia', name: 'Jumia', role: 'Online Marketplace', type: 'business' },
+      { tag: 'konga', name: 'Konga', role: 'E-commerce', type: 'business' },
+      { tag: 'shoprite', name: 'Shoprite', role: 'Supermarket', type: 'business' },
+      // Personal
+      { tag: 'michael', name: 'Michael', role: 'Verified NairaTag', type: 'personal' },
+    ];
+
+
+    function switchCardTab(tab) {
+      currentCardTab = tab;
+      const isSwap = tab === 'swap';
+
+      document.getElementById('tab-swap-btn')?.classList.toggle('active', isSwap);
+      document.getElementById('tab-pay-btn')?.classList.toggle('active', !isSwap);
+
+      const panelSwap = document.getElementById('panel-swap-view');
+      const panelPay = document.getElementById('panel-pay-view');
+      if (panelSwap) panelSwap.style.display = isSwap ? 'flex' : 'none';
+      if (panelPay) panelPay.style.display = isSwap ? 'none' : 'flex';
+
+      // Trigger slide-in animation on the newly visible panel
+      const activePanel = isSwap ? panelSwap : panelPay;
+      if (activePanel) {
+        activePanel.style.animation = 'none';
+        requestAnimationFrame(() => {
+          activePanel.style.animation = 'tab-slide-in 0.22s ease';
+        });
+      }
+
+      const swapControls = document.getElementById('swap-header-controls');
+      const payControls = document.getElementById('pay-header-controls');
+      if (swapControls) swapControls.style.display = isSwap ? 'block' : 'none';
+      if (payControls) payControls.style.display = isSwap ? 'none' : 'block';
+
+      if (!isSwap) {
+        updatePayOutputs();
+        resolvePayRecipient(payRecipient);
+      }
+    }
+
+    // Pay Quick Amount Chips
+    function setPayQuickAmount(amt) {
+      payAmount = amt;
+      const inp = document.getElementById('pay-input-amount');
+      if (inp) {
+        inp.value = amt.toLocaleString('en-US');
+        // Value-pop micro-animation
+        inp.classList.remove('value-updated');
+        requestAnimationFrame(() => inp.classList.add('value-updated'));
+        inp.addEventListener('animationend', () => inp.classList.remove('value-updated'), { once: true });
+      }
+      updatePayQuickChips(amt);
+      updatePayOutputs();
+    }
+
+    function handlePayAmountInput(rawVal) {
+      const cleaned = String(rawVal).replace(/[^0-9.]/g, '');
+      const num = Number(cleaned) || 0;
+      payAmount = num;
+      updatePayQuickChips(num);
+      updatePayOutputs();
+    }
+
+    function updatePayQuickChips(num) {
+      document.querySelectorAll('#pay-header-controls .slip-pill').forEach(btn => {
+        const chipAmt = parseInt(btn.textContent.replace(/[^0-9]/g, ''), 10) * (btn.textContent.includes('k') ? 1000 : 1);
+        btn.classList.toggle('active', chipAmt === num);
+      });
+    }
+
+    function updatePayOutputs() {
+      const recInput = document.getElementById('pay-receive-amount');
+      const fiatEq = document.getElementById('pay-fiat-eq');
+      const btnText = document.getElementById('btn-pay-action-text');
+
+      const usdVal = (payAmount / NGN_USD_RATE).toFixed(2);
+      if (fiatEq) fiatEq.textContent = `≈ $${Number(usdVal).toLocaleString('en-US')}`;
+
+      // Pop-animate the receive output field on update
+      if (recInput) {
+        recInput.classList.remove('value-updated');
+        requestAnimationFrame(() => recInput.classList.add('value-updated'));
+        recInput.addEventListener('animationend', () => recInput.classList.remove('value-updated'), { once: true });
+      }
+
+      if (!payRecipient) {
+        if (btnText) btnText.textContent = 'Select a Recipient';
+        if (recInput) recInput.value = payAmount ? payAmount.toLocaleString('en-US') : '0';
+        return;
+      }
+
+      if (payAsset === 'NGN') {
+        if (recInput) recInput.value = payAmount ? payAmount.toLocaleString('en-US') : '0';
+        if (btnText) btnText.textContent = `Pay ₦${payAmount.toLocaleString('en-US')}`;
+      } else if (payAsset === 'cNGN') {
+        if (recInput) recInput.value = payAmount ? `${payAmount.toLocaleString('en-US')} cNGN` : '0 cNGN';
+        if (btnText) btnText.textContent = `Pay ${payAmount.toLocaleString('en-US')} cNGN`;
+      } else if (payAsset === 'USDC') {
+        const usdc = (payAmount / NGN_USD_RATE).toFixed(2);
+        if (recInput) recInput.value = `${usdc} USDC`;
+        if (btnText) btnText.textContent = `Pay ${usdc} USDC`;
+      } else if (payAsset === 'ETH') {
+        const eth = (payAmount / (NGN_USD_RATE * ETH_USD_RATE)).toFixed(5);
+        if (recInput) recInput.value = `${eth} ETH`;
+        if (btnText) btnText.textContent = `Pay ${eth} ETH`;
+      }
+    }
+
+    function openPayTokenModal() {
+      const modal = document.getElementById('pay-token-modal');
+      if (modal) modal.hidden = false;
+    }
+
+    function closePayTokenModal(e) {
+      if (!e || e.target.id === 'pay-token-modal' || e.target.tagName === 'BUTTON') {
+        const modal = document.getElementById('pay-token-modal');
+        if (modal) modal.hidden = true;
+      }
+    }
+
+    function selectPayRail(rail, asset, icon) {
+      payRail = rail;
+      payAsset = asset;
+
+      const label = document.getElementById('pay-token-label');
+      if (label) label.textContent = asset;
+      const iconEl = document.getElementById('pay-token-icon');
+      if (iconEl) {
+        iconEl.textContent = icon;
+        iconEl.style.background = asset === 'NGN' ? '#10b981' : asset === 'cNGN' ? '#0052ff' : asset === 'USDC' ? '#2775ca' : '#627eea';
+      }
+
+      document.querySelectorAll('#pay-token-modal .token-list-item').forEach(el => el.classList.remove('active'));
+      const activeEl = document.getElementById(`pay-opt-${asset.toLowerCase()}`);
+      if (activeEl) activeEl.classList.add('active');
+
+      const badge = document.getElementById('pay-badge-active');
+      if (badge && activeEl) activeEl.appendChild(badge);
+
+      closePayTokenModal();
+      updatePayOutputs();
+    }
+
+    // ══════════════════════════════════════════════════════════
+    // RECIPIENT TAG SELECTION & MODAL
+    // ══════════════════════════════════════════════════════════
+    function renderPopularTagPills() {
+      const topTags = ['asake', 'burna', 'davido'];
+      const container = document.getElementById('tag-popular-pills');
+      if (!container) return;
+
+      container.innerHTML = topTags.map(tag => {
+        const gifUrl = GIF_AVATARS[tag];
+        const avatarHtml = gifUrl
+          ? `<img src="${gifUrl}" alt="${tag}" style="width:18px;height:18px;border-radius:50%;object-fit:cover;display:block;" />`
+          : (window.TagAvatar ? (window.TagAvatar.resolveTagProfile(tag, { avatarSize: 18 })?.avatarSvg || '₦') : '₦');
+        return `
+          <button type="button" class="tag-pill-btn" onclick="selectRecipientTag('${tag}')">
+            <span class="tag-pill-avatar">${avatarHtml}</span>
+            <span>₦${tag.toUpperCase()}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function openRecipientTagModal() {
+      const modal = document.getElementById('recipient-tag-modal');
+      if (modal) modal.hidden = false;
+      const inp = document.getElementById('recipient-tag-search-input');
+      if (inp) {
+        inp.value = '';
+        setTimeout(() => inp.focus(), 50);
+      }
+      renderPopularTagPills();
+      renderRecipientTagList('');
+    }
+
+    function closeRecipientTagModal(e) {
+      if (!e || e.target.id === 'recipient-tag-modal' || e.target.tagName === 'BUTTON') {
+        const modal = document.getElementById('recipient-tag-modal');
+        if (modal) modal.hidden = true;
+      }
+    }
+
+    function renderRecipientTagList(query) {
+      const list = document.getElementById('recipient-tag-list');
+      if (!list) return;
+
+      const q = (query || '').replace(/^₦/, '').trim().toLowerCase();
+      const filtered = DEFAULT_RECIPIENT_TAGS.filter(t =>
+        t.tag.includes(q) || t.name.toLowerCase().includes(q) || (t.role || '').toLowerCase().includes(q)
+      );
+
+      // Custom tag suggestion
+      let customHtml = '';
+      if (q && !DEFAULT_RECIPIENT_TAGS.some(t => t.tag === q)) {
+        customHtml = `
+          <div class="token-list-item" onclick="selectRecipientTag('${q}')" style="border:1px dashed var(--primary); background:var(--primary-soft);">
+            <div class="token-icon" style="background:var(--primary);">₦</div>
+            <div style="flex:1;">
+              <div style="font-weight:800;font-size:13px;color:var(--ink);">₦${q.toUpperCase()}</div>
+              <div style="font-size:11px;color:var(--ink-muted);">Custom NairaTag</div>
+            </div>
+            <span style="font-size:11px;font-weight:700;color:#60a5fa;">Pick ↵</span>
+          </div>
+        `;
+      }
+
+      // Section grouping when not filtering
+      const TYPE_LABELS = { artist: '🎵 Artists', business: '🏪 Businesses', fintech: '💳 Fintech', personal: '👤 Personal' };
+      const TYPE_ORDER = ['artist', 'business', 'fintech', 'personal'];
+      let bodyHtml = '';
+
+      if (!q) {
+        const sections = {};
+        TYPE_ORDER.forEach(t => { sections[t] = []; });
+        filtered.forEach(item => {
+          const t = item.type || 'personal';
+          if (!sections[t]) sections[t] = [];
+          sections[t].push(item);
+        });
+        TYPE_ORDER.forEach(type => {
+          if (!sections[type] || !sections[type].length) return;
+          bodyHtml += `<div style="font-size:10px;font-weight:800;color:var(--ink-light);text-transform:uppercase;letter-spacing:0.06em;padding:10px 4px 4px;border-top:1px solid var(--line-subtle);margin-top:4px;">${TYPE_LABELS[type] || type}</div>`;
+          bodyHtml += sections[type].map(item => renderTagListItem(item)).join('');
+        });
+      } else {
+        bodyHtml = filtered.map(item => renderTagListItem(item)).join('');
+      }
+
+      list.innerHTML = customHtml + bodyHtml;
+    }
+
+    function renderTagListItem(item) {
+      const gifUrl = GIF_AVATARS[item.tag];
+      const avatarHtml = gifUrl
+        ? `<img src="${gifUrl}" alt="${item.tag}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;display:block;" />`
+        : (window.TagAvatar ? (window.TagAvatar.resolveTagProfile(item.tag, { avatarSize: 22 })?.avatarSvg || '₦') : '₦');
+      const isSelected = payRecipient === item.tag;
+      const typeBadgeColors = { artist: '#a855f7', business: '#f97316', fintech: '#0ea5e9', personal: '#10b981' };
+      const typeColor = typeBadgeColors[item.type] || '#94a3b8';
+      const typeBadge = item.type
+        ? `<span style="font-size:9px;font-weight:800;color:${typeColor};background:${typeColor}18;padding:1px 5px;border-radius:4px;">${item.type}</span>`
+        : '';
+      return `
+        <div class="token-list-item ${isSelected ? 'active' : ''}" onclick="selectRecipientTag('${item.tag}')">
+          <div class="token-avatar-circle" style="width:22px;height:22px;">${avatarHtml}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:800;font-size:13px;color:var(--ink);display:flex;align-items:center;gap:5px;">
+              ₦${item.tag.toUpperCase()} ${typeBadge}
+            </div>
+            <div style="font-size:11px;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.name} · ${item.role}</div>
+          </div>
+          ${isSelected ? '<span class="token-badge-active">Selected</span>' : ''}
+        </div>
+      `;
+    }
+
+    function handleTagSearch(val) {
+      renderRecipientTagList(val);
+    }
+
+    function selectRecipientTag(handle) {
+      const clean = (handle || '').replace(/^₦/, '').toLowerCase().trim();
+      if (!clean) return;
+      payRecipient = clean;
+      closeRecipientTagModal();
+      resolvePayRecipient(clean);
+      updatePayOutputs();
+      history.replaceState(null, '', `?tab=pay&to=${clean}`);
+      showPaymentToast('Recipient Selected', `Ready to send to ₦${clean.toUpperCase()}`, 'system');
+    }
+
+    async function resolvePayRecipient(handle) {
+      const clean = (handle || '').toLowerCase().trim();
+      payRecipient = clean;
+
+      const pillLabel = document.getElementById('pay-recipient-tag-label');
+      const avatarWrap = document.getElementById('pay-recipient-avatar-svg');
+
+      if (!clean) {
+        if (pillLabel) pillLabel.textContent = 'Select Tag';
+        if (avatarWrap) avatarWrap.style.display = 'none';
+        updatePayOutputs();
+        return;
+      }
+
+      if (pillLabel) pillLabel.textContent = `₦${clean.toUpperCase()}`;
+      if (avatarWrap) {
+        avatarWrap.style.display = 'grid';
+        if (window.TagAvatar) {
+          const profile = window.TagAvatar.resolveTagProfile(clean, { avatarSize: 32 });
+          avatarWrap.innerHTML = profile.avatarSvg;
+        }
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/api/resolver/resolve-tag?tag=${clean}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.avatar && json.avatar.svg && avatarWrap) {
+            avatarWrap.innerHTML = json.avatar.svg;
+          }
+        }
+      } catch (err) { }
+      updatePayOutputs();
+    }
+
+    function showPaymentToast(title, body, category = 'system') {
+      if (window.NairaTagNotifications && typeof window.NairaTagNotifications.showToast === 'function') {
+        window.NairaTagNotifications.showToast(title, body, null, category);
+      } else {
+        console.log(`[Toast ${category}] ${title}: ${body}`);
+      }
+    }
+
+    async function executePayAction() {
+      if (!payRecipient) {
+        openRecipientTagModal();
+        return;
+      }
+
+      if (!payAmount || payAmount <= 0) {
+        showPaymentToast('Invalid Amount', 'Please enter a valid payment amount', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-pay-action');
+      const btnText = document.getElementById('btn-pay-action-text');
+      const originalText = btnText ? btnText.textContent : 'Pay';
+
+      if (btn) btn.disabled = true;
+      if (btnText) btnText.innerHTML = '<span class="btn-spinner"></span> Initializing...';
+
+      const payerEmail = document.getElementById('pay-payer-email')?.value?.trim() || `payer_${Date.now()}@nairatag.ng`;
+
+      showPaymentToast('Payment Initialized', `Creating checkout for ₦${payRecipient.toUpperCase()}...`, 'processing');
+
+      try {
+        const res = await fetch(`${API_BASE}/api/pay/create-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tag: payRecipient,
+            amount: payAmount,
+            currency: payAsset,
+            rail: payRail,
+            payerEmail,
+            description: `NairaTag Pay to ₦${payRecipient.toUpperCase()}`
+          })
+        });
+
+        const sessionData = await res.json();
+        if (!sessionData.ok) throw new Error(sessionData.error || 'Failed to initialize session');
+        paySession = sessionData;
+
+        if (payRail === 'local') {
+          launchPayFlutterwave(sessionData);
+        } else {
+          launchPayCrypto(sessionData);
+        }
+      } catch (err) {
+        showPaymentToast('Payment Failed', err.message || 'Unable to initialize payment session', 'error');
+        if (btn) btn.disabled = false;
+        if (btnText) btnText.textContent = originalText;
+      }
+    }
+
+    function launchPayFlutterwave(session) {
+      const btn = document.getElementById('btn-pay-action');
+      const config = session.railConfig;
+
+      showPaymentToast('Checkout Ready', 'Authorize in modal to complete transfer', 'payment');
+
+      if (typeof FlutterwaveCheckout === 'function') {
+        FlutterwaveCheckout({
+          public_key: config.public_key,
+          tx_ref: config.tx_ref,
+          amount: config.amount,
+          currency: config.currency,
+          payment_options: config.payment_options,
+          customer: config.customer,
+          customizations: config.customizations,
+          meta: config.meta,
+          callback: async function (data) {
+            showPaymentToast('Processing Authorization', 'Verifying payment on rail...', 'processing');
+            await verifyAndCompletePay({
+              txRef: session.txRef,
+              transactionId: String(data.transaction_id || data.id),
+              rail: 'local'
+            });
+          },
+          onclose: function () {
+            if (btn) btn.disabled = false;
+            updatePayOutputs();
+            showPaymentToast('Checkout Closed', 'Payment session was closed', 'system');
+          }
+        });
+      } else {
+        showPaymentToast('Checkout Unavailable', 'Flutterwave Checkout SDK failed to load. Please check your network connection.', 'error');
+        if (btn) btn.disabled = false;
+        updatePayOutputs();
+      }
+    }
+
+    async function launchPayCrypto(session) {
+      const btn = document.getElementById('btn-pay-action');
+      const btnText = document.getElementById('btn-pay-action-text');
+      if (btnText) btnText.textContent = 'Awaiting Base Transaction...';
+
+      if (!window.ethereum) {
+        showPaymentToast('Web3 Wallet Required', 'Please install or connect a Web3 wallet (MetaMask, Coinbase Wallet) on Base to pay in crypto.', 'error');
+        if (btn) btn.disabled = false;
+        updatePayOutputs();
+        return;
+      }
+
+      try {
+        showPaymentToast('Wallet Detected', 'Connecting to Base wallet...', 'wallet');
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send('eth_requestAccounts', []);
+        const signer = await provider.getSigner();
+        const senderAddress = await signer.getAddress();
+        console.log('[Crypto Pay] Connected Sender:', senderAddress);
+
+        const targetAddress = session.railConfig?.recipientAddress || (recipientData && recipientData.resolvedAddress);
+        if (!targetAddress || !ethers.isAddress(targetAddress)) {
+          throw new Error(`Recipient ₦${payRecipient.toUpperCase()} does not have an active on-chain address configured.`);
+        }
+
+        const cryptoAmountStr = String(session.railConfig?.cryptoAmount || payAmount || '0.001');
+        showPaymentToast('Awaiting Signature', `Confirm sending ${cryptoAmountStr} ${payAsset} to ₦${payRecipient.toUpperCase()}...`, 'processing');
+
+        let tx;
+        if (payAsset === 'ETH') {
+          tx = await signer.sendTransaction({
+            to: targetAddress,
+            value: ethers.parseEther(cryptoAmountStr)
+          });
+        } else {
+          const tokenAddress = payAsset === 'cNGN'
+            ? '0x610178dA211FEF7D417bC0e6FeD39F05609AD788'
+            : '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+
+          const erc20Abi = [
+            'function transfer(address to, uint256 amount) returns (bool)',
+            'function decimals() view returns (uint8)'
+          ];
+          const contract = new ethers.Contract(tokenAddress, erc20Abi, signer);
+          let decimals = 18;
+          try { decimals = await contract.decimals(); } catch { }
+          const parsedAmount = ethers.parseUnits(cryptoAmountStr, decimals);
+          tx = await contract.transfer(targetAddress, parsedAmount);
+        }
+
+        showPaymentToast('Transaction Broadcasted', `Transaction submitted (${tx.hash.slice(0, 10)}...). Confirming on Base...`, 'processing');
+        const receipt = await tx.wait(1);
+
+        await verifyAndCompletePay({
+          txRef: session.txRef,
+          txHash: tx.hash,
+          rail: 'crypto'
+        });
+      } catch (err) {
+        console.error('Crypto Base transaction error:', err);
+        showPaymentToast('Payment Cancelled / Error', err.shortMessage || err.message || 'Crypto signature failed or was rejected.', 'error');
+        if (btn) btn.disabled = false;
+        updatePayOutputs();
+      }
+    }
+
+    async function verifyAndCompletePay({ txRef, transactionId = null, txHash = null, rail = 'local' }) {
+      try {
+        showPaymentToast('Verifying Settlement', `Confirming reference ${txRef.slice(0, 16)}...`, 'processing');
+        const res = await fetch(`${API_BASE}/api/pay/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ txRef, transactionId, txHash, rail })
+        });
+        const result = await res.json();
+        if (result.ok && result.status === 'successful') {
+          if (typeof confetti === 'function') {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          }
+          showPaymentToast('Payment Confirmed! 🎉', `₦${Number(result.amount).toLocaleString('en-US')} received by ₦${payRecipient.toUpperCase()}`, 'claim');
+
+          const card = document.getElementById('swap-result-card');
+          const title = document.getElementById('swap-result-title-text');
+          const body = document.getElementById('swap-result-body-text');
+
+          if (title) title.textContent = `Paid ₦${Number(result.amount).toLocaleString('en-US')} to ₦${payRecipient.toUpperCase()}!`;
+          if (body) body.innerHTML = `Settled instantly via ${rail === 'local' ? 'Local NGN (Flutterwave)' : 'Celo Sepolia'}. Reference: <code>${result.txRef}</code>. Receipt ID: <code>${result.receipt?.receiptId || 'REC_' + Date.now()}</code>`;
+          if (card) card.hidden = false;
+        } else {
+          throw new Error(result.error || 'Payment verification failed');
+        }
+      } catch (err) {
+        showPaymentToast('Verification Failed', err.message || 'Payment verification failed', 'error');
+      } finally {
+        const btn = document.getElementById('btn-pay-action');
+        if (btn) btn.disabled = false;
+        updatePayOutputs();
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      calculateOutput();
+      updateHeaderWalletBalance();
+      renderPopularTagPills();
+
+      // Check URL parameters for tab=pay or recipient
+      const p = new URLSearchParams(window.location.search);
+      const tabParam = p.get('tab');
+      const tagParam = p.get('to') || p.get('tag') || p.get('handle');
+      const amtParam = p.get('amount') || p.get('amt');
+
+      if (tagParam) {
+        payRecipient = tagParam.replace(/^₦/, '').toLowerCase().trim();
+      } else {
+        payRecipient = '';
+      }
+      if (amtParam && !isNaN(Number(amtParam)) && Number(amtParam) > 0) {
+        payAmount = Number(amtParam);
+        const inp = document.getElementById('pay-input-amount');
+        if (inp) inp.value = payAmount.toLocaleString('en-US');
+      }
+
+      if (tabParam === 'pay' || tagParam) {
+        switchCardTab('pay');
+      } else {
+        resolvePayRecipient('');
+      }
+    });
+  </script>
+  <!-- Libraries.dev Metal-fx Liquid Metal Effect Bundle -->
+  <script type="module" src="/hub/metal-bundle.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,1112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>Developer Documentation · ₦Tag Protocol & SDK</title>
+  <meta name="description" content="Integrate ₦Tag resolution, on-chain identity minting, and cNGN payments into your dApp, wallet, or backend service.">
+  <link rel="stylesheet" href="/hub/theme.css">
+  <link rel="stylesheet" href="/hub/notifications.css">
+  <script src="/hub/theme.js"></script>
+  <script src="/hub/notifications.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --font-sans: 'Poppins Rounded', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-surface: #f1f5f9;
+      --bg-subtle: #f8fafc;
+      --line: #e2e8f0;
+      --line-subtle: #edf2f7;
+      --ink: #0f172a;
+      --ink-muted: #64748b;
+      --ink-light: #94a3b8;
+      
+      --primary: #0052ff;
+      --primary-hover: #0045d8;
+      --primary-soft: #eff6ff;
+      --primary-border: #bfdbfe;
+      
+      --success: #10b981;
+      --success-soft: #ecfdf5;
+      --success-text: #065f46;
+      
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-pill: 9999px;
+      
+      --no-shadow: none !important;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body {
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--ink);
+      font-size: 13.5px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    * { box-shadow: var(--no-shadow); }
+
+    .app-layout {
+      display: flex;
+      height: 100dvh;
+      max-height: 100dvh;
+      width: 100vw;
+      padding: 6px;
+      gap: 6px;
+      background-color: var(--bg-page);
+    }
+
+    /* Sidebar Navigation */
+    .app-sidebar {
+      width: 220px;
+      min-width: 220px;
+      height: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 9px;
+      flex-shrink: 0;
+      transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 100;
+    }
+
+    .app-sidebar.collapsed { width: 48px; min-width: 48px; padding: 8px 5px; }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 2px 2px 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #0052ff;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    .brand-text {
+      font-size: 13.5px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .sidebar-toggle-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--ink-muted);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .sidebar-toggle-btn:hover { background: #f1f5f9; color: var(--ink); }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 8px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .sidebar-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+    .sidebar-nav-group { display: flex; flex-direction: column; gap: 3px; }
+    .sidebar-nav-title {
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-muted);
+      padding: 2px 6px 3px;
+    }
+
+    .sidebar-menu { display: flex; flex-direction: column; gap: 2px; }
+
+    .sidebar-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink);
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .sidebar-menu-item:hover { background: #f1f5f9; border-color: var(--line); }
+    .sidebar-menu-item.active { background: #eff6ff; color: #0052ff; border-color: #bfdbfe; font-weight: 700; }
+
+    .menu-icon { font-size: 13.5px; width: 20px; text-align: center; color: var(--ink-muted); }
+    .sidebar-menu-item.active .menu-icon { color: #0052ff; }
+    .menu-badge {
+      margin-left: auto;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: var(--radius-pill);
+      background: #f1f5f9;
+      color: var(--ink-muted);
+    }
+
+    .sidebar-footer {
+      padding-top: 6px;
+      border-top: 1px solid var(--line);
+    }
+    .sidebar-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--success-text);
+      background: var(--success-soft);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+
+    /* Main Viewport */
+    .main-viewport {
+      flex: 1;
+      height: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* Header */
+    .app-header {
+      height: 44px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 14px;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+    .header-breadcrumb a { text-decoration: none; color: var(--ink-muted); }
+    .header-breadcrumb a:hover { color: #0052ff; }
+    .header-breadcrumb span { color: var(--ink-light); }
+
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .header-btn {
+      height: 30px;
+      padding: 0 11px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      transition: all 0.12s ease;
+    }
+    .header-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .header-btn.primary { background: #0052ff; color: #ffffff; border-color: #0052ff; }
+    .header-btn.primary:hover { background: var(--primary-hover); }
+
+    /* Header Wallet Balance Dropdown Popover */
+    .header-wallet-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 280px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      z-index: 1050;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      box-shadow: none !important;
+      text-align: left;
+    }
+    .header-wallet-popover[hidden] { display: none !important; }
+    .popover-header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+    .popover-user-info { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .popover-avatar { width: 26px; height: 26px; border-radius: 50%; background: #eff6ff; border: 1px solid #bfdbfe; color: #0052ff; display: grid; place-items: center; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+    .popover-handle { font-size: 12px; font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .popover-addr { font-size: 10.5px; font-family: var(--font-mono); color: var(--ink-muted); }
+    .popover-close-btn { width: 20px; height: 20px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #f8fafc; color: var(--ink-muted); cursor: pointer; display: grid; place-items: center; font-size: 10px; transition: all 0.12s ease; }
+    .popover-close-btn:hover { background: #f1f5f9; color: var(--ink); }
+    .popover-balances-deck { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .popover-balance-card { background: #f8fafc; border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 7px; display: flex; flex-direction: column; gap: 2px; }
+    .popover-balance-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-muted); }
+    .popover-balance-num { font-size: 12px; font-family: var(--font-mono); font-weight: 800; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .popover-status-row { display: flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 600; color: var(--success-text); background: var(--success-soft); padding: 4px 7px; border-radius: var(--radius-sm); }
+    .popover-actions-deck { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; padding-top: 2px; }
+    .popover-action-btn { flex: 1; height: 26px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: #ffffff; color: var(--ink); font-size: 10.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; transition: all 0.12s ease; white-space: nowrap; text-decoration: none; }
+    .popover-action-btn:hover { background: #f1f5f9; border-color: #cbd5e1; color: #0052ff; }
+
+    /* Page Content */
+    .page-content-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 32px 48px;
+    }
+
+    .content-container {
+      max-width: 920px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .docs-hero {
+      background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 22px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .docs-tag-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      align-self: flex-start;
+      padding: 3px 10px;
+      border-radius: var(--radius-pill);
+      background: #e0e7ff;
+      color: #3730a3;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .docs-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--ink);
+      letter-spacing: -0.02em;
+    }
+
+    .docs-desc {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--ink-muted);
+      max-width: 760px;
+    }
+
+    /* Sub-Navigation Pills */
+    .docs-nav-bar {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--line);
+    }
+    .docs-nav-link {
+      padding: 5px 12px;
+      border-radius: var(--radius-pill);
+      background: #f1f5f9;
+      color: var(--ink-muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all 0.12s ease;
+    }
+    .docs-nav-link:hover { background: #e2e8f0; color: var(--ink); }
+    .docs-nav-link.active { background: #0052ff; color: #ffffff; }
+
+    /* Code Terminal Box */
+    .code-terminal-card {
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .code-tab-nav {
+      display: flex;
+      align-items: center;
+      background: #1e293b;
+      padding: 4px 6px;
+      gap: 4px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 5px 12px;
+      border-radius: 4px;
+      border: 0;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.12s ease;
+    }
+    .tab-btn:hover { color: #f8fafc; }
+    .tab-btn.active { background: #0f172a; color: #38bdf8; }
+
+    .code-content-wrap {
+      position: relative;
+      background: #0f172a;
+    }
+
+    .copy-floating-btn {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #e2e8f0;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.12s ease;
+      z-index: 10;
+    }
+    .copy-floating-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+    .code-pre {
+      margin: 0;
+      padding: 16px 20px;
+      color: #f1f5f9;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      max-height: 320px;
+    }
+
+    /* Live Resolver Sandbox */
+    .sandbox-card {
+      background: #ffffff;
+      border: 1px solid var(--primary-border);
+      border-radius: var(--radius-md);
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .sandbox-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .sandbox-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sandbox-status {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--success-text);
+      background: var(--success-soft);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+    }
+
+    .sandbox-controls {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .input-box {
+      flex: 1;
+      min-width: 220px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      padding: 0 10px;
+      background: #f8fafc;
+    }
+    .input-prefix { font-weight: 800; color: #0052ff; margin-right: 4px; }
+    .input-field {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      outline: none;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      color: var(--ink);
+    }
+    .resolve-btn {
+      height: 36px;
+      padding: 0 16px;
+      border-radius: var(--radius-sm);
+      background: #0052ff;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12px;
+      border: 0;
+      cursor: pointer;
+    }
+    .resolve-btn:hover { background: var(--primary-hover); }
+
+    .sandbox-result {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.5;
+      color: #334155;
+      word-break: break-all;
+    }
+
+    /* Endpoints Table */
+    .endpoints-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      font-size: 12px;
+    }
+    .endpoints-table th, .endpoints-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+    .endpoints-table th {
+      background: #f8fafc;
+      font-weight: 700;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      font-size: 10.5px;
+      letter-spacing: 0.04em;
+    }
+    .endpoints-table tr:last-child td { border-bottom: 0; }
+    .method-badge {
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+    }
+    .method-badge.get { background: #dcfce7; color: #15803d; }
+    .method-badge.post { background: #e0e7ff; color: #4338ca; }
+
+    @media (max-width: 768px) {
+      .sandbox-controls { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- ============================================================= -->
+                                <!-- Left Sidebar Navigation -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a class="brand-logo" href="/agent">
+          <div class="brand-mark">
+            <img src="/hub/nairatag-icon.png" alt="₦" class="brand-mark-img" />
+          </div>
+          <span class="brand-text">NairaTag</span>
+        </a>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" type="button" title="Collapse sidebar" aria-label="Toggle sidebar">
+          <span id="sidebar-toggle-icon">◨</span>
+        </button>
+      </div>
+
+      <div class="sidebar-scroll">
+        <!-- Protocol Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Protocol</div>
+          <nav class="sidebar-menu" aria-label="Protocol Navigation">
+                        <a class="sidebar-menu-item" id="menu-profile" href="/profile" title="Agent Profile & Streaks">
+              <span class="menu-icon">👤</span>
+              <span class="menu-label">Profile</span>
+            </a>
+<a class="sidebar-menu-item" id="menu-claim" href="/claim" title="Claim ₦Tag">
+              <span class="menu-icon">✦</span>
+              <span class="menu-label">Claim</span>
+              <span class="menu-badge badge-count-claim">1</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-agent" href="/agent" title="Open AI Chat">
+              <span class="menu-icon">💬</span>
+              <span class="menu-label">Chat</span>
+              <span class="menu-badge badge-count-chat">2</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-tasks" href="/tasks" title="Agent Tasks &amp; Bounties">
+              <span class="menu-icon">🎯</span>
+              <span class="menu-label">Tasks</span>
+              <span class="menu-badge badge-count-tasks">5</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-explorer" href="/explorer" title="Identity Explorer">
+              <span class="menu-icon">🌐</span>
+              <span class="menu-label">Explorer</span>
+              
+            </a>
+            <a class="sidebar-menu-item" id="menu-swap" href="/swap" title="Swap Assets">
+              <span class="menu-icon">⇄</span>
+              <span class="menu-label">Swap</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-earnings" href="/earnings" title="Agent Earnings Leaderboard">
+              <span class="menu-icon">🏆</span>
+              <span class="menu-label">Earnings</span>
+              
+            </a>
+          </nav>
+        </div>
+
+        <!-- Knowledge & Info Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Knowledge &amp; Info</div>
+          <nav class="sidebar-menu" aria-label="Knowledge and Documentation">
+            <a class="sidebar-menu-item" id="menu-about" href="/about" title="About ₦Tag Network">
+              <span class="menu-icon">ℹ</span>
+              <span class="menu-label">About</span>
+            </a>
+            <a class="sidebar-menu-item active" id="menu-docs" href="/docs" title="Developer Docs &amp; SDK">
+              <span class="menu-icon">📖</span>
+              <span class="menu-label">Docs</span>
+              
+            </a>
+            <a class="sidebar-menu-item" id="menu-faq" href="/faq" title="Frequently Asked Questions">
+              <span class="menu-icon">❓</span>
+              <span class="menu-label">FAQ</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Viewport Container -->
+    <div class="main-viewport">
+      <!-- Top Navigation Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="header-sidebar-btn" id="header-sidebar-btn" type="button" title="Open menu" aria-label="Open menu" style="display:none;">☰</button>
+        </div>
+        <div class="header-right">
+          <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" title="Toggle Theme" aria-label="Toggle dark mode">🌙</button>
+          <button type="button" class="header-auth-btn" id="header-auth-btn" onclick="window.NairaTagSupabase.openAuthModal('signin')" title="Sign In or Sign Up">
+            <span id="auth-btn-icon">👤</span>
+            <span id="auth-btn-text">Sign In</span>
+          </button>
+          <div style="position:relative;">
+            <a href="/wallet" class="header-btn" id="header-wallet-btn" title="Open Wallet Dashboard" style="font-family:var(--font-mono); font-weight:700; text-decoration:none;">
+              <span>👛</span>
+              <span id="header-wallet-balance">0.00 cNGN</span>
+            </a>
+            <!-- Wallet Balance Dropdown Popover -->
+            <div class="header-wallet-popover" id="header-wallet-popover" hidden>
+              <div class="popover-header">
+                <div class="popover-user-info">
+                  <div class="popover-tag" id="popover-active-tag">₦TAG</div>
+                  <div class="popover-addr" id="popover-active-addr">Not connected</div>
+                </div>
+                <div class="popover-status-badge">Active</div>
+              </div>
+              <div class="popover-balance-section">
+                <div class="popover-balance-label">Total Balance</div>
+                <div class="popover-balance-val" id="popover-total-balance">₦ 0.00</div>
+              </div>
+              <div class="popover-actions">
+                <a href="/wallet" class="popover-btn primary" id="popover-open-wallet">Wallet Dashboard</a>
+                <button type="button" class="popover-btn" id="popover-disconnect-btn">Disconnect</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main class="page-content-scroll">
+        <div class="content-container">
+
+          <!-- Hero Section -->
+          <div class="docs-hero">
+            <div class="docs-tag-badge">Developer Docs &amp; SDK</div>
+            <h1 class="docs-title">Integrate ₦Tag Identity &amp; Settlement Into Any Application</h1>
+            <p class="docs-desc">
+              Resolve ₦Tags to EVM addresses, build frictionless checkout flows with native <code>cNGN</code> micro-gas settlement on Celo Sepolia (Chain 11142220), and interact with live Celo contracts using viem, ethers.js, or our REST API daemon.
+            </p>
+          </div>
+
+          <!-- Sub-Nav Links -->
+          <div class="docs-nav-bar">
+            <a class="docs-nav-link active" href="#code-tabs">Code Samples</a>
+            <a class="docs-nav-link" href="#live-sandbox">Live Resolver Sandbox</a>
+            <a class="docs-nav-link" href="#rest-api">REST Endpoints</a>
+            <a class="docs-nav-link" href="#contract-spec">Smart Contracts</a>
+          </div>
+
+          <!-- Interactive Code Snippets -->
+          <div class="code-terminal-card" id="code-tabs">
+            <div class="code-tab-nav">
+              <button class="tab-btn active" data-tab="rpc">RPC Config</button>
+              <button class="tab-btn" data-tab="ethers">ethers.js v6</button>
+              <button class="tab-btn" data-tab="viem">viem</button>
+              <button class="tab-btn" data-tab="solidity">Solidity</button>
+              <button class="tab-btn" data-tab="rest">REST API</button>
+            </div>
+
+            <div class="code-content-wrap">
+              <button class="copy-floating-btn" id="copy-code-btn">
+                <span>📋</span> <span id="copy-btn-text">Copy</span>
+              </button>
+              <pre class="code-pre"><code id="code-display"></code></pre>
+            </div>
+          </div>
+
+          <!-- Live Resolver Sandbox -->
+          <div class="sandbox-card" id="live-sandbox">
+            <div class="sandbox-head">
+              <div class="sandbox-title">
+                <span>⚡ Live On-Chain Query Sandbox</span>
+              </div>
+              <span class="sandbox-status">Celo Sepolia Online</span>
+            </div>
+            <p style="font-size:12px; color:var(--ink-muted);">Test live ₦Tag resolution against our running registry node and inspect resolved address and token balances in real time.</p>
+            
+            <div class="sandbox-controls">
+              <div class="input-box">
+                <span class="input-prefix">₦</span>
+                <input class="input-field" id="sandbox-input" value="femi" placeholder="Enter handle e.g. femi, nairatag">
+              </div>
+              <button class="resolve-btn" id="sandbox-btn" type="button">Resolve ₦Tag ↗</button>
+            </div>
+
+            <div class="sandbox-result" id="sandbox-output">
+              Click 'Resolve ₦Tag' to execute live RPC resolution...
+            </div>
+          </div>
+
+          <!-- REST API Reference -->
+          <div id="rest-api">
+            <h3 style="font-size:16px; font-weight:800; margin-bottom:8px;">REST API Daemon Reference (Port 8787)</h3>
+            <table class="endpoints-table">
+              <thead>
+                <tr>
+                  <th>Method</th>
+                  <th>Endpoint</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="method-badge get">GET</span></td>
+                  <td><code>/api/agent/telemetry</code></td>
+                  <td>Returns live block heights, claim totals, and recent events.</td>
+                </tr>
+                <tr>
+                  <td><span class="method-badge get">GET</span></td>
+                  <td><code>/api/agent/wallet-info?tag=:handle</code></td>
+                  <td>Resolves a ₦Tag to an address and fetches on-chain balances.</td>
+                </tr>
+                <tr>
+                  <td><span class="method-badge post">POST</span></td>
+                  <td><code>/api/agent/prepare-claim</code></td>
+                  <td>Checks availability on Celo Sepolia and prepares calldata.</td>
+                </tr>
+                <tr>
+                  <td><span class="method-badge post">POST</span></td>
+                  <td><code>/api/agent/tag-payment</code></td>
+                  <td>Validates recipient ₦Tag and checks policy limit spend limits.</td>
+                </tr>
+                <tr>
+                  <td><span class="method-badge post">POST</span></td>
+                  <td><code>/api/agent/swap</code></td>
+                  <td>Prepares Celo DEX swap router parameters.</td>
+                </tr>
+                <tr>
+                  <td><span class="method-badge post">POST</span></td>
+                  <td><code>/api/agent/bridge-preview</code></td>
+                  <td>Calculates LI.FI cross-chain quotes and slippage lock.</td>
+                </tr>
+                <tr>
+                  <td><span class="method-badge post">POST</span></td>
+                  <td><code>/api/agent/receive-request</code></td>
+                  <td>Generates payment request calldata and scannable QR payload.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Smart Contracts Spec -->
+          <div class="sandbox-card" id="contract-spec">
+            <h3 style="font-size:15px; font-weight:800;">Deployed Smart Contracts</h3>
+            <div style="display:flex; flex-direction:column; gap:8px; font-size:12px;">
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:6px;">
+                <span style="font-weight:700; color:var(--ink-muted);">Chain 901 Sovereign Registry</span>
+                <span style="font-family:var(--font-mono); font-weight:700;">0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--line); padding-bottom:6px;">
+                <span style="font-weight:700; color:var(--ink-muted);">NairaTagRegistry (Celo Sepolia)</span>
+                <span style="font-family:var(--font-mono); font-weight:700;">0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0</span>
+              </div>
+              <div style="display:flex; justify-content:space-between;">
+                <span style="font-weight:700; color:var(--ink-muted);">PaymentRequest Contract</span>
+                <span style="font-family:var(--font-mono); font-weight:700;">0x0B306BF915C4d645ff596e518fAf3F9669b97016</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    const SNIPPETS = {
+      rpc: `# NairaTag Active Network: Celo Sepolia Testnet
+Network Name:      Celo Sepolia Testnet
+RPC URL:           https://forno.celo-sepolia.celo-testnet.org
+Chain ID:          11142220
+Currency Symbol:   CELO (Gas) / cNGN (Settlement)
+Block Explorer:    https://celo-sepolia.blockscout.com
+Registry Contract: 0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0
+Resolver Contract: 0x293EA56588b8abac78Bab6241466ad8C30bB955A`,
+
+      ethers: `import { ethers } from "ethers";
+
+// 1. Initialize Chain 901 provider
+const provider = new ethers.JsonRpcProvider("https://forno.celo-sepolia.celo-testnet.org", 11142220);
+
+// 2. Connect to the on-chain TagProtocol registry
+const REGISTRY_ADDR = "0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0";
+const REGISTRY_ABI = [
+  "function resolve(string tag) external view returns (address)",
+  "function ownerOf(string tag) external view returns (address)"
+];
+
+const registry = new ethers.Contract(REGISTRY_ADDR, REGISTRY_ABI, provider);
+
+// 3. Resolve ₦femi to EVM address
+const targetAddress = await registry.resolve("femi");
+console.log("Resolved ₦femi to:", targetAddress);`,
+
+      viem: `import { createPublicClient, http } from "viem";
+
+export const celoSepolia = {
+  id: 11142220,
+  name: "Celo Sepolia Testnet",
+  nativeCurrency: { name: "CELO", symbol: "CELO", decimals: 18 },
+  rpcUrls: { default: { http: ["https://forno.celo-sepolia.celo-testnet.org"] } }
+};
+
+const client = createPublicClient({
+  chain: celoSepolia,
+  transport: http()
+});
+
+const resolved = await client.readContract({
+  address: "0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0",
+  abi: [{
+    name: "resolve",
+    type: "function",
+    inputs: [{ type: "string", name: "tag" }],
+    outputs: [{ type: "address" }]
+  }],
+  functionName: "resolve",
+  args: ["femi"]
+});
+
+console.log("Resolved ₦femi:", resolved);`,
+
+      solidity: `// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+interface INairaTagRegistry {
+  function resolve(string calldata tag) external view returns (address);
+  function ownerOf(string calldata tag) external view returns (address);
+}
+
+contract DirectTagPayment {
+  INairaTagRegistry public immutable registry;
+
+  constructor(address _registry) {
+    registry = INairaTagRegistry(_registry);
+  }
+
+  function sendToTag(string calldata tag) external payable {
+    address recipient = registry.resolve(tag);
+    require(recipient != address(0), "₦Tag not registered");
+    
+    (bool sent, ) = payable(recipient).call{value: msg.value}("");
+    require(sent, "Payment failed");
+  }
+}`,
+
+      rest: `# 1. Query Node Telemetry
+GET http://127.0.0.1:8787/api/agent/telemetry
+
+# 2. Check ₦Tag Availability & Prepare Calldata
+POST http://127.0.0.1:8787/api/agent/prepare-claim
+Content-Type: application/json
+
+{
+  "handle": "femi",
+  "network": "celoSepolia"
+}
+
+# 3. Query ₦Tag Balances & Address
+GET http://127.0.0.1:8787/api/agent/wallet-info?tag=femi`
+    };
+
+    let activeTab = 'rpc';
+    const codeDisplay = document.getElementById('code-display');
+    const copyBtn = document.getElementById('copy-code-btn');
+    const copyBtnText = document.getElementById('copy-btn-text');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+
+    function renderTab(tab) {
+      activeTab = tab;
+      tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      codeDisplay.textContent = SNIPPETS[tab] || '';
+    }
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => renderTab(btn.dataset.tab));
+    });
+
+    renderTab('rpc');
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(SNIPPETS[activeTab] || '');
+        copyBtnText.textContent = 'Copied!';
+        setTimeout(() => { copyBtnText.textContent = 'Copy'; }, 1500);
+      } catch (e) {
+        alert('Clipboard access denied');
+      }
+    });
+
+    // Sandbox Resolver
+    const sandboxInput = document.getElementById('sandbox-input');
+    const sandboxBtn = document.getElementById('sandbox-btn');
+    const sandboxOutput = document.getElementById('sandbox-output');
+
+    sandboxBtn.addEventListener('click', async () => {
+      const tag = sandboxInput.value.trim().replace(/^₦/, '');
+      if (!tag) return alert('Enter a ₦Tag to query');
+      sandboxBtn.disabled = true;
+      sandboxOutput.textContent = `Querying live node for ₦${tag}...`;
+      try {
+        const res = await fetch(`http://127.0.0.1:8787/api/agent/wallet-info?tag=${encodeURIComponent(tag)}`);
+        const body = await res.json();
+        if (body.address) {
+          sandboxOutput.innerHTML = `
+            <span style="color:#10b981; font-weight:700;">✓ RESOLVED:</span> ₦${tag} → <strong>${body.address}</strong><br>
+            Chain 901 Balance: <strong>${body.balances?.chain901?.formatted || '0.00'} cNGN</strong><br>
+            Celo Sepolia Balance: <strong>${body.balances?.celoSepolia?.formatted || '0.00'} CELO</strong>
+          `;
+        } else {
+          sandboxOutput.textContent = `₦${tag} is available for registration.`;
+        }
+      } catch (err) {
+        sandboxOutput.textContent = `Query error: ${err.message}`;
+      } finally {
+        sandboxBtn.disabled = false;
+      }
+    });
+
+    // Sidebar Collapse
+    const sidebar = document.getElementById('app-sidebar');
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    const toggleIcon = document.getElementById('sidebar-toggle-icon');
+
+    toggleBtn.addEventListener('click', () => {
+      const isCollapsed = sidebar.classList.toggle('collapsed');
+      toggleIcon.textContent = isCollapsed ? '◧' : '◨';
+      localStorage.setItem('nairatag_sidebar_collapsed', isCollapsed ? '1' : '0');
+    });
+
+    if (localStorage.getItem('nairatag_sidebar_collapsed') === '1') {
+      sidebar.classList.add('collapsed');
+      toggleIcon.textContent = '◧';
+    }
+
+    async function updateHeaderBalance() {
+      const balEl = document.getElementById('header-wallet-balance');
+      if (!balEl) return;
+      const addr = window.ethereum?.selectedAddress;
+      if (!addr) return;
+      try {
+        const res = await fetch(`http://127.0.0.1:8787/api/agent/wallet-info?address=${addr}`);
+        const data = await res.json();
+        if (data?.balances?.chain901?.formatted) {
+          balEl.textContent = `${data.balances.chain901.formatted} cNGN`;
+        }
+      } catch (e) {
+        console.warn('Wallet balance fetch failed:', e);
+      }
+    }
+    window.addEventListener('DOMContentLoaded', updateHeaderBalance);
+    if (window.ethereum?.on) {
+      window.ethereum.on('accountsChanged', updateHeaderBalance);
+    }
+
+    const headerWalletBtn = document.getElementById('header-wallet-btn');
+    const headerWalletPopover = document.getElementById('header-wallet-popover');
+    const popoverCloseBtn = document.getElementById('popover-close-btn');
+
+    async function refreshPopoverData() {
+      if (!headerWalletPopover) return;
+      const wallet = window.ethereum?.selectedAddress || null;
+      const popoverHandle = document.getElementById('popover-handle');
+      const popoverAddress = document.getElementById('popover-address');
+      const popoverAvatar = document.getElementById('popover-avatar');
+      const popover901 = document.getElementById('popover-balance-901');
+      const popoverEth = document.getElementById('popover-balance-eth');
+      const popoverNet = document.getElementById('popover-net-status');
+
+      if (!wallet) {
+        if (popoverHandle) popoverHandle.textContent = 'Guest Account';
+        if (popoverAddress) popoverAddress.textContent = 'Wallet not connected';
+        if (popoverAvatar) popoverAvatar.textContent = '?';
+        if (popover901) popover901.textContent = '0.00 cNGN';
+        if (popoverEth) popoverEth.textContent = '0.0000 ETH';
+        if (popoverNet) popoverNet.textContent = 'Connect in Web3 wallet';
+        return;
+      }
+
+      if (popoverAddress) popoverAddress.textContent = `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
+      if (popoverAvatar) popoverAvatar.textContent = '0x';
+
+      try {
+        const res = await fetch(`http://127.0.0.1:8787/api/agent/wallet-info?address=${wallet}`);
+        const body = await res.json();
+        if (popoverHandle) {
+          popoverHandle.textContent = body.tag ? body.tag : `${wallet.slice(0, 6)}...${wallet.slice(-4)}`;
+        }
+        if (body.balances?.chain901?.formatted) {
+          if (popover901) popover901.textContent = `${body.balances.chain901.formatted} cNGN`;
+          const headerBalance = document.getElementById('header-wallet-balance');
+          if (headerBalance) headerBalance.textContent = `${body.balances.chain901.formatted} cNGN`;
+        }
+        if (body.balances?.celoSepolia?.formatted) {
+          if (popoverEth) popoverEth.textContent = `${body.balances.celoSepolia.formatted} ETH`;
+        }
+        if (popoverNet) popoverNet.textContent = 'Celo Sepolia Ready';
+      } catch (err) {
+        if (popoverNet) popoverNet.textContent = 'Node query error';
+      }
+    }
+
+    if (headerWalletBtn) {
+      headerWalletBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!headerWalletPopover) return;
+        headerWalletPopover.hidden = !headerWalletPopover.hidden;
+        if (!headerWalletPopover.hidden) refreshPopoverData();
+      });
+    }
+    if (popoverCloseBtn) {
+      popoverCloseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (headerWalletPopover) headerWalletPopover.hidden = true;
+      });
+    }
+    document.addEventListener('click', (e) => {
+      if (headerWalletPopover && !headerWalletPopover.hidden) {
+        if (!headerWalletPopover.contains(e.target) && e.target !== headerWalletBtn && !headerWalletBtn.contains(e.target)) {
+          headerWalletPopover.hidden = true;
+        }
+      }
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && headerWalletPopover && !headerWalletPopover.hidden) {
+        headerWalletPopover.hidden = true;
+      }
+    });
+    document.getElementById('popover-copy-addr')?.addEventListener('click', async () => {
+      const wallet = window.ethereum?.selectedAddress;
+      if (!wallet) return alert('No wallet connected.');
+      try {
+        await navigator.clipboard.writeText(wallet);
+        alert('Wallet address copied.');
+      } catch {
+        alert('Clipboard permission denied.');
+      }
+    });
+    document.getElementById('popover-refresh-btn')?.addEventListener('click', () => {
+      refreshPopoverData();
+    });
+  </script>
+</body>
+</html>

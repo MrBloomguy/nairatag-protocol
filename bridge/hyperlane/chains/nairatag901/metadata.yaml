@@ -1,0 +1,22 @@
+chainId: 901
+domainId: 901
+name: nairatag901
+displayName: NairaTag Chain 901
+displayNameShort: NairaTag
+protocol: ethereum
+rpcUrls:
+  - http: http://127.0.0.1:9545
+nativeToken:
+  name: Ether
+  symbol: ETH
+  decimals: 18
+blockExplorers:
+  - name: NairaTag Blockscout
+    url: http://localhost:4000
+    apiUrl: http://localhost:4000/api
+    family: blockscout
+blocks:
+  confirmations: 1
+  reorgPeriod: 0
+  estimateBlockTime: 2
+isTestnet: true

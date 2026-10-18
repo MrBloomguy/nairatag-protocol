@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>₦Tag Marketplace · Buy, Sell & Swap NairaTags</title>
+  <meta name="description" content="Browse, buy, sell, and swap ₦Tag identity handles on the NairaTag secondary marketplace. Earn points on every transaction.">
+  <link rel="stylesheet" href="/hub/theme.css">
+  <link rel="stylesheet" href="/hub/notifications.css">
+  <script src="/hub/theme.js"></script>
+  <script src="/hub/notifications.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --font-sans: 'Poppins Rounded', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --bg-page: #f8fafc; --bg-card: #ffffff; --bg-surface: #f1f5f9;
+      --line: #e2e8f0; --ink: #0f172a; --ink-muted: #64748b; --ink-light: #94a3b8;
+      --primary: #0052ff; --primary-hover: #0045d8; --primary-soft: #eff6ff; --primary-border: #bfdbfe;
+      --accent-purple: #7c3aed; --accent-purple-soft: #f5f3ff;
+      --success: #10b981; --success-soft: #ecfdf5;
+      --warning: #f59e0b; --warning-soft: #fffbeb;
+      --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-pill: 9999px;
+      --no-shadow: none !important;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; box-shadow: var(--no-shadow) !important; }
+    html, body { height: 100dvh; max-height: 100dvh; overflow: hidden; font-family: var(--font-sans); background: var(--bg-page); color: var(--ink); font-size: 13.5px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    .app-layout { display: flex; height: 100dvh; width: 100vw; padding: 6px; gap: 6px; }
+    .app-sidebar.collapsed { width: 48px !important; min-width: 48px !important; padding: 8px 5px !important; }
+    .app-sidebar.collapsed .brand-text, .app-sidebar.collapsed .menu-label, .app-sidebar.collapsed .menu-badge, .app-sidebar.collapsed .sidebar-nav-title { display: none !important; }
+    .app-sidebar { width: 220px; min-width: 220px; height: 100%; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-md); display: flex; flex-direction: column; justify-content: space-between; padding: 9px; flex-shrink: 0; overflow: hidden; }
+    .sidebar-header { display: flex; align-items: center; gap: 7px; padding-bottom: 9px; border-bottom: 1px solid var(--line); }
+    .brand-mark { font-size: 18px; font-weight: 900; color: var(--primary); }
+    .brand-text { font-size: 12.5px; font-weight: 800; color: var(--ink); }
+    .sidebar-scroll { flex: 1; overflow-y: auto; padding-top: 8px; }
+    .sidebar-scroll::-webkit-scrollbar { width: 3px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+    .sidebar-nav-group { margin-bottom: 14px; }
+    .sidebar-nav-title { font-size: 9.5px; font-weight: 700; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 4px; margin-bottom: 4px; }
+    .sidebar-menu { display: flex; flex-direction: column; gap: 1px; }
+    .sidebar-menu-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 600; color: var(--ink-muted); text-decoration: none; border: none; background: none; cursor: pointer; width: 100%; transition: background 0.12s, color 0.12s; }
+    .sidebar-menu-item:hover { background: var(--bg-surface); color: var(--ink); }
+    .sidebar-menu-item.active { background: var(--primary-soft); color: var(--primary); }
+    .menu-icon { font-size: 14px; width: 18px; text-align: center; flex-shrink: 0; }
+    .menu-badge { font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: var(--radius-pill); margin-left: auto; }
+    .sidebar-footer { padding-top: 8px; border-top: 1px solid var(--line); }
+    .sidebar-status-badge { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: var(--radius-sm); background: var(--success-soft); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .status-text { font-size: 10.5px; font-weight: 700; color: #065f46; }
+    .main-viewport { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+    .app-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-md); flex-shrink: 0; }
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .header-page-title { font-size: 14px; font-weight: 800; color: var(--ink); }
+    .header-page-sub { font-size: 11px; color: var(--ink-muted); }
+    .header-right { display: flex; align-items: center; gap: 6px; }
+    .header-btn { display: flex; align-items: center; gap: 5px; padding: 5px 10px; background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--radius-sm); font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--ink); cursor: pointer; text-decoration: none; }
+    .header-btn:hover { background: var(--line); }
+    .pill-badge { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: var(--radius-pill); font-size: 10.5px; font-weight: 700; }
+    .pill-badge.green { background: var(--success-soft); color: #065f46; }
+    .pill-badge.blue { background: var(--primary-soft); color: var(--primary); }
+    .pill-badge.purple { background: var(--accent-purple-soft); color: var(--accent-purple); }
+    .content-body { flex: 1; display: flex; gap: 6px; overflow: hidden; }
+    .listings-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
+    .filter-bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-md); flex-shrink: 0; flex-wrap: wrap; }
+    .filter-tab { padding: 4px 12px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; border: 1px solid var(--line); background: var(--bg-surface); color: var(--ink-muted); cursor: pointer; transition: background 0.12s, color 0.12s; }
+    .filter-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .filter-tab:hover:not(.active) { background: var(--line); color: var(--ink); }
+    .filter-search { flex: 1; min-width: 140px; padding: 4px 10px; border-radius: var(--radius-sm); border: 1px solid var(--line); background: var(--bg-surface); font-family: var(--font-sans); font-size: 12.5px; color: var(--ink); outline: none; }
+    .filter-search:focus { border-color: var(--primary); background: var(--bg-card); }
+    .btn-list-tag { padding: 5px 14px; border-radius: var(--radius-sm); border: none; font-family: var(--font-sans); font-size: 12.5px; font-weight: 700; background: var(--primary); color: #fff; cursor: pointer; white-space: nowrap; }
+    .btn-list-tag:hover { background: var(--primary-hover); }
+    .listings-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; padding: 2px; align-content: start; }
+    .listings-grid::-webkit-scrollbar { width: 4px; }
+    .listings-grid::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+    .listing-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 8px; position: relative; transition: border-color 0.15s; }
+    .listing-card:hover { border-color: var(--primary-border); }
+    .listing-card-badge { position: absolute; top: 10px; right: 10px; }
+    .listing-tag-name { font-size: 20px; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; font-family: var(--font-mono); }
+    .listing-owner { font-size: 10.5px; color: var(--ink-muted); font-family: var(--font-mono); }
+    .listing-price { font-size: 15px; font-weight: 800; color: var(--ink); }
+    .listing-currency { font-size: 11px; font-weight: 600; color: var(--ink-muted); }
+    .listing-swap-hint { font-size: 10.5px; color: var(--accent-purple); font-weight: 600; }
+    .listing-actions { display: flex; gap: 5px; }
+    .btn-action { flex: 1; padding: 6px 0; border-radius: var(--radius-sm); border: 1px solid var(--line); font-family: var(--font-sans); font-size: 12px; font-weight: 700; cursor: pointer; background: var(--bg-surface); color: var(--ink); transition: background 0.12s; }
+    .btn-action:hover { background: var(--line); }
+    .btn-action.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn-action.primary:hover { background: var(--primary-hover); }
+    .btn-action.purple { background: var(--accent-purple-soft); color: var(--accent-purple); border-color: #ddd6fe; }
+    .btn-action.purple:hover { background: #ede9fe; }
+    .empty-state { grid-column: 1/-1; text-align: center; padding: 40px 20px; color: var(--ink-muted); font-size: 13px; }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .side-panel { width: 240px; min-width: 240px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex-shrink: 0; }
+    .side-panel::-webkit-scrollbar { width: 3px; }
+    .side-panel::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+    .panel-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px; }
+    .panel-title { font-size: 11px; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 10px; }
+    .pts-score { font-size: 28px; font-weight: 900; color: var(--primary); font-family: var(--font-mono); line-height: 1; }
+    .pts-label { font-size: 10.5px; color: var(--ink-muted); margin-bottom: 8px; }
+    .pts-earn-row { display: flex; align-items: center; gap: 6px; padding: 4px 6px; border-radius: var(--radius-sm); background: var(--bg-surface); font-size: 11px; color: var(--ink-muted); margin-bottom: 3px; }
+    .pts-earn-badge { font-size: 10px; font-weight: 700; color: #065f46; background: var(--success-soft); padding: 1px 5px; border-radius: var(--radius-pill); white-space: nowrap; }
+    .btn-share-ref { width: 100%; margin-top: 8px; padding: 7px; border-radius: var(--radius-sm); border: none; font-family: var(--font-sans); font-size: 12px; font-weight: 700; background: var(--primary); color: #fff; cursor: pointer; }
+    .btn-share-ref:hover { background: var(--primary-hover); }
+    .lb-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank { width: 18px; font-size: 11px; font-weight: 800; color: var(--ink-muted); text-align: center; }
+    .lb-tag { flex: 1; font-size: 12px; font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .lb-pts { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--primary); }
+    .field-label { font-size: 10.5px; font-weight: 700; color: var(--ink-muted); display: block; margin-bottom: 3px; text-transform: uppercase; }
+    .field-input, .field-select { width: 100%; padding: 6px 9px; border-radius: var(--radius-sm); border: 1px solid var(--line); font-family: var(--font-sans); font-size: 12.5px; color: var(--ink); background: var(--bg-surface); outline: none; margin-bottom: 7px; }
+    .field-input:focus, .field-select:focus { border-color: var(--primary); background: var(--bg-card); }
+    .input-row { display: flex; gap: 0; }
+    .btn-submit { width: 100%; padding: 7px; border-radius: var(--radius-sm); border: none; font-family: var(--font-sans); font-size: 12.5px; font-weight: 700; background: var(--primary); color: #fff; cursor: pointer; margin-top: 2px; }
+    .btn-submit:hover { background: var(--primary-hover); }
+    .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+    .field-status { font-size: 11px; color: var(--ink-muted); margin-top: 4px; min-height: 16px; }
+    .field-status.ok { color: var(--success); }
+    .field-status.err { color: #ef4444; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
+    .modal-overlay[hidden] { display: none; }
+    .modal-box { background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-lg); width: 100%; max-width: 420px; max-height: 80vh; overflow-y: auto; padding: 20px; }
+    .modal-title { font-size: 15px; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .modal-close { background: none; border: none; font-size: 16px; cursor: pointer; color: var(--ink-muted); padding: 2px 6px; border-radius: 4px; }
+    .modal-close:hover { background: var(--bg-surface); }
+    #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 6px; }
+    .toast-item { background: var(--ink); color: #fff; padding: 8px 14px; border-radius: var(--radius-sm); font-size: 12.5px; font-weight: 600; animation: fadeUp 0.2s ease; max-width: 280px; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .pfx { padding: 6px 8px; font-weight: 700; border: 1px solid; border-right: none; border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+    .sfx { width: 75px; margin: 0; border-left: none; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+    .main-input { margin: 0; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+    .main-input-l { margin: 0; border-radius: var(--radius-sm) 0 0 var(--radius-sm); border-right: none; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+      <!-- Left Sidebar Navigation -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a class="brand-logo" href="/agent">
+          <div class="brand-mark">
+            <img src="/hub/nairatag-icon.png" alt="₦" class="brand-mark-img" />
+          </div>
+          <span class="brand-text">NairaTag</span>
+        </a>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" type="button" title="Collapse sidebar" aria-label="Toggle sidebar">
+          <span id="sidebar-toggle-icon">◨</span>
+        </button>
+      </div>
+
+      <div class="sidebar-scroll">
+        <!-- Protocol Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Protocol</div>
+          <nav class="sidebar-menu" aria-label="Protocol Navigation">
+                        <a class="sidebar-menu-item" id="menu-profile" href="/profile" title="Agent Profile & Streaks">
+              <span class="menu-icon">👤</span>
+              <span class="menu-label">Profile</span>
+            </a>
+<a class="sidebar-menu-item" id="menu-claim" href="/claim" title="Claim ₦Tag">
+              <span class="menu-icon">✦</span>
+              <span class="menu-label">Claim</span>
+              <span class="menu-badge badge-count-claim">1</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-agent" href="/agent" title="Open AI Chat">
+              <span class="menu-icon">💬</span>
+              <span class="menu-label">Chat</span>
+              <span class="menu-badge badge-count-chat">2</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-tasks" href="/tasks" title="Agent Tasks &amp; Bounties">
+              <span class="menu-icon">🎯</span>
+              <span class="menu-label">Tasks</span>
+              <span class="menu-badge badge-count-tasks">5</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-explorer" href="/explorer" title="Identity Explorer">
+              <span class="menu-icon">🌐</span>
+              <span class="menu-label">Explorer</span>
+              
+            </a>
+            <a class="sidebar-menu-item" id="menu-swap" href="/swap" title="Swap Assets">
+              <span class="menu-icon">⇄</span>
+              <span class="menu-label">Swap</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-earnings" href="/earnings" title="Agent Earnings Leaderboard">
+              <span class="menu-icon">🏆</span>
+              <span class="menu-label">Earnings</span>
+              
+            </a>
+          </nav>
+        </div>
+
+        <!-- Knowledge & Info Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Knowledge &amp; Info</div>
+          <nav class="sidebar-menu" aria-label="Knowledge and Documentation">
+            <a class="sidebar-menu-item" id="menu-about" href="/about" title="About ₦Tag Network">
+              <span class="menu-icon">ℹ</span>
+              <span class="menu-label">About</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-docs" href="/docs" title="Developer Docs &amp; SDK">
+              <span class="menu-icon">📖</span>
+              <span class="menu-label">Docs</span>
+              
+            </a>
+            <a class="sidebar-menu-item" id="menu-faq" href="/faq" title="Frequently Asked Questions">
+              <span class="menu-icon">❓</span>
+              <span class="menu-label">FAQ</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Viewport Container -->
+    <div class="main-viewport">
+      <!-- Top Navigation Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="header-sidebar-btn" id="header-sidebar-btn" type="button" title="Open menu" aria-label="Open menu" style="display:none;">☰</button>
+        </div>
+        <div class="header-right">
+          <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" title="Toggle Theme" aria-label="Toggle dark mode">🌙</button>
+          <button type="button" class="header-auth-btn" id="header-auth-btn" onclick="window.NairaTagSupabase.openAuthModal('signin')" title="Sign In or Sign Up">
+            <span id="auth-btn-icon">👤</span>
+            <span id="auth-btn-text">Sign In</span>
+          </button>
+          <div style="position:relative;">
+            <a href="/wallet" class="header-btn" id="header-wallet-btn" title="Open Wallet Dashboard" style="font-family:var(--font-mono); font-weight:700; text-decoration:none;">
+              <span>👛</span>
+              <span id="header-wallet-balance">0.00 cNGN</span>
+            </a>
+            <!-- Wallet Balance Dropdown Popover -->
+            <div class="header-wallet-popover" id="header-wallet-popover" hidden>
+              <div class="popover-header">
+                <div class="popover-user-info">
+                  <div class="popover-tag" id="popover-active-tag">₦TAG</div>
+                  <div class="popover-addr" id="popover-active-addr">Not connected</div>
+                </div>
+                <div class="popover-status-badge">Active</div>
+              </div>
+              <div class="popover-balance-section">
+                <div class="popover-balance-label">Total Balance</div>
+                <div class="popover-balance-val" id="popover-total-balance">₦ 0.00</div>
+              </div>
+              <div class="popover-actions">
+                <a href="/wallet" class="popover-btn primary" id="popover-open-wallet">Wallet Dashboard</a>
+                <button type="button" class="popover-btn" id="popover-disconnect-btn">Disconnect</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+    <div class="content-body">
+      <div class="listings-panel">
+        <div class="filter-bar">
+          <button class="filter-tab active" data-filter="all">All Listings</button>
+          <button class="filter-tab" data-filter="sale">For Sale</button>
+          <button class="filter-tab" data-filter="swap">Swap Only</button>
+          <input class="filter-search" type="text" id="search-input" placeholder="Search ₦Tag...">
+          <button class="btn-list-tag" id="btn-open-list">+ List My Tag</button>
+        </div>
+        <div class="listings-grid" id="listings-grid">
+          <div class="empty-state"><div class="empty-icon">🏪</div><div>Loading marketplace listings...</div></div>
+        </div>
+      </div>
+
+      <div class="side-panel">
+        <div class="panel-card">
+          <div class="panel-title">🌟 My Points</div>
+          <div class="pts-score" id="pts-score">—</div>
+          <div class="pts-label">NairaTag Points</div>
+          <div class="pts-earn-row"><span>Claim a tag</span><span class="pts-earn-badge">+100 pts</span></div>
+          <div class="pts-earn-row"><span>Refer a friend</span><span class="pts-earn-badge">+100 pts</span></div>
+          <div class="pts-earn-row"><span>Share referral</span><span class="pts-earn-badge">+50 pts</span></div>
+          <button class="btn-share-ref" id="btn-copy-ref">📤 Copy Referral Link</button>
+        </div>
+        <div class="panel-card">
+          <div class="panel-title">🏆 Leaderboard</div>
+          <div id="leaderboard-list"><div style="color:var(--ink-muted);font-size:11.5px;text-align:center;padding:8px;">Loading...</div></div>
+        </div>
+        <div class="panel-card">
+          <div class="panel-title">🏷️ Quick List</div>
+          <label class="field-label">₦Tag Handle</label>
+          <div class="input-row" style="margin-bottom:7px;">
+            <span class="pfx" style="background:var(--primary-soft);border-color:var(--primary-border);color:var(--primary);">₦</span>
+            <input class="field-input main-input" id="quick-tag" placeholder="yourtag" style="margin:0;">
+          </div>
+          <label class="field-label">Type</label>
+          <select class="field-select" id="quick-type"><option value="sale">For Sale</option><option value="swap">Swap Only</option><option value="both">Both</option></select>
+          <label class="field-label">Price</label>
+          <div class="input-row" style="margin-bottom:7px;">
+            <input class="field-input main-input-l" id="quick-price" placeholder="0.5" style="margin:0;">
+            <select class="field-select sfx" id="quick-currency" style="margin:0;"><option>ETH</option><option>cNGN</option><option>USDC</option></select>
+          </div>
+          <button class="btn-submit" id="btn-quick-list">List on Marketplace →</button>
+          <div class="field-status" id="quick-list-status"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- List Tag Modal -->
+<div class="modal-overlay" id="modal-list" hidden>
+  <div class="modal-box">
+    <div class="modal-title"><span>🏷️ List ₦Tag for Sale / Swap</span><button class="modal-close" id="modal-close-list" type="button">✕</button></div>
+    <label class="field-label">Your ₦Tag Handle</label>
+    <div class="input-row" style="margin-bottom:10px;">
+      <span class="pfx" style="background:var(--primary-soft);border-color:var(--primary-border);color:var(--primary);">₦</span>
+      <input class="field-input main-input" id="modal-tag" placeholder="yourtag" style="margin:0;">
+    </div>
+    <label class="field-label">Listing Type</label>
+    <select class="field-select" id="modal-type"><option value="sale">For Sale</option><option value="swap">Swap Only</option><option value="both">Both (Sale + Swap)</option></select>
+    <label class="field-label">Price</label>
+    <div class="input-row" style="margin-bottom:10px;">
+      <input class="field-input main-input-l" id="modal-price" placeholder="e.g. 0.5" style="margin:0;">
+      <select class="field-select sfx" id="modal-currency" style="margin:0;"><option>ETH</option><option>cNGN</option><option>USDC</option></select>
+    </div>
+    <label class="field-label">Swap Target (optional)</label>
+    <div class="input-row" style="margin-bottom:10px;">
+      <span class="pfx" style="background:var(--accent-purple-soft);border-color:#ddd6fe;color:var(--accent-purple);">₦</span>
+      <input class="field-input main-input" id="modal-swap-target" placeholder="targetTag (optional)" style="margin:0;">
+    </div>
+    <button class="btn-submit" id="modal-submit" type="button">List on Marketplace</button>
+    <div class="field-status" id="modal-status"></div>
+  </div>
+</div>
+
+<!-- Buy Modal -->
+<div class="modal-overlay" id="modal-buy" hidden>
+  <div class="modal-box">
+    <div class="modal-title"><span>🛒 Buy ₦Tag</span><button class="modal-close" id="modal-close-buy" type="button">✕</button></div>
+    <div style="padding:14px;background:var(--primary-soft);border:1px solid var(--primary-border);border-radius:var(--radius-md);margin-bottom:12px;text-align:center;">
+      <div style="font-size:10px;color:var(--ink-muted);font-weight:700;text-transform:uppercase;">Purchasing</div>
+      <div style="font-size:26px;font-weight:900;color:var(--primary);font-family:var(--font-mono);" id="buy-tag-name">₦tag</div>
+      <div style="font-size:16px;font-weight:800;margin-top:4px;" id="buy-price-display">—</div>
+    </div>
+    <div style="font-size:12px;color:var(--ink-muted);line-height:1.6;margin-bottom:12px;">Buying will transfer ownership of this ₦Tag to your connected wallet. Payment goes directly to the current owner. Requires your wallet signature.</div>
+    <div style="background:var(--bg-surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px;font-size:11.5px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span style="color:var(--ink-muted);">Seller</span><span id="buy-seller" style="font-family:var(--font-mono);">—</span></div>
+      <div style="display:flex;justify-content:space-between;"><span style="color:var(--ink-muted);">Transfer</span><span style="color:#0052ff;font-weight:700;">On-chain via Registry</span></div>
+    </div>
+    <button class="btn-submit" id="btn-confirm-buy" type="button">Confirm Purchase →</button>
+    <div class="field-status" id="buy-status"></div>
+  </div>
+</div>
+
+<!-- Swap Modal -->
+<div class="modal-overlay" id="modal-swap" hidden>
+  <div class="modal-box">
+    <div class="modal-title"><span>🔄 Propose Tag Swap</span><button class="modal-close" id="modal-close-swap" type="button">✕</button></div>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px;background:linear-gradient(135deg,#eff6ff,#f5f3ff);border:1px solid var(--primary-border);border-radius:var(--radius-md);margin-bottom:12px;">
+      <div style="text-align:center;flex:1;"><div style="font-size:10px;color:var(--ink-muted);font-weight:700;">THEY OFFER</div><div style="font-size:20px;font-weight:900;color:var(--primary);font-family:var(--font-mono);" id="swap-target-display">₦tag</div></div>
+      <div style="font-size:24px;">⇄</div>
+      <div style="text-align:center;flex:1;"><div style="font-size:10px;color:var(--ink-muted);font-weight:700;">YOU OFFER</div><div style="font-size:20px;font-weight:900;color:var(--accent-purple);font-family:var(--font-mono);" id="swap-my-display">₦?</div></div>
+    </div>
+    <label class="field-label">Your ₦Tag to Offer</label>
+    <div class="input-row" style="margin-bottom:10px;">
+      <span class="pfx" style="background:var(--accent-purple-soft);border-color:#ddd6fe;color:var(--accent-purple);">₦</span>
+      <input class="field-input main-input" id="swap-my-tag" placeholder="yourtag" style="margin:0;">
+    </div>
+    <label class="field-label">Extra Sweetener (optional)</label>
+    <div class="input-row" style="margin-bottom:10px;">
+      <input class="field-input main-input-l" id="swap-extra-amount" placeholder="0" style="margin:0;">
+      <select class="field-select sfx" id="swap-extra-asset" style="margin:0;"><option>ETH</option><option>cNGN</option></select>
+    </div>
+    <div style="font-size:11.5px;color:var(--ink-muted);line-height:1.5;margin-bottom:12px;padding:8px;background:var(--warning-soft);border-radius:var(--radius-sm);border:1px solid #fde68a;">⚡ Atomic swap: both transfers happen simultaneously, or neither does. The other owner must also approve.</div>
+    <button class="btn-submit" id="btn-confirm-swap" type="button">Send Swap Proposal →</button>
+    <div class="field-status" id="swap-status"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script>
+  const API = 'http://127.0.0.1:8787';
+  let connectedWallet = null, allListings = [], currentFilter = 'all', currentSearch = '';
+  let activeBuyTag = null, activeSwapTag = null;
+
+  function showToast(msg, ms = 3000) {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div'); t.className = 'toast-item'; t.textContent = msg;
+    c.appendChild(t); setTimeout(() => t.remove(), ms);
+  }
+
+  document.getElementById('btn-connect-wallet').addEventListener('click', async () => {
+    if (!window.ethereum) return showToast('No wallet extension detected.');
+    try {
+      const a = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      connectedWallet = a[0];
+      document.getElementById('btn-connect-wallet').textContent = '\ud83d\udc5b ' + connectedWallet.slice(0,6) + '...' + connectedWallet.slice(-4);
+      loadPoints();
+    } catch (e) { showToast(e.message || 'Wallet error.'); }
+  });
+
+  async function loadListings() {
+    const grid = document.getElementById('listings-grid');
+    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">\u23f3</div><div>Loading...</div></div>';
+    try {
+      const r = await fetch(API + '/api/market/listings?filter=all');
+      const d = await r.json();
+      allListings = d.listings || [];
+      renderListings();
+      document.getElementById('listings-count-badge').textContent = allListings.length + ' listing' + (allListings.length !== 1 ? 's' : '');
+    } catch (err) {
+      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">\u26a0\ufe0f</div><div>' + (err.message || 'Failed to load.') + '</div></div>';
+    }
+  }
+
+  function renderListings() {
+    const grid = document.getElementById('listings-grid');
+    const q = currentSearch.toLowerCase();
+    let items = allListings.filter(l => {
+      if (currentFilter === 'sale') return l.listing_type === 'sale' || l.listing_type === 'both';
+      if (currentFilter === 'swap') return l.listing_type === 'swap' || l.listing_type === 'both';
+      return true;
+    }).filter(l => !q || (l.tag || '').toLowerCase().includes(q));
+
+    if (!items.length) { grid.innerHTML = '<div class="empty-state"><div class="empty-icon">\ud83c\udfea</div><div>No listings match.</div></div>'; return; }
+
+    grid.innerHTML = items.map(l => {
+      const isSwap = l.listing_type === 'swap';
+      const isBoth = l.listing_type === 'both';
+      const typeBadge = isSwap
+        ? '<span class="pill-badge purple">Swap</span>'
+        : isBoth ? '<span class="pill-badge blue">Sale + Swap</span>' : '<span class="pill-badge blue">For Sale</span>';
+      const acts = isSwap
+        ? '<button class="btn-action purple" onclick="openSwapModal(\'' + l.tag + '\')">&rlarr; Swap</button>'
+        : isBoth
+          ? '<button class="btn-action primary" onclick="openBuyModal(\'' + l.tag + '\')"' + '>Buy</button><button class="btn-action purple" onclick="openSwapModal(\'' + l.tag + '\')"' + '>Swap</button>'
+          : '<button class="btn-action primary" onclick="openBuyModal(\'' + l.tag + '\')"' + '>Buy &rarr;</button>';
+      return '<div class="listing-card"><div class="listing-card-badge">' + typeBadge + '</div>' +
+        '<div><div class="listing-tag-name">' + l.tag + '</div>' +
+        '<div class="listing-owner">' + (l.owner ? l.owner.slice(0,6) + '...' + l.owner.slice(-4) : 'Unknown') + '</div></div>' +
+        '<div>' + (l.price ? '<div style="display:flex;align-items:baseline;gap:5px;"><span class="listing-price">' + l.price + '</span><span class="listing-currency">' + (l.currency || 'ETH') + '</span></div>' : '<div class="listing-swap-hint">Swap proposals only</div>') +
+        (l.swap_target_tag ? '<div class="listing-swap-hint">wants ' + l.swap_target_tag + '</div>' : '') + '</div>' +
+        '<div class="listing-actions">' + acts + '</div></div>';
+    }).join('');
+  }
+
+  document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentFilter = tab.dataset.filter;
+      renderListings();
+    });
+  });
+  document.getElementById('search-input').addEventListener('input', e => { currentSearch = e.target.value; renderListings(); });
+
+  async function loadPoints() {
+    const wallet = connectedWallet || '0x0000000000000000000000000000000000000000';
+    try {
+      const [ps, lb] = await Promise.all([
+        fetch(API + '/api/points/summary?wallet=' + wallet).then(r => r.json()),
+        fetch(API + '/api/points/leaderboard?limit=5').then(r => r.json())
+      ]);
+      document.getElementById('pts-score').textContent = (ps.totalPoints || 0).toLocaleString();
+      document.getElementById('btn-copy-ref').onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(ps.referralUrl || location.origin + '/hub/claim.html');
+          await fetch(API + '/api/points/share-referral', { method: 'POST', headers: {'content-type':'application/json'}, body: JSON.stringify({ walletAddress: wallet }) });
+          showToast('Referral link copied! +50 points earned.');
+        } catch { showToast('Referral link copied!'); }
+      };
+      const lb5 = lb.leaderboard || [];
+      const medals = ['\ud83e\udd47','\ud83e\udd48','\ud83e\udd49'];
+      document.getElementById('leaderboard-list').innerHTML = lb5.map((r, i) =>
+        '<div class="lb-row"><div class="lb-rank">' + (medals[i] || (i+1)) + '</div>' +
+        '<div class="lb-tag">' + (r.tag || r.walletAddress.slice(0,8) + '...') + '</div>' +
+        '<div class="lb-pts">' + (r.totalPoints || 0).toLocaleString() + ' pts</div></div>'
+      ).join('');
+    } catch {}
+  }
+
+  document.getElementById('btn-quick-list').addEventListener('click', async () => {
+    if (!connectedWallet) return showToast('Connect your wallet first.');
+    const tag = document.getElementById('quick-tag').value.trim();
+    if (!tag) return showToast('Enter a \u20a6Tag handle.');
+    const btn = document.getElementById('btn-quick-list');
+    const stat = document.getElementById('quick-list-status');
+    btn.disabled = true; stat.textContent = 'Submitting...'; stat.className = 'field-status';
+    try {
+      const r = await fetch(API + '/api/market/list', { method: 'POST', headers: {'content-type':'application/json'},
+        body: JSON.stringify({ tag, owner: connectedWallet, price: document.getElementById('quick-price').value.trim() || null, currency: document.getElementById('quick-currency').value, listingType: document.getElementById('quick-type').value }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Listing failed.');
+      stat.textContent = '\u2713 \u20a6' + tag + ' listed!'; stat.className = 'field-status ok';
+      loadListings(); showToast('\u20a6' + tag + ' is now on the marketplace!');
+    } catch (err) { stat.textContent = err.message; stat.className = 'field-status err'; }
+    finally { btn.disabled = false; }
+  });
+
+  document.getElementById('btn-open-list').addEventListener('click', () => { document.getElementById('modal-list').hidden = false; });
+  document.getElementById('modal-close-list').addEventListener('click', () => { document.getElementById('modal-list').hidden = true; });
+  document.getElementById('modal-submit').addEventListener('click', async () => {
+    if (!connectedWallet) return showToast('Connect wallet first.');
+    const tag = document.getElementById('modal-tag').value.trim();
+    if (!tag) return showToast('Enter a \u20a6Tag.');
+    const btn = document.getElementById('modal-submit'), stat = document.getElementById('modal-status');
+    btn.disabled = true; stat.textContent = 'Submitting...'; stat.className = 'field-status';
+    try {
+      const r = await fetch(API + '/api/market/list', { method: 'POST', headers: {'content-type':'application/json'},
+        body: JSON.stringify({ tag, owner: connectedWallet, price: document.getElementById('modal-price').value.trim() || null, currency: document.getElementById('modal-currency').value, listingType: document.getElementById('modal-type').value, swapTargetTag: document.getElementById('modal-swap-target').value.trim() || null }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed.');
+      stat.textContent = d.message || '\u20a6Tag listed!'; stat.className = 'field-status ok';
+      loadListings(); setTimeout(() => { document.getElementById('modal-list').hidden = true; }, 1200);
+    } catch (err) { stat.textContent = err.message; stat.className = 'field-status err'; }
+    finally { btn.disabled = false; }
+  });
+
+  window.openBuyModal = function(tag) {
+    activeBuyTag = tag;
+    const listing = allListings.find(l => l.tag === tag);
+    document.getElementById('buy-tag-name').textContent = tag;
+    document.getElementById('buy-price-display').textContent = listing && listing.price ? listing.price + ' ' + (listing.currency || 'ETH') : '\u2014';
+    document.getElementById('buy-seller').textContent = listing && listing.owner ? listing.owner.slice(0,6) + '...' + listing.owner.slice(-4) : '\u2014';
+    document.getElementById('buy-status').textContent = '';
+    document.getElementById('modal-buy').hidden = false;
+  };
+  document.getElementById('modal-close-buy').addEventListener('click', () => { document.getElementById('modal-buy').hidden = true; });
+  document.getElementById('btn-confirm-buy').addEventListener('click', async () => {
+    if (!connectedWallet) return showToast('Connect wallet first.');
+    const btn = document.getElementById('btn-confirm-buy'), stat = document.getElementById('buy-status');
+    btn.disabled = true; stat.textContent = 'Executing purchase & routing payment to seller...'; stat.className = 'field-status';
+    try {
+      const r = await fetch(API + '/api/market/buy', {
+        method: 'POST',
+        headers: {'content-type':'application/json'},
+        body: JSON.stringify({ tag: activeBuyTag, buyerAddress: connectedWallet })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed to complete purchase.');
+      stat.textContent = `✓ Purchased! ${d.price} ${d.currency} sent directly to seller. Tag ownership transferred to you!`;
+      stat.className = 'field-status ok';
+      showToast(`🎉 You now own ${activeBuyTag}! Funds credited to seller.`);
+      loadListings();
+      setTimeout(() => { document.getElementById('modal-buy').hidden = true; }, 2000);
+    } catch (err) { stat.textContent = err.message; stat.className = 'field-status err'; }
+    finally { btn.disabled = false; }
+  });
+
+  window.openSwapModal = function(targetTag) {
+    activeSwapTag = targetTag;
+    document.getElementById('swap-target-display').textContent = targetTag;
+    document.getElementById('swap-my-display').textContent = '\u20a6?';
+    document.getElementById('swap-my-tag').value = '';
+    document.getElementById('swap-status').textContent = '';
+    document.getElementById('modal-swap').hidden = false;
+  };
+  document.getElementById('swap-my-tag').addEventListener('input', e => {
+    document.getElementById('swap-my-display').textContent = e.target.value ? '\u20a6' + e.target.value : '\u20a6?';
+  });
+  document.getElementById('modal-close-swap').addEventListener('click', () => { document.getElementById('modal-swap').hidden = true; });
+  document.getElementById('btn-confirm-swap').addEventListener('click', async () => {
+    if (!connectedWallet) return showToast('Connect wallet first.');
+    const myTag = document.getElementById('swap-my-tag').value.trim();
+    if (!myTag) return showToast('Enter your \u20a6Tag to offer.');
+    const btn = document.getElementById('btn-confirm-swap'), stat = document.getElementById('swap-status');
+    btn.disabled = true; stat.textContent = 'Preparing swap...'; stat.className = 'field-status';
+    try {
+      const r = await fetch(API + '/api/market/prepare-swap', { method: 'POST', headers: {'content-type':'application/json'},
+        body: JSON.stringify({ myTag, targetTag: activeSwapTag, myAddress: connectedWallet, extraAmount: document.getElementById('swap-extra-amount').value.trim() || '0', extraAsset: document.getElementById('swap-extra-asset').value }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Swap failed.');
+      stat.textContent = d.instruction || 'Swap proposal prepared. Both parties must sign.'; stat.className = 'field-status ok';
+      showToast('Swap proposed: \u20a6' + myTag + ' \u21c4 ' + activeSwapTag);
+    } catch (err) { stat.textContent = err.message; stat.className = 'field-status err'; }
+    finally { btn.disabled = false; }
+  });
+
+  loadListings();
+  loadPoints();
+</script>
+</body>
+</html>

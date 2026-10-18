@@ -1,0 +1,28 @@
+{
+  "name": "@nairatag/wagmi",
+  "version": "0.1.0",
+  "description": "Thin Wagmi / React hooks integration layer for NairaTag Identity Protocol",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "test": "node test/wagmi.test.js"
+  },
+  "keywords": [
+    "nairatag",
+    "wagmi",
+    "react",
+    "viem",
+    "ethereum",
+    "identity",
+    "resolver"
+  ],
+  "author": "NairaTag Network",
+  "license": "MIT",
+  "peerDependencies": {
+    "@nairatag/viem": "^0.1.0",
+    "viem": "^2.0.0"
+  },
+  "dependencies": {
+    "@nairatag/viem": "file:../viem"
+  }
+}

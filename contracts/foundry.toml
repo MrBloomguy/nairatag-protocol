@@ -1,0 +1,18 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+test = "test"
+script = "script"
+solc_version = "0.8.20"
+optimizer = true
+optimizer_runs = 50
+via_ir = true
+evm_version = "cancun"
+
+[rpc_endpoints]
+nairatag_devnet = "http://127.0.0.1:9545"
+nairatag_sepolia = "https://sepolia-rpc.nairatag.network"
+ethereum_l1_devnet = "http://127.0.0.1:8545"
+celo_sepolia = "https://forno.celo-sepolia.celo-testnet.org"
+celo = "https://forno.celo.org"

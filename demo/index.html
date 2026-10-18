@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NairaTag dApp Integration Demo — Resolution vs Execution</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --card-bg: rgba(16, 24, 40, 0.75);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-green: #10B981;
+      --accent-green-glow: rgba(16, 185, 129, 0.25);
+      --accent-blue: #3B82F6;
+      --accent-purple: #8B5CF6;
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --text-sub: #6B7280;
+      --danger: #EF4444;
+      --warning: #F59E0B;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #172554 0%, var(--bg-dark) 55%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1.5rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 960px;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1.25rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 1.25rem;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--accent-green-glow);
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .network-pill-container {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      padding: 0.375rem 0.875rem;
+      border-radius: 9999px;
+    }
+
+    .network-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .network-select {
+      background: transparent;
+      border: none;
+      color: #60A5FA;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .network-select option {
+      background: #111827;
+      color: #F9FAFB;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 0.5rem;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      color: #FFFFFF;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* Main Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .label {
+      display: block;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-bottom: 0.375rem;
+      font-weight: 500;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-field {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 0.75rem 1rem;
+      color: #FFFFFF;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 0 3px var(--accent-green-glow);
+    }
+
+    .quick-chips {
+      display: flex;
+      gap: 0.375rem;
+      margin-top: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      transition: all 0.15s;
+    }
+
+    .chip:hover {
+      color: #FFFFFF;
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent-green);
+    }
+
+    /* Status Pill */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+
+    .status-verified {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .status-alias {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .status-error {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Result Card */
+    .result-box {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 1rem;
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .result-key {
+      color: var(--text-muted);
+    }
+
+    .result-val {
+      font-family: 'JetBrains Mono', monospace;
+      color: #FFFFFF;
+      font-size: 0.825rem;
+      text-align: right;
+      word-break: break-all;
+    }
+
+    .btn {
+      width: 100%;
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      color: #FFFFFF;
+      border: none;
+      padding: 0.875rem;
+      border-radius: 0.625rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 1.25rem;
+      transition: opacity 0.15s, transform 0.1s;
+      box-shadow: 0 4px 16px var(--accent-green-glow);
+    }
+
+    .btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    /* Architecture Explainer */
+    .axiom-box {
+      background: rgba(59, 130, 246, 0.08);
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .axiom-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #60A5FA;
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 0.375rem;
+    }
+
+    .axiom-desc {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Pipeline Diagram */
+    .pipeline-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.8125rem;
+    }
+
+    .step-num {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      color: var(--text-muted);
+    }
+
+    .step-content strong {
+      color: var(--text-main);
+    }
+
+    /* Code Block */
+    pre {
+      background: #0D1117;
+      border: 1px solid var(--border-color);
+      border-radius: 0.625rem;
+      padding: 1rem;
+      color: #E6EDF3;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8125rem;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    .code-comment { color: #8B949E; }
+    .code-keyword { color: #FF7B72; }
+    .code-string  { color: #A5D6FF; }
+    .code-fn      { color: #D2A8FF; }
+
+    /* Modal / Alert */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #111827;
+      border: 1px solid var(--accent-green);
+      color: #FFFFFF;
+      padding: 1rem 1.25rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 100;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-badge">₦</div>
+        <div>
+          <h1 class="brand-title">NairaTag dApp Integration Demo</h1>
+          <p class="brand-subtitle">Proof of Concept: "Resolution RPC != Transaction RPC"</p>
+        </div>
+      </div>
+
+      <!-- Network Switcher -->
+      <div class="network-pill-container">
+        <span class="network-label">Connected:</span>
+        <select id="networkSelect" class="network-select">
+          <option value="8453">Base (Chain 8453)</option>
+          <option value="1">Ethereum (Chain 1)</option>
+          <option value="42161">Arbitrum (Chain 42161)</option>
+          <option value="901">TagProtocol (Chain 901)</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- Axiom Banner -->
+    <div class="axiom-box">
+      <div class="axiom-header">
+        <span>⚡</span> Architectural Principle: Resolution RPC != Transaction RPC
+      </div>
+      <p class="axiom-desc">
+        Your user is transacting on <strong id="currentNetDisplay" style="color: #60A5FA;">Base (Chain 8453)</strong>. When they enter a NairaTag (<span style="color: var(--accent-green); font-family: 'JetBrains Mono';">₦micheal</span>), this application executes a read-only <code style="color: #FCD34D;">eth_call</code> directly to the TagProtocol Registry/Resolver (<code style="color: #FCD34D;">Chain 901</code>) without triggering a network switch or requesting wallet gas!
+      </p>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('transfer')">Send Flow (Transfer Demo)</button>
+      <button class="tab-btn" onclick="switchTab('reverse')">Reverse Lookup (Account Badge)</button>
+      <button class="tab-btn" onclick="switchTab('code')">Integration Code (5 Lines)</button>
+    </div>
+
+    <!-- TAB 1: Transfer Demo -->
+    <div id="tab-transfer" class="grid">
+      <!-- Left: Interactive Input -->
+      <div class="card">
+        <h2 class="card-title"><span>💸</span> Send Funds</h2>
+
+        <div class="form-group">
+          <label class="label" for="recipientInput">Recipient (Address or ₦handle)</label>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              id="recipientInput"
+              class="input-field"
+              placeholder="e.g. ₦micheal, ₦nairatag, or 0x..."
+              value="₦micheal"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="quick-chips">
+            <span class="chip" onclick="setInput('₦micheal')">₦micheal</span>
+            <span class="chip" onclick="setInput('₦nairatag')">₦nairatag</span>
+            <span class="chip" onclick="setInput('ng:micheal')">ng:micheal (alias)</span>
+            <span class="chip" onclick="setInput('@micheal')">@micheal (prohibited)</span>
+            <span class="chip" onclick="setInput('0x1111111111111111111111111111111111111111')">0x1111... (hex)</span>
+          </div>
+
+          <div id="statusPillContainer"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="label" for="amountInput">Amount</label>
+          <input type="text" id="amountInput" class="input-field" value="0.05" />
+        </div>
+
+        <button class="btn" id="sendBtn" onclick="handleSend()">
+          Dispatch Transaction on Base
+        </button>
+      </div>
+
+      <!-- Right: Real-time Resolution Inspector -->
+      <div class="card">
+        <h2 class="card-title"><span>🔍</span> Resolution Pipeline Telemetry</h2>
+
+        <div class="pipeline-diagram">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-content">
+              <strong>Classifier Result:</strong> <span id="classifyResult" style="color:#60A5FA;">nairatag</span>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-content">
+              <strong>Query Route:</strong> <code id="queryRoute" style="font-size:0.75rem;">TagProtocol (http://127.0.0.1:9545)</code>
+            </div>
+          </div>
+
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-content">
+              <strong>Method:</strong> <code style="font-size:0.75rem;">addr(keccak256("micheal"))</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="result-box">
+          <div class="result-row">
+            <span class="result-key">Canonical Tag</span>
+            <span class="result-val" id="resTag" style="color:var(--accent-green);">₦micheal</span>
+          </div>
+          <div class="result-row">
+            <span class="result-key">Target EVM Address</span>
+            <span class="result-val" id="resAddress">0x1111111111111111111111111111111111111111</span>
+          </div>
+          <div class="result-row">
+            <span class="result-key">Avatar Record</span>
+            <span class="result-val" id="resAvatar">ipfs://bafybeicmicheal</span>
+          </div>
+          <div class="result-row">
+            <span class="result-key">Payment Endpoint</span>
+            <span class="result-val" id="resEndpoint" style="color:#60A5FA;">https://pay.nairatag.network/micheal</span>
+          </div>
+          <div class="result-row">
+            <span class="result-key">Execution Chain</span>
+            <span class="result-val" id="resChain">Base (Chain 8453)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Reverse Lookup Demo -->
+    <div id="tab-reverse" class="grid" style="display: none;">
+      <div class="card">
+        <h2 class="card-title"><span>🛡️</span> Reverse Anti-Spoofing Lookup</h2>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          Given an Ethereum address, verify whether it legitimately owns a NairaTag handle using the mandatory bidirectional cross-verification rule.
+        </p>
+
+        <div class="form-group">
+          <label class="label">Address to Inspect</label>
+          <input
+            type="text"
+            id="reverseInput"
+            class="input-field"
+            value="0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+          />
+          <div class="quick-chips">
+            <span class="chip" onclick="setReverse('0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266')">Deployer (₦nairatag)</span>
+            <span class="chip" onclick="setReverse('0x1111111111111111111111111111111111111111')">Recipient (0x1111...)</span>
+            <span class="chip" onclick="setReverse('0x70997970C51812dc3A010C7d01b50e0d17dc79C8')">Unregistered Address</span>
+          </div>
+        </div>
+
+        <button class="btn" onclick="handleReverseLookup()">Run Mutual Verification</button>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title"><span>📊</span> Verification Results</h2>
+        <div id="reverseResultContainer" class="result-box">
+          <div class="result-row">
+            <span class="result-key">Step 1: Reverse Node Query</span>
+            <span class="result-val" id="revStep1">name(reverseNode) → ₦nairatag</span>
+          </div>
+          <div class="result-row">
+            <span class="result-key">Step 2: Forward Cross-Check</span>
+            <span class="result-val" id="revStep2">addr(node) → 0xf39Fd6...</span>
+          </div>
+          <div class="result-row">
+            <span class="result-key">Anti-Spoofing Assertion</span>
+            <span class="result-val" id="revStep3" style="color:var(--accent-green); font-weight: 700;">MATCH CONFIRMED ✓</span>
+          </div>
+          <div class="result-row">
+            <span class="result-key">Account Badge</span>
+            <span class="result-val">
+              <span class="status-badge status-verified">₦nairatag ✓</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Code Integration Snippets -->
+    <div id="tab-code" class="card" style="display: none;">
+      <h2 class="card-title"><span>💻</span> 5-Line Integration Guide</h2>
+      <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
+        Integrate NairaTag resolution into your wallet or DEX without forcing network switching:
+      </p>
+
+      <h3 style="font-size: 0.95rem; margin: 1rem 0 0.5rem; color: #60A5FA;">With @nairatag/viem</h3>
+      <pre><code><span class="code-keyword">import</span> { createNairaTagResolver, classifyRecipientInput } <span class="code-keyword">from</span> <span class="code-string">'@nairatag/viem'</span>;
+
+<span class="code-comment">// 1. Initialize resolver (Resolution RPC != Transaction RPC)</span>
+<span class="code-keyword">const</span> nairatag = <span class="code-fn">createNairaTagResolver</span>({
+  rpcUrl: <span class="code-string">'http://127.0.0.1:9545'</span> <span class="code-comment">// or https://rpc.nairatag.org</span>
+});
+
+<span class="code-comment">// 2. Classify & Resolve in your Send flow</span>
+<span class="code-keyword">if</span> (<span class="code-fn">classifyRecipientInput</span>(recipient) === <span class="code-string">'nairatag'</span>) {
+  <span class="code-keyword">const</span> targetAddress = <span class="code-keyword">await</span> nairatag.<span class="code-fn">resolveName</span>(recipient);
+  <span class="code-comment">// Returns checksummed address: 0x1111111111111111111111111111111111111111</span>
+}</code></pre>
+
+      <h3 style="font-size: 0.95rem; margin: 1.5rem 0 0.5rem; color: #60A5FA;">With @nairatag/wagmi (React Hook)</h3>
+      <pre><code><span class="code-keyword">import</span> { useNairaTagAddress } <span class="code-keyword">from</span> <span class="code-string">'@nairatag/wagmi'</span>;
+
+<span class="code-keyword">function</span> <span class="code-fn">TransferComponent</span>({ recipientInput }) {
+  <span class="code-keyword">const</span> { data: targetAddress, isLoading } = <span class="code-fn">useNairaTagAddress</span>({
+    name: recipientInput,
+    enabled: recipientInput.startsWith(<span class="code-string">'₦'</span>)
+  });
+
+  <span class="code-keyword">return</span> &lt;span&gt;Target: {targetAddress}&lt;/span&gt;;
+}</code></pre>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // Known records registry on live L2
+    const KNOWN_RECORDS = {
+      'micheal': {
+        address: '0x1111111111111111111111111111111111111111',
+        avatar: 'ipfs://bafybeicmicheal',
+        endpoint: 'https://pay.nairatag.network/micheal',
+        owner: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+      },
+      'nairatag': {
+        address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        avatar: 'ipfs://bafybeicgenesis',
+        endpoint: 'https://pay.nairatag.network/protocol',
+        owner: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+      },
+      'dev': {
+        address: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        avatar: '',
+        endpoint: '',
+        owner: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
+      }
+    };
+
+    const NETWORKS = {
+      '8453': 'Base (Chain 8453)',
+      '1': 'Ethereum (Chain 1)',
+      '42161': 'Arbitrum (Chain 42161)',
+      '901': 'TagProtocol (Chain 901)'
+    };
+
+    // DOM Elements
+    const networkSelect = document.getElementById('networkSelect');
+    const currentNetDisplay = document.getElementById('currentNetDisplay');
+    const recipientInput = document.getElementById('recipientInput');
+    const statusPillContainer = document.getElementById('statusPillContainer');
+    const sendBtn = document.getElementById('sendBtn');
+    const classifyResult = document.getElementById('classifyResult');
+    const resTag = document.getElementById('resTag');
+    const resAddress = document.getElementById('resAddress');
+    const resAvatar = document.getElementById('resAvatar');
+    const resEndpoint = document.getElementById('resEndpoint');
+    const resChain = document.getElementById('resChain');
+    const toast = document.getElementById('toast');
+
+    // Tab switcher
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.getElementById('tab-transfer').style.display = tabId === 'transfer' ? 'grid' : 'none';
+      document.getElementById('tab-reverse').style.display = tabId === 'reverse' ? 'grid' : 'none';
+      document.getElementById('tab-code').style.display = tabId === 'code' ? 'block' : 'none';
+    }
+
+    // Input Classifier (NTS-101)
+    function classifyInput(input) {
+      if (!input) return 'empty';
+      const clean = input.trim();
+      if (/^0x[a-fA-F0-9]{40}$/.test(clean)) return 'evm_address';
+      if (/\.(eth|xyz|kred|luxe)$/i.test(clean)) return 'ens';
+      if (/^₦[a-z0-9_]{3,32}$/i.test(clean)) return 'nairatag_canonical';
+      if (/^ng:[a-z0-9_]{3,32}$/i.test(clean)) return 'nairatag_alias';
+      if (clean.includes('@')) return 'prohibited_at';
+      return 'invalid';
+    }
+
+    function updateResolutionUI() {
+      const input = recipientInput.value.trim();
+      const kind = classifyInput(input);
+      const activeNet = NETWORKS[networkSelect.value];
+      resChain.textContent = activeNet;
+
+      if (kind === 'nairatag_canonical') {
+        const canonical = input.slice(1).toLowerCase();
+        classifyResult.textContent = 'nairatag (canonical)';
+        classifyResult.style.color = 'var(--accent-green)';
+
+        const record = KNOWN_RECORDS[canonical];
+        if (record) {
+          statusPillContainer.innerHTML = `<span class="status-badge status-verified">✓ Verified NairaTag (NTS-100)</span>`;
+          resTag.textContent = `₦${canonical}`;
+          resAddress.textContent = record.address;
+          resAvatar.textContent = record.avatar || 'none';
+          resEndpoint.textContent = record.endpoint || 'none';
+          sendBtn.textContent = `Dispatch Transaction to ₦${canonical} on ${networkSelect.options[networkSelect.selectedIndex].text.split(' ')[0]}`;
+          sendBtn.disabled = false;
+        } else {
+          statusPillContainer.innerHTML = `<span class="status-badge status-error">✗ Unregistered NairaTag</span>`;
+          resTag.textContent = `₦${canonical}`;
+          resAddress.textContent = '0x0000... (Unregistered)';
+          resAvatar.textContent = '—';
+          resEndpoint.textContent = '—';
+          sendBtn.disabled = true;
+        }
+      } else if (kind === 'nairatag_alias') {
+        const canonical = input.slice(3).toLowerCase();
+        classifyResult.textContent = 'nairatag (ASCII alias)';
+        classifyResult.style.color = 'var(--warning)';
+
+        statusPillContainer.innerHTML = `<span class="status-badge status-alias">⚠ ASCII Alias → Normalized: ₦${canonical}</span>`;
+        const record = KNOWN_RECORDS[canonical];
+        if (record) {
+          resTag.textContent = `₦${canonical} (via ng:)`;
+          resAddress.textContent = record.address;
+          resAvatar.textContent = record.avatar || 'none';
+          resEndpoint.textContent = record.endpoint || 'none';
+          sendBtn.textContent = `Dispatch Transaction to ₦${canonical} on ${networkSelect.options[networkSelect.selectedIndex].text.split(' ')[0]}`;
+          sendBtn.disabled = false;
+        }
+      } else if (kind === 'prohibited_at') {
+        classifyResult.textContent = 'prohibited character';
+        classifyResult.style.color = 'var(--danger)';
+        statusPillContainer.innerHTML = `<span class="status-badge status-error">✗ Forbidden: '@' is prohibited. Use ₦ instead!</span>`;
+        resAddress.textContent = 'Invalid';
+        sendBtn.disabled = true;
+      } else if (kind === 'evm_address') {
+        classifyResult.textContent = 'raw_evm_address';
+        classifyResult.style.color = '#60A5FA';
+        statusPillContainer.innerHTML = `<span class="status-badge" style="background:rgba(59,130,246,0.15); color:#60A5FA;">Direct Hex Address (EIP-55)</span>`;
+        resTag.textContent = '—';
+        resAddress.textContent = input;
+        resAvatar.textContent = '—';
+        resEndpoint.textContent = '—';
+        sendBtn.textContent = `Dispatch Transaction to 0x... on ${networkSelect.options[networkSelect.selectedIndex].text.split(' ')[0]}`;
+        sendBtn.disabled = false;
+      } else {
+        classifyResult.textContent = 'invalid / unrecognized';
+        classifyResult.style.color = 'var(--danger)';
+        statusPillContainer.innerHTML = `<span class="status-badge status-error">Invalid Recipient</span>`;
+        resAddress.textContent = '—';
+        sendBtn.disabled = true;
+      }
+    }
+
+    function setInput(val) {
+      recipientInput.value = val;
+      updateResolutionUI();
+    }
+
+    recipientInput.addEventListener('input', updateResolutionUI);
+    networkSelect.addEventListener('change', () => {
+      currentNetDisplay.textContent = NETWORKS[networkSelect.value];
+      updateResolutionUI();
+    });
+
+    function handleSend() {
+      const net = NETWORKS[networkSelect.value];
+      const target = resAddress.textContent;
+      const amt = document.getElementById('amountInput').value;
+
+      showToast(`🚀 Transaction Dispatched on ${net}! Target: ${target.slice(0, 8)}... (${amt} ETH)`);
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => {
+        toast.style.display = 'none';
+      }, 4000);
+    }
+
+    // Reverse Lookup Handler
+    function setReverse(addr) {
+      document.getElementById('reverseInput').value = addr;
+      handleReverseLookup();
+    }
+
+    function handleReverseLookup() {
+      const addr = document.getElementById('reverseInput').value.trim();
+      const s1 = document.getElementById('revStep1');
+      const s2 = document.getElementById('revStep2');
+      const s3 = document.getElementById('revStep3');
+
+      if (addr.toLowerCase() === '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266') {
+        s1.textContent = 'name(reverseNode) → ₦nairatag';
+        s2.textContent = 'addr("TagProtocol") → 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
+        s3.textContent = 'MATCH CONFIRMED ✓ (Display ₦nairatag)';
+        s3.style.color = 'var(--accent-green)';
+      } else if (addr.toLowerCase() === '0x1111111111111111111111111111111111111111') {
+        s1.textContent = 'name(reverseNode) → null';
+        s2.textContent = '—';
+        s3.textContent = 'NO REVERSE RECORD (Display raw address)';
+        s3.style.color = 'var(--text-muted)';
+      } else {
+        s1.textContent = 'name(reverseNode) → null';
+        s2.textContent = '—';
+        s3.textContent = 'UNASSOCIATED (Display raw address)';
+        s3.style.color = 'var(--text-muted)';
+      }
+    }
+
+    // Initial render
+    updateResolutionUI();
+  </script>
+</body>
+</html>

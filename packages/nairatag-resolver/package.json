@@ -1,0 +1,22 @@
+{
+  "name": "@nairatag/resolver",
+  "version": "1.0.0",
+  "description": "Identity Resolver and Profile SDK for the NairaTag Social Protocol",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/resolver.test.js"
+  },
+  "dependencies": {
+    "@nairatag/parser": "file:../nairatag-parser"
+  },
+  "keywords": [
+    "nairatag",
+    "resolver",
+    "identity",
+    "social",
+    "protocol"
+  ],
+  "author": "NairaTag Network",
+  "license": "MIT"
+}

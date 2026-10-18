@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>𝕏 Timeline Simulation — NairaTag Social Layer</title>
+  <link rel="stylesheet" href="/hub/theme.css">
+  <link rel="stylesheet" href="/extension/content/card.css">
+  <style>
+    body {
+      background: #000000;
+      color: #e7e9ea;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+    }
+    .x-layout {
+      width: 100%;
+      max-width: 600px;
+      border-left: 1px solid #2f3336;
+      border-right: 1px solid #2f3336;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .x-header {
+      position: sticky;
+      top: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid #2f3336;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+    .x-header h1 {
+      font-size: 19px;
+      font-weight: 800;
+      margin: 0;
+    }
+    .x-composer {
+      padding: 14px 16px;
+      border-bottom: 1px solid #2f3336;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .x-composer textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 17px;
+      resize: none;
+      outline: none;
+      font-family: inherit;
+      box-sizing: border-box;
+      min-height: 60px;
+    }
+    .x-composer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .x-tweet-btn {
+      background: #1d9bf0;
+      color: #fff;
+      border: none;
+      border-radius: 9999px;
+      padding: 8px 18px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .x-tweet-btn:hover { background: #1a8cd8; }
+    .x-post {
+      padding: 14px 16px;
+      border-bottom: 1px solid #2f3336;
+      display: flex;
+      gap: 12px;
+      transition: background 0.1s ease;
+    }
+    .x-post:hover { background: rgba(255, 255, 255, 0.03); }
+    .x-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #222;
+      flex-shrink: 0;
+    }
+    .x-post-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .x-post-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14.5px;
+    }
+    .x-name { font-weight: 700; color: #fff; }
+    .x-handle { color: #71767b; }
+    .x-text {
+      font-size: 15px;
+      line-height: 1.45;
+      color: #e7e9ea;
+      word-break: break-word;
+    }
+  </style>
+</head>
+<body>
+  <div class="x-layout">
+    <div class="x-header">
+      <h1>𝕏 Home · NairaTag Active</h1>
+      <a href="/wallet" style="font-size:12px; color:#1d9bf0; text-decoration:none; font-weight:700;">👛 Wallet ↗</a>
+    </div>
+
+    <!-- Live Post Composer -->
+    <div class="x-composer">
+      <textarea id="x-composer-text" placeholder="What is happening?! (Try typing: 'Send ₦5,000 to ₦MIKKI or check ₦ASAKE')"></textarea>
+      <div class="x-composer-bottom">
+        <span style="font-size:12px; color:#71767b;">NairaTag Parser will enhance newly posted tweets live!</span>
+        <button type="button" class="x-tweet-btn" id="btn-post-tweet">Post</button>
+      </div>
+    </div>
+
+    <!-- Timeline Container (Target for MutationObserver) -->
+    <div id="x-timeline">
+      <!-- Post 1 -->
+      <div class="x-post">
+        <img class="x-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=femi" alt="Femi" />
+        <div class="x-post-content">
+          <div class="x-post-meta">
+            <span class="x-name">Femi Otedola</span>
+            <span class="x-handle">@femi · 2h</span>
+          </div>
+          <div class="x-text">
+            Abeg send ₦5,000 to ₦MIKKI for the ticket 😂
+          </div>
+        </div>
+      </div>
+
+      <!-- Post 2 -->
+      <div class="x-post">
+        <img class="x-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=burna" alt="Burna" />
+        <div class="x-post-content">
+          <div class="x-post-meta">
+            <span class="x-name">Burna Boy</span>
+            <span class="x-handle">@burna · 3h</span>
+          </div>
+          <div class="x-text">
+            Big congratulations to ₦ASAKE on the new album launch! 🚀 Everyone tip ₦ASAKE now!
+          </div>
+        </div>
+      </div>
+
+      <!-- Post 3 -->
+      <div class="x-post">
+        <img class="x-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=chika" alt="Chika" />
+        <div class="x-post-content">
+          <div class="x-post-meta">
+            <span class="x-name">Chika Okonkwo</span>
+            <span class="x-handle">@chika · 5h</span>
+          </div>
+          <div class="x-text">
+            Don't send ₦100k, send ₦20k to ₦TEMI instead. Also who claimed ₦NEWTAG?
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load the Extension Content Script -->
+  <script src="/extension/content/content.js"></script>
+
+  <script>
+    // Live composer test
+    document.getElementById('btn-post-tweet')?.addEventListener('click', () => {
+      const input = document.getElementById('x-composer-text');
+      const val = input.value.trim();
+      if (!val) return;
+
+      const timeline = document.getElementById('x-timeline');
+      const post = document.createElement('div');
+      post.className = 'x-post';
+      post.innerHTML = `
+        <img class="x-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=you" alt="You" />
+        <div class="x-post-content">
+          <div class="x-post-meta">
+            <span class="x-name">You</span>
+            <span class="x-handle">@you · Just now</span>
+          </div>
+          <div class="x-text">${val}</div>
+        </div>
+      `;
+
+      timeline.prepend(post);
+      input.value = '';
+    });
+  </script>
+</body>
+</html>

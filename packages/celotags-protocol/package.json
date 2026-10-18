@@ -1,0 +1,24 @@
+{
+  "name": "@celotags/protocol",
+  "version": "1.0.0",
+  "description": "CeloTags Protocol — Open Identity, Discovery, Coordination, and Economic Infrastructure for AI Agents Across Africa",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "celo",
+    "celotags",
+    "agentic",
+    "erc-8004",
+    "a2a",
+    "identity",
+    "resolver",
+    "cngn",
+    "cip-64",
+    "web3"
+  ],
+  "author": "CeloTags Network",
+  "license": "MIT"
+}

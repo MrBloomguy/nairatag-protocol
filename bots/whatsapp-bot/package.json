@@ -1,0 +1,17 @@
+{
+  "name": "@nairatag/whatsapp-bot",
+  "version": "1.0.0",
+  "description": "NairaTag WhatsApp Interaction Bot Service",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/whatsapp-bot.test.js"
+  },
+  "dependencies": {
+    "@nairatag/parser": "file:../../packages/nairatag-parser",
+    "@nairatag/resolver": "file:../../packages/nairatag-resolver",
+    "@nairatag/actions": "file:../../packages/nairatag-actions"
+  },
+  "author": "NairaTag Network",
+  "license": "MIT"
+}

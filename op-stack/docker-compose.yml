@@ -1,0 +1,100 @@
+services:
+  op-geth-init:
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-geth:v1.101500.2
+    user: root
+    volumes:
+      - ./deployer/.deployer/genesis.json:/genesis.json:ro
+      - op-geth-data:/db
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        if [ ! -d "/db/geth/chaindata" ]; then
+          echo "Initializing op-geth database from genesis.json..."
+          geth init --datadir=/db /genesis.json
+        else
+          echo "op-geth database already initialized."
+        fi
+    restart: "no"
+
+  op-geth:
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-geth:v1.101500.2
+    depends_on:
+      op-geth-init:
+        condition: service_completed_successfully
+    ports:
+      - "9545:8545"   # Public L2 RPC
+      - "8551:8551"   # Auth Engine API
+    volumes:
+      - op-geth-data:/db
+      - ./deployer/.deployer/jwt.hex:/jwt.hex:ro
+    command:
+      - --datadir=/db
+      - --http
+      - --http.addr=0.0.0.0
+      - --http.port=8545
+      - --http.corsdomain=*
+      - --http.vhosts=*
+      - --http.api=web3,eth,net,txpool,debug
+      - --authrpc.addr=0.0.0.0
+      - --authrpc.port=8551
+      - --authrpc.vhosts=*
+      - --authrpc.jwtsecret=/jwt.hex
+      - --rollup.disabletxpoolgossip=true
+      - --nodiscover
+      - --syncmode=full
+      - --gcmode=archive
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  op-node:
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-node:v1.11.1
+    depends_on:
+      - op-geth
+    ports:
+      - "8547:8547"   # op-node RPC
+    volumes:
+      - ./deployer/.deployer/rollup.json:/rollup.json:ro
+      - ./deployer/.deployer/jwt.hex:/jwt.hex:ro
+    command:
+      - op-node
+      - --l1=http://host.docker.internal:8545
+      - --l1.rpckind=basic
+      - --l2=http://op-geth:8551
+      - --l2.jwt-secret=/jwt.hex
+      - --rollup.config=/rollup.json
+      - --rpc.addr=0.0.0.0
+      - --rpc.port=8547
+      - --rpc.enable-admin
+      - --sequencer.enabled
+      - --sequencer.l1-confs=0
+      - --verifier.l1-confs=0
+      - --p2p.disable
+      - --p2p.sequencer.key=0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  op-batcher:
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-batcher:v1.11.1
+    depends_on:
+      - op-node
+      - op-geth
+    ports:
+      - "8548:8548"   # op-batcher metrics
+    command:
+      - op-batcher
+      - --l1-eth-rpc=http://host.docker.internal:8545
+      - --l2-eth-rpc=http://op-geth:8545
+      - --rollup-rpc=http://op-node:8547
+      - --private-key=0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d
+      - --rpc.addr=0.0.0.0
+      - --rpc.port=8548
+      - --wait-node-sync=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  op-geth-data:

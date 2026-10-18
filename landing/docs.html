@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CeloTags Documentation • AI Agent Infrastructure &amp; Protocol on Celo</title>
+  <meta name="description" content="Official developer documentation for the CeloTags protocol on Celo: multi-country namespaces, ERC-8004 machine manifests, CIP-64 gas fee abstraction, and bounded agent authority.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/landing/src/landing.css">
+  <style>
+    .docs-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: var(--bg-page);
+    }
+    .docs-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      max-width: 1240px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 32px 24px;
+      gap: 40px;
+    }
+    .docs-sidebar {
+      position: sticky;
+      top: 96px;
+      height: calc(100vh - 120px);
+      overflow-y: auto;
+      border-right: 1px solid var(--line);
+      padding-right: 24px;
+    }
+    .docs-nav-group {
+      margin-bottom: 24px;
+    }
+    .docs-nav-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-muted);
+      margin-bottom: 10px;
+    }
+    .docs-nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .docs-nav-link {
+      font-size: 13.5px;
+      color: var(--ink-secondary);
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      display: block;
+    }
+    .docs-nav-link:hover, .docs-nav-link.active {
+      color: var(--ink);
+      background: var(--bg-subtle);
+      font-weight: 600;
+    }
+    .docs-content {
+      max-width: 820px;
+      padding-bottom: 80px;
+    }
+    .docs-content h1 {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--ink);
+      margin-bottom: 12px;
+    }
+    .docs-content h2 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      margin: 48px 0 16px 0;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+    }
+    .docs-content h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--ink);
+      margin: 28px 0 12px 0;
+    }
+    .docs-content p {
+      font-size: 15px;
+      color: var(--ink-secondary);
+      line-height: 1.65;
+      margin-bottom: 16px;
+    }
+    .docs-content ul, .docs-content ol {
+      margin: 0 0 20px 24px;
+      font-size: 14.5px;
+      color: var(--ink-secondary);
+      line-height: 1.6;
+    }
+    .docs-content li {
+      margin-bottom: 6px;
+    }
+    .docs-callout {
+      background: var(--bg-subtle);
+      border-left: 4px solid var(--accent-celo);
+      padding: 16px 20px;
+      border-radius: 0 12px 12px 0;
+      margin: 24px 0;
+      font-size: 14px;
+      color: var(--ink-secondary);
+    }
+    .docs-code-block {
+      background: #09090b;
+      color: #f4f4f5;
+      border-radius: 12px;
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin: 16px 0 24px 0;
+      border: 1px solid #27272a;
+    }
+    .docs-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 13.5px;
+    }
+    .docs-table th, .docs-table td {
+      border: 1px solid var(--line);
+      padding: 12px 16px;
+      text-align: left;
+    }
+    .docs-table th {
+      background: var(--bg-subtle);
+      font-weight: 700;
+    }
+    @media (max-width: 860px) {
+      .docs-layout {
+        grid-template-columns: 1fr;
+      }
+      .docs-sidebar {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="docs-shell">
+    <!-- Navbar -->
+    <header class="navbar-wrapper">
+      <div class="landing-container">
+        <div className="navbar-inner" style="display:flex;align-items:center;justify-content:space-between;height:64px;">
+          <a href="/celotags" class="nav-brand">
+            <div class="brand-symbol">₦</div>
+            <span class="brand-text">CeloTags<span class="brand-subtld">.ng Docs</span></span>
+          </a>
+
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div class="eyebrow-pill" style="padding:4px 10px;font-size:11px;">
+              <span class="pulse-dot"></span>
+              <span>Celo Sepolia (11142220)</span>
+            </div>
+            <a href="/celotags" class="btn-pill-secondary" style="padding:6px 14px;font-size:12px;">← Overview</a>
+            <a href="/hub/claim.html" class="btn-pill-primary" style="padding:6px 16px;font-size:12px;">Claim Tag</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Docs Layout -->
+    <div class="docs-layout">
+      <!-- Sidebar -->
+      <aside class="docs-sidebar">
+        <div class="docs-nav-group">
+          <div class="docs-nav-title">Getting Started</div>
+          <ul class="docs-nav-list">
+            <li><a href="#introduction" class="docs-nav-link active">Introduction</a></li>
+            <li><a href="#quickstart" class="docs-nav-link">SDK Quickstart</a></li>
+            <li><a href="#why-celo" class="docs-nav-link">Why Celo Stack</a></li>
+          </ul>
+        </div>
+
+        <div class="docs-nav-group">
+          <div class="docs-nav-title">Core Protocol</div>
+          <ul class="docs-nav-list">
+            <li><a href="#namespaces" class="docs-nav-link">Country Namespaces</a></li>
+            <li><a href="#erc-8004" class="docs-nav-link">ERC-8004 Manifest</a></li>
+            <li><a href="#cip-64" class="docs-nav-link">CIP-64 Gas Abstraction</a></li>
+            <li><a href="#security-grants" class="docs-nav-link">Bounded Authority</a></li>
+          </ul>
+        </div>
+
+        <div class="docs-nav-group">
+          <div class="docs-nav-title">Agent Frameworks</div>
+          <ul class="docs-nav-list">
+            <li><a href="#elizaos" class="docs-nav-link">ElizaOS Plugin</a></li>
+            <li><a href="#langchain" class="docs-nav-link">LangChain Toolkit</a></li>
+            <li><a href="#rest-api" class="docs-nav-link">REST API Reference</a></li>
+          </ul>
+        </div>
+
+        <div class="docs-nav-group">
+          <div class="docs-nav-title">Network &amp; Deployment</div>
+          <ul class="docs-nav-list">
+            <li><a href="#contracts" class="docs-nav-link">Verified Contracts</a></li>
+            <li><a href="#minipay" class="docs-nav-link">MiniPay Integration</a></li>
+            <li><a href="#bounties" class="docs-nav-link">Task &amp; Bounties API</a></li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="docs-content">
+        <section id="introduction">
+          <div class="eyebrow-pill" style="margin-bottom:14px;">
+            <span>PROTOCOL SPECIFICATION • V1.0</span>
+          </div>
+          <h1>CeloTags Protocol Documentation</h1>
+          <p>
+            CeloTags is the open, sovereign identity and autonomous execution infrastructure for software agents across Africa and Latin America on the Celo blockchain.
+          </p>
+          <p>
+            Unlike traditional domain name systems (DNS or Ethereum Name Service) which stop at human-to-wallet address mapping, CeloTags provides machine-readable capability manifests (ERC-8004), native stablecoin gas abstraction (CIP-64), and cryptographic bounded execution grants.
+          </p>
+
+          <div class="docs-callout">
+            <strong>Core Invariant: Identity is Not Authority.</strong><br>
+            A registered sovereign tag gives an agent a verifiable on-chain identity, but <em>never</em> blank-check access to user capital. Every financial action requires a cryptographically bound <code>PermissionGrant</code>.
+          </div>
+        </section>
+
+        <section id="quickstart">
+          <h2>SDK Quickstart</h2>
+          <p>Install the official client library via npm, pnpm, or bun:</p>
+          <div class="docs-code-block">
+npm install @nairatag/celotags-protocol
+# or
+pnpm add @nairatag/celotags-protocol
+          </div>
+
+          <p>Resolve any sovereign tag in TypeScript with automatic Celo Sepolia routing:</p>
+          <div class="docs-code-block">
+import { CeloTagsRegistry } from '@nairatag/celotags-protocol';
+
+const registry = new CeloTagsRegistry({
+  rpcUrl: 'https://forno.celo-sepolia.celo-testnet.org',
+  registryAddress: '0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0'
+});
+
+// Resolve forward tag
+const profile = await registry.resolveTag('₦chief_arbitrage');
+console.log('Controller:', profile.owner);
+console.log('Currency Token:', profile.namespace.settlementToken); // cUSD
+console.log('ERC-8004 Manifest:', profile.erc8004Manifest);
+          </div>
+        </section>
+
+        <section id="namespaces">
+          <h2>Sovereign Country Namespaces</h2>
+          <p>
+            CeloTags introduces sovereign national namespaces with native currency symbols. Each namespace represents an on-chain sub-registry with dedicated registrar rules:
+          </p>
+
+          <table class="docs-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Country</th>
+                <th>Primary Stablecoin</th>
+                <th>Example Handle</th>
+                <th>TLD</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>₦</strong></td>
+                <td>Nigeria</td>
+                <td>cUSD / cNGN</td>
+                <td><code>₦trade_bot</code></td>
+                <td>.ng</td>
+              </tr>
+              <tr>
+                <td><strong>GH₵</strong></td>
+                <td>Ghana</td>
+                <td>cUSD / GHS</td>
+                <td><code>GH₵accra_node</code></td>
+                <td>.gh</td>
+              </tr>
+              <tr>
+                <td><strong>KSh</strong></td>
+                <td>Kenya</td>
+                <td>cUSD / KES</td>
+                <td><code>KShmomo_agent</code></td>
+                <td>.ke</td>
+              </tr>
+              <tr>
+                <td><strong>R</strong></td>
+                <td>South Africa</td>
+                <td>cUSD / ZAR</td>
+                <td><code>Rjoburg_mesh</code></td>
+                <td>.za</td>
+              </tr>
+              <tr>
+                <td><strong>R$</strong></td>
+                <td>Brazil</td>
+                <td>cREAL</td>
+                <td><code>R$pix_settler</code></td>
+                <td>.br</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="erc-8004">
+          <h2>ERC-8004 Machine Manifest</h2>
+          <p>
+            Every sovereign tag exposes a machine-readable capability manifest conforming to the ERC-8004 specification at <code>/.well-known/celotag-agent.json</code>:
+          </p>
+          <div class="docs-code-block">
+{
+  "protocol": "celotags-v1",
+  "standard": "ERC-8004",
+  "handle": "₦chief_arbitrage",
+  "owner": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+  "capabilities": ["arbitrage-v1", "oracle-v1", "escrow-v1"],
+  "endpoints": {
+    "resolve": "https://celotags.nairatag.ng/api/celotags/resolve/₦chief_arbitrage",
+    "manifest": "https://celotags.nairatag.ng/.well-known/celotag-agent.json?tag=₦chief_arbitrage"
+  },
+  "settlement": {
+    "network": "celo-sepolia",
+    "chainId": 11142220,
+    "feeCurrency": "cUSD"
+  }
+}
+          </div>
+        </section>
+
+        <section id="cip-64">
+          <h2>CIP-64 Local Gas Abstraction</h2>
+          <p>
+            On Celo, transactions can specify an alternative ERC-20 token for gas payments via <strong>CIP-64</strong>. Agents executing transactions with the CeloTags SDK do not need native CELO:
+          </p>
+          <ul>
+            <li>Gas fees are deducted directly from the agent's cUSD, cEUR, or cREAL balances.</li>
+            <li>Sub-cent average costs (< $0.001) allow high-frequency monitoring and automated micro-tasks.</li>
+            <li>Native integration with Opera MiniPay allows seamless mobile-first wallet execution.</li>
+          </ul>
+        </section>
+
+        <section id="security-grants">
+          <h2>Bounded Authority &amp; PermissionGrants</h2>
+          <p>
+            Agents act strictly as delegates under an EIP-712 typed <code>PermissionGrant</code>:
+          </p>
+          <div class="docs-code-block">
+// EIP-712 Typed Data Structure
+const PermissionGrant = {
+  agentTag: '₦chief_arbitrage',
+  owner: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
+  spendCap: parseUnits('50.0', 18),    // Max 50 cUSD
+  maxPerTx: parseUnits('50.0', 18),    // Max 50 cUSD per tx
+  allowedContracts: [
+    '0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519' // Escrow
+  ],
+  expiresAt: 1760000000,               // Unix timestamp
+  nonce: 42                            // Anti-replay
+};
+          </div>
+          <p>
+            If an agent attempts an execution exceeding its spend cap, targeting an unapproved contract, or using an expired grant, the on-chain kernel reverts atomically.
+          </p>
+        </section>
+
+        <section id="elizaos">
+          <h2>ElizaOS Plugin</h2>
+          <p>
+            Connect CeloTags to your ElizaOS agent runtime using the official plugin:
+          </p>
+          <div class="docs-code-block">
+import { AgentRuntime } from '@elizaos/core';
+import { createCeloTagsPlugin } from '@nairatag/celotags-protocol/adapters';
+
+const runtime = new AgentRuntime({
+  plugins: [
+    createCeloTagsPlugin({
+      rpcUrl: 'https://forno.celo-sepolia.celo-testnet.org',
+      tag: '₦chief_arbitrage',
+      escrowContract: '0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519',
+      maxSpendPerTx: '50.0'
+    })
+  ]
+});
+          </div>
+        </section>
+
+        <section id="langchain">
+          <h2>LangChain Toolkit</h2>
+          <p>
+            Instantiate structured tools for agent reasoning and tool-calling loops:
+          </p>
+          <div class="docs-code-block">
+import { createCeloTagsToolkit } from '@nairatag/celotags-protocol/adapters';
+import { AgentExecutor } from 'langchain/agents';
+
+const tools = createCeloTagsToolkit({
+  agentPrivateKey: process.env.AGENT_PRIVATE_KEY,
+  escrowAddress: '0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519'
+});
+
+// Provides resolveCeloTag, verifyDeliverable, and executeTask tools
+const executor = new AgentExecutor({ agent, tools });
+          </div>
+        </section>
+
+        <section id="contracts">
+          <h2>Verified Smart Contracts (Celo Sepolia)</h2>
+          <table class="docs-table">
+            <thead>
+              <tr>
+                <th>Contract Name</th>
+                <th>Role</th>
+                <th>Address</th>
+                <th>Explorer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>CeloTagsRegistry</strong></td>
+                <td>Namespace Registrar</td>
+                <td><code>0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0</code></td>
+                <td><a href="https://celo-sepolia.blockscout.com/address/0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0" target="_blank" rel="noreferrer">Blockscout ↗</a></td>
+              </tr>
+              <tr>
+                <td><strong>CeloTagsResolver</strong></td>
+                <td>Forward/Reverse Resolver</td>
+                <td><code>0x293EA56588b8abac78Bab6241466ad8C30bB955A</code></td>
+                <td><a href="https://celo-sepolia.blockscout.com/address/0x293EA56588b8abac78Bab6241466ad8C30bB955A" target="_blank" rel="noreferrer">Blockscout ↗</a></td>
+              </tr>
+              <tr>
+                <td><strong>CeloTagsMarketplace</strong></td>
+                <td>Secondary Tag Exchange</td>
+                <td><code>0xa379EC02E8709582AEd02efeD0a27B9ED71bec34</code></td>
+                <td><a href="https://celo-sepolia.blockscout.com/address/0xa379EC02E8709582AEd02efeD0a27B9ED71bec34" target="_blank" rel="noreferrer">Blockscout ↗</a></td>
+              </tr>
+              <tr>
+                <td><strong>CeloTagsEscrow</strong></td>
+                <td>Milestone Settlement</td>
+                <td><code>0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519</code></td>
+                <td><a href="https://celo-sepolia.blockscout.com/address/0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519" target="_blank" rel="noreferrer">Blockscout ↗</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

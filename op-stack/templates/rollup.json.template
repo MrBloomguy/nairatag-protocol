@@ -1,0 +1,36 @@
+{
+  "//": "==============================================================================",
+  "//": "NairaTag Network — Rollup Configuration Template",
+  "//": "Must be derived from canonical L1 Bedrock contract deployment outputs.",
+  "//": "==============================================================================",
+  "genesis": {
+    "l1": {
+      "hash": "<REQUIRED_L1_GENESIS_BLOCK_HASH>",
+      "number": 0
+    },
+    "l2": {
+      "hash": "<REQUIRED_L2_GENESIS_BLOCK_HASH>",
+      "number": 0
+    },
+    "l2_time": "<REQUIRED_UNIX_TIMESTAMP_MATCHING_GENESIS_JSON>",
+    "system_config": {
+      "batcherAddr": "<REQUIRED_BATCHER_EOA_ADDRESS>",
+      "overhead": "0x0000000000000000000000000000000000000000000000000000000000000834",
+      "scalar": "0x00000000000000000000000000000000000000000000000000000000000f4240",
+      "gasLimit": 30000000
+    }
+  },
+  "block_time": 2,
+  "max_sequencer_drift": 600,
+  "seq_window_size": 3600,
+  "channel_timeout": 300,
+  "l1_chain_id": 900,
+  "l2_chain_id": 901,
+  "regolith_time": 0,
+  "canyon_time": 0,
+  "delta_time": 0,
+  "ecotone_time": 0,
+  "batch_inbox_address": "<REQUIRED_BATCH_INBOX_ADDRESS_DERIVED_FROM_CHAIN_ID>",
+  "deposit_contract_address": "<REQUIRED_L1_OPTIMISM_PORTAL_PROXY_ADDRESS>",
+  "l1_system_config_address": "<REQUIRED_L1_SYSTEM_CONFIG_PROXY_ADDRESS>"
+}

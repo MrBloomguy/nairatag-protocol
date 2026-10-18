@@ -1,0 +1,26 @@
+{
+  "name": "@nairatag/viem",
+  "version": "0.1.0",
+  "description": "Viem adapter for NairaTag Identity Protocol (NTS-100 / NTS-101)",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "scripts": {
+    "test": "node test/resolver.test.js"
+  },
+  "keywords": [
+    "nairatag",
+    "viem",
+    "ethereum",
+    "name-service",
+    "identity",
+    "resolver"
+  ],
+  "author": "NairaTag Network",
+  "license": "MIT",
+  "peerDependencies": {
+    "viem": "^2.0.0"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  }
+}

@@ -1,0 +1,164 @@
+{
+  "version": "7.3",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "FIND_TAG": [
+      "CLAIM_SUMMARY"
+    ],
+    "CLAIM_SUMMARY": [
+      "CLAIM_SUCCESS"
+    ],
+    "CLAIM_SUCCESS": []
+  },
+  "screens": [
+    {
+      "id": "FIND_TAG",
+      "title": "🇳🇬 Find your ₦Tag",
+      "data": {},
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Image",
+            "src": "https://nairatag-network.vercel.app/hub/banner-card.jpg",
+            "scale-type": "contain"
+          },
+          {
+            "type": "TextHeading",
+            "text": "✨ Claim your ₦NAIRATAG"
+          },
+          {
+            "type": "TextSubheading",
+            "text": "Your sovereign name for the onchain economy."
+          },
+          {
+            "type": "TextBody",
+            "text": "Check if your preferred **₦Tag** is available, claim your identity, and instantly unlock your **Base wallet** ⛓️, **Flutterwave Virtual Account** 🏦, and welcome vouchers 🎁.\n\n*Popular Suggestions:*\n• `₦Michael`  • `₦Ola`  • `₦Chioma`\n• `₦boy864`   • `₦Musa`  • `₦Bola`",
+            "markdown": true
+          },
+          {
+            "type": "Form",
+            "name": "search_form",
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "tag_name",
+                "label": "₦ Enter handle (e.g. michael, chioma)",
+                "required": true,
+                "input-type": "text",
+                "pattern": "^[₦]?[a-zA-Z0-9_]{3,20}$",
+                "helper-text": "No need to type ₦ • 3-20 characters (letters, numbers, _)"
+              },
+              {
+                "type": "Footer",
+                "label": "🔍 Check Availability ⚡",
+                "on-click-action": {
+                  "name": "navigate",
+                  "next": {
+                    "name": "CLAIM_SUMMARY",
+                    "type": "screen"
+                  },
+                  "payload": {
+                    "tag_input": "${form.tag_name}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CLAIM_SUMMARY",
+      "title": "⚡ Claim your ₦Tag",
+      "data": {
+        "tag_input": {
+          "type": "string",
+          "__example__": "Michael"
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "🟢 AVAILABLE & READY TO MINT ⚡"
+          },
+          {
+            "type": "TextSubheading",
+            "text": "This handle is available. Be the first to make it yours!"
+          },
+          {
+            "type": "TextBody",
+            "text": "What you get when you claim:\n\n* 🆔 **Verified Protocol Handle** 💎\n* ⛓️ **Base Onchain Wallet** 🚀\n* 🏦 **Dedicated Flutterwave NUBAN Account** 💳\n* 🎁 **₦1,000 Welcome Voucher** 🎟️\n* ⚡ **Instant P2P Settlements** 💸\n* 🔗 **Shareable Web Profile (nairatag.ng)** 🌐",
+            "markdown": true
+          },
+          {
+            "type": "Form",
+            "name": "claim_form",
+            "children": [
+              {
+                "type": "Footer",
+                "label": "🎉 Claim ₦Tag Now 🚀",
+                "on-click-action": {
+                  "name": "navigate",
+                  "next": {
+                    "name": "CLAIM_SUCCESS",
+                    "type": "screen"
+                  },
+                  "payload": {
+                    "confirmed_tag": "${data.tag_input}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "CLAIM_SUCCESS",
+      "title": "🎉 Success!",
+      "data": {
+        "confirmed_tag": {
+          "type": "string",
+          "__example__": "Michael"
+        }
+      },
+      "terminal": true,
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Image",
+            "src": "https://nairatag-network.vercel.app/hub/banner-card.jpg",
+            "scale-type": "contain"
+          },
+          {
+            "type": "TextHeading",
+            "text": "🎊 🥳 ₦${data.confirmed_tag} is Live! 🍾 🎉"
+          },
+          {
+            "type": "TextSubheading",
+            "text": "Your NairaTag has been successfully claimed & minted."
+          },
+          {
+            "type": "TextBody",
+            "text": "🎊 *Toss the confetti!* **₦${data.confirmed_tag}** is officially yours! ✨\n\n* 📱 **WhatsApp Identity**: Verified & linked\n* ⛓️ **Base Wallet**: 0x7a3...91c4 (Active)\n* 🏦 **Flutterwave Account**: Ready for deposits\n* 🎁 **₦1,000 Voucher**: Credited to your account\n\nShare your ₦Tag with your friends and start receiving payments instantly! 🚀",
+            "markdown": true
+          },
+          {
+            "type": "Footer",
+            "label": "🎊 Done 🥳",
+            "on-click-action": {
+              "name": "complete",
+              "payload": {
+                "tag": "${data.confirmed_tag}"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "network": "celo-sepolia",
+  "chainId": 11142220,
+  "rpcUrl": "https://forno.celo-sepolia.celo-testnet.org",
+  "registry": "0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0",
+  "resolver": "0x293EA56588b8abac78Bab6241466ad8C30bB955A",
+  "marketplace": "0xa379EC02E8709582AEd02efeD0a27B9ED71bec34",
+  "paymentRequest": "0xb9a0250a6C0908fA01574a5416321096279c4d53",
+  "contracts": {
+    "registry": "0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0",
+    "resolver": "0x293EA56588b8abac78Bab6241466ad8C30bB955A",
+    "marketplace": "0xa379EC02E8709582AEd02efeD0a27B9ED71bec34",
+    "paymentRequest": "0xb9a0250a6C0908fA01574a5416321096279c4d53"
+  },
+  "deployer": "0xeC6B46AA42CCbc93357038a8896A2178251f2d16",
+  "deploymentBlock": 2185210,
+  "timestamp": "2026-10-09T14:49:15Z",
+  "status": "verified-deployment",
+  "canonical": true,
+  "agentWritesEnabled": true
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>NairaTag</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 14px;
+      width: 300px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #0a0a0a;
+      color: #ffffff;
+      box-sizing: border-box;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #222;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 800;
+      font-size: 15px;
+      color: #0052ff;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+    }
+    .wallet-card {
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .wallet-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+    }
+    .wallet-tag {
+      font-size: 16px;
+      font-weight: 900;
+      color: #fff;
+    }
+    .wallet-addr {
+      font-size: 11px;
+      font-family: monospace;
+      color: #888;
+    }
+    .search-input {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #333;
+      background: #141414;
+      color: #fff;
+      font-size: 12.5px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+    .action-btn {
+      width: 100%;
+      padding: 8px;
+      border-radius: 8px;
+      border: none;
+      background: #0052ff;
+      color: #fff;
+      font-weight: 700;
+      font-size: 12.5px;
+      cursor: pointer;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      text-decoration: none;
+    }
+    .action-btn:hover { background: #0045d8; }
+    .secondary-btn {
+      background: #222;
+      color: #ccc;
+    }
+    .secondary-btn:hover { background: #2a2a2a; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="brand">
+      <span>₦</span>
+      <span>NairaTag Social</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:5px; font-size:11px; color:#10b981; font-weight:700;">
+      <span class="status-dot"></span>
+      <span>X Web Active</span>
+    </div>
+  </div>
+
+  <div class="wallet-card">
+    <span class="wallet-label">Connected Handle</span>
+    <span class="wallet-tag" id="pop-tag">₦MIKKI</span>
+    <span class="wallet-addr" id="pop-addr">0xf39F...2266</span>
+  </div>
+
+  <input type="text" class="search-input" id="pop-inspect-input" placeholder="Inspect ₦tag on X (e.g. ₦asake)" />
+
+  <button type="button" class="action-btn" id="pop-btn-inspect">🔍 Inspect Tag</button>
+  <a href="http://127.0.0.1:8088/hub/wallet.html" target="_blank" class="action-btn secondary-btn">👛 Open NairaTag Wallet</a>
+  <a href="http://127.0.0.1:8088/hub/claim.html" target="_blank" class="action-btn secondary-btn">✦ Claim New ₦Tag</a>
+
+  <script src="popup.js"></script>
+</body>
+</html>

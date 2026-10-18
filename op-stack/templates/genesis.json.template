@@ -1,0 +1,56 @@
+{
+  "//": "==============================================================================",
+  "//": "NairaTag Network — L2 Genesis Configuration Template",
+  "//": "Do NOT hand-craft production genesis; generate using 'op-node genesis l2' or 'op-deployer'.",
+  "//": "==============================================================================",
+  "config": {
+    "chainId": 901,
+    "homesteadBlock": 0,
+    "eip150Block": 0,
+    "eip155Block": 0,
+    "eip158Block": 0,
+    "byzantiumBlock": 0,
+    "constantinopleBlock": 0,
+    "petersburgBlock": 0,
+    "istanbulBlock": 0,
+    "muirGlacierBlock": 0,
+    "berlinBlock": 0,
+    "londonBlock": 0,
+    "arrowGlacierBlock": 0,
+    "grayGlacierBlock": 0,
+    "mergeNetsplitBlock": 0,
+    "bedrockBlock": 0,
+    "regolithTime": 0,
+    "canyonTime": 0,
+    "deltaTime": 0,
+    "ecotoneTime": 0,
+    "optimism": {
+      "eip1559Denominator": 50,
+      "eip1559Elasticity": 6
+    }
+  },
+  "nonce": "0x0",
+  "timestamp": "<REQUIRED_HEX_TIMESTAMP_MATCHING_L1_GENESIS_TIME>",
+  "extraData": "<REQUIRED_EXTRA_DATA_OR_DEFAULT_0x>",
+  "gasLimit": "0x1c9c380",
+  "difficulty": "0x0",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x4200000000000000000000000000000000000011",
+  "alloc": {
+    "0x4200000000000000000000000000000000000015": {
+      "//": "L2CrossDomainMessenger predeploy bytecode",
+      "code": "<REQUIRED_PREDEPLOY_BYTECODE_GENERATED_BY_OP_NODE_GENESIS>"
+    },
+    "0x4200000000000000000000000000000000000016": {
+      "//": "L2ToL1MessagePasser predeploy bytecode",
+      "code": "<REQUIRED_PREDEPLOY_BYTECODE_GENERATED_BY_OP_NODE_GENESIS>"
+    },
+    "0x4200000000000000000000000000000000000010": {
+      "//": "L1Block predeploy bytecode",
+      "code": "<REQUIRED_PREDEPLOY_BYTECODE_GENERATED_BY_OP_NODE_GENESIS>"
+    },
+    "<REQUIRED_PRE_FUNDED_ACCOUNT_ADDRESS_1>": {
+      "balance": "0x21e19e0c9bab2400000"
+    }
+  }
+}

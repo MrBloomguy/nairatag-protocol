@@ -1,0 +1,5281 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title id="page-title">Claim ₦Tag</title>
+  <meta name="description" id="page-description"
+    content="Claim your human-readable ₦Tag handle for non-custodial Web3 payments, social identity, and instant settlement on Celo Sepolia.">
+
+  <!-- OpenGraph Onchain Identity Metadata -->
+  <meta property="og:type" content="profile">
+  <meta property="og:site_name" content="TagProtocol Sovereign Identity">
+  <meta property="og:title" id="og-title" content="NairaTag · Sovereign Onchain Identity on Celo">
+  <meta property="og:description" id="og-desc"
+    content="Say goodbye to 42-character hex addresses. Claim your sovereign onchain handle for Telegram alerts, non-custodial payments, and instant settlement on Celo.">
+  <meta property="og:image" id="og-image" content="https://nairatag.ng/hub/banner-card.jpg">
+  <meta property="og:url" id="og-url" content="https://nairatag.ng/claim">
+
+  <!-- Twitter / X Card Metadata -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@TagProtocol">
+  <meta name="twitter:title" id="tw-title" content="NairaTag · Sovereign Onchain Identity on Celo">
+  <meta name="twitter:description" id="tw-desc"
+    content="Say goodbye to 42-character hex addresses. Claim your sovereign onchain handle for Telegram alerts, non-custodial payments, and instant settlement on Celo.">
+  <meta name="twitter:image" id="tw-image" content="https://nairatag.ng/hub/banner-card.jpg">
+
+  <link rel="canonical" id="canonical-link" href="https://nairatag.ng/claim">
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+  <link rel="stylesheet" href="/hub/theme.css">
+  <link rel="stylesheet" href="/hub/notifications.css">
+  <script src="/hub/theme.js"></script>
+  <script src="/hub/notifications.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="/hub/tag-avatar.js"></script>
+  <style>
+    :root {
+      color-scheme: light;
+      --font-sans: 'Poppins Rounded', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-surface: #f1f5f9;
+      --bg-subtle: #f8fafc;
+      --line: #e2e8f0;
+      --line-subtle: #edf2f7;
+      --ink: #0f172a;
+      --ink-muted: #64748b;
+      --ink-light: #94a3b8;
+
+      --primary: #0052ff;
+      --primary-hover: #0045d8;
+      --primary-soft: #eff6ff;
+      --primary-border: #bfdbfe;
+
+      --success: #10b981;
+      --success-soft: #ecfdf5;
+      --success-text: #065f46;
+
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-pill: 9999px;
+      --no-shadow: none !important;
+    }
+
+    [data-theme="dark"] {
+      color-scheme: dark;
+      --bg-page: #000000;
+      --bg-card: #0a0a0a;
+      --bg-surface: #141414;
+      --bg-subtle: #0f0f0f;
+      --line: #222222;
+      --line-subtle: #1a1a1a;
+      --ink: #f8fafc;
+      --ink-muted: #94a3b8;
+      --ink-light: #64748b;
+
+      --primary: #0052ff;
+      --primary-hover: #1a65ff;
+      --primary-soft: rgba(0, 82, 255, 0.15);
+      --primary-border: rgba(0, 82, 255, 0.35);
+
+      --success-soft: rgba(16, 185, 129, 0.15);
+      --success-text: #34d399;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      box-shadow: var(--no-shadow);
+    }
+
+    html,
+    body {
+      height: 100dvh;
+      max-height: 100dvh;
+      overflow: hidden;
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--ink);
+      font-size: 13.5px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app-layout {
+      display: flex;
+      height: 100dvh;
+      max-height: 100dvh;
+      width: 100vw;
+      padding: 6px;
+      gap: 6px;
+      background-color: var(--bg-page);
+    }
+
+    /* Sidebar Navigation */
+    .app-sidebar {
+      width: 220px;
+      min-width: 220px;
+      height: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 9px;
+      flex-shrink: 0;
+      transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.2s cubic-bezier(0.16, 1, 0.3, 1), padding 0.2s ease;
+      overflow: hidden;
+      z-index: 100;
+    }
+
+    .app-sidebar.collapsed {
+      width: 48px;
+      min-width: 48px;
+      padding: 8px 5px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .brand-mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #0052ff;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .brand-text {
+      font-weight: 800;
+      font-size: 13.5px;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      transition: opacity 0.15s ease;
+    }
+
+    .app-sidebar.collapsed .brand-text {
+      display: none;
+    }
+
+    .sidebar-toggle-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      color: var(--ink-muted);
+      flex-shrink: 0;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: var(--bg-surface);
+      color: var(--ink);
+    }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      margin: 9px -4px;
+      padding: 0 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar {
+      display: none;
+      width: 0;
+      height: 0;
+    }
+
+    .sidebar-nav-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .sidebar-nav-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-light);
+      padding: 3px 7px;
+    }
+
+    .app-sidebar.collapsed .sidebar-nav-title {
+      display: none;
+    }
+
+    .sidebar-menu {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sidebar-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      text-decoration: none;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .sidebar-menu-item:hover {
+      background: var(--bg-surface);
+      color: var(--ink);
+      border-color: var(--line-subtle);
+    }
+
+    .sidebar-menu-item.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary-border);
+    }
+
+    .menu-icon {
+      font-size: 13.5px;
+      width: 17px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .menu-label {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app-sidebar.collapsed .menu-label,
+    .app-sidebar.collapsed .menu-badge {
+      display: none;
+    }
+
+    .menu-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .sidebar-footer {
+      padding-top: 7px;
+      border-top: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    .sidebar-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 7px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+
+    .app-sidebar.collapsed .sidebar-status-badge .status-text {
+      display: none;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      flex-shrink: 0;
+    }
+
+    /* Main Viewport Container */
+    .main-viewport {
+      flex: 1;
+      height: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    /* App Header */
+    .app-header {
+      height: 44px;
+      min-height: 44px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .header-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--ink-muted);
+    }
+
+    .header-breadcrumb a {
+      color: var(--ink-muted);
+      text-decoration: none;
+    }
+
+    .header-breadcrumb a:hover {
+      color: var(--primary);
+    }
+
+    .header-breadcrumb strong {
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: #ffffff;
+      color: var(--ink);
+      font-size: 11.5px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .header-btn:hover {
+      background: var(--bg-surface);
+    }
+
+    .header-btn.primary {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* Popover */
+    .header-wallet-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 290px;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      z-index: 1000;
+    }
+
+    .header-wallet-popover[hidden] {
+      display: none !important;
+    }
+
+    .popover-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+    }
+
+    .popover-user-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .popover-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+    }
+
+    .popover-handle {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .popover-addr {
+      font-size: 10.5px;
+      color: var(--ink-muted);
+      font-family: var(--font-mono);
+    }
+
+    .popover-close-btn {
+      background: transparent;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--ink-muted);
+    }
+
+    .popover-close-btn:hover {
+      color: var(--ink);
+    }
+
+    .popover-balances-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .popover-balance-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+    }
+
+    .popover-balance-label {
+      font-size: 10.5px;
+      color: var(--ink-muted);
+      font-weight: 600;
+    }
+
+    .popover-balance-num {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .popover-status-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--success);
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+
+    .popover-actions-deck {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4px;
+    }
+
+    .popover-action-btn {
+      background: #ffffff;
+      border: 1px solid var(--line);
+      padding: 5px;
+      border-radius: var(--radius-sm);
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .popover-action-btn:hover {
+      background: var(--bg-surface);
+      color: var(--primary);
+    }
+
+    /* Page Content Scroll Area */
+    .page-content-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 2-Column Responsive Layout */
+    .claim-page-layout {
+      width: 100%;
+      max-width: 860px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 24px;
+      margin: 0 auto;
+    }
+
+    /* Left Main Column: 480px Uniswap Standard */
+    .claim-page-main {
+      width: 480px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .claim-console-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      padding: 24px 28px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    /* Top Nav: Back Arrow */
+    .claim-top-nav {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      margin-bottom: 24px;
+    }
+
+    .claim-back-button {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-pill);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+
+    .claim-back-button:hover {
+      background: var(--bg-surface);
+      transform: translateX(-2px);
+    }
+
+    /* Top Segmented Tag Switcher Tabs */
+    .claim-top-tabs {
+      display: inline-flex;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      padding: 3px;
+      gap: 2px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .claim-top-tab {
+      background: transparent;
+      border: none;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .claim-top-tab:hover {
+      color: var(--ink);
+    }
+
+    .claim-top-tab.active {
+      background: var(--ink);
+      color: var(--bg-card);
+    }
+
+    [data-theme="dark"] .claim-top-tab.active {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    .claim-stage-subtitle {
+      font-size: 19px;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 2px;
+      letter-spacing: -0.01em;
+      text-align: center;
+    }
+
+    /* Hero Stage: Live Type Tag Searching Display */
+    .claim-hero-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 100%;
+      text-align: center;
+      margin-bottom: 8px;
+      overflow: visible;
+    }
+
+    .claim-live-tag-display {
+      font-family: var(--font-sans);
+      font-size: clamp(76px, 18vw, 96px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      color: #94a3b8;
+      margin: 8px 0 20px;
+      text-align: center;
+      transition: color 0.15s ease;
+      cursor: text;
+      user-select: none;
+      white-space: nowrap;
+      display: inline-block;
+      max-width: 100%;
+    }
+
+    .claim-live-tag-display.has-value {
+      color: var(--ink);
+      font-weight: 900;
+    }
+
+    .claim-live-tag-display .live-tag-prefix {
+      color: #10b981;
+      opacity: 0.85;
+      transition: color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .claim-live-tag-display.has-value .live-tag-prefix {
+      color: #10b981;
+      opacity: 1;
+    }
+
+    [data-theme="dark"] .claim-live-tag-display {
+      color: #64748b;
+    }
+
+    [data-theme="dark"] .claim-live-tag-display.has-value {
+      color: #f8fafc;
+    }
+
+    [data-theme="dark"] .claim-live-tag-display .live-tag-prefix {
+      color: #34d399;
+      opacity: 0.85;
+    }
+
+    [data-theme="dark"] .claim-live-tag-display.has-value .live-tag-prefix {
+      color: #34d399;
+      opacity: 1;
+    }
+
+    /* Pill Input Box */
+    .claim-pill-input-box {
+      width: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: #f1f5f9;
+      border: 1px solid transparent;
+      border-radius: var(--radius-pill);
+      height: 54px;
+      padding: 0 14px 0 22px;
+      transition: border-color 0.15s ease, background 0.15s ease;
+      margin-bottom: 14px;
+    }
+
+    [data-theme="dark"] .claim-pill-input-box {
+      background: #141414;
+      border-color: #222222;
+    }
+
+    .claim-pill-input-box:focus-within {
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+
+    .claim-pill-input {
+      flex: 1;
+      height: 100%;
+      background: transparent;
+      border: none;
+      outline: none;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink);
+      min-width: 0;
+    }
+
+    .claim-pill-input::placeholder {
+      color: #94a3b8;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+
+    [data-theme="dark"] .claim-pill-input::placeholder {
+      color: #64748b;
+    }
+
+    /* Pill Claim Button */
+    .claim-pill-button {
+      width: 100%;
+      height: 52px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line-subtle);
+      background: #e2e8f0;
+      color: #334155;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.18s ease;
+      user-select: none;
+      margin-bottom: 0;
+    }
+
+    [data-theme="dark"] .claim-pill-button {
+      background: #1e293b;
+      color: #94a3b8;
+      border-color: #2a374a;
+    }
+
+    .claim-pill-button.ready,
+    .claim-pill-button:hover:not(:disabled) {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+      transform: translateY(-1px);
+    }
+
+    [data-theme="dark"] .claim-pill-button.ready,
+    [data-theme="dark"] .claim-pill-button:hover:not(:disabled) {
+      background: #ffffff;
+      color: #0f172a;
+      border-color: #ffffff;
+    }
+
+    .claim-pill-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+      transform: none;
+    }
+
+    /* Active Claimed Banner (Visible when user already owns a ₦Tag) */
+    .active-claimed-banner {
+      width: 100%;
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      box-sizing: border-box;
+      animation: fadeIn 0.25s ease;
+    }
+
+    [data-theme="dark"] .active-claimed-banner {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.35);
+    }
+
+    .active-claimed-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .active-claimed-icon {
+      font-size: 18px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .active-claimed-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #065f46;
+    }
+
+    [data-theme="dark"] .active-claimed-label {
+      color: #34d399;
+    }
+
+    .active-claimed-sub {
+      font-size: 10.5px;
+      color: var(--ink-muted);
+      font-family: var(--font-mono);
+    }
+
+    .active-claimed-actions {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+
+    .btn-claimed-action {
+      padding: 4px 9px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      text-decoration: none;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .btn-claimed-action:hover {
+      background: #10b981;
+      color: #ffffff;
+      border-color: #10b981;
+    }
+
+    /* Claim Wallet Status Bar */
+    .claim-wallet-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.03);
+      border: 1px solid var(--line-subtle);
+      border-radius: var(--radius-md);
+      font-size: 11.5px;
+      margin-top: 10px;
+      box-sizing: border-box;
+    }
+
+    [data-theme="dark"] .claim-wallet-bar {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .claim-wallet-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .claim-wallet-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+      flex-shrink: 0;
+    }
+
+    .claim-wallet-label {
+      color: var(--ink-muted);
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .claim-wallet-addr {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 11.5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .claim-connect-btn {
+      background: transparent;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 3px 8px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .claim-connect-btn:hover {
+      background: var(--ink);
+      color: var(--bg-card);
+    }
+
+    /* Post-Claim Action Panel */
+    .claim-success-panel {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: var(--radius-lg);
+      padding: 14px;
+      margin-top: 12px;
+      box-sizing: border-box;
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.12);
+      animation: fadeIn 0.3s ease forwards;
+    }
+
+    .claim-success-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .claim-success-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .claim-success-title {
+      margin: 0;
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .claim-success-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .claim-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      font-size: 11.5px;
+      font-weight: 700;
+      text-decoration: none;
+      background: var(--bg-page);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .claim-action-btn:hover {
+      background: var(--ink);
+      color: var(--bg-page);
+      border-color: var(--ink);
+    }
+
+    .claim-action-btn.primary {
+      background: #10b981;
+      border-color: #10b981;
+      color: #ffffff;
+    }
+
+    .claim-action-btn.primary:hover {
+      background: #059669;
+      border-color: #059669;
+      color: #ffffff;
+    }
+
+    .reg-net-mini.net-celo {
+      background: rgba(16, 185, 129, 0.12);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .form-label-hint {
+      font-size: 11px;
+      color: var(--ink-muted);
+      font-weight: 500;
+    }
+
+    /* Tag Input Wrapper */
+    .tag-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      transition: border-color 0.15s ease;
+    }
+
+    .tag-input-wrapper:focus-within {
+      border-color: var(--primary);
+    }
+
+    .tag-prefix {
+      padding-left: 14px;
+      font-family: var(--font-mono);
+      font-size: 20px;
+      font-weight: 800;
+      color: #10b981;
+      user-select: none;
+    }
+
+    .tag-input {
+      flex: 1;
+      height: 48px;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 0 10px;
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--ink);
+      min-width: 0;
+    }
+
+    .tag-status-indicator {
+      display: none;
+      align-items: center;
+      margin-right: 10px;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+      white-space: nowrap;
+    }
+
+    .tag-status-indicator.available {
+      display: flex;
+      background: var(--success-soft);
+      color: var(--success-text);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .tag-status-indicator.taken {
+      display: flex;
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .tag-status-indicator.checking {
+      display: flex;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      padding: 4px 6px;
+    }
+
+    .status-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--line);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spinAnim 0.65s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spinAnim {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .address-input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      transition: border-color 0.15s ease;
+    }
+
+    .address-input-wrapper:focus-within {
+      border-color: var(--primary);
+    }
+
+    .address-input {
+      flex: 1;
+      height: 42px;
+      background: transparent;
+      border: none;
+      outline: none;
+      padding: 0 12px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink);
+      min-width: 0;
+    }
+
+    .address-quick-pill {
+      margin-right: 8px;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .address-quick-pill:hover {
+      background: var(--bg-subtle);
+      color: var(--primary);
+    }
+
+    .claim-specs-deck {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .spec-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+    }
+
+    .spec-label {
+      color: var(--ink-muted);
+      font-weight: 600;
+    }
+
+    .spec-value {
+      font-weight: 700;
+      color: var(--ink);
+      font-family: var(--font-mono);
+    }
+
+    .btn-claim-primary {
+      width: 100%;
+      height: 52px;
+      background: var(--primary);
+      border: none;
+      border-radius: 20px;
+      color: #ffffff;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-claim-primary:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    .btn-claim-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+
+
+    /* Carousel */
+    .reg-carousel-container {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .reg-carousel-track {
+      display: flex;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 100%;
+    }
+
+    .reg-slide {
+      flex: 0 0 100%;
+      display: flex;
+      gap: 6px;
+    }
+
+    .reg-pill-item {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      padding: 5px 8px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-width: 0;
+    }
+
+    .reg-pill-item:hover {
+      background: var(--bg-surface);
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .reg-dicebear-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      object-fit: cover;
+    }
+
+    .reg-handle-tag {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .reg-net-mini {
+      font-size: 8.5px;
+      font-weight: 700;
+      padding: 1px 4px;
+      border-radius: 9999px;
+      line-height: 1.2;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .reg-net-mini.net-base {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      padding: 0;
+    }
+
+    [data-theme="dark"] .reg-net-mini.net-base {
+      background: transparent;
+      border: none;
+    }
+
+    .reg-net-mini.net-901 {
+      background: rgba(16, 185, 129, 0.08);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    [data-theme="dark"] .reg-net-mini.net-901 {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    .reg-dots-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .reg-dot-btn {
+      width: 5px;
+      height: 5px;
+      border-radius: 9999px;
+      background: var(--line);
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      transition: width 0.25s ease, background 0.25s ease;
+    }
+
+    .reg-dot-btn.active {
+      width: 14px;
+      background: #0052ff;
+    }
+
+    /* ============================================================= */
+    /* Sovereign Identity Card Sidebar on the Page (RIGHT COLUMN)    */
+    /* ============================================================= */
+    .claim-page-sidebar {
+      width: 320px;
+      flex-shrink: 0;
+      background: #ffffff;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    [data-theme="dark"] .claim-page-sidebar {
+      background: #0a0a0a;
+      border-color: #222222;
+    }
+
+    .claim-sidebar-badge {
+      display: inline-flex;
+      align-self: flex-start;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(0, 82, 255, 0.08);
+      border: 1px solid rgba(0, 82, 255, 0.2);
+      padding: 3px 8px;
+      border-radius: 9999px;
+      color: var(--primary);
+    }
+
+    [data-theme="dark"] .claim-sidebar-badge {
+      background: rgba(0, 82, 255, 0.15);
+      border-color: rgba(0, 82, 255, 0.35);
+    }
+
+    .claim-sidebar-title {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+      line-height: 1.25;
+      margin: 0;
+    }
+
+    /* Card Mode Switcher & Multi-Card System Styles */
+    .card-mode-tabs {
+      display: flex;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 3px;
+      gap: 3px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      margin-bottom: 2px;
+    }
+
+    .card-mode-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .card-mode-tab {
+      flex: 1;
+      padding: 6px 7px;
+      font-size: 10.5px;
+      font-weight: 700;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--ink-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .card-mode-tab:hover {
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .card-mode-tab.active {
+      background: var(--bg-card);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    [data-theme="dark"] .card-mode-tab.active {
+      background: #1a1a1a;
+      color: #ffffff;
+      border-color: #333333;
+    }
+
+    .claim-sidebar-card-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card-view {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      animation: cardFadeIn 0.2s ease forwards;
+    }
+
+    .card-view.active {
+      display: flex;
+    }
+
+    @keyframes cardFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Live Onchain Identity Preview Card Component */
+    .live-identity-card {
+      width: 100%;
+      aspect-ratio: 1 / 1.05;
+      min-height: 280px;
+      background: var(--card-bg, #bbf246);
+      border-radius: 26px;
+      padding: 20px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      transition: background 0.35s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+      user-select: none;
+    }
+
+    .live-identity-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .live-identity-card::before {
+      content: '';
+      position: absolute;
+      top: -25%;
+      left: -25%;
+      width: 150%;
+      height: 150%;
+      background-image: repeating-linear-gradient(-35deg,
+          rgba(0, 0, 0, 0.038) 0px,
+          rgba(0, 0, 0, 0.038) 36px,
+          transparent 36px,
+          transparent 72px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Signature Diagonal ₦ Monogram Watermark */
+    .card-monogram-watermark {
+      position: absolute;
+      right: -25px;
+      top: -15px;
+      font-size: 260px;
+      font-weight: 900;
+      color: #000000;
+      opacity: 0.08;
+      pointer-events: none;
+      user-select: none;
+      line-height: 1;
+      transform: rotate(-15deg);
+      z-index: 1;
+      font-family: var(--font-sans);
+      transition: color 0.3s ease, opacity 0.3s ease;
+    }
+
+    .live-identity-card.contrast-white .card-monogram-watermark,
+    .sovereign-alt-card.contrast-white .card-monogram-watermark {
+      color: #ffffff;
+      opacity: 0.14;
+    }
+
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 2;
+    }
+
+    .card-logo-symbol {
+      font-family: var(--font-sans);
+      font-size: 34px;
+      font-weight: 900;
+      color: #000000;
+      line-height: 1;
+      letter-spacing: -0.05em;
+      transition: color 0.25s ease;
+    }
+
+    .card-net-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.12);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #000000;
+      transition: all 0.25s ease;
+    }
+
+    .card-net-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 900;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .card-net-dot.net-dot-base {
+      background: #0052ff;
+    }
+
+    .card-net-dot.net-dot-base::after {
+      content: '—';
+      font-size: 7px;
+      line-height: 1;
+    }
+
+    .card-net-dot.net-dot-901 {
+      background: #10b981;
+    }
+
+    .card-net-dot.net-dot-901::after {
+      content: '₦';
+      font-size: 8px;
+      line-height: 1;
+    }
+
+    .card-avatar-stage {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+      margin: 8px 0;
+    }
+
+    .card-avatar-svg-container {
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: none;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .card-avatar-svg-container svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      filter: none;
+      stroke: none;
+    }
+
+    .card-avatar-svg-container svg * {
+      stroke: none;
+    }
+
+    .card-avatar-crop {
+      width: 136px;
+      height: 136px;
+      background-image: url('sovereign-card.jpg');
+      background-size: 285px auto;
+      background-position: center 36.5%;
+      background-repeat: no-repeat;
+      border-radius: 20px;
+      filter: none;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .card-avatar-img {
+      width: 136px;
+      height: 136px;
+      object-fit: contain;
+      filter: none;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .card-avatar-loader {
+      width: 136px;
+      height: 136px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(4px);
+      border: 1px dashed rgba(0, 0, 0, 0.2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .card-avatar-spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(0, 0, 0, 0.15);
+      border-top-color: #000000;
+      border-radius: 50%;
+      animation: spinAvatarLoader 0.7s linear infinite;
+    }
+
+    @keyframes spinAvatarLoader {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .card-avatar-loading-text {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: rgba(0, 0, 0, 0.6);
+      letter-spacing: 0.02em;
+    }
+
+    /* High-contrast white text overrides for Red / Dark cards */
+    .live-identity-card.contrast-white .card-logo-symbol,
+    .live-identity-card.contrast-white .card-handle-title,
+    .live-identity-card.contrast-white .card-status-subtitle,
+    .sovereign-alt-card.contrast-white .card-logo-symbol,
+    .sovereign-alt-card.contrast-white .card-handle-title,
+    .sovereign-alt-card.contrast-white .card-status-subtitle {
+      color: #ffffff !important;
+    }
+
+    .live-identity-card.contrast-white .card-verified-badge,
+    .sovereign-alt-card.contrast-white .card-verified-badge {
+      background: transparent !important;
+    }
+
+    .live-identity-card.contrast-white .card-net-pill,
+    .sovereign-alt-card.contrast-white .card-net-pill {
+      background: rgba(0, 0, 0, 0.32) !important;
+      color: #ffffff !important;
+    }
+
+    .live-identity-card.contrast-white .card-avatar-spinner {
+      border-color: rgba(255, 255, 255, 0.2);
+      border-top-color: #ffffff;
+    }
+
+    .live-identity-card.contrast-white .card-avatar-loading-text {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    letter-spacing: 0.02em;
+    }
+
+    .card-footer-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      position: relative;
+      z-index: 2;
+      gap: 8px;
+    }
+
+    .card-identity-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .card-handle-title {
+      font-family: var(--font-sans);
+      font-size: 26px;
+      font-weight: 900;
+      color: #000000;
+      line-height: 1.1;
+      letter-spacing: -0.035em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-status-subtitle {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #1a1a1a;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #16a34a;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .card-verified-badge {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: transparent;
+      border: none;
+    }
+
+    .card-verified-badge img {
+      width: 32px;
+      height: 32px;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.22));
+    }
+
+    .card-verified-badge svg {
+      display: none;
+    }
+
+    /* Pulse Celebration */
+    @keyframes cardClaimCelebration {
+      0% {
+        transform: scale(1);
+      }
+
+      25% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 25px rgba(158, 254, 0, 0.7));
+      }
+
+      50% {
+        transform: scale(0.98);
+      }
+
+      75% {
+        transform: scale(1.02);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .live-identity-card.claimed-pulse {
+      animation: cardClaimCelebration 0.9s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .live-identity-card.claimed-pulse .card-verified-badge {
+      transform: scale(1.18) rotate(360deg);
+    }
+
+    /* Common Card Styling for Share, Referral, QR */
+    .sovereign-alt-card {
+      width: 100%;
+      aspect-ratio: 1 / 1.05;
+      min-height: 280px;
+      background: var(--card-bg, #bbf246);
+      border-radius: 26px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      user-select: none;
+      color: #000000;
+      transition: background 0.35s ease;
+    }
+
+    .sovereign-alt-card::before {
+      content: '';
+      position: absolute;
+      top: -25%;
+      left: -25%;
+      width: 150%;
+      height: 150%;
+      background-image: repeating-linear-gradient(-35deg,
+          rgba(0, 0, 0, 0.038) 0px,
+          rgba(0, 0, 0, 0.038) 36px,
+          transparent 36px,
+          transparent 72px);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Share Card Elements */
+    .share-actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .share-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 36px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+      padding: 0 8px;
+      white-space: nowrap;
+    }
+
+    .share-btn-x {
+      background: #000000;
+      color: #ffffff;
+      border-color: #222222;
+    }
+
+    .share-btn-x:hover {
+      background: #1a1a1a;
+      transform: translateY(-1px);
+    }
+
+    .share-btn-tg {
+      background: #229ed9;
+      color: #ffffff;
+      border-color: #1c88bd;
+    }
+
+    .share-btn-tg:hover {
+      background: #1f8ec4;
+      transform: translateY(-1px);
+    }
+
+    .share-btn-wa {
+      background: #25d366;
+      color: #ffffff;
+      border-color: #20ba5a;
+    }
+
+    .share-btn-wa:hover {
+      background: #1ebc59;
+      transform: translateY(-1px);
+    }
+
+    .share-btn-copy {
+      background: var(--bg-card);
+      color: var(--ink);
+      border-color: var(--line);
+    }
+
+    .share-btn-copy:hover {
+      background: var(--bg-subtle);
+      color: var(--primary);
+    }
+
+    .action-row-btn {
+      width: 100%;
+      height: 38px;
+      border-radius: 12px;
+      font-size: 11.5px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      color: var(--ink);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .action-row-btn:hover {
+      background: var(--bg-surface);
+      border-color: var(--primary-border);
+      color: var(--primary);
+    }
+
+    .action-row-btn.primary-accent {
+      background: #000000;
+      color: #9dfe00;
+      border-color: #222222;
+    }
+
+    .action-row-btn.primary-accent:hover {
+      background: #111111;
+    }
+
+    /* Referral Card Elements */
+    .referral-link-box {
+      display: flex;
+      align-items: center;
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 12px;
+      padding: 4px 6px;
+      gap: 6px;
+      margin: 8px 0 6px;
+    }
+
+    .referral-url-text {
+      flex: 1;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      color: #000000;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding-left: 4px;
+    }
+
+    .referral-copy-chip {
+      padding: 5px 9px;
+      border-radius: 8px;
+      background: #000000;
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .referral-copy-chip:hover {
+      background: #222222;
+      color: #9dfe00;
+    }
+
+    .referral-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+      margin-top: 6px;
+    }
+
+    .referral-metric-tile {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      padding: 8px 5px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .metric-number {
+      font-size: 13.5px;
+      font-weight: 900;
+      color: #000000;
+      font-family: var(--font-mono);
+    }
+
+    .metric-caption {
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #333333;
+      text-transform: uppercase;
+    }
+
+    /* QR Code Card Elements */
+    .qr-card-center-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 8px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .qr-canvas-holder {
+      width: 164px;
+      height: 164px;
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .qr-image-el {
+      width: 148px;
+      height: 148px;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+
+    .qr-center-symbol-badge {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      background: #000000;
+      color: #9dfe00;
+      border-radius: 50%;
+      border: 2px solid #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 900;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    }
+
+    .qr-payload-banner {
+      margin-top: 6px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #1a1a1a;
+      background: rgba(255, 255, 255, 0.65);
+      padding: 3px 8px;
+      border-radius: 6px;
+      max-width: 92%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+    }
+
+    /* Meta Tag Card Elements */
+    .metatag-subtabs {
+      display: flex;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 2px;
+      gap: 2px;
+      margin-bottom: 6px;
+    }
+
+    .metatag-subtab {
+      flex: 1;
+      padding: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--ink-muted);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+
+    .metatag-subtab.active {
+      background: var(--bg-card);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    [data-theme="dark"] .metatag-subtab.active {
+      background: #1c1c1c;
+      color: #ffffff;
+      border-color: #333333;
+    }
+
+    .social-preview-simulator {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sim-img-wrap {
+      width: 100%;
+      height: 110px;
+      overflow: hidden;
+      position: relative;
+      background: #101010;
+    }
+
+    .sim-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .sim-content-box {
+      padding: 9px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .sim-domain {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .sim-title {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1.25;
+    }
+
+    .sim-desc {
+      font-size: 10px;
+      color: var(--ink-muted);
+      line-height: 1.35;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .meta-snippet-deck {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 9px;
+      position: relative;
+      margin-top: 6px;
+    }
+
+    .meta-code-pre {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      color: #e6edf3;
+      line-height: 1.45;
+      max-height: 95px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .claim-sidebar-caption {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      text-align: center;
+      line-height: 1.35;
+    }
+
+    .claim-sidebar-desc {
+      font-size: 12px;
+      color: var(--ink-muted);
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .claim-sidebar-pills {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .claim-sidebar-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    [data-theme="dark"] .claim-sidebar-pill {
+      background: #141414;
+      border-color: #222222;
+    }
+
+    .claim-sidebar-pill .pill-dot {
+      font-size: 11px;
+    }
+
+    /* Floating Toast Notification (Sleek Compact Pill) */
+    .onchain-toast {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      z-index: 100000;
+      max-width: 360px;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      border-radius: 9999px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+      animation: toastSlideInDesktop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      pointer-events: auto;
+    }
+
+    [data-theme="light"] .onchain-toast {
+      background: rgba(255, 255, 255, 0.96);
+      border-color: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+    }
+
+    @keyframes toastSlideInDesktop {
+      from { transform: translateY(-12px) scale(0.96); opacity: 0; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    @keyframes toastSlideOutDesktop {
+      from { transform: translateY(0) scale(1); opacity: 1; }
+      to { transform: translateY(-12px) scale(0.96); opacity: 0; }
+    }
+
+    .onchain-toast.toast-hiding {
+      animation: toastSlideOutDesktop 0.2s ease forwards;
+    }
+
+    .toast-body {
+      padding: 7px 14px 7px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast-icon {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #10b981;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 900;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .toast-details {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12.5px;
+    }
+
+    .toast-title {
+      font-weight: 800;
+      color: #f8fafc;
+    }
+
+    [data-theme="light"] .toast-title {
+      color: #0f172a;
+    }
+
+    .toast-message {
+      color: #94a3b8;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    [data-theme="light"] .toast-message {
+      color: #64748b;
+    }
+
+    .toast-close-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      margin-left: 4px;
+      padding: 0;
+      transition: color 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .toast-close-btn:hover {
+      color: var(--ink);
+    }
+
+    /* Mobile: Sleek centered floating pill */
+    @media (max-width: 768px) {
+      .onchain-toast {
+        top: 14px;
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: auto;
+        max-width: calc(100vw - 32px);
+        animation: toastDropInMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      @keyframes toastDropInMobile {
+        from { transform: translate(-50%, -16px) scale(0.96); opacity: 0; }
+        to { transform: translate(-50%, 0) scale(1); opacity: 1; }
+      }
+
+      @keyframes toastDropOutMobile {
+        from { transform: translate(-50%, 0) scale(1); opacity: 1; }
+        to { transform: translate(-50%, -16px) scale(0.96); opacity: 0; }
+      }
+
+      .onchain-toast.toast-hiding {
+        animation: toastDropOutMobile 0.2s ease forwards;
+      }
+    }
+
+    /* ═════════════════════════════════════════════════════════════════ */
+    /* CLAIM SUCCESS CELEBRATION MODAL (REDESIGNED UX & FLOW)           */
+    /* ═════════════════════════════════════════════════════════════════ */
+    .success-celebration-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 15, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 200000;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .success-celebration-overlay.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .success-modal-card {
+      width: 100%;
+      max-width: 440px;
+      max-height: 94vh;
+      background: linear-gradient(180deg, #181528 0%, #0d0c15 100%);
+      border: 1px solid rgba(192, 132, 252, 0.28);
+      border-radius: 36px 36px 0 0;
+      box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.8), 0 0 50px rgba(122, 69, 229, 0.35);
+      padding: 16px 20px 26px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+      text-align: center;
+      color: #ffffff;
+      transform: translateY(100%);
+      transition: transform 0.45s cubic-bezier(0.19, 1, 0.22, 1);
+      position: relative;
+    }
+    .success-celebration-overlay.active .success-modal-card {
+      transform: translateY(0);
+    }
+    @media (min-width: 600px) {
+      .success-celebration-overlay {
+        align-items: center;
+      }
+      .success-modal-card {
+        border-radius: 36px;
+        transform: translateY(30px) scale(0.96);
+      }
+      .success-celebration-overlay.active .success-modal-card {
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-grab-handle {
+      width: 42px;
+      height: 4.5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.24);
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
+
+    .success-badge-overline {
+      font-size: 11px;
+      font-weight: 700;
+      color: #c084fc;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      margin-bottom: 2px;
+    }
+
+    .success-modal-headline {
+      font-size: 25px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 10px;
+      letter-spacing: -0.02em;
+    }
+
+    /* 3D Holographic Orbiting Badge */
+    .holo-badge-container {
+      position: relative;
+      width: 120px;
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+    }
+    .holo-orbit-ring {
+      position: absolute;
+      width: 130px;
+      height: 65px;
+      transform: rotate(-14deg);
+      pointer-events: none;
+      animation: orbitPulse 3s ease-in-out infinite alternate;
+    }
+    @keyframes orbitPulse {
+      0% { transform: rotate(-14deg) scale(0.96); opacity: 0.75; }
+      100% { transform: rotate(-14deg) scale(1.04); opacity: 1; }
+    }
+    .orbit-star {
+      position: absolute;
+      color: #c084fc;
+      font-size: 14px;
+      animation: starTwinkle 2s ease-in-out infinite alternate;
+    }
+    .star-orbit-1 {
+      top: 12px;
+      left: 10px;
+    }
+    .star-orbit-2 {
+      bottom: 12px;
+      right: 10px;
+      animation-delay: 1s;
+    }
+    @keyframes starTwinkle {
+      0% { transform: scale(0.8) rotate(0deg); opacity: 0.6; }
+      100% { transform: scale(1.2) rotate(15deg); opacity: 1; filter: drop-shadow(0 0 6px #c084fc); }
+    }
+
+    .holo-star-core {
+      width: 62px;
+      height: 62px;
+      background: radial-gradient(circle at 30% 30%, #a855f7, #6b21a8 70%, #3b0764 100%);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(168, 85, 247, 0.6), inset 0 0 12px rgba(255, 255, 255, 0.4);
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      animation: floatBadge 3.6s ease-in-out infinite;
+      z-index: 2;
+    }
+    @keyframes floatBadge {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-5px) rotate(2deg); }
+    }
+    .holo-inner-glyph {
+      font-size: 30px;
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Points Earned Counter Stage */
+    .points-reward-stage {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .points-counter-val {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffd700;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.45);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .points-counter-val.pop {
+      transform: scale(1.15);
+    }
+    .points-reward-sub {
+      font-size: 12px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-top: 1px;
+    }
+
+    /* Identity Status Pill */
+    .identity-status-pill {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 18px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      text-align: left;
+    }
+    .status-pill-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(122, 69, 229, 0.25);
+      border: 1px solid rgba(192, 132, 252, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 800;
+      color: #c084fc;
+      flex-shrink: 0;
+    }
+    .status-pill-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .status-pill-info strong {
+      display: block;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .status-pill-info span {
+      display: block;
+      font-size: 11px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .status-pill-badge {
+      font-size: 11px;
+      font-weight: 700;
+      color: #34d399;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 3px 8px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    /* What You Can Do With Your Agent Tag Section */
+    .agent-powers-section {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 18px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    .agent-powers-header {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #a1a1aa;
+      margin-bottom: 8px;
+    }
+    .agent-powers-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .agent-power-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .power-icon {
+      font-size: 15px;
+      line-height: 1.3;
+      flex-shrink: 0;
+    }
+    .power-text strong {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .power-text span {
+      display: block;
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.3;
+    }
+
+    /* Dual Action Buttons Row */
+    .success-actions-row {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+      margin-top: 2px;
+    }
+    .btn-share-reward {
+      flex: 1.3;
+      height: 48px;
+      background: #7a45e5;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: 0 8px 24px rgba(122, 69, 229, 0.4);
+      transition: all 0.2s ease;
+    }
+    .btn-share-reward:hover {
+      background: #6835d0;
+      transform: translateY(-1px);
+    }
+    .btn-share-reward:active {
+      transform: scale(0.97);
+    }
+    .btn-done-hub {
+      flex: 0.8;
+      height: 48px;
+      background: #f1f5f9;
+      color: #0f172a;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .btn-done-hub:hover {
+      background: #e2e8f0;
+      transform: translateY(-1px);
+    }
+    .btn-done-hub:active {
+      transform: scale(0.97);
+    }
+
+    /* Share Notification Toast */
+    .share-toast {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: #09090b;
+      color: #ffffff;
+      border: 1px solid #7a45e5;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 210;
+      white-space: nowrap;
+    }
+    .share-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 880px) {
+      .claim-page-layout {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .claim-page-sidebar {
+        width: 100%;
+        max-width: 480px;
+        order: 2;
+      }
+
+      .claim-page-main {
+        width: 100%;
+        max-width: 480px;
+        order: 1;
+      }
+    }
+
+    /* Mobile Viewport: Claim Section Full Screen (Scroll up to view preview card) */
+    @media (max-width: 640px) {
+      .page-content-scroll {
+        padding: 0 0 40px 0 !important;
+      }
+
+      .claim-page-layout {
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 0 !important;
+        margin: 0 !important;
+      }
+
+      .claim-page-main {
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 0 !important;
+      }
+
+      .claim-console-card {
+        min-height: calc(100dvh - 44px) !important;
+        min-height: calc(100vh - 44px) !important;
+        border: none !important;
+        border-radius: 0 !important;
+        border-bottom: 1px solid var(--line) !important;
+        box-shadow: none !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        padding: 16px 18px 24px !important;
+        background: var(--bg-page) !important;
+        box-sizing: border-box !important;
+      }
+
+      .claim-top-nav {
+        margin-bottom: auto !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+      }
+
+      .claim-top-tabs {
+        margin-left: auto !important;
+        margin-right: 0 !important;
+      }
+
+      .claim-hero-stage {
+        margin: auto 0 !important;
+        padding: 24px 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        overflow: hidden !important;
+      }
+
+      .claim-stage-subtitle {
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        margin-bottom: 4px !important;
+      }
+
+      .claim-live-tag-display {
+        font-size: clamp(56px, 16vw, 88px);
+        margin: 6px 0 16px !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
+      .claim-pill-input-box {
+        margin-bottom: 12px !important;
+        height: 52px !important;
+      }
+
+      .claim-pill-button {
+        margin-bottom: 6px !important;
+        height: 52px !important;
+      }
+
+      /* Recent Registrations Carousel below full screen console */
+      .reg-carousel-container {
+        margin: 16px 16px 8px !important;
+      }
+
+      .reg-dots-nav {
+        margin-bottom: 24px !important;
+      }
+
+      /* Sovereign Identity Card & Value Pitch below */
+      .claim-page-sidebar {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 24px 16px 40px !important;
+        border-top: 1px solid var(--line) !important;
+        background: var(--bg-card) !important;
+        box-sizing: border-box !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-layout">
+    <!-- Left Sidebar Navigation -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a class="brand-logo" href="/agent">
+          <div class="brand-mark">
+            <img src="/hub/nairatag-icon.png" alt="₦" class="brand-mark-img" />
+          </div>
+          <span class="brand-text">NairaTag</span>
+        </a>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" type="button" title="Collapse sidebar"
+          aria-label="Toggle sidebar">
+          <span id="sidebar-toggle-icon">◨</span>
+        </button>
+      </div>
+
+      <div class="sidebar-scroll">
+        <!-- Protocol Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Protocol</div>
+          <nav class="sidebar-menu" aria-label="Protocol Navigation">
+            <a class="sidebar-menu-item active" id="menu-claim" href="/claim" title="Claim ₦Tag">
+              <span class="menu-icon">✦</span>
+              <span class="menu-label">Claim</span>
+              <span class="menu-badge badge-count-claim">1</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-agent" href="/agent" title="Open AI Chat">
+              <span class="menu-icon">💬</span>
+              <span class="menu-label">Chat</span>
+              <span class="menu-badge badge-count-chat">2</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-tasks" href="/tasks" title="Agent Tasks &amp; Bounties">
+              <span class="menu-icon">🎯</span>
+              <span class="menu-label">Tasks</span>
+              <span class="menu-badge badge-count-tasks">5</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-explorer" href="/explorer" title="Identity Explorer">
+              <span class="menu-icon">🌐</span>
+              <span class="menu-label">Explorer</span>
+              
+            </a>
+            <a class="sidebar-menu-item" id="menu-swap" href="/swap" title="Swap Assets">
+              <span class="menu-icon">⇄</span>
+              <span class="menu-label">Swap</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-earnings" href="/earnings" title="Agent Earnings Leaderboard">
+              <span class="menu-icon">🏆</span>
+              <span class="menu-label">Earnings</span>
+              
+            </a>
+          </nav>
+        </div>
+
+        <!-- Knowledge & Info Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Knowledge &amp; Info</div>
+          <nav class="sidebar-menu" aria-label="Knowledge and Documentation">
+            <a class="sidebar-menu-item" id="menu-about" href="/about" title="About ₦Tag Network">
+              <span class="menu-icon">ℹ</span>
+              <span class="menu-label">About</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-docs" href="/docs" title="Developer Docs &amp; SDK">
+              <span class="menu-icon">📖</span>
+              <span class="menu-label">Docs</span>
+              
+            </a>
+            <a class="sidebar-menu-item" id="menu-faq" href="/faq" title="Frequently Asked Questions">
+              <span class="menu-icon">❓</span>
+              <span class="menu-label">FAQ</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Sidebar Footer: Theme Toggle -->
+      <div class="sidebar-footer">
+        <button class="sidebar-menu-item" id="theme-toggle-btn" type="button" title="Toggle Theme" aria-label="Toggle dark mode" style="justify-content:flex-start;">
+          <span class="menu-icon" id="theme-toggle-icon">🌙</span>
+          <span class="menu-label">Dark Mode</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Viewport Container -->
+    <div class="main-viewport">
+      <!-- Top Navigation Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="header-sidebar-btn" id="header-sidebar-btn" type="button" title="Open menu"
+            aria-label="Open menu" style="display:none;">☰</button>
+        </div>
+        <div class="header-right">
+
+          <button type="button" class="header-auth-btn" id="header-auth-btn"
+            onclick="window.NairaTagSupabase.openAuthModal('signin')" title="Sign In or Sign Up">
+            <span id="auth-btn-icon">👤</span>
+            <span id="auth-btn-text">Sign In</span>
+          </button>
+          <div style="position:relative;">
+            <a href="/wallet" class="header-btn" id="header-wallet-btn" title="Open Wallet Dashboard"
+              style="font-family:var(--font-mono); font-weight:700; text-decoration:none;">
+              <span>👛</span>
+              <span id="header-wallet-balance">0.00 cNGN</span>
+            </a>
+            <!-- Wallet Balance Dropdown Popover -->
+            <div class="header-wallet-popover" id="header-wallet-popover" hidden>
+              <div class="popover-header">
+                <div class="popover-user-info">
+                  <div class="popover-tag" id="popover-active-tag">₦TAG</div>
+                  <div class="popover-addr" id="popover-active-addr">Not connected</div>
+                </div>
+                <div class="popover-status-badge">Active</div>
+              </div>
+              <div class="popover-balance-section">
+                <div class="popover-balance-label">Total Balance</div>
+                <div class="popover-balance-val" id="popover-total-balance">₦ 0.00</div>
+              </div>
+              <div class="popover-actions">
+                <a href="/wallet" class="popover-btn primary" id="popover-open-wallet">Wallet Dashboard</a>
+                <button type="button" class="popover-btn" id="popover-disconnect-btn">Disconnect</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content-scroll">
+        <div class="claim-page-layout">
+          <!-- Left Column: Uniswap-width 480px Main Claim Console & Registrations -->
+          <main class="claim-page-main">
+            <div class="claim-console-card">
+              <!-- Active Claimed Tag Banner (Persistent Profile Display) -->
+              <div id="active-claimed-banner" class="active-claimed-banner" style="display:none;">
+                <div class="active-claimed-info">
+                  <span class="active-claimed-icon">✨</span>
+                  <div>
+                    <div class="active-claimed-label">You own <strong id="active-claimed-tag-name">₦...</strong></div>
+                    <div class="active-claimed-sub" id="active-claimed-address">0x... · Celo Mainnet</div>
+                  </div>
+                </div>
+                <div class="active-claimed-actions">
+                  <a href="/agent" class="btn-claimed-action" title="Open Chat">Chat 💬</a>
+                  <a href="#" id="btn-view-claimed-profile" class="btn-claimed-action"
+                    title="View Sovereign Profile">Profile ↗</a>
+                </div>
+              </div>
+
+              <!-- Top Navigation: Back button -->
+              <div class="claim-top-nav">
+                <button type="button" class="claim-back-button"
+                  onclick="if(window.history.length > 1){window.history.back();}else{window.location.href='/';}"
+                  title="Back" aria-label="Go back">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Center Stage: Live Type Tag Searching Display -->
+              <div class="claim-hero-stage">
+                <div class="claim-stage-subtitle" id="claim-stage-subtitle">Claim your NairaTag</div>
+                <div class="claim-live-tag-display" id="claim-live-tag-display"
+                  onclick="document.getElementById('handle-input').focus()" title="Click to search / edit tag">
+                  <span class="live-tag-prefix">₦</span><span id="claim-live-tag-text">Tag</span>
+                </div>
+              </div>
+
+              <!-- Pill Input Box -->
+              <div class="claim-pill-input-box">
+                <input type="text" id="handle-input" class="claim-pill-input" placeholder="Enter your NairaTag"
+                  autocomplete="off" spellcheck="false" aria-label="Enter your NairaTag" />
+                <div id="status-pill" class="tag-status-indicator">Available</div>
+              </div>
+
+              <!-- Pill Claim Button -->
+              <button type="button" class="claim-pill-button" id="btn-submit-claim" onclick="executeClaim()">
+                <span id="btn-claim-text">Claim</span>
+              </button>
+
+              <!-- Post-Claim Success Actions Panel -->
+              <div id="claim-success-panel" class="claim-success-panel" style="display:none;">
+                <div class="claim-success-header">
+                  <span class="claim-success-icon">🎉</span>
+                  <h3 class="claim-success-title" id="success-tag-title">₦Tag Claimed!</h3>
+                </div>
+                <div class="claim-success-actions">
+                  <a href="/agent" class="claim-action-btn primary" id="btn-goto-agent">
+                    <span>💬 Open Agent</span>
+                  </a>
+                  <a href="#" class="claim-action-btn" id="btn-goto-profile">
+                    <span>👤 View Profile</span>
+                  </a>
+                  <a href="/wallet" class="claim-action-btn" id="btn-goto-wallet">
+                    <span>👛 Wallet</span>
+                  </a>
+
+                </div>
+              </div>
+
+              <!-- Preserved hidden owner-address-input for Web3 transactions -->
+              <input type="hidden" id="owner-address-input" value="" />
+            </div>
+
+            <!-- Recent Registrations Animated Carousel (3 side-by-side pills per slide) -->
+            <div class="form-group" style="margin-top: 4px;">
+              <div class="reg-carousel-container" id="reg-carousel-container">
+                <div class="reg-carousel-track" id="reg-carousel-track">
+                  <!-- Slide 1: ₦segun, ₦dev, ₦mama (Celo Mainnet) -->
+                  <div class="reg-slide">
+                    <div class="reg-pill-item"
+                      onclick="selectTag('segun')"
+                      title="₦segun · Celo Mainnet">
+                      <img class="reg-dicebear-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=segun"
+                        alt="₦segun"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%2310b981\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'central\' text-anchor=\'middle\' fill=\'white\' font-size=\'11\' font-weight=\'bold\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">₦segun</span>
+                      <span class="reg-net-mini net-celo">Celo</span>
+                    </div>
+
+                    <div class="reg-pill-item" onclick="selectTag('dev')"
+                      title="₦dev · Celo Mainnet">
+                      <img class="reg-dicebear-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=dev"
+                        alt="₦dev"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%2310b981\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'central\' text-anchor=\'middle\' fill=\'white\' font-size=\'11\' font-weight=\'bold\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">₦dev</span>
+                      <span class="reg-net-mini net-celo">Celo</span>
+                    </div>
+
+                    <div class="reg-pill-item" onclick="selectTag('mama')"
+                      title="₦mama · Celo Mainnet">
+                      <img class="reg-dicebear-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=mama"
+                        alt="₦mama"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%2310b981\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'central\' text-anchor=\'middle\' fill=\'white\' font-size=\'11\' font-weight=\'bold\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">₦mama</span>
+                      <span class="reg-net-mini net-celo">Celo</span>
+                    </div>
+                  </div>
+
+                  <!-- Slide 2: ₦chowdeck, ₦shop, ₦travel (Celo Mainnet) -->
+                  <div class="reg-slide">
+                    <div class="reg-pill-item"
+                      onclick="selectTag('chowdeck')"
+                      title="₦chowdeck · Celo Mainnet">
+                      <img class="reg-dicebear-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=chowdeck"
+                        alt="₦chowdeck"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%2310b981\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'central\' text-anchor=\'middle\' fill=\'white\' font-size=\'11\' font-weight=\'bold\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">₦chowdeck</span>
+                      <span class="reg-net-mini net-celo">Celo</span>
+                    </div>
+
+                    <div class="reg-pill-item" onclick="selectTag('shop')"
+                      title="₦shop · Celo Mainnet">
+                      <img class="reg-dicebear-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=shop"
+                        alt="₦shop"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%2310b981\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'central\' text-anchor=\'middle\' fill=\'white\' font-size=\'11\' font-weight=\'bold\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">₦shop</span>
+                      <span class="reg-net-mini net-celo">Celo</span>
+                    </div>
+
+                    <div class="reg-pill-item"
+                      onclick="selectTag('travel')"
+                      title="₦travel · Celo Mainnet">
+                      <img class="reg-dicebear-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=travel"
+                        alt="₦travel"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%2310b981\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'central\' text-anchor=\'middle\' fill=\'white\' font-size=\'11\' font-weight=\'bold\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">₦travel</span>
+                      <span class="reg-net-mini net-celo">Celo</span>
+                    </div>
+                  </div>
+
+                  <!-- Slide 3: ₦designer, ₦researcher, ₦bayo -->
+                  <div class="reg-slide">
+                    <div class="reg-pill-item"
+                      onclick="selectTag('designer')"
+                      title="₦designer · Celo Mainnet">
+                      <img class="reg-dicebear-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=designer"
+                        alt="₦designer"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%2310b981\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'central\' text-anchor=\'middle\' fill=\'white\' font-size=\'11\' font-weight=\'bold\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">₦designer</span>
+                      <span class="reg-net-mini net-celo">Celo</span>
+                    </div>
+
+                    <div class="reg-pill-item"
+                      onclick="selectTag('researcher')"
+                      title="₦researcher · Celo Mainnet">
+                      <img class="reg-dicebear-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=researcher"
+                        alt="₦researcher"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%2310b981\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'central\' text-anchor=\'middle\' fill=\'white\' font-size=\'11\' font-weight=\'bold\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">₦researcher</span>
+                      <span class="reg-net-mini net-celo">Celo</span>
+                    </div>
+
+                    <div class="reg-pill-item" onclick="selectTag('bayo')"
+                      title="₦bayo · Celo Mainnet">
+                      <img class="reg-dicebear-avatar" src="https://api.dicebear.com/7.x/identicon/svg?seed=bayo"
+                        alt="₦bayo"
+                        onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'12\' fill=\'%2310b981\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'central\' text-anchor=\'middle\' fill=\'white\' font-size=\'11\' font-weight=\'bold\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">₦bayo</span>
+                      <span class="reg-net-mini net-celo">Celo</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Slide Pagination Dots -->
+              <div class="reg-dots-nav" id="reg-dots-nav">
+                <button type="button" class="reg-dot-btn active" onclick="goToRegSlide(0)" title="Slide 1"></button>
+                <button type="button" class="reg-dot-btn" onclick="goToRegSlide(1)" title="Slide 2"></button>
+                <button type="button" class="reg-dot-btn" onclick="goToRegSlide(2)" title="Slide 3"></button>
+              </div>
+            </div>
+          </main>
+
+          <!-- Right Sidebar on the Page: Sovereign Identity Card & Value Pitch (RIGHT) -->
+          <aside class="claim-page-sidebar">
+
+            <!-- Card Mode Switcher Tabs -->
+            <div class="card-mode-tabs" role="tablist" aria-label="Card Views">
+              <button type="button" class="card-mode-tab active" id="tab-identity" onclick="setCardMode('identity')">✦
+                Identity</button>
+              <button type="button" class="card-mode-tab" id="tab-share" onclick="setCardMode('share')">🔗
+                Share</button>
+              <button type="button" class="card-mode-tab" id="tab-referral" onclick="setCardMode('referral')">🎁
+                Referral</button>
+              <button type="button" class="card-mode-tab" id="tab-qrcode" onclick="setCardMode('qrcode')">📱 QR
+                Code</button>
+              <button type="button" class="card-mode-tab" id="tab-metatags" onclick="setCardMode('metatags')">🏷️
+                Meta</button>
+            </div>
+
+
+            <div class="claim-sidebar-card-wrap" id="claim-sidebar-card-wrap">
+              <!-- VIEW 1: Live Onchain Identity Preview Card Component -->
+              <div class="card-view active" id="view-identity">
+                <div class="live-identity-card" id="live-identity-card" title="Interactive Live Sovereign ₦Tag Preview">
+                  <!-- Giant Monogram Watermark behind avatar -->
+                  <div class="card-monogram-watermark" id="card-monogram-watermark">₦</div>
+
+                  <!-- Top Row -->
+                  <div class="card-header-row">
+                    <div class="card-logo-symbol" id="card-logo-symbol">₦</div>
+                  </div>
+
+                  <!-- Center Character Avatar Stage -->
+                  <div class="card-avatar-stage">
+                    <div id="card-avatar-svg-container" class="card-avatar-svg-container"></div>
+                    <div id="card-avatar-loading" class="card-avatar-loader" style="display:none;">
+                      <div class="card-avatar-spinner"></div>
+                      <span class="card-avatar-loading-text">Generating...</span>
+                    </div>
+                  </div>
+
+                  <!-- Bottom Identity Info -->
+                  <div class="card-footer-row">
+                    <div class="card-identity-text">
+                      <div class="card-handle-title" id="card-handle-title">₦TAG</div>
+                    </div>
+                    <div class="card-verified-badge" id="card-verified-badge" title="Verified Onchain Sovereign Tag">
+                      <img src="/hub/verified-badge.png" width="32" height="32" alt="Verified Sovereign Tag"
+                        style="display:block; object-fit:contain;">
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- VIEW 2: Share Card Component -->
+              <div class="card-view" id="view-share">
+                <div class="sovereign-alt-card" id="share-sovereign-card">
+                  <!-- Giant Monogram Watermark behind avatar -->
+                  <div class="card-monogram-watermark" id="share-card-monogram-watermark">₦</div>
+
+                  <div class="card-header-row">
+                    <div class="card-logo-symbol" id="share-card-logo-symbol">₦</div>
+                    <div class="card-net-pill" id="share-card-net-pill" style="font-size:10px;">
+                      <span>✦ Share Pass</span>
+                    </div>
+                  </div>
+
+                  <div class="card-avatar-stage" style="margin: 4px 0;">
+                    <div id="share-card-avatar-svg-container" class="card-avatar-svg-container"></div>
+                    <div id="share-card-avatar-loading" class="card-avatar-loader" style="display:none;">
+                      <div class="card-avatar-spinner"></div>
+                    </div>
+                  </div>
+
+                  <div class="card-footer-row" style="margin-bottom: 2px;">
+                    <div class="card-identity-text">
+                      <div class="card-handle-title" id="share-handle-title">₦TAG</div>
+                    </div>
+                    <div class="card-verified-badge" id="share-card-verified-badge"
+                      style="width:32px; height:32px; background:transparent;">
+                      <img src="/hub/verified-badge.png" width="28" height="28" alt="Verified Sovereign Tag"
+                        style="display:block; object-fit:contain;">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Share Actions -->
+                <div class="share-actions-grid">
+                  <button type="button" class="share-btn share-btn-x" onclick="shareToTwitter()"
+                    title="Share on X / Twitter">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+                      <path
+                        d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    <span>Share on 𝕏</span>
+                  </button>
+                  <button type="button" class="share-btn share-btn-tg" onclick="shareToTelegram()"
+                    title="Share on Telegram">
+                    <span>✈ Telegram</span>
+                  </button>
+                  <button type="button" class="share-btn share-btn-wa" onclick="shareToWhatsApp()"
+                    title="Share on WhatsApp">
+                    <span>💬 WhatsApp</span>
+                  </button>
+                  <button type="button" class="share-btn share-btn-copy" id="btn-copy-share" onclick="copyShareLink()"
+                    title="Copy Share URL">
+                    <span>🔗 Copy Link</span>
+                  </button>
+                </div>
+
+                <button type="button" class="action-row-btn primary-accent" onclick="downloadCardImage()"
+                  title="Download High-Res PNG Card">
+                  <span>💾 Download Card Image (PNG)</span>
+                </button>
+                <button type="button" class="action-row-btn" onclick="copyMarkdownBadge()"
+                  title="Copy Markdown Badge for GitHub/Sites">
+                  <span>📋 Copy Markdown Badge</span>
+                </button>
+              </div>
+
+              <!-- VIEW 3: Referral Card Component -->
+              <div class="card-view" id="view-referral">
+                <div class="sovereign-alt-card">
+                  <div class="card-header-row">
+                    <div class="card-logo-symbol">₦</div>
+                    <div class="card-net-pill" style="background:#000000; color:#ffd700; font-size:10px;">
+                      <span>🎁 Ambassador Pass</span>
+                    </div>
+                  </div>
+
+                  <div style="text-align: center; margin: 4px 0 2px;">
+                    <div
+                      style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #1a1a1a;">
+                      Invite Friends · Earn 10% Gas Rebates</div>
+                    <div class="card-handle-title" id="ref-card-handle-title" style="font-size: 24px; margin-top: 2px;">₦TAG</div>
+                  </div>
+
+                  <!-- Referral Link Input -->
+                  <div class="referral-link-box">
+                    <span class="referral-url-text"
+                      id="referral-url-display">https://nairatag.ng/claim</span>
+                    <button type="button" class="referral-copy-chip" id="btn-copy-ref"
+                      onclick="copyReferralLink()">Copy</button>
+                  </div>
+
+                  <!-- Metrics Grid (Hydrated live from onchain ledger) -->
+                  <div class="referral-metrics-grid">
+                    <div class="referral-metric-tile">
+                      <span class="metric-number" id="metric-invites">0</span>
+                      <span class="metric-caption">Invited</span>
+                    </div>
+                    <div class="referral-metric-tile">
+                      <span class="metric-number" id="metric-rebates">₦0</span>
+                      <span class="metric-caption">cNGN Rebates</span>
+                    </div>
+                    <div class="referral-metric-tile">
+                      <span class="metric-number" id="metric-tier">10%</span>
+                      <span class="metric-caption">Tier Rebate</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="share-actions-grid">
+                  <button type="button" class="share-btn share-btn-x" onclick="shareReferralTwitter()">
+                    <span>Share Ref on 𝕏</span>
+                  </button>
+                  <button type="button" class="share-btn share-btn-tg" onclick="shareReferralTelegram()">
+                    <span>Invite on TG</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- VIEW 4: QR Code Card Component -->
+              <div class="card-view" id="view-qrcode">
+                <div class="sovereign-alt-card">
+                  <div class="card-header-row">
+                    <div class="card-logo-symbol">₦</div>
+                  </div>
+
+                  <div class="qr-card-center-stage">
+                    <div class="qr-canvas-holder">
+                      <img class="qr-image-el" id="qr-code-img"
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ethereum%3A0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0%3Ftag%3D%E2%82%A6michael"
+                        alt="₦Tag Onchain QR Code" />
+                      <div class="qr-center-symbol-badge">₦</div>
+                    </div>
+                    <div class="qr-payload-banner" id="qr-payload-text">celo:nairatag.ng/claim</div>
+                  </div>
+
+                  <div class="card-footer-row">
+                    <div class="card-identity-text">
+                      <div class="card-handle-title" id="qr-handle-title" style="font-size: 20px;">₦TAG</div>
+                    </div>
+                    <div class="card-verified-badge" style="width:30px; height:30px; background:transparent;">
+                      <img src="/hub/verified-badge.png" width="26" height="26" alt="Verified Sovereign Tag"
+                        style="display:block; object-fit:contain;">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="share-actions-grid">
+                  <button type="button" class="action-row-btn" id="btn-copy-uri" onclick="copyPaymentUri()">
+                    <span>📋 Copy URI</span>
+                  </button>
+                  <button type="button" class="action-row-btn primary-accent" onclick="downloadQrImage()">
+                    <span>💾 Download QR (PNG)</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- VIEW 5: Meta Tag System Card Component -->
+              <div class="card-view" id="view-metatags">
+                <div class="metatag-subtabs">
+                  <button type="button" class="metatag-subtab active" id="subtab-x" onclick="setMetaPreview('x')">𝕏
+                    Twitter Card</button>
+                  <button type="button" class="metatag-subtab" id="subtab-tg"
+                    onclick="setMetaPreview('tg')">Telegram</button>
+                  <button type="button" class="metatag-subtab" id="subtab-wa"
+                    onclick="setMetaPreview('wa')">WhatsApp</button>
+                </div>
+
+                <!-- Social Simulator Preview Frame -->
+                <div class="social-preview-simulator" id="social-sim-box">
+                  <div class="sim-img-wrap">
+                    <img src="banner-card.jpg" alt="Meta Card Preview" id="sim-card-img">
+                  </div>
+                  <div class="sim-content-box">
+                    <span class="sim-domain" id="sim-domain-label">nairatag.net · Sovereign Web3</span>
+                    <div class="sim-title" id="sim-card-title">₦TAG · Sovereign Onchain Identity on Celo</div>
+                    <div class="sim-desc" id="sim-card-desc">Say goodbye to 42-character hex addresses. NairaTag is a
+                      sovereign onchain handle for instant settlement on Celo Sepolia...</div>
+                  </div>
+                </div>
+
+                <!-- Live Meta Code Snippet Box -->
+                <div class="meta-snippet-deck">
+                  <pre class="meta-code-pre" id="meta-code-display">&lt;meta property="og:title" content="NairaTag · Sovereign Onchain Identity on Celo"&gt;
+&lt;meta property="og:description" content="Non-custodial sovereign identity on Celo Sepolia"&gt;
+&lt;meta property="og:image" content="https://nairatag.ng/cards/tag.svg?mode=og"&gt;
+&lt;meta name="twitter:card" content="summary_large_image"&gt;</pre>
+                </div>
+
+                <button type="button" class="action-row-btn primary-accent" id="btn-copy-meta"
+                  onclick="copyMetaSnippet()">
+                  <span>📋 Copy Meta Tags HTML</span>
+                </button>
+              </div>
+            </div>
+
+
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Onchain Toast Notification (Sleek Compact Pill) -->
+  <div class="onchain-toast" id="onchain-toast" hidden>
+    <div class="toast-body">
+      <span class="toast-icon" id="toast-icon">✓</span>
+      <div class="toast-details">
+        <span class="toast-title" id="toast-title">₦Tag</span>
+        <span class="toast-message" id="toast-message">Claimed</span>
+      </div>
+      <button type="button" class="toast-close-btn" onclick="dismissToast()"
+        aria-label="Close notification">✕</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/hub/supabase.js"></script>
+  <script>
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : '';
+    let currentNetwork = 'celo';
+    let debounceTimer = null;
+    let toastTimeout = null;
+    let currentCardMode = 'identity';
+    let currentMetaPreview = 'x';
+    let currentTagType = 'nairatag';
+
+    function setClaimTagType(type) {
+      currentTagType = type;
+      document.querySelectorAll('.claim-top-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.getAttribute('data-type') === type);
+      });
+      const titleEl = document.getElementById('claim-stage-subtitle');
+      const inputEl = document.getElementById('handle-input');
+      if (type === 'agenttag') {
+        if (titleEl) titleEl.textContent = 'Claim your AgentTag';
+        if (inputEl) inputEl.placeholder = 'Enter your AgentTag';
+      } else if (type === 'community') {
+        if (titleEl) titleEl.textContent = 'Claim your CommunityTag';
+        if (inputEl) inputEl.placeholder = 'Enter your CommunityTag';
+      } else {
+        if (titleEl) titleEl.textContent = 'Claim your NairaTag';
+        if (inputEl) inputEl.placeholder = 'Enter your NairaTag';
+      }
+    }
+
+    function formatShortAddress(addr) {
+      if (!addr) return '0x...';
+      if (addr.length <= 16) return addr;
+      return `${addr.slice(0, 8)}...${addr.slice(-6)}`;
+    }
+
+    // Card Mode Switcher
+    function setCardMode(mode) {
+      currentCardMode = mode;
+      document.querySelectorAll('.card-mode-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.id === `tab-${mode}`);
+      });
+      document.querySelectorAll('.card-view').forEach(view => {
+        view.classList.toggle('active', view.id === `view-${mode}`);
+      });
+      const val = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      updateAllCards(val, currentNetwork, null);
+    }
+
+    // Meta Simulator Tab Switcher
+    function setMetaPreview(platform) {
+      currentMetaPreview = platform;
+      document.querySelectorAll('.metatag-subtab').forEach(btn => {
+        btn.classList.toggle('active', btn.id === `subtab-${platform}`);
+      });
+      const val = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      updateMetaSimulator(val, currentNetwork);
+    }
+
+    // Live Head Meta Tag Synchronizer
+    function updateMetaTags(handle, net) {
+      const cleanVal = (handle || '').toLowerCase().replace(/[^a-z0-9_]/g, '') || (localStorage.getItem('nairatag_active_tag') || 'tag').replace(/^₦/, '').toLowerCase();
+      const displayTag = `₦${cleanVal}`;
+      const netLabel = 'Celo Sepolia';
+      const pageTitle = `${displayTag} • NairaTag Sovereign Identity`;
+      const desc = `Send crypto directly to my tag nairatag.ng/tag/${cleanVal.toUpperCase()} 💚 Verified on Celo.`;
+      const origin = window.location.origin.includes('localhost') ? 'https://nairatag.ng' : window.location.origin;
+      const url = `${origin}/tag/${encodeURIComponent(cleanVal.toUpperCase())}`;
+      const cardImg = `${origin}/cards/${encodeURIComponent(cleanVal)}.svg?mode=og`;
+
+      const titleEl = document.getElementById('page-title');
+      if (titleEl) titleEl.textContent = pageTitle;
+      const descEl = document.getElementById('page-description');
+      if (descEl) descEl.content = desc;
+
+      const ogTitle = document.getElementById('og-title');
+      if (ogTitle) ogTitle.content = pageTitle;
+      const ogDesc = document.getElementById('og-desc');
+      if (ogDesc) ogDesc.content = desc;
+      const ogUrl = document.getElementById('og-url');
+      if (ogUrl) ogUrl.content = url;
+      const ogImg = document.getElementById('og-image');
+      if (ogImg) ogImg.content = cardImg;
+
+      const twTitle = document.getElementById('tw-title');
+      if (twTitle) twTitle.content = pageTitle;
+      const twDesc = document.getElementById('tw-desc');
+      if (twDesc) twDesc.content = desc;
+      const twImg = document.getElementById('tw-image');
+      if (twImg) twImg.content = cardImg;
+
+      const canon = document.getElementById('canonical-link');
+      if (canon) canon.href = url;
+    }
+
+    function updateMetaSimulator(cleanVal, net) {
+      const displayTag = `₦${cleanVal}`;
+      const netLabel = 'Celo Sepolia';
+      const simBox = document.getElementById('social-sim-box');
+      const simTitle = document.getElementById('sim-card-title');
+      const simDesc = document.getElementById('sim-card-desc');
+      const simDomain = document.getElementById('sim-domain-label');
+      const codeDisplay = document.getElementById('meta-code-display');
+      const origin = window.location.origin.includes('localhost') ? 'https://nairatag.ng' : window.location.origin;
+      const cardImg = `${origin}/cards/${encodeURIComponent(cleanVal)}.svg?mode=og`;
+      const tagUrl = `${origin}/tag/${encodeURIComponent(cleanVal.toUpperCase())}`;
+
+      if (simTitle) simTitle.textContent = `${displayTag} • NairaTag Sovereign Identity`;
+      if (simDesc) simDesc.textContent = `Send crypto directly to my tag nairatag.ng/tag/${cleanVal.toUpperCase()} 💚 Verified on ${netLabel}.`;
+
+      if (currentMetaPreview === 'x') {
+        if (simDomain) simDomain.textContent = 'nairatag.ng · Sovereign Identity';
+        if (simBox) simBox.style.borderLeft = '1px solid var(--line)';
+      } else if (currentMetaPreview === 'tg') {
+        if (simDomain) simDomain.textContent = 'Telegram Web3 Identity Preview';
+        if (simBox) simBox.style.borderLeft = '3px solid #229ed9';
+      } else if (currentMetaPreview === 'wa') {
+        if (simDomain) simDomain.textContent = 'WhatsApp Sovereign Identity Card';
+        if (simBox) simBox.style.borderLeft = '3px solid #25d366';
+      }
+
+      if (codeDisplay) {
+        codeDisplay.textContent = `<meta property="og:type" content="profile">
+<meta property="og:title" content="${displayTag} • NairaTag Sovereign Identity">
+<meta property="og:description" content="Send crypto directly to my tag nairatag.ng/tag/${cleanVal.toUpperCase()} 💚 Verified on ${netLabel}.">
+<meta property="og:image" content="${cardImg}">
+<meta property="og:url" content="${tagUrl}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@NairaTag">
+<meta name="twitter:title" content="${displayTag} • NairaTag Sovereign Identity">
+<meta name="twitter:description" content="Send crypto directly to my tag nairatag.ng/tag/${cleanVal.toUpperCase()} 💚 Verified on ${netLabel}.">
+<meta name="twitter:image" content="${cardImg}">`;
+      }
+    }
+
+    // 9 Archetype Signatures for initial random starter selection
+    const STARTER_ARCHETYPES = ['tobi', 'amara', 'josh', 'chi', 'kola', 'jay', 'belle', 'lola', 'michael'];
+    let sessionStarterTag = STARTER_ARCHETYPES[Math.floor(Math.random() * STARTER_ARCHETYPES.length)];
+    const frozenAvatarCache = new Map();
+
+    async function checkCanonicalAvatar(tag) {
+      const clean = (tag || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (!clean || frozenAvatarCache.has(clean)) return frozenAvatarCache.get(clean);
+      try {
+        const res = await fetch(`${API_BASE}/api/avatar/canonical?tag=${clean}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.ok && data.avatar && data.avatar.source === 'photo') {
+            frozenAvatarCache.set(clean, data.avatar);
+            const current = (handleInput?.value.trim() || sessionStarterTag).toLowerCase().replace(/[^a-z0-9_]/g, '');
+            if (current === clean) {
+              const liveSvg = document.getElementById('card-avatar-svg-container');
+              if (liveSvg && data.avatar.svg) liveSvg.innerHTML = data.avatar.svg;
+              const shareSvg = document.getElementById('share-card-avatar-svg-container');
+              if (shareSvg && data.avatar.svg) shareSvg.innerHTML = data.avatar.svg;
+            }
+            return data.avatar;
+          }
+        }
+      } catch { }
+      return null;
+    }
+
+    // Dynamic Live Preview Card Controller (Random vibrant archetype assignment)
+    function updateLiveCard(handle, net, statusType) {
+      const cleanVal = (handle || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (!cleanVal && statusType === 'empty') {
+        sessionStarterTag = STARTER_ARCHETYPES[Math.floor(Math.random() * STARTER_ARCHETYPES.length)];
+      }
+      const displayTag = cleanVal ? `₦${cleanVal}` : `₦${sessionStarterTag}`;
+      const effectiveHandle = cleanVal || sessionStarterTag;
+
+      // 1. Resolve deterministic profile via TagAvatar
+      let profile = null;
+      if (window.TagAvatar) {
+        profile = window.TagAvatar.resolveTagProfile(effectiveHandle, { avatarSize: 140 });
+      }
+
+      const p = profile ? profile.palette : {
+        primary: '#bbf246',
+        textOnCard: '#000000',
+        badgeBg: 'rgba(0,0,0,0.12)',
+        id: 'lime'
+      };
+
+      const liveCard = document.getElementById('live-identity-card');
+      const cardLogo = document.getElementById('card-logo-symbol');
+      const cardHandle = document.getElementById('card-handle-title');
+      const cardCaption = document.getElementById('claim-sidebar-caption');
+      const cardNetPill = document.getElementById('card-net-pill');
+      const cardNetName = document.getElementById('card-net-name');
+      const cardNetDot = document.getElementById('card-net-dot');
+      const cardBadge = document.getElementById('card-verified-badge');
+      const watermark = document.getElementById('card-monogram-watermark');
+
+      // Apply dynamic background color with high contrast support
+      if (liveCard) {
+        liveCard.style.setProperty('--card-bg', p.primary);
+        liveCard.style.background = p.primary;
+        liveCard.style.borderColor = p.dark || 'rgba(0, 0, 0, 0.12)';
+        liveCard.classList.toggle('contrast-white', p.textOnCard === '#ffffff');
+      }
+
+      if (cardLogo) cardLogo.style.color = p.textOnCard;
+      if (cardHandle) {
+        cardHandle.textContent = displayTag;
+        cardHandle.style.color = p.textOnCard;
+      }
+      if (watermark) {
+        watermark.style.color = p.textOnCard;
+        watermark.style.opacity = p.textOnCard === '#ffffff' ? '0.14' : '0.08';
+      }
+      if (cardNetPill) {
+        cardNetPill.style.background = p.badgeBg || (p.textOnCard === '#ffffff' ? 'rgba(0,0,0,0.32)' : 'rgba(0,0,0,0.12)');
+        cardNetPill.style.color = p.textOnCard;
+      }
+      if (cardBadge) {
+        cardBadge.style.background = 'transparent';
+      }
+
+
+      const effectiveNet = 'celoSepolia';
+      const netLabel = 'Celo';
+      if (cardNetName) cardNetName.textContent = netLabel;
+      if (cardNetDot) {
+        cardNetDot.className = 'card-net-dot net-dot-celo';
+      }
+
+      if (cardCaption) {
+        if (statusType === 'claimed') {
+          cardCaption.textContent = `${displayTag} Sovereign Onchain Identity Card on ${netLabel} · Minted!`;
+        } else {
+          cardCaption.textContent = `${displayTag} Sovereign Onchain Identity Card on ${netLabel} (${p.name || 'Archetype'})`;
+        }
+      }
+
+      // 2. Avatar stage: spinner while typing, exact pixel SVG on completion!
+      const avatarSvgContainer = document.getElementById('card-avatar-svg-container');
+      const avatarLoading = document.getElementById('card-avatar-loading');
+
+      if (statusType === 'checking') {
+        if (avatarSvgContainer) avatarSvgContainer.style.display = 'none';
+        if (avatarLoading) avatarLoading.style.display = 'flex';
+      } else {
+        if (avatarLoading) avatarLoading.style.display = 'none';
+        if (avatarSvgContainer) {
+          const cached = frozenAvatarCache.get(effectiveHandle);
+          if (cached && cached.svg) {
+            avatarSvgContainer.innerHTML = cached.svg;
+          } else if (profile) {
+            avatarSvgContainer.innerHTML = profile.avatarSvg;
+            checkCanonicalAvatar(effectiveHandle);
+          }
+          avatarSvgContainer.style.display = 'flex';
+        }
+      }
+    }
+
+    // Master Updater across all 5 cards
+    function updateAllCards(handle, net, statusType) {
+      const cleanVal = (handle || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+      const displayTag = cleanVal ? `₦${cleanVal}` : `₦${sessionStarterTag}`;
+      const effectiveHandle = cleanVal || sessionStarterTag;
+      const effectiveNet = net || currentNetwork;
+
+      // 1. Identity Card
+      updateLiveCard(cleanVal, effectiveNet, statusType);
+
+      // Resolve profile for secondary cards
+      let profile = null;
+      if (window.TagAvatar) {
+        profile = window.TagAvatar.resolveTagProfile(effectiveHandle, { avatarSize: 140 });
+      }
+      const p = profile ? profile.palette : {
+        primary: '#bbf246',
+        textOnCard: '#000000',
+        badgeBg: 'rgba(0,0,0,0.12)',
+        id: 'lime'
+      };
+
+      // 2. Share Card
+      const shareCard = document.getElementById('share-sovereign-card');
+      const shareTitle = document.getElementById('share-handle-title');
+      const shareLogo = document.getElementById('share-card-logo-symbol');
+      const shareNetPill = document.getElementById('share-card-net-pill');
+      const shareBadge = document.getElementById('share-card-verified-badge');
+      const shareWatermark = document.getElementById('share-card-monogram-watermark');
+      const shareAvatarSvg = document.getElementById('share-card-avatar-svg-container');
+      const shareLoading = document.getElementById('share-card-avatar-loading');
+
+      if (shareCard) {
+        shareCard.style.setProperty('--card-bg', p.primary);
+        shareCard.style.background = p.primary;
+        shareCard.classList.toggle('contrast-white', p.textOnCard === '#ffffff');
+      }
+      if (shareTitle) {
+        shareTitle.textContent = displayTag;
+        shareTitle.style.color = p.textOnCard;
+      }
+      if (shareLogo) shareLogo.style.color = p.textOnCard;
+      if (shareWatermark) {
+        shareWatermark.style.color = p.textOnCard;
+        shareWatermark.style.opacity = p.textOnCard === '#ffffff' ? '0.14' : '0.08';
+      }
+      if (shareNetPill) {
+        shareNetPill.style.background = p.textOnCard === '#ffffff' ? 'rgba(0,0,0,0.32)' : 'rgba(0,0,0,0.12)';
+        shareNetPill.style.color = p.textOnCard;
+      }
+      if (shareBadge) {
+        shareBadge.style.background = 'transparent';
+      }
+
+      if (statusType === 'checking') {
+        if (shareAvatarSvg) shareAvatarSvg.style.display = 'none';
+        if (shareLoading) shareLoading.style.display = 'flex';
+      } else {
+        if (shareLoading) shareLoading.style.display = 'none';
+        if (shareAvatarSvg) {
+          const cached = frozenAvatarCache.get(effectiveHandle);
+          if (cached && cached.svg) {
+            shareAvatarSvg.innerHTML = cached.svg;
+          } else if (profile) {
+            shareAvatarSvg.innerHTML = profile.avatarSvg;
+          }
+          shareAvatarSvg.style.display = 'flex';
+        }
+      }
+
+      // 3. Referral Card
+      const refTitle = document.getElementById('ref-card-handle-title');
+      if (refTitle) refTitle.textContent = displayTag;
+      const refDisplay = document.getElementById('referral-url-display');
+      const origin = window.location.origin.includes('localhost') ? 'https://nairatag.ng' : window.location.origin;
+      if (refDisplay) refDisplay.textContent = `${origin}/claim?ref=${effectiveHandle}`;
+      syncReferralMetrics(effectiveHandle);
+
+      // 4. QR Code Card
+      const qrTitle = document.getElementById('qr-handle-title');
+      if (qrTitle) qrTitle.textContent = displayTag;
+      const qrPayloadText = document.getElementById('qr-payload-text');
+      const qrImg = document.getElementById('qr-code-img');
+
+
+      const contractAddr = '0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0';
+      const qrPayload = `celo:${contractAddr}?tag=${encodeURIComponent(displayTag)}&ref=${encodeURIComponent(effectiveHandle)}`;
+      if (qrPayloadText) qrPayloadText.textContent = qrPayload;
+      if (qrImg) {
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrPayload)}`;
+      }
+
+      // 5. Meta Tag System
+      updateMetaTags(effectiveHandle, effectiveNet);
+      updateMetaSimulator(effectiveHandle, effectiveNet);
+    }
+
+    // Live Onchain Referral & Points Synchronizer (Zero Fake Data)
+    async function syncReferralMetrics(tag) {
+      const clean = (tag || handleInput?.value.trim() || 'michael').toLowerCase().replace(/^[₦@#]/, '');
+      const wallet = document.getElementById('owner-address-input')?.value.trim() || '';
+      try {
+        const res = await fetch(`${API_BASE}/api/points?tag=${encodeURIComponent(clean)}${wallet ? `&wallet=${encodeURIComponent(wallet)}` : ''}`);
+        const data = await res.json();
+        if (data.ok) {
+          const invitesEl = document.getElementById('metric-invites');
+          const rebatesEl = document.getElementById('metric-rebates');
+          const tierEl = document.getElementById('metric-tier');
+          if (invitesEl) invitesEl.textContent = data.inviteCount !== undefined ? data.inviteCount : 0;
+          if (rebatesEl) rebatesEl.textContent = data.formattedRebates || `₦${(data.rebatesNgn || 0).toLocaleString()}`;
+          if (tierEl) tierEl.textContent = data.tier ? data.tier.replace('Ambassador ', '') : '10%';
+        }
+      } catch (err) {
+        console.warn('[Sync points error]', err);
+      }
+    }
+
+    // Social Sharing & Export Handlers (Image 1, 2 & 3 Specification)
+    function shareToTwitter() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const origin = window.location.origin.includes('localhost') ? 'https://nairatag.ng' : window.location.origin;
+      const tagDomain = origin.replace(/^https?:\/\//, '');
+      const text = `Send crypto directly to my tag ${tagDomain}/tag/${handle.toUpperCase()} 💚\n\n@NairaTag #Celo #Crypto`;
+      const url = `${origin}/tag/${encodeURIComponent(handle.toUpperCase())}`;
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function shareToTelegram() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const origin = window.location.origin.includes('localhost') ? 'https://nairatag.ng' : window.location.origin;
+      const url = `${origin}/tag/${encodeURIComponent(handle.toUpperCase())}`;
+      const text = `Send crypto directly to my sovereign ₦${handle.toUpperCase()} tag on Celo 💚`;
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function shareToWhatsApp() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const origin = window.location.origin.includes('localhost') ? 'https://nairatag.ng' : window.location.origin;
+      const url = `${origin}/tag/${encodeURIComponent(handle.toUpperCase())}`;
+      const text = `Send crypto directly to my tag: ${url} 💚 (Tap to send crypto on Celo)`;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function shareToWhatsAppStory() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      downloadIdentityPng();
+      showClaimToast(handle, currentNetwork, 'Story Card downloaded! Post directly to your WhatsApp Status.');
+    }
+
+    function copyShareLink() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const origin = window.location.origin.includes('localhost') ? 'https://nairatag.ng' : window.location.origin;
+      const url = `${origin}/tag/${encodeURIComponent(handle.toUpperCase())}`;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('btn-copy-share');
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<span>✓ Copied!</span>';
+          setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        }
+        showClaimToast(handle, currentNetwork, 'Universal ₦Tag Share Link Copied');
+      });
+    }
+
+    function copyReferralLink() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const origin = window.location.origin.includes('localhost') ? 'https://nairatag.ng' : window.location.origin;
+      const url = `${origin}/claim?ref=${encodeURIComponent(handle)}`;
+      navigator.clipboard.writeText(url).then(() => {
+        const btn = document.getElementById('btn-copy-ref');
+        if (btn) {
+          const orig = btn.textContent;
+          btn.textContent = '✓ Copied';
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        }
+        showClaimToast(handle, currentNetwork, '10% Rebate Referral Link Copied');
+      });
+    }
+
+    function shareReferralTwitter() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const origin = window.location.origin.includes('localhost') ? 'https://nairatag.ng' : window.location.origin;
+      const url = `${origin}/claim?ref=${encodeURIComponent(handle)}`;
+      const text = `Claim your sovereign ₦Tag handle on @NairaTag! Non-custodial payments & instant settlement on @Celo.\n\nUse my ambassador referral link: ${url}`;
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function shareReferralTelegram() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const text = `Claim your sovereign ₦Tag handle on Celo Sepolia with my referral link: https://nairatag.ng/claim?ref=${encodeURIComponent(handle)}`;
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(`https://nairatag.ng/claim?ref=${encodeURIComponent(handle)}`)}&text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function copyPaymentUri() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const contractAddr = '0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0';
+      const payload = `celo:${contractAddr}?tag=₦${handle}&ref=${handle}`;
+      navigator.clipboard.writeText(payload).then(() => {
+        const btn = document.getElementById('btn-copy-uri');
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<span>✓ Copied!</span>';
+          setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        }
+        showClaimToast(handle, currentNetwork, 'Payment URI copied to clipboard');
+      });
+    }
+
+    function copyMetaSnippet() {
+      const code = document.getElementById('meta-code-display')?.textContent || '';
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('btn-copy-meta');
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<span>✓ Tags Copied!</span>';
+          setTimeout(() => { btn.innerHTML = orig; }, 1500);
+        }
+        showClaimToast(handleInput?.value.trim() || 'michael', currentNetwork, 'OpenGraph & Twitter Card tags copied');
+      });
+    }
+
+    function copyMarkdownBadge() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const badge = `[![₦Tag](https://img.shields.io/badge/₦Tag-₦${handle}-0052ff?style=for-the-badge&logo=ethereum)](https://nairatag.ng/tag/${handle})`;
+      navigator.clipboard.writeText(badge).then(() => {
+        showClaimToast(handle, currentNetwork, 'Markdown badge copied to clipboard');
+      });
+    }
+
+    function downloadQrImage() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const qrImg = document.getElementById('qr-code-img');
+      if (!qrImg || !qrImg.src) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 400;
+      canvas.height = 400;
+      const ctx = canvas.getContext('2d');
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 400, 400);
+        ctx.drawImage(img, 20, 20, 360, 360);
+
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(200, 200, 35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 5;
+        ctx.stroke();
+
+        ctx.fillStyle = '#9dfe00';
+        ctx.font = '900 36px "Plus Jakarta Sans", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('₦', 200, 202);
+
+        const a = document.createElement('a');
+        a.download = `₦${handle}-qrcode.png`;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+        showClaimToast(handle, currentNetwork, `Downloaded ₦${handle} QR PNG`);
+      };
+      img.src = qrImg.src;
+    }
+
+    function downloadCardImage() {
+      const handle = (handleInput?.value.trim() || localStorage.getItem('nairatag_active_tag') || 'tag').toLowerCase().replace(/^₦/, '');
+      const displayTag = `₦${handle}`;
+      const netLabel = 'Celo';
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 800;
+      canvas.height = 1000;
+      const ctx = canvas.getContext('2d');
+
+      const grad = ctx.createLinearGradient(0, 0, 800, 1000);
+      grad.addColorStop(0, '#a4ff05');
+      grad.addColorStop(0.5, '#8ef000');
+      grad.addColorStop(1, '#7ee600');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.roundRect(0, 0, 800, 1000, 40);
+      ctx.fill();
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.04)';
+      ctx.lineWidth = 36;
+      for (let i = -800; i < 1800; i += 72) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i - 500, 1000);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      ctx.fillStyle = '#000000';
+      ctx.font = '900 72px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('₦', 50, 110);
+
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(580, 60, 170, 50, 25);
+      ctx.fill();
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(610, 85, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#000000';
+      ctx.font = '800 22px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(netLabel, 635, 93);
+      ctx.restore();
+
+      function finishRender() {
+        ctx.fillStyle = '#000000';
+        ctx.font = '900 62px "Plus Jakarta Sans", sans-serif';
+        ctx.fillText(displayTag, 50, 895);
+
+        const badgeImg = new Image();
+        badgeImg.crossOrigin = 'anonymous';
+        badgeImg.onload = () => {
+          ctx.drawImage(badgeImg, 680, 840, 76, 76);
+          triggerDownload();
+        };
+        badgeImg.onerror = () => {
+          triggerDownload();
+        };
+        badgeImg.src = '/hub/verified-badge.png';
+
+        function triggerDownload() {
+          const a = document.createElement('a');
+          a.download = `${displayTag}-identity-card.png`;
+          a.href = canvas.toDataURL('image/png');
+          a.click();
+          showClaimToast(handle, currentNetwork, `Downloaded ${displayTag} PNG`);
+        }
+      }
+
+      const isDefault = !handle || handle === 'michael';
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(240, 220, 320, 320, 30);
+        ctx.clip();
+        ctx.drawImage(img, 240, 220, 320, 320);
+        ctx.restore();
+        finishRender();
+      };
+      img.onerror = () => { finishRender(); };
+      img.src = isDefault ? 'sovereign-card.jpg' : `https://api.dicebear.com/7.x/pixel-art/png?seed=${encodeURIComponent(handle)}`;
+    }
+
+    // Celebratory Toast Notification Trigger (Sleek Compact Pill)
+    function showClaimToast(handle, net, info) {
+      const toast = document.getElementById('onchain-toast');
+      const title = document.getElementById('toast-title');
+      const msg = document.getElementById('toast-message');
+      if (!toast) return;
+
+      const rawHandle = String(handle || '').replace(/^[₦@#]/, '');
+      const displayTag = `₦${rawHandle}`;
+
+      if (title) title.textContent = displayTag;
+      if (msg) {
+        if (info && (info.startsWith('0x') || info.length >= 20)) {
+          msg.textContent = 'Claimed on Celo';
+        } else {
+          msg.textContent = info || 'Done';
+        }
+      }
+
+      toast.hidden = false;
+      toast.classList.remove('toast-hiding');
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        dismissToast();
+      }, 3500);
+    }
+
+    function dismissToast() {
+      const toast = document.getElementById('onchain-toast');
+      if (!toast || toast.hidden) return;
+      toast.classList.add('toast-hiding');
+      setTimeout(() => {
+        toast.hidden = true;
+        toast.classList.remove('toast-hiding');
+      }, 250);
+    }
+
+    function selectNetwork(net) {
+      currentNetwork = net;
+      const specNet = document.getElementById('spec-network');
+      if (specNet) specNet.textContent = net === 'celo-sepolia' ? 'Celo Sepolia (11142220)' : 'Celo Mainnet (42220)';
+      const specGas = document.getElementById('spec-gas');
+      if (specGas) specGas.textContent = '0.00 cNGN (Subsidized / Gasless via CIP-64)';
+      updateAllCards(handleInput.value.trim(), net, null);
+      checkAvailability();
+    }
+
+    let currentTagCategory = 'nairatag';
+
+    function adjustLiveTagFontSize() {
+      const displayEl = document.getElementById('claim-live-tag-display');
+      if (!displayEl) return;
+
+      // Reset inline font size so we can accurately measure natural content width
+      displayEl.style.removeProperty('font-size');
+
+      const parent = displayEl.parentElement;
+      if (!parent) return;
+
+      // Determine true available inner width across both desktop & mobile viewport
+      const consoleCard = displayEl.closest('.claim-console-card') || parent;
+      const cardComputed = window.getComputedStyle(consoleCard);
+      const cardPadding = (parseFloat(cardComputed.paddingLeft) || 18) + (parseFloat(cardComputed.paddingRight) || 18);
+      const cardInnerWidth = (consoleCard.clientWidth || window.innerWidth) - cardPadding;
+      const viewportMaxWidth = window.innerWidth - (window.innerWidth <= 768 ? 36 : 56);
+
+      const availWidth = Math.max(160, Math.min(cardInnerWidth || 424, viewportMaxWidth, parent.clientWidth || 424));
+      if (availWidth <= 0) return;
+
+      // Unconstrained content width for single-line text
+      const contentWidth = displayEl.scrollWidth;
+
+      // Scale down smoothly when the tag exceeds the container width
+      if (contentWidth > availWidth) {
+        const computedFs = parseFloat(window.getComputedStyle(displayEl).fontSize) || (window.innerWidth <= 768 ? 72 : 96);
+        const scaleRatio = availWidth / contentWidth;
+        const targetFs = Math.max(18, Math.floor(computedFs * scaleRatio * 0.94));
+        displayEl.style.setProperty('font-size', `${targetFs}px`, 'important');
+      }
+    }
+
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(adjustLiveTagFontSize);
+    }
+
+    window.addEventListener('resize', adjustLiveTagFontSize);
+
+    function updateLiveTagDisplay(val) {
+      const displayEl = document.getElementById('claim-live-tag-display');
+      const textEl = document.getElementById('claim-live-tag-text');
+      if (!displayEl || !textEl) return;
+
+      if (!val) {
+        displayEl.classList.remove('has-value', 'available', 'taken');
+        textEl.textContent = 'Tag';
+      } else {
+        displayEl.classList.add('has-value');
+        textEl.textContent = val;
+      }
+      adjustLiveTagFontSize();
+    }
+
+    function setDevAccount(acc) {
+      const input = document.getElementById('owner-address-input');
+      if (acc === 'dev2') {
+        input.value = '';
+      } else {
+        input.value = '';
+      }
+      updateHeaderWalletBalance();
+    }
+
+    const handleInput = document.getElementById('handle-input');
+    const statusPill = document.getElementById('status-pill');
+    const btnSubmit = document.getElementById('btn-submit-claim');
+    const ownerInputEl = document.getElementById('owner-address-input');
+
+    handleInput.addEventListener('input', (e) => {
+      let val = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+      e.target.value = val;
+      updateLiveTagDisplay(val);
+
+      clearTimeout(debounceTimer);
+      if (!val || val.length < 3) {
+        statusPill.style.display = 'none';
+        btnSubmit.disabled = true;
+        btnSubmit.classList.remove('ready');
+        updateAllCards(val, currentNetwork, val ? 'checking' : 'empty');
+        return;
+      }
+
+      statusPill.className = 'tag-status-indicator checking';
+      statusPill.innerHTML = '<span class="status-spinner" title="Checking availability..."></span>';
+      statusPill.style.display = 'flex';
+      updateAllCards(val, currentNetwork, 'checking');
+
+      debounceTimer = setTimeout(checkAvailability, 500);
+    });
+
+    async function checkAvailability() {
+      const val = handleInput.value.trim();
+      if (!val || val.length < 3) return;
+
+      const account = document.getElementById('owner-address-input')?.value.trim() || '';
+
+      statusPill.className = 'tag-status-indicator checking';
+      statusPill.innerHTML = '<span class="status-spinner" title="Checking availability..."></span>';
+      statusPill.style.display = 'flex';
+
+      try {
+        const queryUrl = `${API_BASE}/api/claims?action=check&tag=${encodeURIComponent(val)}`;
+        const res = await fetch(queryUrl);
+        const data = await res.json();
+        const liveDisplayEl = document.getElementById('claim-live-tag-display');
+
+        if (res.ok && data.available) {
+          statusPill.className = 'tag-status-indicator available';
+          statusPill.textContent = '✓ Available';
+          statusPill.style.display = 'flex';
+          btnSubmit.disabled = false;
+          btnSubmit.classList.add('ready');
+          if (liveDisplayEl) { liveDisplayEl.classList.add('available'); liveDisplayEl.classList.remove('taken'); }
+          updateAllCards(val, currentNetwork, 'available');
+        } else if (res.status === 409 || data.isTaken) {
+          // Already claimed by another user
+          statusPill.className = 'tag-status-indicator taken';
+          statusPill.textContent = '✗ Taken';
+          statusPill.style.display = 'flex';
+          btnSubmit.disabled = true;
+          btnSubmit.classList.remove('ready');
+          if (liveDisplayEl) { liveDisplayEl.classList.add('taken'); liveDisplayEl.classList.remove('available'); }
+          updateAllCards(val, currentNetwork, 'taken');
+        } else if (res.status === 403 || data.walletRestricted) {
+          statusPill.className = 'tag-status-indicator taken';
+          statusPill.textContent = '⚠️ 1 Tag Limit';
+          statusPill.style.display = 'flex';
+          btnSubmit.disabled = true;
+          btnSubmit.classList.remove('ready');
+          if (liveDisplayEl) { liveDisplayEl.classList.add('taken'); liveDisplayEl.classList.remove('available'); }
+          updateAllCards(val, currentNetwork, 'taken');
+          showClaimToast(val, currentNetwork, data.reason || `Wallet already owns a sovereign NairaTag.`);
+        } else {
+          statusPill.className = 'tag-status-indicator taken';
+          statusPill.textContent = '✗ Unavailable';
+          statusPill.style.display = 'flex';
+          btnSubmit.disabled = true;
+          btnSubmit.classList.remove('ready');
+          updateAllCards(val, currentNetwork, 'taken');
+        }
+      } catch (err) {
+        // Fallback: If tag format is valid, keep available and allow claiming
+        if (val.length >= 3 && !['cbn', 'police', 'efcc', 'gov', 'admin', 'official'].includes(val)) {
+          statusPill.className = 'tag-status-indicator available';
+          statusPill.textContent = '✓ Available';
+          statusPill.style.display = 'flex';
+          btnSubmit.disabled = false;
+          btnSubmit.classList.add('ready');
+          updateAllCards(val, currentNetwork, 'available');
+        } else {
+          statusPill.style.display = 'none';
+          btnSubmit.disabled = true;
+          btnSubmit.classList.remove('ready');
+        }
+      }
+    }
+
+    // Sovereign & Web3 Wallet Engine
+    async function initClaimWallet() {
+      let userAddr = null;
+      let walletSource = 'sovereign';
+
+      // 1. Check window.ethereum (MetaMask, Opera MiniPay, Rainbow, Rabby, Coinbase)
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+          if (accounts && accounts.length > 0 && /^0x[a-fA-F0-9]{40}$/i.test(accounts[0])) {
+            userAddr = accounts[0];
+            walletSource = 'web3';
+          }
+        } catch (e) {
+          console.warn('[Web3 check]', e);
+        }
+      }
+
+      // 2. Check localStorage for active wallet
+      if (!userAddr) {
+        try {
+          const active = localStorage.getItem('nairatag_active_wallet');
+          if (active) {
+            const parsed = JSON.parse(active);
+            if (parsed?.address && /^0x[a-fA-F0-9]{40}$/i.test(parsed.address)) {
+              userAddr = parsed.address;
+              walletSource = 'profile';
+            }
+          }
+        } catch { }
+      }
+
+      // 3. Check localStorage for claimed tag
+      if (!userAddr) {
+        try {
+          const claimed = localStorage.getItem('nairatag_claimed_tag');
+          if (claimed) {
+            const parsed = JSON.parse(claimed);
+            if (parsed?.address && /^0x[a-fA-F0-9]{40}$/i.test(parsed.address)) {
+              userAddr = parsed.address;
+              walletSource = 'claimed';
+            }
+          }
+        } catch { }
+      }
+
+      // 4. Create or load sovereign non-custodial browser wallet (via ethers)
+      if (!userAddr) {
+        try {
+          const storedKey = localStorage.getItem('nairatag_wallet_key');
+          if (window.ethers) {
+            let w;
+            if (storedKey) {
+              w = new window.ethers.Wallet(storedKey);
+            } else {
+              w = window.ethers.Wallet.createRandom();
+              localStorage.setItem('nairatag_wallet_key', w.privateKey);
+            }
+            userAddr = w.address;
+            walletSource = 'sovereign';
+          }
+        } catch (e) {
+          console.warn('[Sovereign Wallet]', e);
+        }
+      }
+
+      // 5. Deterministic fallback if ethers unavailable
+      if (!userAddr) {
+        let cached = localStorage.getItem('nairatag_device_address');
+        if (!cached) {
+          cached = '0x' + Array.from({ length: 40 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+          localStorage.setItem('nairatag_device_address', cached);
+        }
+        userAddr = cached;
+      }
+
+      const ownerInput = document.getElementById('owner-address-input');
+      if (ownerInput) ownerInput.value = userAddr;
+
+      const addrDisplay = document.getElementById('claim-wallet-addr-display');
+      if (addrDisplay) {
+        addrDisplay.textContent = `${userAddr.slice(0, 6)}...${userAddr.slice(-4)}`;
+        addrDisplay.title = `${userAddr} (${walletSource === 'web3' ? 'Web3 Connected' : 'Sovereign Non-Custodial Key'})`;
+      }
+
+      const btnConnect = document.getElementById('btn-toggle-connect-wallet');
+      if (btnConnect) {
+        btnConnect.textContent = walletSource === 'web3' ? 'Connected ✓' : 'Connect Web3';
+      }
+
+      updateHeaderWalletBalance();
+      return userAddr;
+    }
+
+    async function connectExternalWallet() {
+      if (window.ethereum) {
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts.length > 0) {
+            const addr = accounts[0];
+            const ownerInput = document.getElementById('owner-address-input');
+            if (ownerInput) ownerInput.value = addr;
+
+            const addrDisplay = document.getElementById('claim-wallet-addr-display');
+            if (addrDisplay) {
+              addrDisplay.textContent = `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+              addrDisplay.title = addr;
+            }
+
+            const btnConnect = document.getElementById('btn-toggle-connect-wallet');
+            if (btnConnect) btnConnect.textContent = 'Connected ✓';
+
+            // Re-check tag availability with new wallet
+            checkAvailability();
+            updateHeaderWalletBalance();
+            showClaimToast(handleInput?.value.trim() || 'wallet', currentNetwork, `Connected: ${addr.slice(0, 6)}...${addr.slice(-4)}`);
+          }
+        } catch (err) {
+          alert('Could not connect wallet: ' + err.message);
+        }
+      } else {
+        alert('No Web3 wallet extension found. NairaTag is using your sovereign non-custodial browser wallet on Celo!');
+      }
+    }
+
+    async function checkExistingClaimOnMount() {
+      try {
+        let p = null;
+        const currentAddr = currentClaimWallet || window.ethereum?.selectedAddress || null;
+
+        // 1. Query Supabase directly
+        if (currentAddr && window.NairaTagSupabase) {
+          p = await window.NairaTagSupabase.getClaimByWallet(currentAddr);
+        }
+
+        // 2. Query /api/claims endpoint
+        if (!p && currentAddr) {
+          try {
+            const res = await fetch(`${API_BASE}/api/claims?wallet=${encodeURIComponent(currentAddr)}`);
+            const data = await res.json();
+            if (data.ok && data.claim) p = data.claim;
+          } catch { }
+        }
+
+        // 3. Fallback to localStorage if offline
+        if (!p) {
+          const stored = localStorage.getItem('nairatag_claimed_tag');
+          if (stored) p = JSON.parse(stored);
+        }
+
+        if (p) {
+          const rawTag = p.tagId || p.tagName || p.tag || p.clean_tag;
+          if (rawTag) {
+            const clean = String(rawTag).replace(/^[₦@#]/, '');
+            const banner = document.getElementById('active-claimed-banner');
+            const nameEl = document.getElementById('active-claimed-tag-name');
+            const addrEl = document.getElementById('active-claimed-address');
+            const profileLink = document.getElementById('btn-view-claimed-profile');
+
+            if (banner && nameEl) {
+              nameEl.textContent = `₦${clean}`;
+              const addr = p.address || p.wallet_address;
+              if (addrEl && addr) {
+                addrEl.textContent = `${addr.slice(0, 6)}...${addr.slice(-4)} · Celo Sepolia`;
+              }
+              if (profileLink) {
+                profileLink.href = `/tag/${encodeURIComponent(clean)}`;
+              }
+              banner.style.display = 'flex';
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[Check existing claim error]', err);
+      }
+    }
+
+    async function executeClaim() {
+      // ── Auth Gate: Require sign-in before claiming ──
+      if (window.NairaTagSupabase) {
+        try {
+          const user = await window.NairaTagSupabase.getUser();
+          if (!user) {
+            window.NairaTagSupabase.openAuthModal('signin');
+            return;
+          }
+        } catch (e) {
+          window.NairaTagSupabase.openAuthModal('signin');
+          return;
+        }
+      }
+
+      const val = handleInput.value.trim();
+      let account = document.getElementById('owner-address-input')?.value.trim();
+      if (!account) {
+        account = await initClaimWallet();
+      }
+      if (!val) return;
+
+      btnSubmit.disabled = true;
+
+      let signature = null;
+      const nonce = Date.now().toString();
+      const deadline = Math.floor(Date.now() / 1000) + 600;
+
+      let activeChainId = 11142220; // Default Celo Sepolia
+      if (window.ethereum) {
+        try {
+          const hexChain = await window.ethereum.request({ method: 'eth_chainId' });
+          if (hexChain) {
+            const parsed = parseInt(hexChain, 16);
+            if (parsed === 42220 || parsed === 11142220) {
+              activeChainId = parsed;
+            }
+          }
+        } catch (e) {
+          console.warn('[eth_chainId check]', e);
+        }
+      }
+
+      // EIP-712 Sovereign Identity Proof
+      if (window.ethereum && account) {
+        try {
+          btnSubmit.innerHTML = '<span>Claiming...</span>';
+          const canonicalDisplay = val.startsWith('₦') ? val : `₦${val}`;
+          const cleanHandle = canonicalDisplay.replace(/^[₦@#]/, '').toLowerCase();
+          const typedData = {
+            domain: {
+              name: 'CeloTags Protocol',
+              version: '1',
+              chainId: activeChainId,
+              verifyingContract: '0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0'
+            },
+            types: {
+              EIP712Domain: [
+                { name: 'name', type: 'string' },
+                { name: 'version', type: 'string' },
+                { name: 'chainId', type: 'uint256' },
+                { name: 'verifyingContract', type: 'address' }
+              ],
+              ClaimAuthorization: [
+                { name: 'tag', type: 'string' },
+                { name: 'urn', type: 'string' },
+                { name: 'owner', type: 'address' },
+                { name: 'nonce', type: 'uint256' },
+                { name: 'deadline', type: 'uint256' },
+                { name: 'action', type: 'string' }
+              ]
+            },
+            primaryType: 'ClaimAuthorization',
+            message: {
+              tag: canonicalDisplay,
+              urn: `urn:celotag:ng:${cleanHandle}`,
+              owner: account.toLowerCase(),
+              nonce: nonce,
+              deadline: deadline,
+              action: 'CLAIM_SOVEREIGN_IDENTITY'
+            }
+          };
+
+          signature = await window.ethereum.request({
+            method: 'eth_signTypedData_v4',
+            params: [account, JSON.stringify(typedData)]
+          });
+        } catch (signErr) {
+          console.warn('[Claim EIP-712 signing notice]', signErr.message);
+          if (signErr.code === 4001 || /user rejected/i.test(signErr.message)) {
+            btnSubmit.disabled = false;
+            btnSubmit.innerHTML = '<span>Claim</span>';
+            return;
+          }
+          // Fallback to personal_sign if typedData v4 not supported
+          try {
+            const msg = `Claim NairaTag ${val.startsWith('₦') ? val : '₦' + val} for ${account.toLowerCase()}`;
+            signature = await window.ethereum.request({
+              method: 'personal_sign',
+              params: [msg, account]
+            });
+          } catch (psErr) {
+            console.warn('[personal_sign fallback notice]', psErr.message);
+          }
+        }
+      }
+
+      // Sovereign non-custodial browser wallet key signing in localStorage
+      if (!signature && window.ethers) {
+        try {
+          const storedKey = localStorage.getItem('nairatag_wallet_key');
+          if (storedKey) {
+            const w = new window.ethers.Wallet(storedKey);
+            const canonicalDisplay = val.startsWith('₦') ? val : `₦${val}`;
+            const cleanHandle = canonicalDisplay.replace(/^[₦@#]/, '').toLowerCase();
+            const domain = {
+              name: 'CeloTags Protocol',
+              version: '1',
+              chainId: activeChainId,
+              verifyingContract: '0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0'
+            };
+            const types = {
+              ClaimAuthorization: [
+                { name: 'tag', type: 'string' },
+                { name: 'urn', type: 'string' },
+                { name: 'owner', type: 'address' },
+                { name: 'nonce', type: 'uint256' },
+                { name: 'deadline', type: 'uint256' },
+                { name: 'action', type: 'string' }
+              ]
+            };
+            const msgObj = {
+              tag: canonicalDisplay,
+              urn: `urn:celotag:ng:${cleanHandle}`,
+              owner: w.address.toLowerCase(),
+              nonce: BigInt(nonce),
+              deadline: BigInt(deadline),
+              action: 'CLAIM_SOVEREIGN_IDENTITY'
+            };
+            signature = await w.signTypedData(domain, types, msgObj);
+            account = w.address;
+          }
+        } catch (swErr) {
+          console.warn('[Sovereign Wallet Sign notice]', swErr);
+        }
+      }
+
+      btnSubmit.innerHTML = '<span>Claiming...</span>';
+      updateAllCards(val, currentNetwork, 'checking');
+
+      try {
+        const res = await fetch(`${API_BASE}/api/claims`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            handle: val,
+            network: activeChainId === 42220 ? 'Celo Mainnet' : 'Celo Sepolia',
+            account: account,
+            chainId: activeChainId,
+            isSub: false,
+            signature,
+            nonce,
+            deadline,
+            action: 'CLAIM_SOVEREIGN_IDENTITY',
+            referrer: (new URLSearchParams(window.location.search).get('ref') || sessionStorage.getItem('nairatag_ref') || null)
+          })
+        });
+        const data = await res.json();
+
+        if (data.ok) {
+          // 1. Update all Cards state to Claimed
+          updateAllCards(val, currentNetwork, 'claimed');
+
+          // 2. Pulse / Celebratory glow animation on Live Card
+          const liveCard = document.getElementById('live-identity-card');
+          if (liveCard) {
+            liveCard.classList.remove('claimed-pulse');
+            void liveCard.offsetWidth;
+            liveCard.classList.add('claimed-pulse');
+          }
+
+          // 3. Multi-shot Confetti explosion (fully visible across the entire page!)
+          if (typeof confetti === 'function') {
+            confetti({
+              particleCount: 120,
+              spread: 85,
+              origin: { y: 0.6 },
+              colors: ['#10b981', '#0052ff', '#ffd700', '#ffffff', '#38bdf8']
+            });
+            setTimeout(() => {
+              confetti({
+                particleCount: 65,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0.08, y: 0.65 },
+                colors: ['#10b981', '#ffd700', '#ffffff']
+              });
+            }, 220);
+            setTimeout(() => {
+              confetti({
+                particleCount: 65,
+                angle: 120,
+                spread: 55,
+                origin: { x: 0.92, y: 0.65 },
+                colors: ['#10b981', '#ffd700', '#ffffff']
+              });
+            }, 380);
+          }
+
+          // 4. Persist claimed tag across all profile keys in LocalStorage
+          const cleanTag = val.replace(/^[₦@#]/, '').toLowerCase();
+          const displayTag = `₦${cleanTag}`;
+          const userAccount = {
+            tagId: cleanTag,
+            cleanTag: cleanTag,
+            tagName: displayTag,
+            tag: displayTag,
+            address: account,
+            network: 'Celo Mainnet',
+            isSub: false,
+            parent: null,
+            claimedAt: Date.now()
+          };
+
+          try {
+            localStorage.setItem('nairatag_claimed_tag', JSON.stringify(userAccount));
+            localStorage.setItem('nairatag_active_wallet', JSON.stringify(userAccount));
+            localStorage.setItem('nairatag_custom_agent_tag', displayTag);
+            localStorage.setItem('nairatag_user_profile', JSON.stringify({
+              tag: displayTag,
+              cleanTag: cleanTag,
+              address: account,
+              network: 'Celo Mainnet',
+              reputation: 100,
+              claimedAt: Date.now()
+            }));
+          } catch (storageErr) {
+            console.warn('[Profile storage error]', storageErr);
+          }
+
+          // 5. Sync with hub activities and resolver layer
+          try {
+            fetch(`/api/tags/claim`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tag: cleanTag, walletAddress: account, signature, nonce, deadline })
+            }).catch(() => { });
+          } catch { }
+
+          // 6. Award 100 Points & Welcome Voucher
+          try {
+            fetch(`${API_BASE}/api/points/award-claim`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                tag: cleanTag,
+                address: account,
+                source: 'web-claim'
+              })
+            }).catch(e => console.warn('Award claim trigger:', e));
+          } catch { }
+
+          // 7. Reveal Post-Claim Actions Panel
+          const successPanel = document.getElementById('claim-success-panel');
+          if (successPanel) {
+            const titleEl = document.getElementById('success-tag-title');
+            if (titleEl) titleEl.textContent = `${displayTag} Claimed on Celo!`;
+
+            const profileLink = document.getElementById('btn-goto-profile');
+            if (profileLink) profileLink.href = `/tag/${encodeURIComponent(cleanTag)}`;
+
+            const walletLink = document.getElementById('btn-goto-wallet');
+            if (walletLink) walletLink.href = `/wallet?tag=${encodeURIComponent(cleanTag)}`;
+
+            const shareBtn = document.getElementById('btn-copy-tag-share');
+            if (shareBtn) {
+              shareBtn.onclick = () => {
+                const url = `https://nairatag.ng/tag/${encodeURIComponent(cleanTag)}`;
+                navigator.clipboard.writeText(url).then(() => {
+                  showClaimToast(cleanTag, 'celo', 'Sovereign Share link copied to clipboard!');
+                });
+              };
+            }
+            successPanel.style.display = 'block';
+          // 8. Open Redesigned Claim Success Modal
+          openClaimSuccessModal(displayTag, account, 250);
+
+          // 9. Update top active banner
+          checkExistingClaimOnMount();
+
+          // 9. Pop Toast Notification
+          showClaimToast(val, 'celo', 'Claimed on Celo');
+
+          loadRecentTelemetry();
+          syncReferralMetrics(cleanTag);
+          updateHeaderWalletBalance();
+
+          btnSubmit.innerHTML = '<span>✓ Claimed · View Profile ➔</span>';
+          btnSubmit.onclick = () => {
+            window.location.href = `/tag/${encodeURIComponent(cleanTag)}`;
+          };
+        } else {
+          alert(data.error || 'Claim failed');
+          btnSubmit.innerHTML = '<span>Claim</span>';
+        }
+      } catch (err) {
+        alert('Claim failed: ' + err.message);
+        btnSubmit.innerHTML = '<span>Claim</span>';
+      } finally {
+        btnSubmit.disabled = false;
+      }
+    }
+
+    // Carousel Controller
+    let currentRegSlide = 0;
+    let regSlideInterval = null;
+
+    function updateRegSlidePosition() {
+      const track = document.getElementById('reg-carousel-track');
+      const dots = document.querySelectorAll('.reg-dot-btn');
+      const totalSlides = track ? track.children.length : 0;
+      if (!track || totalSlides === 0) return;
+
+      track.style.transform = `translateX(-${currentRegSlide * 100}%)`;
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentRegSlide);
+      });
+    }
+
+    function goToRegSlide(idx) {
+      const track = document.getElementById('reg-carousel-track');
+      const totalSlides = track ? track.children.length : 0;
+      if (!track || totalSlides === 0) return;
+      currentRegSlide = (idx + totalSlides) % totalSlides;
+      updateRegSlidePosition();
+    }
+
+    function changeRegSlide(delta) {
+      goToRegSlide(currentRegSlide + delta);
+    }
+
+    function startRegSlideAutoPlay() {
+      stopRegSlideAutoPlay();
+      regSlideInterval = setInterval(() => {
+        changeRegSlide(1);
+      }, 4000);
+    }
+
+    function stopRegSlideAutoPlay() {
+      if (regSlideInterval) {
+        clearInterval(regSlideInterval);
+        regSlideInterval = null;
+      }
+    }
+
+    function selectTag(handle, addr) {
+      if (!handle) return;
+      const clean = handle.replace(/^₦/, '').trim();
+      const input = document.getElementById('handle-input');
+      if (input) {
+        input.value = clean;
+        input.dispatchEvent(new Event('input'));
+        input.focus();
+      }
+      updateAllCards(clean, currentNetwork, 'available');
+      if (addr && navigator.clipboard) {
+        navigator.clipboard.writeText(addr);
+      }
+    }
+
+    async function loadRecentTelemetry() {
+      try {
+        const res = await fetch(`${API_BASE}/api/agent/telemetry`);
+        const data = await res.json();
+        if (data.recentEvents && data.recentEvents.length >= 3) {
+          const events = data.recentEvents;
+          const chunkSize = 3;
+          const slides = [];
+          for (let i = 0; i < events.length; i += chunkSize) {
+            slides.push(events.slice(i, i + chunkSize));
+          }
+
+          const track = document.getElementById('reg-carousel-track');
+          const dotsNav = document.getElementById('reg-dots-nav');
+          if (track && dotsNav && slides.length > 0) {
+            track.innerHTML = slides.map(slideItems => `
+              <div class="reg-slide">
+                ${slideItems.map(e => {
+              const rawHandle = e.handle || 'tag';
+              const clean = rawHandle.replace(/^₦/, '').trim();
+              const displayHandle = `₦${clean}`;
+              const celoSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#35D07F"/><path d="M12 6a6 6 0 100 12 6 6 0 000-12z" fill="#FBCC5C"/></svg>`;
+              const addr = e.wallet_address || '0x...';
+              const dicebearUrl = `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(clean)}`;
+              return `
+                    <div class="reg-pill-item" onclick="selectTag('${clean}', '${addr}')" title="${displayHandle} · Celo Sepolia (${addr})">
+                      <img class="reg-dicebear-avatar" src="${dicebearUrl}" alt="${displayHandle}" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\'><circle cx=\\'12\\' cy=\\'12\\' r=\\'12\\' fill=\\'%2335d07f\\'/><text x=\\'50%\\' y=\\'50%\\' dominant-baseline=\\'central\\' text-anchor=\\'middle\\' fill=\\'white\\' font-size=\\'11\\' font-weight=\\'bold\\'>₦</text></svg>'" />
+                      <span class="reg-handle-tag">${displayHandle}</span>
+                      <span class="reg-net-mini net-celo">${celoSvg}</span>
+                    </div>
+                  `;
+            }).join('')}
+              </div>
+            `).join('');
+
+            dotsNav.innerHTML = slides.map((_, i) => `
+              <button type="button" class="reg-dot-btn ${i === 0 ? 'active' : ''}" onclick="goToRegSlide(${i})" title="Slide ${i + 1}"></button>
+            `).join('');
+
+            currentRegSlide = 0;
+            updateRegSlidePosition();
+          }
+        }
+      } catch (err) { }
+    }
+
+    // Header Wallet Popover Handling
+    const walletBtn = document.getElementById('header-wallet-btn');
+    const walletPopover = document.getElementById('header-wallet-popover');
+    const closePopoverBtn = document.getElementById('popover-close-btn');
+
+    walletBtn?.addEventListener('click', (e) => {
+      const isHub = window.location.pathname.startsWith('/hub/');
+      window.location.href = isHub ? '/hub/wallet.html' : '/wallet';
+    });
+
+    closePopoverBtn?.addEventListener('click', () => { walletPopover.hidden = true; });
+    document.addEventListener('click', (e) => {
+      if (!walletPopover.hidden && !walletPopover.contains(e.target) && e.target !== walletBtn) {
+        walletPopover.hidden = true;
+      }
+    });
+
+    const popoverCopyBtn = document.getElementById('popover-copy-addr');
+    popoverCopyBtn?.addEventListener('click', () => {
+      const activeAddress = document.getElementById('owner-address-input')?.value || localStorage.getItem('nairatag_wallet') || '';
+      navigator.clipboard.writeText(activeAddress).then(() => {
+        const orig = popoverCopyBtn.textContent;
+        popoverCopyBtn.textContent = '✓ Copied';
+        setTimeout(() => { popoverCopyBtn.textContent = orig; }, 1500);
+      });
+    });
+
+    const popoverRefreshBtn = document.getElementById('popover-refresh-btn');
+    popoverRefreshBtn?.addEventListener('click', () => {
+      updateHeaderWalletBalance();
+    });
+
+    async function updateHeaderWalletBalance() {
+      const activeAddress = document.getElementById('owner-address-input')?.value || localStorage.getItem('nairatag_wallet') || '';
+      try {
+        const res = await fetch(`${API_BASE}/api/agent/wallet-info?address=${activeAddress}`);
+        const data = await res.json();
+        if (data.ok) {
+          const bal901 = data.balances?.chain901?.formatted || '0.00';
+          const balEth = data.balances?.celoSepolia?.formatted || '0.0000';
+
+          const pillBal = document.getElementById('header-wallet-balance');
+          const popoverBal = document.getElementById('popover-balance-901');
+          const popoverEth = document.getElementById('popover-balance-eth');
+
+          if (pillBal) pillBal.textContent = `${Number(bal901).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} cNGN`;
+          if (popoverBal) popoverBal.textContent = `${Number(bal901).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} cNGN`;
+          if (popoverEth) popoverEth.textContent = `${Number(balEth).toFixed(4)} ETH`;
+        }
+      } catch (err) { }
+    }
+    // Sidebar toggle and header wallet popover are handled centrally by theme.js
+
+    // Initialize
+    window.addEventListener('DOMContentLoaded', async () => {
+      // 1. Initialize sovereign/Web3 wallet
+      await initClaimWallet();
+
+      // 2. Check existing claimed tag
+      checkExistingClaimOnMount();
+
+      const p = new URLSearchParams(window.location.search);
+      let prefill = p.get('tag') || p.get('handle') || p.get('claim') || p.get('name');
+      const refParam = p.get('ref');
+      if (refParam) {
+        sessionStorage.setItem('nairatag_ref', refParam);
+      }
+
+      // Seamless Telegram Mini App detection
+      if (window.Telegram && window.Telegram.WebApp) {
+        try {
+          window.Telegram.WebApp.ready();
+          window.Telegram.WebApp.expand();
+          if (!prefill && window.Telegram.WebApp.initDataUnsafe?.user?.username) {
+            prefill = window.Telegram.WebApp.initDataUnsafe.user.username;
+          }
+        } catch (tgErr) {
+          console.warn('[Telegram WebApp]', tgErr);
+        }
+      }
+
+      if (prefill) {
+        handleInput.value = prefill.replace(/^[₦@#]/, '');
+        handleInput.dispatchEvent(new Event('input'));
+      } else {
+        const starterArchetypes = ['segun', 'dev', 'mama', 'chowdeck', 'shop', 'travel', 'designer', 'researcher', 'bayo'];
+        const randomStarter = starterArchetypes[Math.floor(Math.random() * starterArchetypes.length)];
+        sessionStarterTag = randomStarter;
+        updateAllCards(randomStarter, currentNetwork, 'empty');
+      }
+      loadRecentTelemetry();
+      updateHeaderWalletBalance();
+
+      const carouselContainer = document.getElementById('reg-carousel-container');
+      if (carouselContainer) {
+        carouselContainer.addEventListener('mouseenter', stopRegSlideAutoPlay);
+        carouselContainer.addEventListener('mouseleave', startRegSlideAutoPlay);
+        carouselContainer.addEventListener('touchstart', stopRegSlideAutoPlay, { passive: true });
+        carouselContainer.addEventListener('touchend', startRegSlideAutoPlay, { passive: true });
+      }
+      startRegSlideAutoPlay();
+    });
+
+    // ─────────────────────────────────────────────────────────────────
+    // REDESIGNED CLAIM SUCCESS CELEBRATION MODAL CONTROLLER
+    // ─────────────────────────────────────────────────────────────────
+    let continuousConfettiTimer = null;
+
+    function openClaimSuccessModal(tag, walletAddress, points = 250) {
+      const clean = (tag || 'tag').replace(/^[₦@#\s]+/g, '');
+      const displayTag = '₦' + clean;
+      const titleEl = document.getElementById('success-modal-title');
+      if (titleEl) titleEl.textContent = 'You Did It!';
+      const handleEl = document.getElementById('success-pill-handle');
+      if (handleEl) handleEl.textContent = displayTag;
+      const addrEl = document.getElementById('success-pill-address');
+      if (addrEl && walletAddress) {
+        addrEl.textContent = `${walletAddress.substring(0, 8)}...${walletAddress.substring(walletAddress.length - 6)} • Celo Sepolia Active`;
+      }
+      
+      const overlay = document.getElementById('success-overlay');
+      if (overlay) overlay.classList.add('active');
+
+      animatePointsCounter(points);
+      startConfettiShower();
+    }
+
+    function closeClaimSuccessModal() {
+      stopConfettiShower();
+      const overlay = document.getElementById('success-overlay');
+      if (overlay) overlay.classList.remove('active');
+    }
+
+    function animatePointsCounter(targetPoints) {
+      const el = document.getElementById('points-counter-val');
+      if (!el) return;
+      let current = 0;
+      const duration = 1200;
+      const steps = 25;
+      const stepVal = targetPoints / steps;
+      const stepTime = duration / steps;
+      
+      const timer = setInterval(() => {
+        current += stepVal;
+        if (current >= targetPoints) {
+          current = targetPoints;
+          clearInterval(timer);
+          el.classList.add('pop');
+          setTimeout(() => el.classList.remove('pop'), 400);
+        }
+        el.textContent = `+${Math.floor(current)} PTS`;
+      }, stepTime);
+    }
+
+    function startConfettiShower() {
+      stopConfettiShower();
+      if (typeof confetti !== 'function') return;
+
+      confetti({
+        particleCount: 110,
+        spread: 85,
+        origin: { y: 0.4 },
+        colors: ['#7a45e5', '#c084fc', '#10b981', '#38bdf8', '#ffd700', '#ffffff']
+      });
+
+      setTimeout(() => {
+        confetti({
+          particleCount: 70,
+          angle: 60,
+          spread: 60,
+          origin: { x: 0.1, y: 0.5 },
+          colors: ['#7a45e5', '#c084fc', '#ffd700', '#ffffff']
+        });
+        confetti({
+          particleCount: 70,
+          angle: 120,
+          spread: 60,
+          origin: { x: 0.9, y: 0.5 },
+          colors: ['#7a45e5', '#10b981', '#ffd700', '#ffffff']
+        });
+      }, 350);
+
+      continuousConfettiTimer = setInterval(() => {
+        confetti({
+          particleCount: 20,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0.05, y: 0.35 },
+          colors: ['#7a45e5', '#c084fc', '#ffffff', '#ffd700']
+        });
+        confetti({
+          particleCount: 20,
+          angle: 120,
+          spread: 55,
+          origin: { x: 0.95, y: 0.35 },
+          colors: ['#7a45e5', '#10b981', '#ffffff', '#ffd700']
+        });
+      }, 1400);
+    }
+
+    function stopConfettiShower() {
+      if (continuousConfettiTimer) {
+        clearInterval(continuousConfettiTimer);
+        continuousConfettiTimer = null;
+      }
+    }
+
+    async function triggerReferralShare() {
+      const tag = localStorage.getItem('nairatag_custom_agent_tag') || '₦tag';
+      const clean = tag.replace(/^[₦@#]/, '');
+      const shareUrl = `https://nairatag.ng/claim?ref=${encodeURIComponent(clean)}`;
+      const shareData = {
+        title: `Claimed my Sovereign ${tag} on NairaTag!`,
+        text: `I just claimed my sovereign onchain identity ${tag} and earned +250 points! Claim your free handle and activate your AI Agent wallet:`,
+        url: shareUrl
+      };
+
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 80,
+          spread: 75,
+          origin: { y: 0.65 },
+          colors: ['#ffd700', '#7a45e5', '#c084fc', '#ffffff', '#10b981']
+        });
+      }
+
+      let currentPts = parseInt(localStorage.getItem('nairatag_points') || '250', 10);
+      currentPts += 100;
+      localStorage.setItem('nairatag_points', currentPts.toString());
+      
+      const pointsEl = document.getElementById('points-counter-val');
+      if (pointsEl) {
+        pointsEl.textContent = `+${currentPts} PTS`;
+        pointsEl.classList.add('pop');
+        setTimeout(() => pointsEl.classList.remove('pop'), 400);
+      }
+
+      const toast = document.getElementById('share-toast');
+      if (toast) {
+        toast.innerHTML = '<span>🎁</span> Referral link copied! +100 bonus points added.';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+      }
+
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (err) {}
+      }
+
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+      } catch (e) {
+        const tmp = document.createElement('textarea');
+        tmp.value = shareUrl;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand('copy');
+        document.body.removeChild(tmp);
+      }
+    }
+  </script>
+
+  <!-- ═════════════════════════════════════════════════════════════════ -->
+  <!-- REDESIGNED CLAIM SUCCESS CELEBRATION MODAL (REFERENCE 1 & 2)      -->
+  <!-- ═════════════════════════════════════════════════════════════════ -->
+  <div class="success-celebration-overlay" id="success-overlay" onclick="if(event.target===this)closeClaimSuccessModal()">
+    <div class="success-modal-card" id="success-modal-card">
+      
+      <!-- Top Sheet Grab Handle -->
+      <div class="modal-grab-handle"></div>
+
+      <!-- Milestone Overline & Headline (Matching Reference 1 & 2) -->
+      <div class="success-badge-overline">Claim Milestone Unlocked</div>
+      <h2 class="success-modal-headline" id="success-modal-title">You Did It!</h2>
+
+      <!-- 3D Holographic Star Badge with Orbiting Ring (Reference 2) -->
+      <div class="holo-badge-container">
+        <svg class="holo-orbit-ring" viewBox="0 0 220 120">
+          <ellipse cx="110" cy="60" rx="95" ry="38" fill="none" stroke="url(#claimRingGrad)" stroke-width="3.5" stroke-dasharray="6 8" />
+          <defs>
+            <linearGradient id="claimRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#c084fc" />
+              <stop offset="50%" stop-color="#7a45e5" />
+              <stop offset="100%" stop-color="#ede9fe" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="orbit-star star-orbit-1">✦</div>
+        <div class="orbit-star star-orbit-2">✦</div>
+        <div class="holo-star-core">
+          <div class="holo-inner-glyph">₦</div>
+        </div>
+      </div>
+
+      <!-- Animated Points Reward Counter -->
+      <div class="points-reward-stage">
+        <div class="points-counter-val" id="points-counter-val">+0 PTS</div>
+        <div class="points-reward-sub">Sovereign Identity Genesis Reward</div>
+      </div>
+
+      <!-- Identity Status Card Row (Reference 2 style) -->
+      <div class="identity-status-pill">
+        <div class="status-pill-avatar">₦</div>
+        <div class="status-pill-info">
+          <strong id="success-pill-handle">₦tag</strong>
+          <span id="success-pill-address">0x... • Celo Sepolia Active</span>
+        </div>
+        <div class="status-pill-badge">✓ Active</div>
+      </div>
+
+      <!-- What You Can Do With Your Agent Tag Section -->
+      <div class="agent-powers-section">
+        <div class="agent-powers-header">What You Can Do With Your Agent Tag</div>
+        <div class="agent-powers-grid">
+          <div class="agent-power-item">
+            <span class="power-icon">⚡</span>
+            <div class="power-text">
+              <strong>Instant cNGN Payments</strong>
+              <span>Send & receive funds with @yourtag instead of 42-char hex</span>
+            </div>
+          </div>
+          <div class="agent-power-item">
+            <span class="power-icon">🤖</span>
+            <div class="power-text">
+              <strong>Autonomous AI Autopilot</strong>
+              <span>Your onchain agent executes escrows & bounties 24/7</span>
+            </div>
+          </div>
+          <div class="agent-power-item">
+            <span class="power-icon">📱</span>
+            <div class="power-text">
+              <strong>MiniPay & WhatsApp Identity</strong>
+              <span>Resolved instantly in chats, dApps & mobile crypto wallets</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dual Action Buttons: Share to Earn + Done (Reference 2 style) -->
+      <div class="success-actions-row">
+        <button type="button" class="btn-share-reward" id="btn-share-referral" onclick="triggerReferralShare()">
+          <span>🎁</span>
+          <span>Share & Earn +100 pts</span>
+        </button>
+        <button type="button" class="btn-done-hub" id="btn-done-hub" onclick="window.location.href='/profile'">
+          Done
+        </button>
+      </div>
+
+      <!-- Toast Notification for Share / Referral -->
+      <div class="share-toast" id="share-toast">
+        <span>🎁</span> Referral link copied! +100 pts pending friend claim.
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Libraries.dev Metal-fx Liquid Metal Effect Bundle -->
+  <script type="module" src="/hub/metal-bundle.js"></script>
+</body>
+
+</html>

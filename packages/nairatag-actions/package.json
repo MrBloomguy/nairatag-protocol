@@ -1,0 +1,23 @@
+{
+  "name": "@nairatag/actions",
+  "version": "1.0.0",
+  "description": "Action Protocol & Payment Provider Abstraction for NairaTag Social Layer",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/actions.test.js"
+  },
+  "dependencies": {
+    "@nairatag/parser": "file:../nairatag-parser",
+    "@nairatag/resolver": "file:../nairatag-resolver"
+  },
+  "keywords": [
+    "nairatag",
+    "actions",
+    "social",
+    "protocol",
+    "payments"
+  ],
+  "author": "NairaTag Network",
+  "license": "MIT"
+}

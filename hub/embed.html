@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>₦Tag Embed Widget</title>
+  <link rel="stylesheet" href="/hub/theme.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #000000;
+      color: #ffffff;
+      font-family: 'Poppins Rounded', 'Poppins', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 16px;
+      overflow: hidden;
+    }
+    .embed-card-wrap {
+      width: 100%;
+      max-width: 360px;
+      background: #0a0a0a;
+      border: 1px solid #222222;
+      border-radius: 24px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card-slot {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+    .card-slot svg {
+      width: 100%;
+      height: auto;
+      max-height: 380px;
+      border-radius: 20px;
+    }
+    .embed-addr-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #141414;
+      border: 1px solid #222222;
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 11.5px;
+      font-family: monospace;
+      color: #a1a1aa;
+    }
+    .embed-copy-btn {
+      background: transparent;
+      border: 1px solid #333333;
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      cursor: pointer;
+      font-family: 'Poppins Rounded', sans-serif;
+      transition: all 0.12s ease;
+    }
+    .embed-copy-btn:hover {
+      background: #222222;
+      border-color: #555555;
+    }
+    .embed-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .embed-btn-send {
+      flex: 1;
+      padding: 10px;
+      border-radius: 12px;
+      background: var(--card-primary, #00ff87);
+      color: #000000;
+      border: none;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: opacity 0.15s ease;
+    }
+    .embed-btn-send:hover { opacity: 0.9; }
+    .embed-btn-hub {
+      padding: 10px 14px;
+      border-radius: 12px;
+      background: #141414;
+      color: #ffffff;
+      border: 1px solid #222222;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .embed-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: #71717a;
+      padding-top: 4px;
+    }
+    .embed-footer a {
+      color: #71717a;
+      text-decoration: none;
+    }
+    .embed-footer a:hover { color: #ffffff; }
+  </style>
+</head>
+<body>
+
+  <div class="embed-card-wrap" id="embed-card-wrap">
+    <div class="card-slot" id="card-slot">
+      <!-- Injected Card SVG -->
+    </div>
+
+    <div class="embed-addr-row">
+      <span id="embed-address">Resolving on-chain...</span>
+      <button class="embed-copy-btn" id="embed-copy-btn" type="button">Copy</button>
+    </div>
+
+    <div class="embed-actions">
+      <a class="embed-btn-send" id="embed-btn-send" target="_blank" href="#">Send Crypto ↗</a>
+      <a class="embed-btn-hub" id="embed-btn-hub" target="_blank" href="#">Hub ↗</a>
+    </div>
+
+    <div class="embed-footer">
+      <span>Verified Onchain</span>
+      <a href="/claim" target="_blank">Powered by NairaTag</a>
+    </div>
+  </div>
+
+  <script src="/hub/tag-avatar.js"></script>
+  <script>
+    (async function() {
+      const params = new URLSearchParams(window.location.search);
+      const pathname = window.location.pathname;
+      let handle = params.get('tag') || pathname.replace(/^\/embed\/?/, '').replace(/^\/hub\/embed\.html\/?/, '');
+      if (!handle) handle = 'tag';
+      handle = handle.replace(/^₦/, '').toLowerCase();
+
+      // Resolve profile via TagAvatar
+      const profile = window.TagAvatar.resolveTagProfile(handle);
+      document.documentElement.style.setProperty('--card-primary', profile.palette.primary);
+
+      // Load card SVG dynamically
+      try {
+        const res = await fetch(`/cards/${handle}.svg?mode=card`);
+        if (res.ok) {
+          const svgText = await res.text();
+          document.getElementById('card-slot').innerHTML = svgText;
+        } else {
+          document.getElementById('card-slot').innerHTML = profile.avatarSvg;
+        }
+      } catch (e) {
+        document.getElementById('card-slot').innerHTML = profile.avatarSvg;
+      }
+
+      // Action links
+      const tagUrl = `/tag/${handle}?action=send`;
+      document.getElementById('embed-btn-send').href = tagUrl;
+      document.getElementById('embed-btn-hub').href = `/tag/${handle}`;
+
+      // Query address from bot resolver
+      let resolvedAddress = '';
+      try {
+        const botRes = await fetch(`http://127.0.0.1:8787/api/agent/wallet-info?tag=${handle}`).then(r => r.json());
+        if (botRes.ok && botRes.address) {
+          resolvedAddress = botRes.address;
+        }
+      } catch (err) {}
+
+      const shortAddr = resolvedAddress ? (resolvedAddress.slice(0, 6) + '...' + resolvedAddress.slice(-4)) : 'Unassigned';
+      document.getElementById('embed-address').textContent = shortAddr;
+      document.getElementById('embed-address').title = resolvedAddress;
+
+      document.getElementById('embed-copy-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(resolvedAddress);
+        document.getElementById('embed-copy-btn').textContent = 'Copied!';
+        setTimeout(() => document.getElementById('embed-copy-btn').textContent = 'Copy', 1500);
+      });
+    })();
+  </script>
+</body>
+</html>

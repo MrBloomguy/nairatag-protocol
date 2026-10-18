@@ -1,0 +1,27 @@
+{
+  "name": "nairatag-network",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --max-old-space-size=4096 --test packages/celotags-protocol/test/*.test.js && node test/nairatag-celo-registry.test.cjs && node test/celo-testnet-smoke.test.cjs",
+    "test:contracts": "cd contracts && forge test --match-contract CeloTagsRegistryTest",
+    "build:metal": "npx esbuild hub/metal-init.jsx --bundle --minify --format=esm --outfile=hub/metal-bundle.js",
+    "build:landing": "npx esbuild landing/src/index.jsx --bundle --minify --format=esm --outfile=landing/dist/celotags-landing.bundle.js"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.3",
+    "metal-fx": "^2.0.10",
+    "pg": "^8.23.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

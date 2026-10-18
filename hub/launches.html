@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>Launches · NairaTag Sovereign Drop &amp; Identity Launchpad</title>
+  
+  <link rel="stylesheet" href="/hub/theme.css" />
+  <link rel="stylesheet" href="/hub/notifications.css" />
+  <script src="/hub/theme.js"></script>
+  <script src="/hub/notifications.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --primary: #0052ff;
+      --primary-hover: #0045d8;
+      --primary-soft: rgba(0, 82, 255, 0.08);
+      --primary-border: rgba(0, 82, 255, 0.2);
+      --ink: #0f172a;
+      --ink-muted: #64748b;
+      --ink-light: #94a3b8;
+      --bg-base: #f8fafc;
+      --bg-page: #f1f5f9;
+      --bg-surface: #f1f5f9;
+      --bg-card: #ffffff;
+      --line: #e2e8f0;
+      --line-subtle: #cbd5e1;
+      --success: #10b981;
+      --success-soft: #ecfdf5;
+      --success-text: #059669;
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --radius-sm: 10px;
+      --radius-pill: 9999px;
+      --font-sans: 'Poppins Rounded', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'Roboto Mono', monospace;
+    }
+
+    [data-theme="dark"] {
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
+      --primary-soft: rgba(59, 130, 246, 0.16);
+      --primary-border: rgba(59, 130, 246, 0.38);
+      --ink: #ffffff;
+      --ink-muted: #a1a1aa;
+      --ink-light: #71717a;
+      --bg-base: #000000;
+      --bg-page: #000000;
+      --bg-surface: #141414;
+      --bg-card: #0a0a0a;
+      --line: #222222;
+      --line-subtle: #171717;
+      --success: #10b981;
+      --success-soft: rgba(16, 185, 129, 0.16);
+      --success-text: #34d399;
+    }
+
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
+      font-family: var(--font-sans);
+      background: var(--bg-page);
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    .app-layout {
+      display: flex;
+      height: 100dvh;
+      max-height: 100dvh;
+      width: 100vw;
+      padding: 6px;
+      gap: 6px;
+      background-color: var(--bg-page);
+    }
+
+    /* Unified Sidebar Navigation */
+    .app-sidebar {
+      width: 220px;
+      min-width: 220px;
+      height: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 9px;
+      flex-shrink: 0;
+      transition: width 0.2s cubic-bezier(0.16, 1, 0.3, 1), min-width 0.2s cubic-bezier(0.16, 1, 0.3, 1), padding 0.2s ease;
+      overflow: hidden;
+      z-index: 100;
+    }
+    .app-sidebar.collapsed { width: 48px; min-width: 48px; padding: 8px 5px; }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .brand-mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: #0052ff;
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .brand-text {
+      font-size: 12.5px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    .app-sidebar.collapsed .brand-text { display: none; }
+
+    .sidebar-toggle-btn {
+      background: transparent;
+      border: none;
+      color: var(--ink-muted);
+      cursor: pointer;
+      font-size: 12.5px;
+      padding: 3px;
+      border-radius: 4px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+    .sidebar-toggle-btn:hover { background: var(--bg-surface); color: var(--ink); }
+
+    .sidebar-scroll {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      margin: 9px -4px;
+      padding: 0 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .sidebar-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+    .sidebar-nav-group { display: flex; flex-direction: column; gap: 3px; }
+    .sidebar-nav-title {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--ink-light);
+      padding: 3px 7px;
+    }
+    .app-sidebar.collapsed .sidebar-nav-title { display: none; }
+
+    .sidebar-menu { display: flex; flex-direction: column; gap: 2px; }
+    .sidebar-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--ink-muted);
+      text-decoration: none;
+      border: 1px solid transparent;
+      background: transparent;
+      cursor: pointer;
+      width: 100%;
+      text-align: left;
+      transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+      white-space: nowrap;
+    }
+    .sidebar-menu-item:hover {
+      background: var(--bg-surface);
+      color: var(--ink);
+      border-color: var(--line-subtle);
+    }
+    .sidebar-menu-item.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+      border-color: var(--primary-border);
+      font-weight: 700;
+    }
+    .menu-icon { font-size: 13.5px; width: 17px; text-align: center; flex-shrink: 0; }
+    .menu-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+    .app-sidebar.collapsed .menu-label, .app-sidebar.collapsed .menu-badge { display: none; }
+    .menu-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+    [data-theme="dark"] .menu-badge {
+      background: #1e293b;
+      color: #94a3b8;
+    }
+
+    .sidebar-footer { padding-top: 7px; border-top: 1px solid var(--line); flex-shrink: 0; }
+    .sidebar-status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 7px;
+      border-radius: var(--radius-sm);
+      background: var(--bg-surface);
+      font-size: 11px;
+      color: var(--ink-muted);
+    }
+    .app-sidebar.collapsed .sidebar-status-badge .status-text { display: none; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+
+    /* Main Viewport */
+    .main-viewport {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* App Header */
+    .app-header {
+      height: 44px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg-card);
+      flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .header-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--ink-muted);
+    }
+    .header-breadcrumb a { color: var(--ink-muted); text-decoration: none; }
+    .header-breadcrumb a:hover { color: var(--primary); }
+    .header-breadcrumb strong { color: var(--ink); font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+
+    .header-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      color: var(--ink);
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.12s ease;
+    }
+    .header-btn:hover { background: var(--bg-surface); }
+
+    .theme-toggle-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      color: var(--ink);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+    }
+    .theme-toggle-btn:hover { background: var(--bg-surface); }
+
+    /* Header Wallet Popover */
+    .header-wallet-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      width: 280px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .header-wallet-popover[hidden] { display: none; }
+    .popover-header { display: flex; align-items: center; justify-content: space-between; }
+    .popover-user-info { display: flex; align-items: center; gap: 8px; }
+    .popover-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+    .popover-handle { font-size: 12.5px; font-weight: 800; color: var(--ink); }
+    .popover-addr { font-size: 10.5px; font-family: var(--font-mono); color: var(--ink-muted); }
+    .popover-close-btn { background: transparent; border: none; color: var(--ink-muted); cursor: pointer; font-size: 13px; }
+    .popover-balances-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px;
+    }
+    .popover-balance-card { display: flex; justify-content: space-between; font-size: 11px; }
+    .popover-balance-label { font-size: 9.5px; font-weight: 700; color: var(--ink-light); text-transform: uppercase; }
+    .popover-balance-num { font-size: 11.5px; font-weight: 800; font-family: var(--font-mono); color: var(--ink); }
+    .popover-status-row { display: flex; align-items: center; gap: 6px; font-size: 10.5px; color: var(--ink-muted); }
+    .popover-actions-deck { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; padding-top: 4px; }
+    .popover-action-btn {
+      padding: 5px 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--bg-card);
+      font-size: 10.5px;
+      font-weight: 600;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: center;
+    }
+    .popover-action-btn:hover { background: var(--bg-surface); }
+
+    /* Page Workspace Layout - Zora Style */
+    .page-content-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 24px 20px 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      background: var(--bg-page);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .page-content-scroll::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+    .launches-container {
+      width: 100%;
+      max-width: 920px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Launches Hero Bar */
+    .launches-header-deck {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--line);
+    }
+    .launches-title-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .launches-super-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--primary);
+    }
+    .launches-main-title {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      color: var(--ink);
+      margin: 0;
+    }
+    .launches-desc {
+      font-size: 13.5px;
+      color: var(--ink-muted);
+      max-width: 540px;
+      line-height: 1.5;
+    }
+    .btn-create-launch {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--ink);
+      color: var(--bg-card);
+      padding: 10px 18px;
+      border-radius: var(--radius-pill);
+      font-size: 13px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.1s ease;
+      white-space: nowrap;
+    }
+    .btn-create-launch:hover {
+      opacity: 0.88;
+      transform: translateY(-1px);
+    }
+
+    /* Zora Spotlight Featured Drop Card */
+    .featured-drop-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      box-shadow: none !important;
+    }
+    @media (max-width: 768px) {
+      .featured-drop-card { grid-template-columns: 1fr; }
+    }
+
+    .drop-media-side {
+      position: relative;
+      background: #000000;
+      min-height: 340px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .drop-media-art {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0.92;
+      transition: transform 0.3s ease;
+    }
+    .drop-media-side:hover .drop-media-art {
+      transform: scale(1.02);
+    }
+    .drop-live-pill {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .drop-live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+    .drop-chain-pill {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: rgba(0, 82, 255, 0.9);
+      color: #ffffff;
+      padding: 4px 10px;
+      border-radius: var(--radius-pill);
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .drop-info-side {
+      padding: 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 20px;
+      background: var(--bg-card);
+    }
+    .drop-creator-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .drop-creator-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--line);
+      background: var(--bg-surface);
+    }
+    .drop-creator-name {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .drop-creator-tag {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      color: var(--primary);
+    }
+
+    .drop-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .drop-title {
+      font-size: 24px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      color: var(--ink);
+      line-height: 1.15;
+    }
+    .drop-description {
+      font-size: 12.5px;
+      color: var(--ink-muted);
+      line-height: 1.5;
+    }
+
+    /* Zora Mint Progress Box */
+    .drop-mint-stats {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 14px;
+    }
+    .drop-stats-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .drop-stat-label { color: var(--ink-muted); }
+    .drop-stat-val { font-family: var(--font-mono); color: var(--ink); }
+
+    .drop-progress-bar-bg {
+      height: 6px;
+      width: 100%;
+      background: var(--line);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .drop-progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+
+    .drop-mint-action-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .mint-stepper-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mint-stepper {
+      display: flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--bg-surface);
+      overflow: hidden;
+    }
+    .stepper-btn {
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .stepper-btn:hover { background: var(--line); }
+    .stepper-val {
+      padding: 0 10px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .mint-token-toggle {
+      flex: 1;
+      display: flex;
+      gap: 4px;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 3px;
+    }
+    .token-toggle-btn {
+      flex: 1;
+      padding: 6px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      color: var(--ink-muted);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+    }
+    .token-toggle-btn.active {
+      background: var(--bg-card);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .btn-mint-hero {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background 0.15s ease;
+    }
+    .btn-mint-hero:hover { background: var(--primary-hover); }
+
+    /* Category Filter Tabs */
+    .launches-filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .filter-tabs {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .filter-tabs::-webkit-scrollbar { display: none; }
+    .filter-tab-btn {
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--line);
+      background: var(--bg-surface);
+      color: var(--ink-muted);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.12s ease;
+    }
+    .filter-tab-btn:hover { color: var(--ink); border-color: var(--primary); }
+    .filter-tab-btn.active {
+      background: var(--ink);
+      color: var(--bg-card);
+      border-color: var(--ink);
+    }
+
+    /* Grid of Drops (Zora Cards) */
+    .drops-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 900px) { .drops-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .drops-grid { grid-template-columns: 1fr; } }
+
+    .drop-grid-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.2s ease, transform 0.15s ease;
+      text-decoration: none;
+      color: inherit;
+    }
+    .drop-grid-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-2px);
+    }
+    .grid-card-media {
+      position: relative;
+      aspect-ratio: 1 / 1;
+      background: #000;
+      overflow: hidden;
+    }
+    .grid-card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .drop-grid-card:hover .grid-card-img { transform: scale(1.03); }
+    .grid-card-net {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 10px;
+      font-weight: 800;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+    .grid-card-tag {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 800;
+      background: rgba(0, 82, 255, 0.9);
+      color: #fff;
+      font-family: var(--font-mono);
+    }
+
+    .grid-card-content {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      justify-content: space-between;
+    }
+    .grid-card-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .grid-card-creator {
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      font-family: var(--font-mono);
+    }
+
+    .grid-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 8px;
+      border-top: 1px solid var(--line);
+    }
+    .grid-card-price-col {
+      display: flex;
+      flex-direction: column;
+    }
+    .grid-price-label { font-size: 9.5px; color: var(--ink-light); text-transform: uppercase; font-weight: 700; }
+    .grid-price-val { font-size: 13px; font-weight: 800; font-family: var(--font-mono); color: var(--ink); }
+
+    .btn-quick-mint {
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      background: var(--primary-soft);
+      border: 1px solid var(--primary-border);
+      color: var(--primary);
+      font-size: 11.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .btn-quick-mint:hover {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    /* Modal Overlay */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+    .modal-overlay[hidden] { display: none !important; }
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 24px;
+      max-width: 440px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important;
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title { font-size: 16px; font-weight: 900; color: var(--ink); }
+    .modal-close-btn { background: transparent; border: none; color: var(--ink-muted); cursor: pointer; font-size: 16px; }
+
+    .modal-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .modal-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .modal-input, .modal-textarea {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13.5px;
+      color: var(--ink);
+      outline: none;
+      font-family: var(--font-sans);
+    }
+    .modal-input:focus, .modal-textarea:focus { border-color: var(--primary); }
+    .modal-submit-btn {
+      padding: 12px;
+      border-radius: 12px;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .modal-submit-btn:hover { background: var(--primary-hover); }
+
+    /* Toast */
+    .app-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #111111;
+      border: 1px solid #333333;
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      font-weight: 600;
+      z-index: 3000;
+      display: none;
+      animation: toastIn 0.2s ease;
+    }
+    .app-toast.visible { display: flex; align-items: center; gap: 8px; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- ============================================================= -->
+                                <!-- Left Sidebar Navigation -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a class="brand-logo" href="/agent">
+          <div class="brand-mark">
+            <img src="/hub/nairatag-icon.png" alt="₦" class="brand-mark-img" />
+          </div>
+          <span class="brand-text">NairaTag</span>
+        </a>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" type="button" title="Collapse sidebar" aria-label="Toggle sidebar">
+          <span id="sidebar-toggle-icon">◨</span>
+        </button>
+      </div>
+
+      <div class="sidebar-scroll">
+        <!-- Protocol Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Protocol</div>
+          <nav class="sidebar-menu" aria-label="Protocol Navigation">
+                        <a class="sidebar-menu-item" id="menu-profile" href="/profile" title="Agent Profile & Streaks">
+              <span class="menu-icon">👤</span>
+              <span class="menu-label">Profile</span>
+            </a>
+<a class="sidebar-menu-item" id="menu-claim" href="/claim" title="Claim ₦Tag">
+              <span class="menu-icon">✦</span>
+              <span class="menu-label">Claim</span>
+              <span class="menu-badge badge-count-claim">1</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-agent" href="/agent" title="Open AI Chat">
+              <span class="menu-icon">💬</span>
+              <span class="menu-label">Chat</span>
+              <span class="menu-badge badge-count-chat">2</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-tasks" href="/tasks" title="Agent Tasks &amp; Bounties">
+              <span class="menu-icon">🎯</span>
+              <span class="menu-label">Tasks</span>
+              <span class="menu-badge badge-count-tasks">5</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-explorer" href="/explorer" title="Identity Explorer">
+              <span class="menu-icon">🌐</span>
+              <span class="menu-label">Explorer</span>
+              
+            </a>
+            <a class="sidebar-menu-item" id="menu-swap" href="/swap" title="Swap Assets">
+              <span class="menu-icon">⇄</span>
+              <span class="menu-label">Swap</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-earnings" href="/earnings" title="Agent Earnings Leaderboard">
+              <span class="menu-icon">🏆</span>
+              <span class="menu-label">Earnings</span>
+              
+            </a>
+          </nav>
+        </div>
+
+        <!-- Knowledge & Info Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Knowledge &amp; Info</div>
+          <nav class="sidebar-menu" aria-label="Knowledge and Documentation">
+            <a class="sidebar-menu-item" id="menu-about" href="/about" title="About ₦Tag Network">
+              <span class="menu-icon">ℹ</span>
+              <span class="menu-label">About</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-docs" href="/docs" title="Developer Docs &amp; SDK">
+              <span class="menu-icon">📖</span>
+              <span class="menu-label">Docs</span>
+              
+            </a>
+            <a class="sidebar-menu-item" id="menu-faq" href="/faq" title="Frequently Asked Questions">
+              <span class="menu-icon">❓</span>
+              <span class="menu-label">FAQ</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Viewport Container -->
+    <div class="main-viewport">
+      <!-- Top Navigation Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="header-sidebar-btn" id="header-sidebar-btn" type="button" title="Open menu" aria-label="Open menu" style="display:none;">☰</button>
+        </div>
+        <div class="header-right">
+          <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" title="Toggle Theme" aria-label="Toggle dark mode">🌙</button>
+          <button type="button" class="header-auth-btn" id="header-auth-btn" onclick="window.NairaTagSupabase.openAuthModal('signin')" title="Sign In or Sign Up">
+            <span id="auth-btn-icon">👤</span>
+            <span id="auth-btn-text">Sign In</span>
+          </button>
+          <div style="position:relative;">
+            <a href="/wallet" class="header-btn" id="header-wallet-btn" title="Open Wallet Dashboard" style="font-family:var(--font-mono); font-weight:700; text-decoration:none;">
+              <span>👛</span>
+              <span id="header-wallet-balance">0.00 cNGN</span>
+            </a>
+            <!-- Wallet Balance Dropdown Popover -->
+            <div class="header-wallet-popover" id="header-wallet-popover" hidden>
+              <div class="popover-header">
+                <div class="popover-user-info">
+                  <div class="popover-tag" id="popover-active-tag">₦TAG</div>
+                  <div class="popover-addr" id="popover-active-addr">Not connected</div>
+                </div>
+                <div class="popover-status-badge">Active</div>
+              </div>
+              <div class="popover-balance-section">
+                <div class="popover-balance-label">Total Balance</div>
+                <div class="popover-balance-val" id="popover-total-balance">₦ 0.00</div>
+              </div>
+              <div class="popover-actions">
+                <a href="/wallet" class="popover-btn primary" id="popover-open-wallet">Wallet Dashboard</a>
+                <button type="button" class="popover-btn" id="popover-disconnect-btn">Disconnect</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="page-content-scroll">
+        <div class="launches-container">
+
+          <!-- 1. Header & Create Action -->
+          <div class="launches-header-deck">
+            <div class="launches-title-box">
+              <span class="launches-super-title">✦ Sovereign Creator Launchpad</span>
+              <h1 class="launches-main-title">₦Tag Launches</h1>
+              <div class="launches-desc">
+                Deploy, mint, and collect sovereign identity editions, community passes, and commemorative ₦Tag drops powered by Base Sub-Accounts.
+              </div>
+            </div>
+            <button type="button" class="btn-create-launch" onclick="openCreateModal()">
+              <span>+</span> Create a Launch
+            </button>
+          </div>
+
+          <!-- 2. Featured Drop Spotlight (Zora Hero) -->
+          <div class="featured-drop-card">
+            <div class="drop-media-side">
+              <img src="/hub/banner-card.jpg" class="drop-media-art" alt="₦lagos Genesis Edition" />
+              <div class="drop-live-pill">
+                <span class="drop-live-dot"></span>
+                <span>Live Now</span>
+              </div>
+              <div class="drop-chain-pill">
+                <span>Celo Sepolia</span>
+              </div>
+            </div>
+
+            <div class="drop-info-side">
+              <div class="drop-creator-row">
+                <img src="https://api.dicebear.com/7.x/identicon/svg?seed=lagos" class="drop-creator-avatar" alt="Creator Avatar" />
+                <div>
+                  <div class="drop-creator-name">Lagos State Web3 Collective</div>
+                  <div class="drop-creator-tag">₦lagos · Sub-Account</div>
+                </div>
+              </div>
+
+              <div class="drop-title-group">
+                <div class="drop-title">₦lagos Sovereign Edition #001</div>
+                <div class="drop-description">
+                  Official genesis commemorative pass for the Nigerian decentralized ecosystem. Grants token-gated access to Lagos builders guild, zero-fee cNGN micro-swaps, and exclusive ₦Tag sub-domains.
+                </div>
+              </div>
+
+              <!-- Zora Mint Stats -->
+              <div class="drop-mint-stats">
+                <div class="drop-stats-row">
+                  <span class="drop-stat-label">Minted Progress</span>
+                  <span class="drop-stat-val" id="featured-mint-progress">684 / 1,000 (68.4%)</span>
+                </div>
+                <div class="drop-progress-bar-bg">
+                  <div class="drop-progress-bar-fill" id="featured-progress-fill" style="width: 68.4%;"></div>
+                </div>
+                <div class="drop-stats-row" style="margin-top: 4px;">
+                  <span class="drop-stat-label">Price per Edition</span>
+                  <span class="drop-stat-val" id="featured-price-label">0.002 ETH <span style="color:var(--ink-muted); font-weight:500;">(~3,000 cNGN)</span></span>
+                </div>
+              </div>
+
+              <!-- Zora Mint Action Box -->
+              <div class="drop-mint-action-box">
+                <div class="mint-stepper-row">
+                  <div class="mint-stepper">
+                    <button type="button" class="stepper-btn" onclick="stepHeroMint(-1)">−</button>
+                    <span class="stepper-val" id="hero-mint-qty">1</span>
+                    <button type="button" class="stepper-btn" onclick="stepHeroMint(1)">+</button>
+                  </div>
+                  <div class="mint-token-toggle">
+                    <button type="button" class="token-toggle-btn active" id="btn-pay-eth" onclick="selectPayCurrency('ETH')">ETH (Base)</button>
+                    <button type="button" class="token-toggle-btn" id="btn-pay-cngn" onclick="selectPayCurrency('cNGN')">cNGN (901)</button>
+                  </div>
+                </div>
+                <button type="button" class="btn-mint-hero" id="btn-hero-mint" onclick="executeHeroMint()">
+                  <span>⚡</span>
+                  <span id="btn-hero-mint-text">Mint Edition (0.002 ETH)</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Category Filter Tabs -->
+          <div class="launches-filter-bar">
+            <div class="filter-tabs">
+              <button type="button" class="filter-tab-btn active" onclick="filterDrops('all')">All Launches</button>
+              <button type="button" class="filter-tab-btn" onclick="filterDrops('live')">● Live Now</button>
+              <button type="button" class="filter-tab-btn" onclick="filterDrops('passes')">Ecosystem Passes</button>
+              <button type="button" class="filter-tab-btn" onclick="filterDrops('music')">Music &amp; Sound</button>
+              <button type="button" class="filter-tab-btn" onclick="filterDrops('chain901')">Chain 901 Gasless</button>
+            </div>
+          </div>
+
+          <!-- 4. Drops Grid (Zora Minimalist Cards) -->
+          <div class="drops-grid" id="drops-grid">
+            <!-- Dynamic drop cards rendered by JS -->
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- MODAL: CREATE A NEW ₦TAG LAUNCH                                -->
+  <!-- ============================================================= -->
+  <div class="modal-overlay" id="create-modal" hidden onclick="if(event.target===this)closeCreateModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Create ₦Tag Edition Launch</div>
+        <button type="button" class="modal-close-btn" onclick="closeCreateModal()">✕</button>
+      </div>
+      <div style="font-size:12px; color:var(--ink-muted); line-height:1.5;">
+        Deploy a sovereign onchain edition contract bound to your ₦Tag identity. Royalties and mint proceeds flow straight to your Base Sub-Account.
+      </div>
+
+      <div class="modal-input-group">
+        <label class="modal-label">Your ₦Tag Handle</label>
+        <input type="text" class="modal-input" id="new-launch-tag" placeholder="e.g. ₦music or ₦burna" value="₦nairatag" />
+      </div>
+
+      <div class="modal-input-group">
+        <label class="modal-label">Collection / Drop Title</label>
+        <input type="text" class="modal-input" id="new-launch-title" placeholder="e.g. Afrobeat Genesis Pass #1" />
+      </div>
+
+      <div class="modal-input-group">
+        <label class="modal-label">Description</label>
+        <textarea class="modal-textarea" id="new-launch-desc" rows="2" placeholder="Tell the community what this sovereign pass grants..."></textarea>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="modal-input-group">
+          <label class="modal-label">Edition Size</label>
+          <input type="number" class="modal-input" id="new-launch-supply" placeholder="e.g. 500" value="500" />
+        </div>
+        <div class="modal-input-group">
+          <label class="modal-label">Price (ETH or cNGN)</label>
+          <input type="text" class="modal-input" id="new-launch-price" placeholder="0.001 ETH" value="0.001 ETH" />
+        </div>
+      </div>
+
+      <button type="button" class="modal-submit-btn" onclick="deployNewLaunch()">Deploy Launch to Celo Sepolia</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="app-toast" id="app-toast"></div>
+
+  <script>
+    const API_BASE = 'http://127.0.0.1:8787';
+
+    const INITIAL_DROPS = [
+      {
+        id: 'music-pass',
+        tag: '₦music',
+        title: 'African Music Collective Pass',
+        creator: '₦burna.tag',
+        category: 'music',
+        network: 'Celo Sepolia',
+        price: '0.0015 ETH',
+        priceNum: 0.0015,
+        currency: 'ETH',
+        supply: 500,
+        minted: 418,
+        image: '/hub/sovereign-card.jpg'
+      },
+      {
+        id: 'dev-guild',
+        tag: '₦dev',
+        title: 'Web3 Builders Guild Identity',
+        creator: '₦techbro.tag',
+        category: 'chain901',
+        network: 'Chain 901',
+        price: 'Free (Gasless)',
+        priceNum: 0,
+        currency: 'cNGN',
+        supply: 2500,
+        minted: 1892,
+        image: '/hub/banner-card.jpg'
+      },
+      {
+        id: 'afrobeats-id',
+        tag: '₦afrobeats',
+        title: 'Sound Edition Identity Mint',
+        creator: '₦davido.tag',
+        category: 'music',
+        network: 'Celo Sepolia',
+        price: '0.003 ETH',
+        priceNum: 0.003,
+        currency: 'ETH',
+        supply: 300,
+        minted: 164,
+        image: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'bisi-pass',
+        tag: '₦bisi',
+        title: 'Micro-Settlement Pass',
+        creator: '₦bisi.tag',
+        category: 'chain901',
+        network: 'Chain 901',
+        price: '500 cNGN',
+        priceNum: 500,
+        currency: 'cNGN',
+        supply: 1000,
+        minted: 894,
+        image: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=600&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'asake-drop',
+        tag: '₦asake',
+        title: 'Lungu Boy Commemorative Pass',
+        creator: '₦asake.tag',
+        category: 'passes',
+        network: 'Celo Sepolia',
+        price: '0.0025 ETH',
+        priceNum: 0.0025,
+        currency: 'ETH',
+        supply: 5000,
+        minted: 2410,
+        image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600&auto=format&fit=crop&q=80'
+      },
+      {
+        id: 'sovereign-genesis',
+        tag: '₦naija',
+        title: 'Sovereign Identity Genesis',
+        creator: '₦sovereign.tag',
+        category: 'passes',
+        network: 'Celo Sepolia',
+        price: '0.005 ETH',
+        priceNum: 0.005,
+        currency: 'ETH',
+        supply: 100,
+        minted: 88,
+        image: '/hub/sovereign-card.jpg'
+      }
+    ];
+
+    let dropsList = [];
+    let activeFilter = 'all';
+    let heroQty = 1;
+    let heroPayCurrency = 'ETH';
+    let toastTimer = null;
+
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById('app-toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.style.borderColor = isSuccess ? 'var(--success)' : '#ef4444';
+      toast.classList.add('visible');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.classList.remove('visible'); }, 3200);
+    }
+
+    function loadDrops() {
+      try {
+        const stored = localStorage.getItem('nairatag_launches');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          dropsList = [...parsed, ...INITIAL_DROPS];
+        } else {
+          dropsList = [...INITIAL_DROPS];
+        }
+      } catch {
+        dropsList = [...INITIAL_DROPS];
+      }
+      renderDrops();
+    }
+
+    function renderDrops() {
+      const grid = document.getElementById('drops-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const filtered = dropsList.filter(d => {
+        if (activeFilter === 'all') return true;
+        if (activeFilter === 'live') return d.minted < d.supply;
+        if (activeFilter === 'passes') return d.category === 'passes';
+        if (activeFilter === 'music') return d.category === 'music';
+        if (activeFilter === 'chain901') return d.network === 'Chain 901';
+        return true;
+      });
+
+      filtered.forEach(d => {
+        const card = document.createElement('div');
+        card.className = 'drop-grid-card';
+        card.innerHTML = `
+          <div class="grid-card-media">
+            <img src="${d.image}" class="grid-card-img" alt="${d.title}" />
+            <div class="grid-card-net">${d.network}</div>
+            <div class="grid-card-tag">${d.tag}</div>
+          </div>
+          <div class="grid-card-content">
+            <div>
+              <div class="grid-card-title">${d.title}</div>
+              <div class="grid-card-creator">By ${d.creator}</div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:700; color:var(--ink-muted); margin-bottom:4px;">
+                <span>Minted</span>
+                <span>${d.minted}/${d.supply}</span>
+              </div>
+              <div class="drop-progress-bar-bg" style="height:4px;">
+                <div class="drop-progress-bar-fill" style="width:${(d.minted / d.supply) * 100}%;"></div>
+              </div>
+            </div>
+            <div class="grid-card-footer">
+              <div class="grid-card-price-col">
+                <span class="grid-price-label">Price</span>
+                <span class="grid-price-val">${d.price}</span>
+              </div>
+              <button type="button" class="btn-quick-mint" onclick="quickMint('${d.id}')">Mint</button>
+            </div>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function filterDrops(cat) {
+      activeFilter = cat;
+      document.querySelectorAll('.filter-tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      renderDrops();
+    }
+
+    // Hero Stepper & Currency
+    function stepHeroMint(delta) {
+      heroQty = Math.max(1, Math.min(10, heroQty + delta));
+      document.getElementById('hero-mint-qty').textContent = heroQty;
+      updateHeroPriceDisplay();
+    }
+
+    function selectPayCurrency(curr) {
+      heroPayCurrency = curr;
+      document.getElementById('btn-pay-eth').classList.toggle('active', curr === 'ETH');
+      document.getElementById('btn-pay-cngn').classList.toggle('active', curr === 'cNGN');
+      updateHeroPriceDisplay();
+    }
+
+    function updateHeroPriceDisplay() {
+      const btnText = document.getElementById('btn-hero-mint-text');
+      if (heroPayCurrency === 'ETH') {
+        const cost = (heroQty * 0.002).toFixed(3);
+        btnText.textContent = `Mint Edition (${cost} ETH)`;
+      } else {
+        const cost = (heroQty * 3000).toLocaleString();
+        btnText.textContent = `Mint Edition (${cost} cNGN)`;
+      }
+    }
+
+    function executeHeroMint() {
+      const btn = document.getElementById('btn-hero-mint');
+      btn.disabled = true;
+      btn.innerHTML = `<span>⏳</span> Minting on Celo Sepolia...`;
+
+      setTimeout(() => {
+        btn.disabled = false;
+        updateHeroPriceDisplay();
+
+        // Fire Zora-style celebration
+        if (window.confetti) {
+          confetti({
+            particleCount: 120,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        }
+
+        // Update stats
+        const progEl = document.getElementById('featured-mint-progress');
+        const fillEl = document.getElementById('featured-progress-fill');
+        const newMinted = 684 + heroQty;
+        if (progEl) progEl.textContent = `${newMinted} / 1,000 (${((newMinted/1000)*100).toFixed(1)}%)`;
+        if (fillEl) fillEl.style.width = `${((newMinted/1000)*100).toFixed(1)}%`;
+
+        showToast(`🎉 Successfully minted ${heroQty}x ₦lagos Sovereign Edition!`);
+      }, 1200);
+    }
+
+    function quickMint(dropId) {
+      const drop = dropsList.find(d => d.id === dropId);
+      if (!drop) return;
+
+      if (window.confetti) {
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } });
+      }
+
+      drop.minted += 1;
+      renderDrops();
+      showToast(`🎉 Minted 1x ${drop.title}! Proceed routed to ${drop.creator}`);
+    }
+
+    // Modal Create Launch
+    function openCreateModal() {
+      document.getElementById('create-modal').hidden = false;
+    }
+    function closeCreateModal() {
+      document.getElementById('create-modal').hidden = true;
+    }
+
+    function deployNewLaunch() {
+      const tag = document.getElementById('new-launch-tag')?.value.trim() || '₦custom';
+      const title = document.getElementById('new-launch-title')?.value.trim();
+      const desc = document.getElementById('new-launch-desc')?.value.trim();
+      const supply = parseInt(document.getElementById('new-launch-supply')?.value, 10) || 500;
+      const price = document.getElementById('new-launch-price')?.value.trim() || '0.001 ETH';
+
+      if (!title) {
+        showToast('Please enter a collection title', false);
+        return;
+      }
+
+      const formattedTag = tag.startsWith('₦') ? tag : `₦${tag}`;
+      const newDrop = {
+        id: `drop-${Date.now()}`,
+        tag: formattedTag,
+        title: title,
+        creator: `${formattedTag}.tag`,
+        category: 'passes',
+        network: 'Celo Sepolia',
+        price: price,
+        priceNum: parseFloat(price) || 0.001,
+        currency: 'ETH',
+        supply: supply,
+        minted: 1,
+        image: '/hub/sovereign-card.jpg'
+      };
+
+      let customLaunches = [];
+      try {
+        const stored = localStorage.getItem('nairatag_launches');
+        if (stored) customLaunches = JSON.parse(stored);
+      } catch {}
+
+      customLaunches.unshift(newDrop);
+      try {
+        localStorage.setItem('nairatag_launches', JSON.stringify(customLaunches));
+      } catch {}
+
+      dropsList.unshift(newDrop);
+      renderDrops();
+      closeCreateModal();
+
+      if (window.confetti) {
+        confetti({ particleCount: 140, spread: 80, origin: { y: 0.5 } });
+      }
+      showToast(`🚀 Drop deployed! ${title} is now live on ₦Tag Launches!`);
+    }
+
+    // Header popover & toggle
+    const sidebar = document.getElementById('app-sidebar');
+    const toggleBtn = document.getElementById('sidebar-toggle-btn');
+    toggleBtn?.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      const icon = document.getElementById('sidebar-toggle-icon');
+      if (icon) icon.textContent = sidebar.classList.contains('collapsed') ? '◧' : '◨';
+    });
+
+    const walletBtn = document.getElementById('header-wallet-btn');
+    const walletPopover = document.getElementById('header-wallet-popover');
+    const closePopoverBtn = document.getElementById('popover-close-btn');
+
+    walletBtn?.addEventListener('click', (e) => { const isHub = window.location.pathname.startsWith('/hub/'); if (!window.location.pathname.endsWith('/wallet.html') && window.location.pathname !== '/wallet') { window.location.href = isHub ? '/hub/wallet.html' : '/wallet'; } });
+    closePopoverBtn?.addEventListener('click', () => { walletPopover.hidden = true; });
+    document.addEventListener('click', (e) => {
+      if (!walletPopover.hidden && !walletPopover.contains(e.target) && e.target !== walletBtn) {
+        walletPopover.hidden = true;
+      }
+    });
+
+    async function updateHeaderWalletBalance() {
+      let activeAddress = localStorage.getItem('nairatag_wallet') || localStorage.getItem('user_address') || '';
+      if (!activeAddress) {
+        const headerBal = document.getElementById('header-wallet-balance');
+        if (headerBal) headerBal.textContent = '0.00 cNGN';
+        return;
+      }
+      try {
+        const stored = localStorage.getItem('nairatag_active_wallet');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed?.address) activeAddress = parsed.address;
+        } else if (window.ethereum?.selectedAddress) {
+          activeAddress = window.ethereum.selectedAddress;
+        }
+      } catch {}
+
+      try {
+        const res = await fetch(`${API_BASE}/api/agent/wallet-info?address=${activeAddress}`);
+        const data = await res.json();
+        if (data.ok) {
+          const bal901 = data.balances?.chain901?.formatted || '0.00';
+          const balEth = data.balances?.celoSepolia?.formatted || '0.0000';
+          const headerBal = document.getElementById('header-wallet-balance');
+          if (headerBal) headerBal.textContent = `${bal901} cNGN`;
+          const p901 = document.getElementById('popover-balance-901');
+          if (p901) p901.textContent = `${bal901} cNGN`;
+          const pEth = document.getElementById('popover-balance-eth');
+          if (pEth) pEth.textContent = `${balEth} ETH`;
+          const pAddr = document.getElementById('popover-address');
+          if (pAddr) pAddr.textContent = `${activeAddress.slice(0, 6)}...${activeAddress.slice(-4)}`;
+          const pHandle = document.getElementById('popover-handle');
+          if (pHandle) pHandle.textContent = data.tag ? `₦${data.tag}` : 'Sovereign Account';
+        }
+      } catch {}
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadDrops();
+      updateHeaderWalletBalance();
+    });
+  </script>
+</body>
+</html>

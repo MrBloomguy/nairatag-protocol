@@ -1,0 +1,17 @@
+{
+  "name": "@nairatag/social-adapter",
+  "version": "1.0.0",
+  "description": "Standard adapter interface for third-party and open-source social networks (Mastodon, Bluesky, etc.)",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/adapter.test.js"
+  },
+  "dependencies": {
+    "@nairatag/parser": "file:../nairatag-parser",
+    "@nairatag/resolver": "file:../nairatag-resolver",
+    "@nairatag/actions": "file:../nairatag-actions"
+  },
+  "author": "NairaTag Network",
+  "license": "MIT"
+}

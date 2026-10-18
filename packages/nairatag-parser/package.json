@@ -1,0 +1,20 @@
+{
+  "name": "@nairatag/parser",
+  "version": "1.0.0",
+  "description": "Universal, platform-independent parser for NairaTag social identity references",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/parser.test.js"
+  },
+  "keywords": [
+    "nairatag",
+    "social",
+    "identity",
+    "parser",
+    "protocol",
+    "web3"
+  ],
+  "author": "NairaTag Network",
+  "license": "MIT"
+}

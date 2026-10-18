@@ -1,0 +1,249 @@
+{
+  "version": 2,
+  "buildCommand": null,
+  "outputDirectory": ".",
+  "routes": [
+    {
+      "src": "/api/celotags(.*)",
+      "dest": "/api/celotags"
+    },
+    {
+      "src": "/.well-known/celotag-agent.json",
+      "dest": "/api/celotags"
+    },
+    {
+      "src": "/celotags/docs(.*)",
+      "dest": "/landing/docs.html"
+    },
+    {
+      "src": "/celotags(/.*)?",
+      "dest": "/landing/index.html"
+    },
+    {
+      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "src": "/(landing/.*)",
+      "dest": "/$1"
+    },
+    {
+      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "src": "/(hub/.*)",
+      "dest": "/$1"
+    },
+    {
+      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "src": "/claim(\\?.*)?",
+      "dest": "/hub/claim.html"
+    },
+    {
+      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "src": "/(api/.*)",
+      "dest": "/$1"
+    },
+    {
+      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "src": "/docs(.*)",
+      "dest": "/landing/docs.html"
+    },
+    {
+      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "src": "/(.*)",
+      "dest": "/landing/index.html"
+    },
+    {
+      "src": "/cards/(?<handle>[^.]+)\\.(?<ext>svg|png)",
+      "dest": "/api/cards?handle=$handle&ext=$ext"
+    },
+    {
+      "src": "/oembed",
+      "dest": "/api/oembed"
+    },
+    {
+      "src": "/embed/(?<handle>.+)",
+      "dest": "/hub/embed.html"
+    },
+    {
+      "src": "/tag/(?<handle>[^/]+)(/.*)?",
+      "dest": "/api/tag?handle=$handle"
+    },
+    {
+      "src": "/₦(?<handle>[^/]+)(/.*)?",
+      "dest": "/api/tag?handle=$handle"
+    },
+    {
+      "src": "/pay/(?<handle>[^/?]+)(\\?.*)?",
+      "status": 302,
+      "headers": { "Location": "/hub/swap.html?tab=pay&to=$handle" }
+    },
+    {
+      "src": "/pay(\\?.*)?",
+      "dest": "/hub/swap.html?tab=pay"
+    },
+    {
+      "src": "/swap(\\?.*)?",
+      "dest": "/hub/swap.html"
+    },
+    {
+      "src": "/explorer(\\?.*)?",
+      "dest": "/hub/explorer.html"
+    },
+    {
+      "src": "/market(\\?.*)?",
+      "dest": "/hub/market.html"
+    },
+    {
+      "src": "/wallet(\\?.*)?",
+      "status": 302,
+      "headers": { "Location": "/profile" }
+    },
+    {
+      "src": "/claim(\\?.*)?",
+      "dest": "/hub/claim.html"
+    },
+    {
+      "src": "/onboarding(\\?.*)?",
+      "dest": "/hub/onboarding.html"
+    },
+    {
+      "src": "/profile(\\?.*)?",
+      "dest": "/hub/profile.html"
+    },
+    {
+      "src": "/streak(\\?.*)?",
+      "dest": "/hub/profile.html?streak=true"
+    },
+    {
+      "src": "/bridge(\\?.*)?",
+      "dest": "/hub/bridge.html"
+    },
+    {
+      "src": "/terms(\\?.*)?",
+      "dest": "/hub/terms.html"
+    },
+    {
+      "src": "/privacy(\\?.*)?",
+      "dest": "/privacy.html"
+    },
+    {
+      "src": "/data-deletion(\\?.*)?",
+      "dest": "/data-deletion.html"
+    },
+    {
+      "src": "/about(\\?.*)?",
+      "dest": "/hub/about.html"
+    },
+    {
+      "src": "/docs(\\?.*)?",
+      "dest": "/hub/docs.html"
+    },
+    {
+      "src": "/faq(\\?.*)?",
+      "dest": "/hub/faq.html"
+    },
+    {
+      "src": "/launches(\\?.*)?",
+      "dest": "/hub/launches.html"
+    },
+    {
+      "src": "/agent(\\?.*)?",
+      "dest": "/hub/agent.html"
+    },
+    {
+      "src": "/tasks(\\?.*)?",
+      "dest": "/hub/tasks.html"
+    },
+    {
+      "src": "/task(\\?.*)?",
+      "dest": "/hub/tasks.html"
+    },
+    {
+      "src": "/bounties(\\?.*)?",
+      "dest": "/hub/tasks.html"
+    },
+    {
+      "src": "/bounty(\\?.*)?",
+      "dest": "/hub/tasks.html"
+    },
+    {
+      "src": "/earnings(\\?.*)?",
+      "dest": "/hub/earnings.html"
+    },
+    {
+      "src": "/activities(\\?.*)?",
+      "dest": "/hub/tasks.html"
+    },
+    {
+      "src": "/activity(\\?.*)?",
+      "dest": "/hub/tasks.html"
+    },
+    {
+      "src": "/minipay(\\?.*)?",
+      "dest": "/hub/minipay.html"
+    },
+    {
+      "src": "/api/agent/(wallet-info|muse-spark)(.*)",
+      "dest": "/api/hub-api"
+    },
+    {
+      "src": "/api/tags/(.*)",
+      "dest": "/api/hub-api"
+    },
+    {
+      "src": "/api/bounties(.*)",
+      "dest": "/api/hub-api"
+    },
+    {
+      "src": "/api/agents(.*)",
+      "dest": "/api/hub-api"
+    },
+    {
+      "src": "/api/earnings/(.*)",
+      "dest": "/api/hub-api"
+    },
+    {
+      "src": "/api/activity/(.*)",
+      "dest": "/api/hub-api"
+    },
+    {
+      "src": "/api/activities(.*)",
+      "dest": "/api/hub-api"
+    },
+    {
+      "src": "/api/tag2tag/(.*)",
+      "dest": "/api/hub-api"
+    },
+    {
+      "src": "/(theme\\.css|theme\\.js|notifications\\.css|notifications\\.js|tag-avatar\\.js|tag-card-generator\\.js|metal-bundle\\.js|PoppinsRounded-[^/]+)",
+      "dest": "/hub/$1"
+    },
+    {
+      "src": "/",
+      "dest": "/hub/claim.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, HEAD, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
+    },
+    {
+      "source": "/hub/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        { "key": "Service-Worker-Allowed", "value": "/" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>Privacy Policy · NairaTag Network</title>
+  <meta name="description" content="Privacy Policy for NairaTag Network, explaining how we protect your digital identity, WhatsApp interactions, and onchain data.">
+  <meta property="og:title" content="Privacy Policy · NairaTag Network">
+  <meta property="og:description" content="Privacy Policy for NairaTag Network and WhatsApp Business Bot.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nairatag-network.vercel.app/privacy">
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --card: #111827;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #10b981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      padding: 32px 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px;
+    }
+    h1 { font-size: 2rem; margin-bottom: 8px; color: #fff; }
+    .meta { color: var(--text-muted); font-size: 13px; margin-bottom: 28px; }
+    h2 { font-size: 1.25rem; color: #fff; margin-top: 24px; margin-bottom: 12px; }
+    p { color: var(--text-muted); margin-bottom: 14px; }
+    ul { margin: 10px 0 18px 24px; color: var(--text-muted); }
+    li { margin-bottom: 6px; }
+    strong { color: var(--text); }
+    .box {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid var(--primary);
+      padding: 14px 18px;
+      border-radius: 4px;
+      margin: 18px 0;
+      color: #e2e8f0;
+    }
+    a { color: var(--primary); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Privacy Policy</h1>
+    <div class="meta">NairaTag Network · Last Updated: October 2026 · Effective Date: Immediate</div>
+
+    <div class="box">
+      <strong>Overview:</strong> NairaTag operates a decentralized identity and payment routing protocol in Nigeria. We are committed to data minimization, self-custody, and protecting user privacy in accordance with the Nigeria Data Protection Regulation (NDPR) and international privacy laws.
+    </div>
+
+    <h2>1. Data Collection & Usage</h2>
+    <p>We collect minimal information necessary to deliver identity routing and conversational interfaces:</p>
+    <ul>
+      <li><strong>Handle:</strong> Your chosen ₦Tag identifier (e.g. <code>₦michael</code>).</li>
+      <li><strong>Onchain Address:</strong> Your public wallet address on Base associated with your tag.</li>
+      <li><strong>Messaging Identifiers:</strong> Your phone number when communicating with our WhatsApp Business Bot or Telegram bot.</li>
+      <li><strong>Payment Rail Metadata:</strong> Virtual account routing details provisioned via licensed banking partners (Flutterwave).</li>
+    </ul>
+
+    <h2>2. WhatsApp Messaging & Flows Data</h2>
+    <p>When interacting with our WhatsApp Business Assistant:</p>
+    <ul>
+      <li>Messages, button clicks, and flow submissions are processed in real-time to execute identity lookups and claims.</li>
+      <li>Data transmitted via WhatsApp Flows is end-to-end encrypted with RSA-OAEP and AES-128-GCM according to Meta Cloud API protocols.</li>
+      <li>We do not sell, rent, or share personal WhatsApp data with third-party advertisers.</li>
+    </ul>
+
+    <h2>3. Self-Custody & Blockchain Ledger</h2>
+    <p>NairaTag does not take custody of your private keys or funds. Transactions published to the Base blockchain are immutable public ledger entries.</p>
+
+    <h2>4. User Rights & Data Deletion</h2>
+    <p>Users have the right to request deletion of any off-chain messaging links, notifications, or contact associations at any time by visiting <a href="/data-deletion">Data Deletion Instructions</a> or emailing <code>privacy@nairatag.ng</code>.</p>
+
+    <h2>5. Contact Us</h2>
+    <p>For privacy inquiries, contact our Data Protection Officer at: <strong>privacy@nairatag.ng</strong></p>
+  </div>
+</body>
+</html>

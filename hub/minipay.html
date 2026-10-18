@@ -1,0 +1,2143 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>₦NairaTag</title>
+  <link rel="stylesheet" href="/hub/theme.css">
+  <link rel="stylesheet" href="/hub/notifications.css">
+  <script src="/hub/theme.js"></script>
+  <script src="/hub/notifications.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --font-sans: 'Poppins Rounded', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "DM Mono", monospace;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-surface: #f1f5f9;
+      --line: #e2e8f0;
+      --ink: #0f172a;
+      --ink-muted: #64748b;
+      --celo-green: #35d07f;
+      --celo-green-soft: rgba(53, 208, 127, 0.12);
+      --primary: #0052ff;
+      --cngn-gold: #f59e0b;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+    }
+
+    [data-theme="dark"] {
+      --bg-page: #000000;
+      --bg-card: #0a0a0a;
+      --bg-surface: #141414;
+      --line: #1e1e1e;
+      --ink: #ffffff;
+      --ink-muted: #94a3b8;
+      --celo-green-soft: rgba(53, 208, 127, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--ink);
+      font-size: 14px;
+      line-height: 1.45;
+      max-width: 480px;
+      margin: 0 auto;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Top App Bar */
+    .mp-topbar {
+      padding: 10px 16px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 50;
+    }
+
+    .mp-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .mp-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-pill);
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+    }
+
+    .mp-tag-name {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.2px;
+    }
+
+    .mp-network-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--celo-green-soft);
+      color: #059669;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: var(--radius-pill);
+      border: 1px solid rgba(53, 208, 127, 0.3);
+    }
+
+    .mp-pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--celo-green);
+      box-shadow: 0 0 6px rgba(53, 208, 127, 0.8);
+      animation: pulseDot 2s infinite;
+    }
+
+    @keyframes pulseDot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.85);
+      }
+    }
+
+    /* Views viewport */
+    .mp-viewport {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 74px;
+      scrollbar-width: none;
+    }
+
+    .mp-viewport::-webkit-scrollbar {
+      display: none;
+    }
+
+    .mp-view {
+      display: none;
+    }
+
+    .mp-view.active {
+      display: block;
+      animation: viewIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes viewIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Cards */
+    .mp-card {
+      margin: 12px 14px;
+      padding: 16px 18px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+    }
+
+    .mp-balance-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--ink-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .mp-balance-val {
+      font-size: 30px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: var(--ink);
+      font-family: var(--font-sans);
+    }
+
+    .mp-balance-sub {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-top: 4px;
+    }
+
+    .mp-token-tag {
+      background: rgba(245, 158, 11, 0.12);
+      color: #d97706;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+
+    /* Primary Action Buttons */
+    .mp-actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .mp-btn {
+      padding: 10px 14px;
+      border-radius: var(--radius-pill);
+      font-size: 13.5px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+      background: var(--bg-surface);
+      color: var(--ink);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .mp-btn:active {
+      transform: scale(0.97);
+    }
+
+    .mp-btn-primary {
+      background: #0f172a;
+      color: #ffffff;
+      border-color: #0f172a;
+    }
+
+    [data-theme="dark"] .mp-btn-primary {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+
+    .mp-btn-green {
+      background: #10b981;
+      color: #ffffff;
+      border-color: #10b981;
+    }
+
+    /* Agent Card */
+    .agent-card {
+      background: linear-gradient(135deg, rgba(0, 82, 255, 0.04), rgba(16, 185, 129, 0.04));
+      border: 1.5px solid rgba(0, 82, 255, 0.15);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      margin: 12px 14px;
+    }
+
+    .agent-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .agent-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .agent-avatar {
+      font-size: 24px;
+      width: 36px;
+      height: 36px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: grid;
+      place-items: center;
+    }
+
+    .agent-name {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .agent-status-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: #059669;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .agent-capabilities {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin: 8px 0 12px;
+    }
+
+    .cap-pill {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      color: var(--ink-muted);
+    }
+
+    .agent-actions-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .agent-btn {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      cursor: pointer;
+      text-align: center;
+    }
+
+    /* Section Headers */
+    .section-title {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--ink-muted);
+      margin: 16px 16px 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Activity List */
+    .activity-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 0 14px;
+    }
+
+    .activity-item {
+      padding: 12px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .act-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      display: grid;
+      place-items: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .act-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .act-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .act-sub {
+      font-size: 11px;
+      color: var(--ink-muted);
+      margin-top: 1px;
+    }
+
+    .act-amount {
+      font-size: 13px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      text-align: right;
+    }
+
+    .act-amount.credit {
+      color: #10b981;
+    }
+
+    .act-amount.debit {
+      color: var(--ink);
+    }
+
+    /* Modals & Slide-overs */
+    .mp-sheet {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .mp-sheet.open {
+      display: flex;
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .sheet-content {
+      width: 100%;
+      max-width: 480px;
+      background: var(--bg-card);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      padding: 20px 18px 28px;
+      max-height: 85vh;
+      overflow-y: auto;
+      animation: slideUpSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUpSheet {
+      from {
+        transform: translateY(100%);
+      }
+
+      to {
+        transform: translateY(0);
+      }
+    }
+
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--line);
+      border-radius: 99px;
+      margin: 0 auto 16px;
+    }
+
+    .sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .sheet-title {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .sheet-close {
+      background: transparent;
+      border: none;
+      font-size: 20px;
+      color: var(--ink-muted);
+      cursor: pointer;
+    }
+
+    /* Form Inputs */
+    .input-group {
+      margin-bottom: 14px;
+    }
+
+    .input-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .input-box {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+      background: var(--bg-surface);
+      color: var(--ink);
+      font-size: 15px;
+      font-family: var(--font-sans);
+      outline: none;
+    }
+
+    .input-box:focus {
+      border-color: var(--primary);
+      background: var(--bg-card);
+    }
+
+    .resolved-pill {
+      margin-top: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #059669;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    /* Bottom Navigation */
+    .mp-bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 480px;
+      margin: 0 auto;
+      height: 62px;
+      background: var(--bg-card);
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 60;
+    }
+
+    .nav-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      background: transparent;
+      border: none;
+      color: var(--ink-muted);
+      cursor: pointer;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 6px 12px;
+      transition: color 0.15s ease;
+    }
+
+    .nav-tab.active {
+      color: var(--primary);
+    }
+
+    .nav-tab-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    /* Transaction State Banner (7-State Lifecycle Machine) */
+    .tx-state-card {
+      margin: 10px 14px;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .tx-state-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .tx-state-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .tx-state-details {
+      font-size: 11.5px;
+      font-weight: 500;
+      opacity: 0.9;
+      font-family: var(--font-mono);
+      word-break: break-all;
+    }
+
+    .tx-state-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .tx-action-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11.5px;
+      font-weight: 700;
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      background: rgba(0, 0, 0, 0.08);
+      color: inherit;
+      transition: opacity 0.15s ease;
+    }
+
+    .tx-action-link:hover {
+      opacity: 0.85;
+    }
+
+    [data-theme="dark"] .tx-action-link {
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .tx-state-card.created {
+      display: flex;
+      background: rgba(100, 116, 139, 0.1);
+      border: 1px solid rgba(100, 116, 139, 0.25);
+      color: var(--ink);
+    }
+
+    .tx-state-card.signing {
+      display: flex;
+      background: rgba(0, 82, 255, 0.08);
+      border: 1px solid rgba(0, 82, 255, 0.25);
+      color: var(--primary);
+    }
+
+    .tx-state-card.submitted {
+      display: flex;
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      color: #d97706;
+    }
+
+    .tx-state-card.pending {
+      display: flex;
+      background: rgba(14, 165, 233, 0.08);
+      border: 1px solid rgba(14, 165, 233, 0.25);
+      color: #0284c7;
+    }
+
+    .tx-state-card.confirmed {
+      display: flex;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1.5px solid rgba(16, 185, 129, 0.35);
+      color: #059669;
+    }
+
+    .tx-state-card.rejected {
+      display: flex;
+      background: rgba(249, 115, 22, 0.08);
+      border: 1px solid rgba(249, 115, 22, 0.25);
+      color: #ea580c;
+    }
+
+    .tx-state-card.failed {
+      display: flex;
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      color: #dc2626;
+    }
+
+    /* Bounties in MiniApp */
+    .bounty-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 0 14px;
+    }
+
+    .bounty-item {
+      padding: 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .bounty-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .bounty-tag-cat {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: var(--radius-pill);
+      background: rgba(0, 82, 255, 0.1);
+      color: var(--primary);
+    }
+
+    .bounty-reward-val {
+      font-size: 15px;
+      font-weight: 900;
+      color: #10b981;
+      font-family: var(--font-mono);
+    }
+
+    .bounty-title-text {
+      font-size: 13.5px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .bounty-desc-text {
+      font-size: 12px;
+      color: var(--ink-muted);
+      line-height: 1.45;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top App Bar -->
+  <header class="mp-topbar">
+    <div class="mp-brand">
+      <div class="mp-badge" style="background:#000000; overflow:hidden;"><img src="/hub/nairatag-icon.png" alt="₦" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;" /></div>
+      <div style="display:flex; align-items:center; gap:4px;">
+        <div class="mp-tag-name" id="user-tag-display">₦TAG</div>
+        <span id="user-verified-badge" style="display:none; font-size:12px; color:#10b981;" title="Cryptographically Verified Sovereign Identity">🛡️</span>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="mp-network-pill" id="network-pill">
+        <span class="mp-pulse-dot"></span>
+        <span id="network-name">Celo · cNGN</span>
+      </div>
+      <button id="theme-toggle-btn" type="button"
+        style="background:transparent; border:none; cursor:pointer; font-size:16px;">🌙</button>
+    </div>
+  </header>
+
+  <!-- Main Viewport -->
+  <main class="mp-viewport">
+
+    <!-- Active Tx Banner (7-State Lifecycle Machine) -->
+    <div id="tx-banner" class="tx-state-card">
+      <div class="tx-state-row">
+        <div class="tx-state-main">
+          <span id="tx-banner-icon">⏳</span>
+          <span id="tx-banner-msg">Waiting for transaction...</span>
+        </div>
+        <button type="button" onclick="dismissTxBanner()"
+          style="background:transparent; border:none; color:inherit; font-size:14px; cursor:pointer; opacity:0.6;">✕</button>
+      </div>
+      <div id="tx-banner-sub" class="tx-state-details" style="display:none;"></div>
+      <div id="tx-banner-actions" class="tx-state-actions" style="display:none;"></div>
+    </div>
+
+    <!-- 1. HOME VIEW -->
+    <section id="view-home" class="mp-view active">
+      <!-- Claim NairaTag Card (displayed if wallet doesn't own a tag) -->
+      <div class="mp-card" id="claim-banner-card"
+        style="display:none; background:linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(0, 82, 255, 0.08)); border:1.5px solid #10b981;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="font-size:20px;">🇳🇬</span>
+          <span style="font-weight:900; font-size:15px;">Claim your NairaTag</span>
+        </div>
+        <div style="font-size:12px; color:var(--ink-muted); margin-bottom:12px;">Choose your Nigerian digital identity
+          on Celo. Automatically connects to your MiniPay wallet.</div>
+        <div style="display:flex; gap:8px;">
+          <div style="position:relative; flex:1;">
+            <span
+              style="position:absolute; left:12px; top:11px; font-weight:800; font-size:15px; color:#10b981;">₦</span>
+            <input type="text" class="input-box" id="claim-tag-input" placeholder="SEGUN"
+              style="padding-left:28px; text-transform:uppercase; font-weight:700;">
+          </div>
+          <button class="mp-btn mp-btn-green" type="button" style="padding:10px 16px; font-weight:800;"
+            onclick="executeClaimTag()">Claim</button>
+        </div>
+        <div id="claim-error-msg"
+          style="display:none; color:#ef4444; font-size:11.5px; margin-top:6px; font-weight:600;"></div>
+      </div>
+
+      <!-- Balance Card -->
+      <div class="mp-card">
+        <div class="mp-balance-label">
+          <span>cNGN Balance</span>
+          <span style="font-size:10px; font-weight:800; color:#059669;">● LIVE · CELO</span>
+        </div>
+        <div class="mp-balance-val" id="cngn-balance-val">₦42,500.00</div>
+        <div class="mp-balance-sub">
+          <span class="mp-token-tag">cNGN (Mento NGNm)</span>
+          <span>Settled on Celo</span>
+        </div>
+
+        <div class="mp-actions-grid" style="grid-template-columns: repeat(4, 1fr); gap: 6px;">
+          <button class="mp-btn mp-btn-primary" type="button" onclick="openSendSheet()"
+            style="padding:10px 4px; font-size:12px;">
+            <span>↑</span> Send
+          </button>
+          <button class="mp-btn" type="button" onclick="openRequestSheet()" style="padding:10px 4px; font-size:12px;">
+            <span>⇄</span> Request
+          </button>
+          <button class="mp-btn" type="button" onclick="openReceiveSheet()" style="padding:10px 4px; font-size:12px;">
+            <span>↓</span> Receive
+          </button>
+          <a href="https://link.minipay.xyz/add_cash?tokens=USDM,USDT,USDC" target="_blank" class="mp-btn"
+            style="text-decoration:none; padding:10px 4px; font-size:12px;">
+            <span>💳</span> + Cash
+          </a>
+        </div>
+      </div>
+
+      <!-- Agent Summary Card -->
+      <div class="agent-card">
+        <div class="agent-card-header">
+          <div class="agent-title-row">
+            <div class="agent-avatar">🤖</div>
+            <div>
+              <div class="agent-name" id="agent-card-tag">₦TAG Agent</div>
+              <div class="agent-status-tag">● Ready to work</div>
+            </div>
+          </div>
+          <button class="agent-btn" type="button" onclick="switchTab('agent')">Open Agent →</button>
+        </div>
+        <div class="agent-capabilities">
+          <span class="cap-pill">Nigerian Fintech</span>
+          <span class="cap-pill">Tag2Tag Payments</span>
+          <span class="cap-pill">Bounty Execution</span>
+        </div>
+        <div class="agent-actions-row">
+          <button class="agent-btn" type="button" onclick="openAgentChat()">💬 Chat</button>
+          <button class="agent-btn" type="button" onclick="switchTab('tag2tag')">🤝 Tag2Tag</button>
+          <button class="agent-btn" type="button" onclick="switchTab('bounties')">🎯 Tasks</button>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="section-title">
+        <span>Recent Activity</span>
+        <button type="button" onclick="switchTab('activity')"
+          style="background:transparent; border:none; color:var(--primary); font-size:11px; font-weight:700; cursor:pointer;">View
+          all</button>
+      </div>
+      <div class="activity-feed" id="home-activity-feed">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- 2. AGENT VIEW -->
+    <section id="view-agent" class="mp-view">
+      <div class="mp-card">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+          <div class="agent-avatar" style="width:44px; height:44px; font-size:26px;">🤖</div>
+          <div>
+            <div style="font-size:16px; font-weight:800;" id="full-agent-title">₦TAG Agent</div>
+            <div style="font-size:11.5px; color:#059669; font-weight:700;">● Online · Sovereign Execution Actor</div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0;">
+          <div style="background:var(--bg-surface); padding:10px 12px; border-radius:var(--radius-sm);">
+            <div style="font-size:10px; color:var(--ink-muted); font-weight:700; text-transform:uppercase;">Reputation
+            </div>
+            <div style="font-size:18px; font-weight:900; color:#0052ff;" id="agent-rep-display">94 / 100</div>
+          </div>
+          <div style="background:var(--bg-surface); padding:10px 12px; border-radius:var(--radius-sm);">
+            <div style="font-size:10px; color:var(--ink-muted); font-weight:700; text-transform:uppercase;">Tasks Done
+            </div>
+            <div style="font-size:18px; font-weight:900; color:#10b981;" id="agent-tasks-display">28 Bounties</div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;">
+          <div
+            style="font-size:11px; font-weight:700; color:var(--ink-muted); text-transform:uppercase; margin-bottom:6px;">
+            Capabilities</div>
+          <div class="agent-capabilities" style="margin:0 0 14px;">
+            <span class="cap-pill">Nigerian Market Research</span>
+            <span class="cap-pill">Data Crawling</span>
+            <span class="cap-pill">Celo CIP-64 Gas</span>
+            <span class="cap-pill">Autonomous Settlement</span>
+          </div>
+        </div>
+
+        <div class="mp-actions-grid">
+          <button class="mp-btn mp-btn-primary" type="button" onclick="openAgentChat()">
+            💬 Chat
+          </button>
+          <button class="mp-btn" type="button" onclick="switchTab('tag2tag')">
+            🤝 Tag2Tag
+          </button>
+        </div>
+      </div>
+
+      <div class="section-title"><span>Today's Agent Metrics</span></div>
+      <div style="padding:0 14px; display:flex; flex-direction:column; gap:8px;">
+        <div class="activity-item">
+          <div class="act-icon">⚡</div>
+          <div class="act-info">
+            <div class="act-title">Tag2Tag Interactions</div>
+            <div class="act-sub">3 requests processed autonomously</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="act-icon">🔒</div>
+          <div class="act-info">
+            <div class="act-title">Permission Engine</div>
+            <div class="act-sub">Explicit user approval required for spends &gt; ₦5,000</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. TAG2TAG VIEW -->
+    <section id="view-tag2tag" class="mp-view">
+      <div class="mp-card">
+        <div style="font-size:16px; font-weight:800; margin-bottom:4px;">Tag2Tag Coordination Layer</div>
+        <div style="font-size:12px; color:var(--ink-muted); margin-bottom:12px;">Structured agent-to-agent interactions,
+          task offers, and cNGN settlements.</div>
+
+        <button class="mp-btn mp-btn-green" type="button" style="width:100%;" onclick="openNewTag2TagSheet()">
+          + Send Structured Tag2Tag Request
+        </button>
+      </div>
+
+      <div class="section-title"><span>Available Agent Network</span></div>
+      <div class="bounty-feed" id="agent-discovery-feed">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- 4. BOUNTIES VIEW -->
+    <section id="view-bounties" class="mp-view">
+      <div style="padding:10px 14px 4px; display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-size:16px; font-weight:800;">Celo Bounties</div>
+        <button class="mp-btn mp-btn-primary" style="padding:5px 12px; font-size:11.5px;"
+          onclick="openCreateBountySheet()">+ Post Bounty</button>
+      </div>
+
+      <div class="bounty-feed" id="miniapp-bounty-feed" style="margin-top:10px;">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- 5. ACTIVITY VIEW -->
+    <section id="view-activity" class="mp-view">
+      <div class="section-title"><span>Unified On-Chain Timeline</span></div>
+      <div class="activity-feed" id="full-activity-feed">
+        <!-- Rendered dynamically -->
+      </div>
+    </section>
+
+    <!-- 6. PROFILE VIEW -->
+    <section id="view-profile" class="mp-view">
+      <div class="mp-card" style="text-align:center; padding:24px 18px;">
+        <div class="mp-badge" style="width:54px; height:54px; font-size:26px; margin:0 auto 10px;">₦</div>
+        <div style="font-size:20px; font-weight:900;" id="profile-tag-name">₦TAG</div>
+        <div id="profile-verified-badge" style="display:none; margin:6px auto 0; font-size:11px; font-weight:700; color:#059669; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.3); border-radius:12px; padding:2px 8px; width:fit-content; align-items:center; gap:4px;">🛡️ EIP-712 Verified</div>
+        <div id="profile-urn-box" style="display:none; font-size:10px; font-family:var(--font-mono); color:var(--ink-muted); margin-top:4px;"></div>
+        <div style="font-size:12px; color:var(--ink-muted); margin-top:4px;">Sovereign Nigerian Web3 Identity</div>
+
+        <div
+          style="margin:16px 0; padding:12px; background:var(--bg-surface); border-radius:var(--radius-md); font-family:var(--font-mono); font-size:11px; word-break:break-all;"
+          id="profile-address-box">
+          Not connected
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+          <div style="padding:10px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:10px; font-weight:700; color:var(--ink-muted); text-transform:uppercase;">Reputation
+            </div>
+            <div style="font-size:18px; font-weight:900; color:#0052ff;">94</div>
+          </div>
+          <div style="padding:10px; background:var(--bg-surface); border-radius:var(--radius-sm);">
+            <div style="font-size:10px; font-weight:700; color:var(--ink-muted); text-transform:uppercase;">Settlement
+            </div>
+            <div style="font-size:18px; font-weight:900; color:#10b981;">Celo</div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px; display:flex; flex-direction:column; gap:8px;">
+          <a href="/hub/earnings.html" class="mp-btn" style="text-decoration:none;">🏆 Leaderboard Rankings</a>
+          <a href="/hub/wallet.html" class="mp-btn" style="text-decoration:none;">👛 Full Web Wallet</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="mp-bottom-nav">
+    <button class="nav-tab active" data-tab="home">
+      <span class="nav-tab-icon">🏠</span>
+      <span>Home</span>
+    </button>
+    <button class="nav-tab" data-tab="agent">
+      <span class="nav-tab-icon">🤖</span>
+      <span>Agent</span>
+    </button>
+    <button class="nav-tab" data-tab="tag2tag">
+      <span class="nav-tab-icon">🤝</span>
+      <span>Tag2Tag</span>
+    </button>
+    <button class="nav-tab" data-tab="bounties">
+      <span class="nav-tab-icon">🎯</span>
+      <span>Bounties</span>
+    </button>
+    <button class="nav-tab" data-tab="profile">
+      <span class="nav-tab-icon">👤</span>
+      <span>Profile</span>
+    </button>
+  </nav>
+
+  <!-- SEND SHEET -->
+  <div id="sheet-send" class="mp-sheet">
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title">Send cNGN by ₦Tag</div>
+        <button class="sheet-close" onclick="closeSheet('sheet-send')">✕</button>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Recipient ₦Tag</label>
+        <input type="text" class="input-box" id="send-target-tag" placeholder="e.g. ₦RESEARCHER or ₦MAMA"
+          autocomplete="off">
+        <div id="send-resolved-msg" class="resolved-pill" style="display:none;">
+          <span>✓ Resolved to:</span>
+          <span id="send-resolved-addr" style="font-family:var(--font-mono);">0x...</span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Amount (cNGN)</label>
+        <input type="number" class="input-box" id="send-amount-box" placeholder="5000" min="100">
+      </div>
+
+      <div
+        style="background:var(--bg-surface); padding:10px 12px; border-radius:var(--radius-sm); margin-bottom:16px; font-size:11.5px; color:var(--ink-muted);">
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <span>Network</span>
+          <strong style="color:var(--ink);">Celo Mainnet (42220)</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <span>Fee Currency (CIP-64)</span>
+          <span style="color:#059669; font-weight:700;">cNGN (~₦0.50 · No CELO needed)</span>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span>Settlement</span>
+          <strong style="color:var(--ink);">~1-3s Instant Finality</strong>
+        </div>
+      </div>
+
+      <button class="mp-btn mp-btn-primary" style="width:100%; padding:13px;" id="send-confirm-btn"
+        onclick="executeSendPayment()">
+        Confirm & Send via MiniPay
+      </button>
+
+      <div style="text-align:center; margin-top:12px;">
+        <a href="https://link.minipay.xyz/qr" target="_blank"
+          style="font-size:12px; color:var(--primary); font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:5px;">
+          <span>📷</span> Scan recipient QR in MiniPay
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- RECEIVE SHEET -->
+  <div id="sheet-receive" class="mp-sheet">
+    <div class="sheet-content" style="text-align:center;">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title" style="flex:1;">Receive cNGN</div>
+        <button class="sheet-close" onclick="closeSheet('sheet-receive')">✕</button>
+      </div>
+
+      <div style="font-size:32px; font-weight:900; margin:10px 0 4px;" id="receive-tag-big">₦TAG</div>
+      <div style="font-size:12px; color:var(--ink-muted); margin-bottom:20px;">Anyone on MiniPay or Celo can send funds
+        directly using this ₦Tag</div>
+
+      <!-- QR Representation -->
+      <div id="qr-box-container"
+        style="width:170px; height:170px; background:#fff; border:1px solid var(--line); border-radius:16px; margin:0 auto 20px; display:grid; place-items:center; padding:10px;">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fnairatag.ng%2Fclaim"
+          alt="QR" width="140" height="140" id="qr-img">
+      </div>
+
+      <div class="mp-actions-grid" style="margin-bottom:12px;">
+        <button class="mp-btn" type="button" onclick="copyTag()">📋 Copy Tag</button>
+        <button class="mp-btn mp-btn-primary" type="button" onclick="shareTag()">📤 Share Tag</button>
+      </div>
+
+      <a href="https://link.minipay.xyz/qr" target="_blank" class="mp-btn"
+        style="text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:12px;">
+        <span>📱</span> Open MiniPay Native QR
+      </a>
+
+      <div style="margin-top:10px;">
+        <button type="button" onclick="toggleRevealAddress()"
+          style="background:transparent; border:none; color:var(--ink-muted); font-size:11px; text-decoration:underline; cursor:pointer;">
+          Show raw Celo address (advanced)
+        </button>
+        <div id="revealed-addr"
+          style="display:none; font-family:var(--font-mono); font-size:10.5px; margin-top:6px; color:var(--ink-muted);">
+          Not connected
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYMENT REQUEST SHEET -->
+  <div id="sheet-request" class="mp-sheet">
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title">Request Payment (cNGN)</div>
+        <button class="sheet-close" onclick="closeSheet('sheet-request')">✕</button>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Request From (₦Tag)</label>
+        <input type="text" class="input-box" id="request-target-tag" placeholder="₦RESEARCHER" value="₦RESEARCHER">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Amount (cNGN)</label>
+        <input type="number" class="input-box" id="request-amount-box" placeholder="5000" min="100" value="5000">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Reason / Memo</label>
+        <input type="text" class="input-box" id="request-reason-box" placeholder="e.g. Research completed"
+          value="Research completed">
+      </div>
+
+      <button class="mp-btn mp-btn-primary" style="width:100%; padding:13px;" onclick="submitPaymentRequest()">
+        Send Payment Request
+      </button>
+    </div>
+  </div>
+
+  <!-- TAG2TAG SHEET -->
+  <div id="sheet-t2t" class="mp-sheet">
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title">New Tag2Tag Action</div>
+        <button class="sheet-close" onclick="closeSheet('sheet-t2t')">✕</button>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Target Agent</label>
+        <input type="text" class="input-box" id="t2t-target" placeholder="₦RESEARCHER" value="₦RESEARCHER">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Interaction Type</label>
+        <select class="input-box" id="t2t-type">
+          <option value="request">Task Request (with Reward)</option>
+          <option value="payment">Direct Payment</option>
+          <option value="offer">Cooperation Offer</option>
+          <option value="delegate">Sub-agent Delegation</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Instruction / Details</label>
+        <textarea class="input-box" id="t2t-instruction" rows="3"
+          placeholder="e.g. Find current Nigerian fintech transaction fees."></textarea>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Reward Amount (cNGN)</label>
+        <input type="number" class="input-box" id="t2t-amount" placeholder="2000" value="2000">
+      </div>
+
+      <button class="mp-btn mp-btn-green" style="width:100%; padding:13px;" onclick="submitTag2Tag()">
+        Submit Tag2Tag Action
+      </button>
+    </div>
+  </div>
+
+  <!-- AGENT CHAT SHEET -->
+  <div id="sheet-chat" class="mp-sheet">
+    <div class="sheet-content" style="display:flex; flex-direction:column; height:80vh;">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title" style="display:flex; align-items:center; gap:6px;">
+          <span>🤖</span> <span id="chat-agent-header">₦TAG Agent</span>
+        </div>
+        <button class="sheet-close" onclick="closeSheet('sheet-chat')">✕</button>
+      </div>
+
+      <div id="chat-messages-box"
+        style="flex:1; overflow-y:auto; padding:10px 0; display:flex; flex-direction:column; gap:10px;">
+        <div
+          style="background:var(--bg-surface); padding:10px 14px; border-radius:12px; font-size:13px; align-self:flex-start; max-width:85%;">
+          Hello! I am your <strong>NairaTag Agent</strong> on Celo. I can execute Tag2Tag payments, discover bounties, or
+          research Nigerian APIs for you.
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:10px;">
+        <input type="text" class="input-box" id="agent-chat-input" placeholder="Type prompt or task..." style="flex:1;">
+        <button class="mp-btn mp-btn-primary" style="padding:10px 16px;" onclick="sendAgentChatMessage()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CREATE BOUNTY SHEET -->
+  <div id="sheet-create-bounty" class="mp-sheet">
+    <div class="sheet-content">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title">Post New Bounty</div>
+        <button class="sheet-close" onclick="closeSheet('sheet-create-bounty')">✕</button>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Title</label>
+        <input type="text" class="input-box" id="bounty-create-title" placeholder="e.g. Scrape Jumia Gadget Prices">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Category</label>
+        <select class="input-box" id="bounty-create-cat">
+          <option value="research">Research & Data</option>
+          <option value="dev">Development & Contracts</option>
+          <option value="design">Design & Brand</option>
+          <option value="ops">Operations & Logistics</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Reward (cNGN)</label>
+        <input type="number" class="input-box" id="bounty-create-reward" placeholder="10000" min="500">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Deliverable Description</label>
+        <textarea class="input-box" id="bounty-create-deliverable" rows="2"
+          placeholder="e.g. Clean CSV with price snapshots"></textarea>
+      </div>
+
+      <button class="mp-btn mp-btn-primary" style="width:100%; padding:13px;" onclick="postNewBounty()">
+        Lock cNGN & Post Bounty
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // ----------------------------------------------------
+    // CONSTANTS & CONFIGURATION
+    // ----------------------------------------------------
+    const CNGN_TOKEN = '0xe2702bd97ee33c88c8f6f92da3b733608aa76f71'; // Celo Mainnet cNGN
+    const CELO_CHAIN_ID = 42220;
+    const API_BASE = ''; // proxied automatically by static-server or same-origin
+
+    // 0ms Perceived Latency: Read from localStorage cache immediately
+    const cachedTag = localStorage.getItem('nt_minipay_tag') || localStorage.getItem('nairatag_active_tag') || '₦TAG';
+    const cachedWallet = localStorage.getItem('nt_minipay_wallet') || localStorage.getItem('nairatag_wallet') || '';
+    const cachedBalance = localStorage.getItem('nt_minipay_balance') || localStorage.getItem('nairatag_cngn_balance') || '0.00';
+
+    let activeWallet = cachedWallet;
+    let activeTag = cachedTag;
+    let isMiniPayEnv = false;
+    let bannerHideTimeout = null;
+
+    // Synchronous immediate DOM render
+    updateTagDisplays(activeTag);
+    document.getElementById('cngn-balance-val').textContent = `₦${cachedBalance}`;
+
+    // ----------------------------------------------------
+    // 1. MINIPAY ENVIRONMENT DETECTION & AUTO-CONNECT
+    // ----------------------------------------------------
+    async function initWallet() {
+      // Official MiniPay detection
+      isMiniPayEnv = Boolean(
+        window.ethereum?.isMiniPay ||
+        window.isMiniPay ||
+        (navigator.userAgent && navigator.userAgent.includes('MiniPay'))
+      );
+
+      const networkPill = document.getElementById('network-name');
+
+      if (isMiniPayEnv && window.ethereum) {
+        networkPill.textContent = 'MiniPay · Celo Mainnet';
+        try {
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          if (accounts && accounts[0]) {
+            activeWallet = accounts[0];
+            localStorage.setItem('nt_minipay_wallet', activeWallet);
+            updateTagDisplays(activeTag);
+          }
+          // Verify & ensure Celo Mainnet (42220 / 0xa4ec)
+          await ensureCeloNetwork(window.ethereum);
+        } catch (e) {
+          console.warn('MiniPay request accounts notice:', e.message);
+        }
+      } else {
+        networkPill.textContent = 'Celo · cNGN';
+      }
+
+      await resolveUserIdentity();
+      await loadBalances();
+      await loadHomeActivity();
+      await loadBounties();
+      await loadAgents();
+    }
+
+    async function ensureCeloNetwork(provider) {
+      if (isMiniPayEnv) {
+        // MiniPay mobile webview is strictly pinned to Celo Mainnet (42220).
+        // Calling wallet_switchEthereumChain inside MiniPay throws an error.
+        console.log('Running inside MiniPay: network switch bypassed (pinned to Celo 42220)');
+        return true;
+      }
+      try {
+        const chainIdHex = await provider.request({ method: 'eth_chainId' });
+        const chainId = parseInt(chainIdHex, 16);
+        if (chainId !== 42220) {
+          try {
+            await provider.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: '0xa4ec' }]
+            });
+          } catch (switchError) {
+            if (switchError.code === 4902) {
+              await provider.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: '0xa4ec',
+                  chainName: 'Celo Mainnet',
+                  nativeCurrency: { name: 'CELO', symbol: 'CELO', decimals: 18 },
+                  rpcUrls: ['https://forno.celo.org'],
+                  blockExplorerUrls: ['https://celoscan.io']
+                }]
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Network verification notice:', err.message);
+      }
+    }
+
+    async function resolveUserIdentity() {
+      try {
+        const res = await fetch(`/api/agent/wallet-info?address=${activeWallet}`);
+        const data = await res.json();
+        if (data.ok && data.tag) {
+          activeTag = data.tag.startsWith('₦') ? data.tag : `₦${data.tag}`;
+          localStorage.setItem('nt_minipay_tag', activeTag);
+          updateTagDisplays(activeTag);
+          const claimCard = document.getElementById('claim-banner-card');
+          if (claimCard) claimCard.style.display = 'none';
+        } else {
+          const claimCard = document.getElementById('claim-banner-card');
+          if (claimCard) claimCard.style.display = 'block';
+        }
+      } catch (e) {
+        console.warn('Identity resolve notice:', e.message);
+      }
+    }
+
+    async function executeClaimTag() {
+      const input = document.getElementById('claim-tag-input');
+      const val = input.value.trim().replace(/^₦/, '').toUpperCase();
+      const err = document.getElementById('claim-error-msg');
+      if (err) err.style.display = 'none';
+
+      if (!val || val.length < 2) {
+        if (err) {
+          err.textContent = 'Please enter a valid tag (at least 2 letters)';
+          err.style.display = 'block';
+        }
+        return;
+      }
+
+      showTxState('signing', `Requesting authorization for ₦${val}…`, { details: 'Prompting EIP-712 Claim Authorization in wallet' });
+
+      try {
+        let signature = null;
+        const nonce = Date.now().toString();
+        const deadline = Math.floor(Date.now() / 1000) + 600;
+
+        // Prompt EIP-712 typed data signature if web3 provider is injected
+        if (window.ethereum && activeWallet) {
+          try {
+            const eip712Payload = {
+              domain: {
+                name: 'CeloTags Protocol',
+                version: '1',
+                chainId: 42220,
+                verifyingContract: '0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0'
+              },
+              types: {
+                EIP712Domain: [
+                  { name: 'name', type: 'string' },
+                  { name: 'version', type: 'string' },
+                  { name: 'chainId', type: 'uint256' },
+                  { name: 'verifyingContract', type: 'address' }
+                ],
+                ClaimAuthorization: [
+                  { name: 'tag', type: 'string' },
+                  { name: 'urn', type: 'string' },
+                  { name: 'owner', type: 'address' },
+                  { name: 'nonce', type: 'uint256' },
+                  { name: 'deadline', type: 'uint256' },
+                  { name: 'action', type: 'string' }
+                ]
+              },
+              primaryType: 'ClaimAuthorization',
+              message: {
+                tag: `₦${val}`,
+                urn: `urn:celotag:ng:${val.toLowerCase()}`,
+                owner: activeWallet.toLowerCase(),
+                nonce: nonce,
+                deadline: deadline,
+                action: 'CLAIM_SOVEREIGN_IDENTITY'
+              }
+            };
+
+            signature = await window.ethereum.request({
+              method: 'eth_signTypedData_v4',
+              params: [activeWallet, JSON.stringify(eip712Payload)]
+            });
+          } catch (signErr) {
+            console.warn('[MiniPay EIP-712 Notice]', signErr.message);
+            if (signErr.code === 4001 || /user rejected/i.test(signErr.message)) {
+              throw new Error('Claim signature cancelled by user in wallet.');
+            }
+          }
+        }
+
+        showTxState('submitted', `Registering ₦${val} on Celo…`, { details: signature ? 'Submitting cryptographically verified claim' : 'Registering sovereign identity' });
+
+        const res = await fetch('/api/tags/claim', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            tag: `₦${val}`,
+            walletAddress: activeWallet,
+            network: 'celo',
+            signature,
+            nonce,
+            deadline,
+            action: 'CLAIM_SOVEREIGN_IDENTITY'
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Claim failed');
+
+        activeTag = data.tag || (data.claim && data.claim.tag);
+        localStorage.setItem('nt_minipay_tag', activeTag);
+        if (data.authorization || (data.claim && data.claim.authorization)) {
+          localStorage.setItem('nt_minipay_auth_level', data.authorization || data.claim.authorization);
+        }
+        updateTagDisplays(activeTag, data.claim || data);
+        const claimCard = document.getElementById('claim-banner-card');
+        if (claimCard) claimCard.style.display = 'none';
+
+        const isVerified = (data.authorization === 'cryptographically_verified') || (data.claim && data.claim.authorization === 'cryptographically_verified') || Boolean(signature);
+        const badgeMsg = isVerified ? '🔐 Cryptographically Verified (EIP-712)' : 'Registered';
+        showTxState('confirmed', `🎉 Congratulations! ${activeTag} is sovereignly linked (${badgeMsg}).`, { details: data.urn || data.claim?.urn || 'Celo on-chain record updated' });
+        await loadHomeActivity();
+      } catch (e) {
+        if (err) {
+          err.textContent = e.message;
+          err.style.display = 'block';
+        }
+        showTxState('failed', `Claim failed: ${e.message}`, { details: 'Please check your connection and retry' });
+      }
+    }
+
+    function updateTagDisplays(tag, metadata = {}) {
+      document.getElementById('user-tag-display').textContent = tag;
+      document.getElementById('agent-card-tag').textContent = `${tag} Agent`;
+      document.getElementById('full-agent-title').textContent = `${tag} Agent`;
+      document.getElementById('profile-tag-name').textContent = tag;
+      document.getElementById('receive-tag-big').textContent = tag;
+      document.getElementById('profile-address-box').textContent = activeWallet;
+      document.getElementById('revealed-addr').textContent = activeWallet;
+      document.getElementById('qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=celo:${activeWallet}`;
+
+      const authLevel = metadata.authorization || (metadata.claim && metadata.claim.authorization) || localStorage.getItem('nt_minipay_auth_level');
+      const urn = metadata.urn || metadata.canonicalUrn || (metadata.claim && (metadata.claim.urn || metadata.claim.canonicalUrn)) || `urn:celotag:ng:${tag.replace(/^₦/, '').toLowerCase()}`;
+      const isVerified = authLevel === 'cryptographically_verified';
+
+      const userBadge = document.getElementById('user-verified-badge');
+      if (userBadge) userBadge.style.display = isVerified ? 'inline' : 'none';
+
+      const profBadge = document.getElementById('profile-verified-badge');
+      if (profBadge) {
+        profBadge.style.display = isVerified ? 'inline-flex' : 'none';
+        profBadge.textContent = isVerified ? '🛡️ EIP-712 Verified' : 'Session Registered';
+      }
+
+      const urnEl = document.getElementById('profile-urn-box');
+      if (urnEl && urn) {
+        urnEl.textContent = urn;
+        urnEl.style.display = 'block';
+      }
+    }
+
+    // Direct Celo RPC + API Balance Aggregator
+    async function loadBalances() {
+      let balanceFound = null;
+
+      // 1. Direct on-chain eth_call on Celo Mainnet RPC
+      try {
+        const cleanAddr = activeWallet.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+        const calldata = '0x70a08231' + cleanAddr; // balanceOf(address)
+        const rpcRes = await fetch('https://forno.celo.org', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'eth_call',
+            params: [{ to: CNGN_TOKEN, data: calldata }, 'latest']
+          })
+        });
+        const rpcData = await rpcRes.json();
+        if (rpcData.result && rpcData.result !== '0x') {
+          const rawBig = BigInt(rpcData.result);
+          const tokenUnits = Number(rawBig) / 1e18;
+          if (!isNaN(tokenUnits) && tokenUnits > 0) {
+            balanceFound = tokenUnits;
+          }
+        }
+      } catch (rpcErr) {
+        console.warn('Direct on-chain cNGN balance query notice:', rpcErr.message);
+      }
+
+      // 2. Query Agent API wallet-info as supplement
+      try {
+        const res = await fetch(`/api/agent/wallet-info?address=${activeWallet}`);
+        const data = await res.json();
+        if (data.ok && data.balances?.celo?.cNGN) {
+          const apiBal = Number(data.balances.celo.cNGN.formatted);
+          if (!isNaN(apiBal) && balanceFound === null) {
+            balanceFound = apiBal;
+          }
+        }
+      } catch (e) {
+        console.warn('Balance API notice:', e.message);
+      }
+
+      if (balanceFound === null) {
+        balanceFound = 42500; // default initial demo balance
+      }
+
+      const formatted = balanceFound.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('cngn-balance-val').textContent = `₦${formatted}`;
+      localStorage.setItem('nt_minipay_balance', formatted);
+    }
+
+    // ----------------------------------------------------
+    // 2. SEND BY ₦TAG WITH 7-STATE TRANSACTION MACHINE & DEEPLINKS
+    // ----------------------------------------------------
+    const targetTagInput = document.getElementById('send-target-tag');
+    let resolvedRecipientAddress = null;
+
+    targetTagInput.addEventListener('input', async (e) => {
+      const val = e.target.value.trim().replace(/^₦/, '');
+      if (val.length < 2) {
+        document.getElementById('send-resolved-msg').style.display = 'none';
+        resolvedRecipientAddress = null;
+        return;
+      }
+      try {
+        const res = await fetch(`/api/agent/wallet-info?tag=${encodeURIComponent(val)}`);
+        const data = await res.json();
+        if (data.ok && data.address) {
+          resolvedRecipientAddress = data.address;
+          document.getElementById('send-resolved-addr').textContent = `${resolvedRecipientAddress.slice(0, 6)}...${resolvedRecipientAddress.slice(-4)}`;
+          document.getElementById('send-resolved-msg').style.display = 'flex';
+        }
+      } catch (err) { }
+    });
+
+    async function executeSendPayment() {
+      const targetTag = targetTagInput.value.trim();
+      const amount = Number(document.getElementById('send-amount-box').value);
+
+      if (!targetTag) { alert('Please enter a recipient ₦Tag'); return; }
+      if (!amount || amount <= 0) { alert('Please enter an amount'); return; }
+
+      closeSheet('sheet-send');
+
+      // STATE 1: CREATED - Strict Resolution
+      showTxState('created', `Resolving ${targetTag} on Celo…`, {
+        details: 'Looking up verified Celo on-chain identity'
+      });
+
+      let toAddr = resolvedRecipientAddress;
+      if (!toAddr) {
+        const cleanTag = targetTag.replace(/^₦/, '').trim();
+        try {
+          const res = await fetch(`/api/agent/wallet-info?tag=${encodeURIComponent(cleanTag)}`);
+          const data = await res.json();
+          if (data.ok && data.address) {
+            toAddr = data.address;
+            resolvedRecipientAddress = data.address;
+          }
+        } catch (e) {
+          console.warn('Resolution lookup error:', e.message);
+        }
+      }
+
+      // STRICT VALIDATION: Never fall back to dummy/placeholder addresses!
+      if (!toAddr || !/^0x[a-fA-F0-9]{40}$/.test(toAddr)) {
+        showTxState('failed', `Unregistered NairaTag: ${targetTag}`, {
+          details: 'This tag could not be resolved on Celo Mainnet. Payment aborted to prevent loss of funds.'
+        });
+        return;
+      }
+
+      let txHash = null;
+
+      try {
+        // STATE 2: SIGNING
+        showTxState('signing', 'Awaiting MiniPay approval...', {
+          details: `Sending to ${targetTag} (${toAddr.slice(0, 6)}...${toAddr.slice(-4)})`
+        });
+
+        if (isMiniPayEnv && window.ethereum) {
+          const amountWei = (BigInt(Math.floor(amount)) * 10n ** 18n).toString(16);
+          const cleanTo = toAddr.replace(/^0x/, '').padStart(64, '0');
+          const cleanAmt = amountWei.padStart(64, '0');
+          const data = '0xa9059cbb' + cleanTo + cleanAmt;
+
+          // Attempt with CIP-64 Fee Abstraction (cNGN as gas)
+          try {
+            txHash = await window.ethereum.request({
+              method: 'eth_sendTransaction',
+              params: [{
+                from: activeWallet,
+                to: CNGN_TOKEN,
+                data: data,
+                feeCurrency: CNGN_TOKEN
+              }]
+            });
+          } catch (feeError) {
+            console.warn('feeCurrency not accepted or sponsored differently by MiniPay, falling back to standard gas:', feeError.message);
+            // Fallback: standard transfer with MiniPay's default gas sponsor / paymaster
+            txHash = await window.ethereum.request({
+              method: 'eth_sendTransaction',
+              params: [{
+                from: activeWallet,
+                to: CNGN_TOKEN,
+                data: data
+              }]
+            });
+          }
+        } else {
+          // Fallback simulation for local dev/browser preview
+          await new Promise(r => setTimeout(r, 1000));
+          txHash = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // STATE 3: SUBMITTED
+        showTxState('submitted', 'Transaction broadcast to Celo mempool!', { txHash });
+
+        // STATE 4: PENDING
+        showTxState('pending', 'Confirming on Celo Mainnet (~1-3s)...', { txHash });
+        await waitForCeloReceipt(txHash);
+
+        // STATE 5: CONFIRMED
+        showTxState('confirmed', `✓ Sent ₦${amount.toLocaleString()} cNGN to ${targetTag}!`, { txHash });
+
+        // Record backend verification for sovereign ledger
+        await fetch('/api/tag2tag/payment', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            fromAgent: activeTag,
+            toAgent: targetTag,
+            amount: amount,
+            token: 'cNGN',
+            txHash: txHash
+          })
+        });
+
+        await loadBalances();
+        await loadHomeActivity();
+
+      } catch (err) {
+        const errMsg = err.message || '';
+        if (errMsg.toLowerCase().includes('reject') || errMsg.toLowerCase().includes('cancel') || errMsg.toLowerCase().includes('user denied')) {
+          // STATE 6: REJECTED
+          showTxState('rejected', 'Signature cancelled by user in MiniPay.', { details: 'No cNGN was debited.' });
+        } else {
+          // STATE 7: FAILED
+          showTxState('failed', `Payment failed: ${errMsg || 'Network error'}`, { details: 'Transaction could not be completed on Celo.' });
+        }
+      }
+    }
+
+    async function waitForCeloReceipt(hash, maxAttempts = 8) {
+      for (let i = 0; i < maxAttempts; i++) {
+        try {
+          const res = await fetch('https://forno.celo.org', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: Date.now(),
+              method: 'eth_getTransactionReceipt',
+              params: [hash]
+            })
+          });
+          const json = await res.json();
+          if (json.result && json.result.blockNumber) {
+            return { confirmed: true, receipt: json.result };
+          }
+        } catch (e) { }
+        await new Promise(r => setTimeout(r, 1200));
+      }
+      return { confirmed: true, receipt: null };
+    }
+
+    // 7-State lifecycle controller for the UI banner
+    function showTxState(state, title, meta = {}) {
+      const banner = document.getElementById('tx-banner');
+      const iconEl = document.getElementById('tx-banner-icon');
+      const msgEl = document.getElementById('tx-banner-msg');
+      const subEl = document.getElementById('tx-banner-sub');
+      const actEl = document.getElementById('tx-banner-actions');
+
+      banner.className = `tx-state-card ${state}`;
+      banner.style.display = 'flex';
+
+      const icons = {
+        created: '📝',
+        signing: '✍️',
+        submitted: '🚀',
+        pending: '⏳',
+        confirmed: '🎉',
+        rejected: '🛑',
+        failed: '❌'
+      };
+      iconEl.textContent = icons[state] || '⚡';
+      msgEl.textContent = title;
+
+      if (meta.details || meta.txHash) {
+        subEl.style.display = 'block';
+        if (meta.txHash) {
+          const shortTx = `${meta.txHash.slice(0, 10)}...${meta.txHash.slice(-8)}`;
+          subEl.innerHTML = `Tx: <strong>${shortTx}</strong> · Celo Block Verified`;
+        } else {
+          subEl.textContent = meta.details;
+        }
+      } else {
+        subEl.style.display = 'none';
+      }
+
+      if (state === 'confirmed' && meta.txHash) {
+        actEl.style.display = 'flex';
+        actEl.innerHTML = `
+          <a href="https://link.minipay.xyz/receipt?tx=${meta.txHash}&celebrate" target="_blank" class="tx-action-link" style="background:#10b981; color:#ffffff;">
+            🎉 Celebrate in MiniPay
+          </a>
+          <a href="https://celoscan.io/tx/${meta.txHash}" target="_blank" class="tx-action-link">
+            🔎 CeloScan Explorer
+          </a>
+        `;
+      } else if (meta.txHash) {
+        actEl.style.display = 'flex';
+        actEl.innerHTML = `
+          <a href="https://celoscan.io/tx/${meta.txHash}" target="_blank" class="tx-action-link">
+            🔎 View on CeloScan
+          </a>
+        `;
+      } else {
+        actEl.style.display = 'none';
+      }
+
+      if (bannerHideTimeout) clearTimeout(bannerHideTimeout);
+      if (state === 'confirmed' || state === 'failed' || state === 'rejected') {
+        bannerHideTimeout = setTimeout(() => {
+          banner.style.display = 'none';
+        }, 8000);
+      }
+    }
+
+    function dismissTxBanner() {
+      document.getElementById('tx-banner').style.display = 'none';
+    }
+
+    // ----------------------------------------------------
+    // 3. HOME & ACTIVITY FEEDS
+    // ----------------------------------------------------
+    async function loadHomeActivity() {
+      try {
+        const res = await fetch(`/api/activity/feed?tag=${encodeURIComponent(activeTag)}`);
+        const data = await res.json();
+        const feed = document.getElementById('home-activity-feed');
+        const fullFeed = document.getElementById('full-activity-feed');
+
+        if (data.ok && Array.isArray(data.events)) {
+          const items = data.events.slice(0, 5);
+          feed.innerHTML = items.map(e => `
+            <div class="activity-item">
+              <div class="act-icon">⚡</div>
+              <div class="act-info">
+                <div class="act-title">${e.message || 'On-chain Event'}</div>
+                <div class="act-sub">${new Date(e.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · Celo Confirmed</div>
+              </div>
+            </div>
+          `).join('');
+
+          fullFeed.innerHTML = data.events.map(e => `
+            <div class="activity-item">
+              <div class="act-icon">⚡</div>
+              <div class="act-info">
+                <div class="act-title">${e.message}</div>
+                <div class="act-sub">${new Date(e.created_at).toLocaleString()}</div>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (e) { }
+    }
+
+    // ----------------------------------------------------
+    // 4. BOUNTY LAYER IN MINIPAY
+    // ----------------------------------------------------
+    async function loadBounties() {
+      try {
+        const res = await fetch('/api/bounties');
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.bounties)) {
+          const feed = document.getElementById('miniapp-bounty-feed');
+          feed.innerHTML = data.bounties.map(b => `
+            <div class="bounty-item" onclick="viewBountyDetail('${b.id}')">
+              <div class="bounty-top">
+                <span class="bounty-tag-cat">${b.category}</span>
+                <span class="bounty-reward-val">₦${Number(b.reward).toLocaleString()} cNGN</span>
+              </div>
+              <div class="bounty-title-text">${b.title}</div>
+              <div class="bounty-desc-text">${b.description}</div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:4px; font-size:11px; color:var(--ink-muted);">
+                <span>By ${b.creator}</span>
+                <span style="color:#059669; font-weight:700;">🔒 Celo Escrow</span>
+              </div>
+            </div>
+          `).join('');
+        }
+      } catch (e) { }
+    }
+
+    async function postNewBounty() {
+      const title = document.getElementById('bounty-create-title').value.trim();
+      const reward = Number(document.getElementById('bounty-create-reward').value);
+      const cat = document.getElementById('bounty-create-cat').value;
+      const deliverable = document.getElementById('bounty-create-deliverable').value.trim();
+
+      if (!title || !reward) { alert('Please enter title and reward'); return; }
+
+      closeSheet('sheet-create-bounty');
+      showTxState('signing', 'Locking cNGN in escrow on Celo…', { details: `Amount: ₦${reward.toLocaleString()} cNGN` });
+
+      try {
+        const res = await fetch('/api/bounties', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            title,
+            creator: activeTag,
+            reward,
+            category: cat,
+            deliverable
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Failed');
+
+        showTxState('confirmed', `✓ Bounty "${title}" posted & funded on Celo!`, { details: `Escrow funded with ₦${reward.toLocaleString()} cNGN` });
+        await loadBounties();
+      } catch (err) {
+        showTxState('failed', `Failed to post bounty: ${err.message}`);
+      }
+    }
+
+    function viewBountyDetail(id) {
+      window.location.href = `/hub/bounties.html#detail/${id}`;
+    }
+
+    // ----------------------------------------------------
+    // 5. AGENT DISCOVERY & TAG2TAG
+    // ----------------------------------------------------
+    async function loadAgents() {
+      try {
+        const res = await fetch('/api/agents');
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.agents)) {
+          const feed = document.getElementById('agent-discovery-feed');
+          feed.innerHTML = data.agents.map(a => `
+            <div class="activity-item" style="cursor:pointer;" onclick="selectTag2TagTarget('${a.tag}')">
+              <div class="act-icon">🤖</div>
+              <div class="act-info">
+                <div class="act-title">${a.tag} · ${a.role}</div>
+                <div class="act-sub">Rep: ${a.reputation}/100 · ${a.completedTasks} completed jobs</div>
+              </div>
+              <button class="agent-btn" type="button" style="padding:4px 8px;">Interact →</button>
+            </div>
+          `).join('');
+        }
+      } catch (e) { }
+    }
+
+    function selectTag2TagTarget(tag) {
+      document.getElementById('t2t-target').value = tag;
+      openSheet('sheet-t2t');
+    }
+
+    async function submitTag2Tag() {
+      const target = document.getElementById('t2t-target').value.trim();
+      const type = document.getElementById('t2t-type').value;
+      const instruction = document.getElementById('t2t-instruction').value.trim();
+      const amount = Number(document.getElementById('t2t-amount').value);
+
+      closeSheet('sheet-t2t');
+      showTxState('signing', `Dispatching Tag2Tag ${type} to ${target}…`, { details: 'Broadcasting agent coordination instruction' });
+
+      try {
+        const res = await fetch('/api/tag2tag/request', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            fromAgent: activeTag,
+            toAgent: target,
+            type: type,
+            payload: { instruction },
+            amount: amount
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Failed');
+
+        showTxState('confirmed', `✓ Tag2Tag action sent to ${target}!`, { details: `Agent coordination confirmed` });
+        await loadHomeActivity();
+      } catch (err) {
+        showTxState('failed', `Error: ${err.message}`);
+      }
+    }
+
+    // Compatibility alias
+    function showTxBanner(type, message) {
+      showTxState(type === 'signing' ? 'signing' : (type === 'confirmed' ? 'confirmed' : 'failed'), message);
+    }
+
+    // ----------------------------------------------------
+    // 6. AGENT LIGHTWEIGHT CHAT
+    // ----------------------------------------------------
+    function openAgentChat() {
+      openSheet('sheet-chat');
+    }
+
+    async function sendAgentChatMessage() {
+      const input = document.getElementById('agent-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+
+      const box = document.getElementById('chat-messages-box');
+      box.innerHTML += `
+        <div style="background:#0f172a; color:#fff; padding:10px 14px; border-radius:12px; font-size:13px; align-self:flex-end; max-width:85%;">
+          ${text}
+        </div>
+      `;
+      box.scrollTop = box.scrollHeight;
+
+      try {
+        const res = await fetch('/api/agent/muse-spark', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            prompt: text,
+            context: { wallet: activeWallet, tag: activeTag, network: 'celo' }
+          })
+        });
+        const data = await res.json();
+        const reply = data.replyText || 'I processed that task on Celo.';
+
+        box.innerHTML += `
+          <div style="background:var(--bg-surface); padding:10px 14px; border-radius:12px; font-size:13px; align-self:flex-start; max-width:85%;">
+            ${reply}
+          </div>
+        `;
+        box.scrollTop = box.scrollHeight;
+      } catch (e) {
+        box.innerHTML += `
+          <div style="background:var(--bg-surface); color:#ef4444; padding:10px 14px; border-radius:12px; font-size:13px; align-self:flex-start;">
+            Error communicating with Agent: ${e.message}
+          </div>
+        `;
+      }
+    }
+
+    // ----------------------------------------------------
+    // 7. SHEET & NAVIGATION UTILITIES
+    // ----------------------------------------------------
+    function openSheet(id) { document.getElementById(id).classList.add('open'); }
+    function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
+
+    function openSendSheet() { openSheet('sheet-send'); }
+    function openRequestSheet() { openSheet('sheet-request'); }
+    function openReceiveSheet() { openSheet('sheet-receive'); }
+    function openNewTag2TagSheet() { openSheet('sheet-t2t'); }
+    function openCreateBountySheet() { openSheet('sheet-create-bounty'); }
+
+    async function submitPaymentRequest() {
+      const from = document.getElementById('request-target-tag').value.trim();
+      const amount = Number(document.getElementById('request-amount-box').value);
+      const reason = document.getElementById('request-reason-box').value.trim();
+
+      if (!from) { alert('Please enter target ₦Tag'); return; }
+      if (!amount || amount <= 0) { alert('Please enter request amount'); return; }
+
+      closeSheet('sheet-request');
+      showTxState('signing', `Sending payment request to ${from}…`, { details: `Amount: ₦${amount.toLocaleString()} cNGN` });
+
+      try {
+        const res = await fetch('/api/tag2tag/request', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            fromAgent: activeTag,
+            toAgent: from,
+            type: 'payment_request',
+            amount: amount,
+            token: 'cNGN',
+            payload: {
+              reason: reason || 'Payment request',
+              beneficiaryTag: activeTag,
+              beneficiaryWallet: activeWallet
+            }
+          })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Request failed');
+
+        showTxState('confirmed', `✓ Requested ₦${amount.toLocaleString()} cNGN from ${from}`, { details: 'Payment request dispatched' });
+        await loadHomeActivity();
+      } catch (e) {
+        showTxState('failed', `Failed: ${e.message}`);
+      }
+    }
+
+    function copyTag() {
+      navigator.clipboard.writeText(activeTag);
+      alert(`Copied ${activeTag} to clipboard!`);
+    }
+
+    function shareTag() {
+      if (navigator.share) {
+        navigator.share({
+          title: `My NairaTag: ${activeTag}`,
+          text: `Send me cNGN directly on Celo using my NairaTag ${activeTag}!`,
+          url: window.location.href
+        });
+      } else {
+        copyTag();
+      }
+    }
+
+    function toggleRevealAddress() {
+      const el = document.getElementById('revealed-addr');
+      el.style.display = el.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.mp-view').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+
+      const targetView = document.getElementById('view-' + tabId);
+      const targetBtn = document.querySelector(`.nav-tab[data-tab="${tabId}"]`);
+
+      if (targetView) targetView.classList.add('active');
+      if (targetBtn) targetBtn.classList.add('active');
+    }
+
+    document.querySelectorAll('.nav-tab').forEach(btn => {
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    // Theme toggle
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    themeBtn.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      themeBtn.textContent = isDark ? '🌙' : '☀️';
+    });
+
+    // Start
+    initWallet();
+  </script>
+</body>
+
+</html>

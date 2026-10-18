@@ -1,0 +1,12 @@
+{
+  "servers": {
+    "nairatag": {
+      "command": "node",
+      "args": ["${workspaceFolder}/agent/mcp/server.js"]
+    },
+    "base-mcp": {
+      "type": "http",
+      "url": "https://mcp.base.org"
+    }
+  }
+}

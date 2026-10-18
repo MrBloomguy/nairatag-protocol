@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="en" data-theme="dark" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>Send money · NairaTag Pay</title>
+  <meta name="description" content="Send money instantly via NairaTag Pay.">
+  <text y='.9em' font-size='90'>₦</text></svg>">
+
+  <!-- Unified Theme & Notifications -->
+  <link rel="stylesheet" href="/hub/theme.css">
+  <link rel="stylesheet" href="/hub/notifications.css">
+  <script src="/hub/theme.js"></script>
+  <script src="/hub/notifications.js"></script>
+  <script src="/hub/tag-avatar.js"></script>
+  
+  <!-- Flutterwave Inline Checkout SDK -->
+  <script src="https://checkout.flutterwave.com/v3.js"></script>
+  <!-- Canvas Confetti for Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+  <!-- Ethers v6 Web3 Provider -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+
+  <style>
+    :root {
+      --font-sans: 'Poppins Rounded', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      
+      --bg-page: #000000;
+      --bg-card: #0c0d0e;
+      --bg-surface: #141618;
+      --bg-subtle: #181b1f;
+      --line: #22252a;
+      --line-subtle: #1c1f24;
+      --ink: #ffffff;
+      --ink-muted: #9ba1ad;
+      --ink-light: #636b78;
+      
+      --primary: #0052ff;
+      --primary-hover: #0045d8;
+      --primary-soft: rgba(0, 82, 255, 0.12);
+      --primary-border: rgba(0, 82, 255, 0.32);
+
+      --nt-accent: #bbf246;
+      --nt-accent-hover: #a3e635;
+      
+      --success: #10b981;
+      --success-soft: rgba(16, 185, 129, 0.12);
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --radius-pill: 9999px;
+      
+      --no-shadow: none !important;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; box-shadow: var(--no-shadow); }
+    
+    html, body {
+      min-height: 100vh;
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--ink);
+      font-size: 13.5px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Hide injected notification bells on standalone pay page */
+    #nt-notify-wrap,
+    .nt-notify-btn {
+      display: none !important;
+    }
+
+    /* Ambient Glow */
+    .ambient-glow {
+      position: fixed;
+      top: -10%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 360px;
+      background: radial-gradient(circle, rgba(0, 82, 255, 0.08) 0%, rgba(187, 242, 70, 0.02) 40%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+      transition: background 0.4s ease;
+    }
+
+    /* Minimal Top Navigation */
+    .app-header {
+      height: 48px;
+      min-height: 48px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(12, 13, 14, 0.85);
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .brand-mark {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: var(--nt-accent);
+      color: #000000;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .brand-text {
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: -0.01em;
+    }
+    .brand-badge {
+      font-size: 10px;
+      font-weight: 800;
+      background: var(--primary-soft);
+      border: 1px solid var(--primary-border);
+      color: #60a5fa;
+      padding: 1px 7px;
+      border-radius: var(--radius-pill);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .pay-nav-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .theme-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+      background: var(--bg-surface);
+      color: var(--ink);
+      font-size: 13px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .theme-btn:hover { background: var(--bg-subtle); }
+
+    /* Page Content - Centered 460px Swap Layout */
+    .page-content-scroll {
+      flex: 1;
+      padding: 24px 16px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 440px;
+      margin: 0 auto;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Uniswap Style Swap Card */
+    .swap-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    .card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2px 2px;
+    }
+
+    .recipient-heading-text {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .recipient-heading-tag {
+      color: var(--ink);
+      font-weight: 800;
+      font-size: 14.5px;
+      letter-spacing: -0.01em;
+    }
+
+    .slippage-pills {
+      display: flex;
+      gap: 4px;
+    }
+    .slip-pill {
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      color: var(--ink-muted);
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .slip-pill:hover {
+      color: var(--ink);
+      border-color: var(--ink-light);
+    }
+    .slip-pill.active {
+      background: #bbf246 !important;
+      border-color: #bbf246 !important;
+      color: #000000 !important;
+      font-weight: 800 !important;
+    }
+    .slip-pill:hover:not(.active) {
+      border-color: #bbf246;
+      color: var(--ink);
+    }
+
+    /* Sunken Input Boxes */
+    .swap-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: border-color 0.15s ease;
+    }
+    .swap-box:focus-within {
+      border-color: var(--primary);
+    }
+
+    .swap-box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      font-weight: 600;
+    }
+
+    .swap-input-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .swap-amount-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 26px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--ink);
+      outline: none;
+      min-width: 0;
+      letter-spacing: -0.02em;
+    }
+    .swap-amount-input::placeholder {
+      color: var(--ink-light);
+      opacity: 0.5;
+    }
+
+    .token-select-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-pill);
+      font-weight: 800;
+      font-size: 12.5px;
+      color: var(--ink);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.12s ease;
+    }
+    .token-select-btn:hover {
+      border-color: var(--primary-border);
+      background: var(--bg-subtle);
+    }
+
+    .token-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #10b981;
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-size: 10.5px;
+      font-weight: 900;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .recipient-token-btn {
+      cursor: default !important;
+      padding: 4px 10px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+    }
+    .recipient-token-btn:hover {
+      border-color: var(--line) !important;
+      background: var(--bg-card) !important;
+    }
+
+    .token-avatar-circle {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      background: var(--bg-surface);
+      flex-shrink: 0;
+      border: 1px solid var(--line);
+    }
+    .token-avatar-circle svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Switch Direction Row */
+    .switch-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: -6px 0;
+      position: relative;
+      z-index: 2;
+    }
+
+    .btn-switch-direction {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--primary);
+      transition: transform 0.2s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-switch-direction:hover {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+      color: #60a5fa;
+      transform: scale(1.08);
+    }
+
+    /* Minimal Single-line Email Input */
+    .swap-email-minimal {
+      width: 100%;
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 9px 12px;
+      font-size: 11.5px;
+      color: var(--ink);
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .swap-email-minimal:focus {
+      border-color: var(--primary);
+    }
+    .swap-email-minimal::placeholder {
+      color: var(--ink-light);
+    }
+
+    /* Hero DEX Execution Button */
+    .btn-execute-swap {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+      margin-top: 2px;
+    }
+    .btn-execute-swap:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+    .btn-execute-swap:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-spinner {
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    /* Modal Backdrop & Token Picker */
+    .token-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 1000;
+    }
+    .token-modal-backdrop[hidden] {
+      display: none;
+    }
+
+    .token-modal-card {
+      width: 100%;
+      max-width: 360px;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      animation: scaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .token-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    .token-modal-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .token-modal-close {
+      background: transparent;
+      border: none;
+      color: var(--ink-muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 6px;
+    }
+    .token-modal-close:hover { color: var(--ink); }
+
+    .token-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .token-list-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 11px;
+      border-radius: var(--radius-md);
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .token-list-item:hover {
+      background: var(--bg-subtle);
+      border-color: var(--line-subtle);
+      transform: translateX(2px);
+    }
+    .token-list-item.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .token-badge-active {
+      font-size: 10px;
+      font-weight: 700;
+      color: #60a5fa;
+      background: var(--primary-soft);
+      border: 1px solid var(--primary-border);
+      padding: 2px 7px;
+      border-radius: var(--radius-pill);
+    }
+
+    /* Success Card (DEX confirmation) */
+    .swap-result-card {
+      background: var(--bg-card);
+      border: 1px solid var(--success);
+      border-radius: var(--radius-xl);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      text-align: center;
+      animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .swap-result-card[hidden] {
+      display: none;
+    }
+
+    .result-icon-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--success-soft);
+      border: 2px solid var(--success);
+      color: var(--success);
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      font-weight: 900;
+      margin: 0 auto;
+    }
+    .result-headline {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+    .result-subhead {
+      font-size: 11.5px;
+      color: var(--ink-muted);
+      margin-top: -8px;
+    }
+
+    .result-details-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      font-size: 11.5px;
+    }
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--ink-muted);
+    }
+    .result-row strong {
+      color: var(--ink);
+      font-family: var(--font-mono);
+    }
+
+    .result-actions-deck {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    @keyframes scaleUp {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @media (max-width: 480px) {
+      .page-content-scroll {
+        padding: 16px 12px 36px;
+      }
+      .swap-card {
+        border-radius: 20px;
+        padding: 14px;
+      }
+      .swap-amount-input {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="ambient-glow" id="ambient-glow"></div>
+
+  <!-- Header Nav Bar -->
+  <header class="app-header">
+    <a href="/claim" class="brand-logo">
+      <div class="brand-mark"><img src="/hub/nairatag-icon.png" alt="₦" class="brand-mark-img" /></div>
+      <span class="brand-text">NairaTag</span>
+      <span class="brand-badge">Pay</span>
+    </a>
+    <div class="pay-nav-right">
+      <button type="button" class="theme-btn theme-toggle-btn" onclick="window.toggleTheme()" title="Toggle Theme">
+        🌙
+      </button>
+    </div>
+  </header>
+
+  <!-- Uniswap / DEX Layout Container -->
+  <main class="page-content-scroll">
+    
+    <!-- MAIN SWAP / PAY CARD -->
+    <div class="swap-card" id="pay-swap-card">
+      
+      <!-- Top Subheader: Recipient Notice & Quick Presets -->
+      <div class="card-top-row">
+        <div class="recipient-heading-text">
+          <span>Send money to</span>
+          <strong class="recipient-heading-tag" id="recipient-heading-tag">₦TAG</strong>
+        </div>
+        <div class="slippage-pills">
+          <button type="button" class="slip-pill" onclick="setQuickAmount(5000)">₦5k</button>
+          <button type="button" class="slip-pill" onclick="setQuickAmount(10000)">₦10k</button>
+          <button type="button" class="slip-pill" onclick="setQuickAmount(25000)">₦25k</button>
+          <button type="button" class="slip-pill active" onclick="setQuickAmount(50000)">₦50k</button>
+          <button type="button" class="slip-pill" onclick="setQuickAmount(100000)">₦100k</button>
+        </div>
+      </div>
+
+      <!-- BOX 1: YOU PAY -->
+      <div class="swap-box">
+        <div class="swap-box-header">
+          <span>You Pay</span>
+          <span id="fiat-eq-val" style="font-family:var(--font-mono); font-size:11px; color:var(--ink-muted);">≈ $32.25</span>
+        </div>
+        <div class="swap-input-row">
+          <input 
+            type="text" 
+            id="input-pay-amount" 
+            class="swap-amount-input" 
+            value="50,000" 
+            autocomplete="off" 
+            inputmode="numeric" 
+            placeholder="0"
+            oninput="handleAmountInput(this.value)" 
+          />
+          <button class="token-select-btn" type="button" id="token-from-btn" onclick="openTokenModal()">
+            <span class="token-icon" id="token-from-icon" style="background:#10b981;">🇳🇬</span>
+            <span id="token-from-label">NGN</span>
+            <span style="font-size:10px; color:var(--ink-light);">▼</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CENTER FLOW SWITCHER / DOWNWARD CONNECTOR -->
+      <div class="switch-row">
+        <button class="btn-switch-direction" type="button" title="Change Payment Rail" onclick="openTokenModal()">
+          ↓
+        </button>
+      </div>
+
+      <!-- BOX 2: RECIPIENT GETS -->
+      <div class="swap-box">
+        <div class="swap-box-header">
+          <span>Recipient Gets</span>
+        </div>
+        <div class="swap-input-row">
+          <input 
+            type="text" 
+            id="input-receive-amount" 
+            class="swap-amount-input" 
+            value="50,000" 
+            readonly 
+          />
+          <div class="token-select-btn recipient-token-btn" id="recipient-pill-btn">
+            <div class="token-avatar-circle" id="recipient-avatar-svg"></div>
+            <span id="recipient-tag-label" style="font-weight:800; font-size:13px; color:var(--ink);">₦TAG</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MINIMAL SINGLE-LINE RECEIPT EMAIL INPUT -->
+      <input 
+        type="email" 
+        id="payer-email" 
+        class="swap-email-minimal" 
+        placeholder="Email for receipt (optional)" 
+      />
+
+      <!-- DEX EXECUTION ACTION BUTTON -->
+      <button type="button" class="btn-execute-swap" id="btn-pay" onclick="executePayment()">
+        <span id="btn-pay-text">Pay ₦50,000</span>
+      </button>
+
+    </div>
+
+    <!-- SUCCESS RECEIPT CARD (DEX RESULT STYLE) -->
+    <div class="swap-result-card" id="swap-result-card" hidden>
+      <div class="result-icon-circle">✓</div>
+      <h2 class="result-headline">Payment Successful!</h2>
+      <p class="result-subhead" id="result-subhead">Settled instantly</p>
+
+      <div class="result-details-box">
+        <div class="result-row">
+          <span>Amount Paid</span>
+          <strong id="rec-amount" style="color:var(--nt-accent); font-size:13px;">₦50,000</strong>
+        </div>
+        <div class="result-row">
+          <span>Recipient</span>
+          <strong id="rec-tag">₦TAG</strong>
+        </div>
+        <div class="result-row">
+          <span>Payment Rail</span>
+          <strong id="rec-rail">Local NGN (Flutterwave)</strong>
+        </div>
+        <div class="result-row">
+          <span>Reference</span>
+          <strong id="rec-ref">NTP_...</strong>
+        </div>
+        <div class="result-row">
+          <span>Receipt ID</span>
+          <strong id="rec-id">REC_...</strong>
+        </div>
+      </div>
+
+      <div class="result-actions-deck">
+        <button type="button" class="btn-execute-swap" onclick="resetPaymentView()">
+          <span>Done · Make Another Payment</span>
+        </button>
+        <button type="button" class="theme-btn" onclick="shareReceipt()" style="width:100%; height:auto; padding:10px; border-radius:12px; font-weight:700; font-size:12px;">
+          <span>Share Receipt</span>
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- TOKEN / RAIL SELECTION MODAL -->
+  <div class="token-modal-backdrop" id="token-modal" hidden onclick="closeTokenModal(event)">
+    <div class="token-modal-card" onclick="event.stopPropagation()">
+      <div class="token-modal-header">
+        <span class="token-modal-title">Select Payment Rail</span>
+        <button type="button" class="token-modal-close" onclick="closeTokenModal()">✕</button>
+      </div>
+      <div class="token-list">
+        <!-- Local NGN -->
+        <div class="token-list-item active" id="token-opt-ngn" onclick="selectRailItem('local', 'NGN', '🇳🇬')">
+          <div class="token-icon" style="background:#10b981;">🇳🇬</div>
+          <div style="flex:1;">
+            <div style="font-weight:800; font-size:13px; color:var(--ink);">Local NGN</div>
+            <div style="font-size:11px; color:var(--ink-muted);">Card · Bank · USSD · OPay</div>
+          </div>
+          <span class="token-badge-active" id="badge-opt-ngn">Active</span>
+        </div>
+
+        <!-- cNGN -->
+        <div class="token-list-item" id="token-opt-cngn" onclick="selectRailItem('crypto', 'cNGN', '🪙')">
+          <div class="token-icon" style="background:#0052ff;">🪙</div>
+          <div style="flex:1;">
+            <div style="font-weight:800; font-size:13px; color:var(--ink);">cNGN</div>
+            <div style="font-size:11px; color:var(--ink-muted);">Digital Naira (Base)</div>
+          </div>
+        </div>
+
+        <!-- USDC -->
+        <div class="token-list-item" id="token-opt-usdc" onclick="selectRailItem('crypto', 'USDC', '💵')">
+          <div class="token-icon" style="background:#2775ca;">💵</div>
+          <div style="flex:1;">
+            <div style="font-weight:800; font-size:13px; color:var(--ink);">USDC</div>
+            <div style="font-size:11px; color:var(--ink-muted);">USD Coin (Base)</div>
+          </div>
+        </div>
+
+        <!-- ETH -->
+        <div class="token-list-item" id="token-opt-eth" onclick="selectRailItem('crypto', 'ETH', '🔷')">
+          <div class="token-icon" style="background:#627eea;">🔷</div>
+          <div style="flex:1;">
+            <div style="font-weight:800; font-size:13px; color:var(--ink);">ETH</div>
+            <div style="font-size:11px; color:var(--ink-muted);">Ethereum (Base)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State & Configuration
+    const API_BASE = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost')
+      ? 'http://127.0.0.1:8787'
+      : '';
+
+    let currentRail = 'local'; // 'local' | 'crypto'
+    let currentAsset = 'NGN';  // 'NGN' | 'cNGN' | 'USDC' | 'ETH'
+    let currentAmount = 50000;
+    let recipientHandle = localStorage.getItem('nairatag_active_tag')?.replace(/^₦/, '').toLowerCase() || 'tag';
+    let recipientData = null;
+    let activeSession = null;
+
+    // Rates relative to NGN
+    const NGN_USD_RATE = 1550;
+    const ETH_USD_RATE = 2700;
+
+    // Initializer
+    function init() {
+      const p = new URLSearchParams(window.location.search);
+      const tagParam = p.get('tag') || p.get('to') || p.get('handle') || window.location.pathname.replace(/^\/pay\/?/, '').replace(/^\//, '');
+      if (tagParam && tagParam !== 'pay.html' && tagParam !== 'pay') {
+        recipientHandle = tagParam.replace(/^₦/, '').toLowerCase().trim();
+      }
+
+      const amountParam = p.get('amount') || p.get('amt');
+      if (amountParam && !isNaN(Number(amountParam)) && Number(amountParam) > 0) {
+        currentAmount = Number(amountParam);
+      }
+
+      const railParam = p.get('rail');
+      if (railParam === 'crypto') {
+        currentRail = 'crypto';
+        currentAsset = 'cNGN';
+      }
+
+      // Update titles & labels
+      document.title = `Send money to ₦${recipientHandle.toUpperCase()} · NairaTag Pay`;
+      document.getElementById('recipient-heading-tag').textContent = `₦${recipientHandle.toUpperCase()}`;
+      document.getElementById('recipient-tag-label').textContent = `₦${recipientHandle.toUpperCase()}`;
+      
+      document.getElementById('input-pay-amount').value = currentAmount.toLocaleString('en-US');
+      updateQuickChips(currentAmount);
+      updateOutputs();
+      resolveRecipientProfile(recipientHandle);
+    }
+
+    // Recipient Profile Resolution
+    async function resolveRecipientProfile(handle) {
+      const clean = (handle || recipientHandle || 'tag').toLowerCase();
+      
+      // 1. Instant Handcrafted Vector Fallback
+      if (window.TagAvatar) {
+        const profile = window.TagAvatar.resolveTagProfile(clean, { avatarSize: 32 });
+        const avatarEl = document.getElementById('recipient-avatar-svg');
+        if (avatarEl) avatarEl.innerHTML = profile.avatarSvg;
+        
+        // Ambient glow
+        const glow = document.getElementById('ambient-glow');
+        if (glow && profile.palette) {
+          glow.style.background = `radial-gradient(circle, ${profile.palette.primary}18 0%, rgba(0, 82, 255, 0.03) 40%, transparent 70%)`;
+        }
+      }
+
+      // 2. Fetch canonical resolver data & NGN receiving account
+      try {
+        const [resResolver, resNgn] = await Promise.allSettled([
+          fetch(`${API_BASE}/api/resolve/${clean}`).then(r => r.json()),
+          fetch(`${API_BASE}/api/ngn-account?tag=${clean}`).then(r => r.json())
+        ]);
+
+        if (resResolver.status === 'fulfilled' && resResolver.value?.ok) {
+          recipientData = resResolver.value;
+          if (recipientData.identity?.resolvedAddress) {
+            recipientData.resolvedAddress = recipientData.identity.resolvedAddress;
+          }
+        }
+
+        if (resNgn.status === 'fulfilled' && resNgn.value?.ok && resNgn.value.account) {
+          const acc = resNgn.value.account;
+          recipientData = { ...recipientData, ngnAccount: acc };
+
+          // Display recipient's dedicated NGN receiving account banner
+          const bannerEl = document.getElementById('recipient-dva-banner');
+          if (bannerEl) {
+            bannerEl.style.display = 'flex';
+            const numEl = document.getElementById('pay-dva-number');
+            const bankEl = document.getElementById('pay-dva-bank');
+            if (numEl) numEl.textContent = acc.accountNumber || 'Provisioning...';
+            if (bankEl) bankEl.textContent = `${acc.bankName} · ${acc.accountName}`;
+          }
+        }
+      } catch (err) {
+        console.warn('Resolver fetch error:', err.message);
+      }
+    }
+
+    // Amount Handling
+    function handleAmountInput(rawVal) {
+      const cleaned = String(rawVal).replace(/[^0-9.]/g, '');
+      const num = Number(cleaned) || 0;
+      currentAmount = num;
+      updateQuickChips(num);
+      updateOutputs();
+    }
+
+    function setQuickAmount(amt) {
+      currentAmount = amt;
+      document.getElementById('input-pay-amount').value = amt.toLocaleString('en-US');
+      updateQuickChips(amt);
+      updateOutputs();
+    }
+
+    function updateQuickChips(num) {
+      document.querySelectorAll('.slip-pill').forEach(btn => {
+        const chipAmt = parseInt(btn.textContent.replace(/[^0-9]/g, ''), 10) * (btn.textContent.includes('k') ? 1000 : 1);
+        btn.classList.toggle('active', chipAmt === num);
+      });
+    }
+
+    function updateOutputs() {
+      const recInput = document.getElementById('input-receive-amount');
+      const fiatEq = document.getElementById('fiat-eq-val');
+      const btnText = document.getElementById('btn-pay-text');
+
+      const usdVal = (currentAmount / NGN_USD_RATE).toFixed(2);
+      if (fiatEq) fiatEq.textContent = `≈ $${Number(usdVal).toLocaleString('en-US')}`;
+
+      if (currentAsset === 'NGN') {
+        recInput.value = currentAmount ? currentAmount.toLocaleString('en-US') : '0';
+        btnText.textContent = `Pay ₦${currentAmount.toLocaleString('en-US')}`;
+      } else if (currentAsset === 'cNGN') {
+        recInput.value = currentAmount ? `${currentAmount.toLocaleString('en-US')} cNGN` : '0 cNGN';
+        btnText.textContent = `Pay ${currentAmount.toLocaleString('en-US')} cNGN`;
+      } else if (currentAsset === 'USDC') {
+        const usdc = (currentAmount / NGN_USD_RATE).toFixed(2);
+        recInput.value = `${usdc} USDC`;
+        btnText.textContent = `Pay ${usdc} USDC`;
+      } else if (currentAsset === 'ETH') {
+        const eth = (currentAmount / (NGN_USD_RATE * ETH_USD_RATE)).toFixed(5);
+        recInput.value = `${eth} ETH`;
+        btnText.textContent = `Pay ${eth} ETH`;
+      }
+    }
+
+    // Token Modal Logic
+    function openTokenModal() {
+      document.getElementById('token-modal').hidden = false;
+    }
+
+    function closeTokenModal(e) {
+      if (!e || e.target.id === 'token-modal' || e.target.classList.contains('token-modal-close')) {
+        document.getElementById('token-modal').hidden = true;
+      }
+    }
+
+    function selectRailItem(rail, asset, icon) {
+      currentRail = rail;
+      currentAsset = asset;
+
+      document.getElementById('token-from-label').textContent = asset;
+      const iconEl = document.getElementById('token-from-icon');
+      iconEl.textContent = icon;
+      iconEl.style.background = asset === 'NGN' ? '#10b981' : asset === 'cNGN' ? '#0052ff' : asset === 'USDC' ? '#2775ca' : '#627eea';
+
+      // Update active state in modal
+      document.querySelectorAll('.token-list-item').forEach(el => el.classList.remove('active'));
+      const activeEl = document.getElementById(`token-opt-${asset.toLowerCase()}`);
+      if (activeEl) activeEl.classList.add('active');
+
+      document.querySelectorAll('.token-badge-active').forEach(b => b.remove());
+      const badge = document.createElement('span');
+      badge.className = 'token-badge-active';
+      badge.textContent = 'Active';
+      activeEl?.appendChild(badge);
+
+      closeTokenModal();
+      updateOutputs();
+      showPaymentToast('Payment Rail Selected', `${asset} configured for ₦${recipientHandle.toUpperCase()}`, 'system');
+    }
+
+    // Payment States Toast Dispatcher
+    function showPaymentToast(title, body, category = 'system') {
+      if (window.NairaTagNotifications && typeof window.NairaTagNotifications.showToast === 'function') {
+        window.NairaTagNotifications.showToast(title, body, null, category);
+      } else {
+        console.log(`[Toast ${category}] ${title}: ${body}`);
+      }
+    }
+
+    // Payment Execution
+    async function executePayment() {
+      if (!currentAmount || currentAmount <= 0) {
+        showPaymentToast('Invalid Amount', 'Please enter a valid payment amount', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-pay');
+      const btnText = document.getElementById('btn-pay-text');
+      const originalText = btnText.textContent;
+
+      btn.disabled = true;
+      btnText.innerHTML = '<span class="btn-spinner"></span> Initializing...';
+
+      const payerEmail = document.getElementById('payer-email')?.value?.trim() || `payer_${Date.now()}@nairatag.ng`;
+
+      showPaymentToast('Payment Initialized', `Creating checkout for ₦${recipientHandle.toUpperCase()}...`, 'processing');
+
+      try {
+        // 1. Create payment session on server
+        const res = await fetch(`${API_BASE}/api/pay/create-session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tag: recipientHandle,
+            amount: currentAmount,
+            currency: currentAsset,
+            rail: currentRail,
+            payerEmail,
+            description: `NairaTag Pay to ₦${recipientHandle.toUpperCase()}`
+          })
+        });
+
+        const sessionData = await res.json();
+        if (!sessionData.ok) throw new Error(sessionData.error || 'Failed to initialize session');
+        activeSession = sessionData;
+
+        // 2. Branch: Local Flutterwave vs Crypto
+        if (currentRail === 'local') {
+          launchFlutterwavePayment(sessionData);
+        } else {
+          launchCryptoPayment(sessionData);
+        }
+
+      } catch (err) {
+        showPaymentToast('Payment Failed', err.message || 'Unable to initialize payment session', 'error');
+        btn.disabled = false;
+        btnText.textContent = originalText;
+      }
+    }
+
+    // Flutterwave Inline Checkout
+    function launchFlutterwavePayment(session) {
+      const btn = document.getElementById('btn-pay');
+      const btnText = document.getElementById('btn-pay-text');
+      const config = session.railConfig;
+
+      showPaymentToast('Checkout Ready', 'Authorize in modal to complete transfer', 'payment');
+
+      if (typeof FlutterwaveCheckout === 'function') {
+        FlutterwaveCheckout({
+          public_key: config.public_key,
+          tx_ref: config.tx_ref,
+          amount: config.amount,
+          currency: config.currency,
+          payment_options: config.payment_options,
+          customer: config.customer,
+          customizations: config.customizations,
+          meta: config.meta,
+          callback: async function(data) {
+            console.log('[Flutterwave] Payment Callback:', data);
+            showPaymentToast('Processing Authorization', 'Verifying payment on rail...', 'processing');
+            await verifyAndCompletePayment({
+              txRef: session.txRef,
+              transactionId: String(data.transaction_id || data.id),
+              rail: 'local'
+            });
+          },
+          onclose: function() {
+            btn.disabled = false;
+            updateOutputs();
+            showPaymentToast('Checkout Closed', 'Payment session was closed', 'system');
+          }
+        });
+      } else {
+        showPaymentToast('Checkout Unavailable', 'Flutterwave Checkout SDK failed to load. Please check your internet connection or ad-blocker.', 'error');
+        btn.disabled = false;
+        updateOutputs();
+      }
+    }
+
+    // Crypto Base Payment (Real On-Chain Web3 Execution)
+    async function launchCryptoPayment(session) {
+      const btn = document.getElementById('btn-pay');
+      const btnText = document.getElementById('btn-pay-text');
+      btnText.textContent = 'Awaiting Base Transaction...';
+
+      if (!window.ethereum) {
+        showPaymentToast('Web3 Wallet Required', 'Please install or connect a Web3 wallet (MetaMask, Coinbase Wallet) on Base to pay in crypto.', 'error');
+        btn.disabled = false;
+        updateOutputs();
+        return;
+      }
+
+      try {
+        showPaymentToast('Wallet Detected', 'Connecting to Base wallet...', 'wallet');
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send('eth_requestAccounts', []);
+        const signer = await provider.getSigner();
+        const senderAddress = await signer.getAddress();
+        console.log('[Crypto] Connected Sender:', senderAddress);
+
+        // Resolve recipient destination EVM address
+        const targetAddress = recipientData?.resolvedAddress || session.railConfig?.recipientAddress;
+        if (!targetAddress || !ethers.isAddress(targetAddress)) {
+          throw new Error(`Recipient ₦${recipientHandle.toUpperCase()} does not have an active on-chain address configured.`);
+        }
+
+        const cryptoAmountStr = String(session.railConfig?.cryptoAmount || currentAmount || '0.001');
+        showPaymentToast('Awaiting Signature', `Confirm sending ${cryptoAmountStr} ${currentAsset} to ₦${recipientHandle.toUpperCase()}...`, 'processing');
+
+        let tx;
+        if (currentAsset === 'ETH') {
+          // Native ETH transfer on Base
+          tx = await signer.sendTransaction({
+            to: targetAddress,
+            value: ethers.parseEther(cryptoAmountStr)
+          });
+        } else {
+          // ERC-20 token transfer (cNGN / USDC)
+          const tokenAddress = currentAsset === 'cNGN'
+            ? '0x610178dA211FEF7D417bC0e6FeD39F05609AD788'
+            : '0x036CbD53842c5426634e7929541eC2318f3dCF7e'; // Celo Sepolia USDC
+          
+          const erc20Abi = [
+            'function transfer(address to, uint256 amount) returns (bool)',
+            'function decimals() view returns (uint8)'
+          ];
+          const contract = new ethers.Contract(tokenAddress, erc20Abi, signer);
+          let decimals = 18;
+          try { decimals = await contract.decimals(); } catch {}
+          const parsedAmount = ethers.parseUnits(cryptoAmountStr, decimals);
+          tx = await contract.transfer(targetAddress, parsedAmount);
+        }
+
+        showPaymentToast('Transaction Broadcasted', `Transaction submitted (${tx.hash.slice(0, 10)}...). Confirming on Base...`, 'processing');
+        const receipt = await tx.wait(1);
+
+        await verifyAndCompletePayment({
+          txRef: session.txRef,
+          txHash: tx.hash,
+          rail: 'crypto'
+        });
+      } catch (err) {
+        console.error('Crypto Base transaction error:', err);
+        showPaymentToast('Payment Cancelled / Error', err.shortMessage || err.message || 'Crypto transaction failed or was rejected by user.', 'error');
+        btn.disabled = false;
+        updateOutputs();
+      }
+    }
+
+    // Verification & Complete
+    async function verifyAndCompletePayment({ txRef, transactionId = null, txHash = null, rail = 'local' }) {
+      try {
+        showPaymentToast('Verifying Settlement', `Confirming reference ${txRef.slice(0, 16)}...`, 'processing');
+        const res = await fetch(`${API_BASE}/api/pay/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ txRef, transactionId, txHash, rail })
+        });
+        const result = await res.json();
+        if (result.ok && result.status === 'successful') {
+          renderSuccessCard(result);
+        } else {
+          throw new Error(result.error || 'Payment verification failed');
+        }
+      } catch (err) {
+        showPaymentToast('Verification Failed', err.message || 'Payment verification failed', 'error');
+        const btn = document.getElementById('btn-pay');
+        btn.disabled = false;
+        updateOutputs();
+      }
+    }
+
+    function renderSuccessCard(data) {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 110,
+          spread: 75,
+          origin: { y: 0.6 },
+          colors: ['#0052ff', '#bbf246', '#38bdf8', '#10b981']
+        });
+      }
+
+      showPaymentToast('Payment Confirmed! 🎉', `₦${Number(data.amount).toLocaleString('en-US')} received by ₦${recipientHandle.toUpperCase()}`, 'claim');
+
+      document.getElementById('rec-amount').textContent = `₦${Number(data.amount).toLocaleString('en-US')}`;
+      document.getElementById('rec-tag').textContent = `₦${recipientHandle.toUpperCase()}`;
+      document.getElementById('rec-rail').textContent = data.rail === 'local' ? 'Local NGN (Flutterwave)' : `${currentAsset} (Celo Sepolia)`;
+      document.getElementById('rec-ref').textContent = data.txRef;
+      document.getElementById('rec-id').textContent = data.receipt?.receiptId || 'REC_' + Date.now();
+      document.getElementById('result-subhead').textContent = `Settled instantly to ₦${recipientHandle.toUpperCase()}`;
+
+      document.getElementById('pay-swap-card').hidden = true;
+      document.getElementById('swap-result-card').hidden = false;
+    }
+
+    function resetPaymentView() {
+      document.getElementById('swap-result-card').hidden = true;
+      document.getElementById('pay-swap-card').hidden = false;
+      const btn = document.getElementById('btn-pay');
+      btn.disabled = false;
+      updateOutputs();
+    }
+
+    function shareReceipt() {
+      const shareText = `Paid ₦${currentAmount.toLocaleString()} to ₦${recipientHandle.toUpperCase()} via NairaTag Pay! Reference: ${activeSession?.txRef || ''}`;
+      if (navigator.share) {
+        navigator.share({ title: 'NairaTag Payment Receipt', text: shareText, url: window.location.href });
+      } else {
+        navigator.clipboard.writeText(shareText);
+        showPaymentToast('Receipt Copied', 'Receipt details copied to your clipboard', 'system');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

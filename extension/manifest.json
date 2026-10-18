@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "NairaTag — Social Identity on X",
+  "version": "1.0.0",
+  "description": "Interactive sovereign NairaTag (₦TAG) references on X Web with in-timeline identity cards, payments, and claiming.",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "http://127.0.0.1:8088/*",
+    "http://127.0.0.1:8787/*"
+  ],
+  "background": {
+    "service_worker": "background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "http://127.0.0.1:8088/*"
+      ],
+      "js": [
+        "content/content.js"
+      ],
+      "css": [
+        "content/card.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "NairaTag Social Identity",
+    "default_icon": "icons/icon.svg"
+  },
+  "icons": {
+    "16": "icons/icon.svg",
+    "48": "icons/icon.svg",
+    "128": "icons/icon.svg"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icons/*",
+        "content/*"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+# ==============================================================================
+# NairaTag Network — Engine API JWT Secret Template
+# ==============================================================================
+# Instructions:
+# Generate a real 32-byte hex secret using:
+#   openssl rand -hex 32 > op-stack/configuration/jwt.hex
+#
+# Do NOT commit production secrets to version control.
+# ==============================================================================
+<REQUIRED_32_BYTE_HEX_SECRET_e.g._openssl_rand_-hex_32>

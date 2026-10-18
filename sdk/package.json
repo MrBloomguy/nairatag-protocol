@@ -1,0 +1,23 @@
+{
+  "name": "@nairatag/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript/JavaScript SDK for NairaTag Network L2",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "nairatag",
+    "op-stack",
+    "ethereum-l2",
+    "identity",
+    "resolver"
+  ],
+  "author": "NairaTag Network",
+  "license": "MIT",
+  "dependencies": {
+    "js-sha3": "^0.13.0"
+  }
+}

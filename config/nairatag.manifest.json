@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "protocol": "NTS-100",
+  "discoveryVersion": "NTS-102",
+  "generatedAt": "2026-09-15T10:00:00Z",
+  "validUntil": "2027-09-15T10:00:00Z",
+  "namespace": {
+    "canonicalPrefix": "₦",
+    "unicode": "U+20A6",
+    "asciiAlias": "ng:",
+    "prohibitedPrefixes": ["@"]
+  },
+  "network": {
+    "name": "NairaTag Layer 2",
+    "chainId": 901,
+    "layer": 2,
+    "settlementChainId": 900,
+    "settlementNetwork": "Ethereum L1"
+  },
+  "resolution": {
+    "rpcUrls": [
+      "https://rpc.nairatag.org",
+      "https://rpc-backup.nairatag.network"
+    ],
+    "registryAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "resolverAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+    "paymentRequestAddress": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+  },
+  "capabilities": [
+    "forward-resolution",
+    "reverse-resolution",
+    "text-records",
+    "multicoin-addresses"
+  ],
+  "supportedCoins": [
+    {
+      "coinType": 60,
+      "symbol": "ETH",
+      "name": "Ethereum / Universal EVM"
+    },
+    {
+      "coinType": 8453,
+      "symbol": "BASE",
+      "name": "Base"
+    },
+    {
+      "coinType": 42161,
+      "symbol": "ARB",
+      "name": "Arbitrum One"
+    },
+    {
+      "coinType": 137,
+      "symbol": "POL",
+      "name": "Polygon"
+    }
+  ],
+  "verification": {
+    "requiredInterfaces": [
+      {
+        "contract": "registry",
+        "interfaceId": "0x01ffc9a7",
+        "name": "ERC-165"
+      },
+      {
+        "contract": "registry",
+        "interfaceId": "0x89e02318",
+        "name": "INairaTagRegistry"
+      },
+      {
+        "contract": "resolver",
+        "interfaceId": "0x3b3b57de",
+        "name": "addr(bytes32)"
+      },
+      {
+        "contract": "resolver",
+        "interfaceId": "0xf1cb7e06",
+        "name": "addr(bytes32,uint256)"
+      },
+      {
+        "contract": "resolver",
+        "interfaceId": "0x691f3431",
+        "name": "name(bytes32)"
+      },
+      {
+        "contract": "resolver",
+        "interfaceId": "0x59314e46",
+        "name": "text(bytes32,string)"
+      }
+    ]
+  }
+}

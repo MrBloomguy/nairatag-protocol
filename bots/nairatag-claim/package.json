@@ -1,0 +1,19 @@
+{
+  "name": "@nairatag/claim-bot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Telegram and WhatsApp claim assistant for NairaTag handles.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "flow:list": "node src/manage-flow.js --list",
+    "flow:deploy": "node src/manage-flow.js --deploy",
+    "flow:send": "node src/manage-flow.js --send",
+    "check": "node --check src/server.js && node --check src/tag-service.js && node --check src/providers/telegram.js && node --check src/providers/whatsapp.js && node --check src/notification-store.js && node --check src/voucher-engine-service.js && node --check src/flutterwave-va-service.js",
+    "test": "node test/voucher-va.test.js"
+  },
+  "dependencies": {
+    "viem": "^2.21.53",
+    "web-push": "^3.6.7"
+  }
+}

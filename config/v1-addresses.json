@@ -1,0 +1,57 @@
+{
+  "rpc": "http://127.0.0.1:9545",
+  "pairs": {
+    "cNGN_BISI": "0xe899C28ECC8CF02c62170DdaCA1eCf35b3894890",
+    "cNGN_ASAKE": "0xd0558A75A3b2B9Fe191a843424688BF6d82aAEfB",
+    "cNGN_KEMI": "0x4a53E07ed9B64Bc3ce96398c50b3D298EED4F7e4"
+  },
+  "hubUrl": "http://127.0.0.1:8088/hub/index.html",
+  "explorerUrl": "http://127.0.0.1:8088/scanner/index.html",
+  "chainId": 901,
+  "contracts": {
+    "MockCNGN": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+    "Router": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+    "Resolver": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+    "TokenFactory": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+    "Registry": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+    "Launchpad": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
+    "AMMFactory": "0x9A676e781A523b5d0C0e43731313A708CB607508",
+    "PaymentRequest": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+    "DopplerLaunchpad": "0x36C02dA8a0983159322a80FFE9F24b1acfF8B570",
+    "V2Migrator": "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00",
+    "ImmutableLocker": "0x9d4454B023096f34B160D6B654540c56A1F81688"
+  },
+  "tokens": {
+    "ASAKE": {
+      "name": "ASAKE Token",
+      "node": "keccak256(naira+asake)",
+      "decimals": 18,
+      "symbol": "ASAKE",
+      "address": "0x24B3c7704709ed1491473F30393FFc93cFB0FC34"
+    },
+    "BISI": {
+      "name": "BISI Token",
+      "node": "keccak256(naira+bisi)",
+      "decimals": 18,
+      "symbol": "BISI",
+      "address": "0x033488800Ae672726c34620D4Bd817E1590d4cDc"
+    },
+    "cNGN": {
+      "name": "cNGN (NairaTag Testnet)",
+      "decimals": 18,
+      "symbol": "cNGN",
+      "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82"
+    },
+    "KEMI": {
+      "name": "Kemi Energy",
+      "node": "keccak256(kemi)",
+      "decimals": 18,
+      "symbol": "KEMI",
+      "address": "0xeaF6B7a8eb2E3ff41E43a0d97cbCd749FA0cE94a",
+      "tag": "₦kemi",
+      "initializer": "0x9E02f3a8567587D27d7EB1D087408D062b4c6a1c",
+      "graduated": true
+    }
+  },
+  "deployedAt": "2026-09-15T18:48:39Z"
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@nairatag/mcp-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "NairaTag identity, Wallet MCP preparation, receipt verification, and Telegram notification tools.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js",
+    "smoke": "node smoke-test.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "viem": "^2.56.7",
+    "zod": "^3.25.0"
+  }
+}

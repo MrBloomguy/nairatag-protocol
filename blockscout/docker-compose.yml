@@ -1,0 +1,107 @@
+version: '3.8'
+
+# ==============================================================================
+# NairaTag Network — Blockscout Blockchain Explorer Stack
+# ==============================================================================
+# Services:
+#   1. db: PostgreSQL database for Blockscout indexing
+#   2. redis_db: Redis for caching
+#   3. backend: Blockscout backend & indexer connecting to NairaTag L2 RPC
+#   4. frontend: Blockscout Next.js web explorer UI
+# ==============================================================================
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: nairatag-blockscout-db
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: blockscout
+    ports:
+      - "5432:5432"
+    volumes:
+      - blockscout_data:/var/lib/postgresql/data
+    networks:
+      - nairatag-explorer-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis_db:
+    image: redis:alpine
+    container_name: nairatag-blockscout-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    networks:
+      - nairatag-explorer-net
+
+  backend:
+    image: ghcr.io/blockscout/blockscout:latest
+    container_name: nairatag-blockscout-backend
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+      redis_db:
+        condition: service_started
+    env_file:
+      - ../config/blockscout.env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/blockscout?ssl=false
+      ECTO_USE_SSL: "false"
+      ETHEREUM_JSONRPC_HTTP_URL: http://host.docker.internal:9545
+      ETHEREUM_JSONRPC_WS_URL: ws://host.docker.internal:9545
+      CHAIN_ID: "901"
+      NETWORK: "NairaTag Network"
+      SUBNETWORK: "NairaTag L2 Devnet"
+      COIN: "ETH"
+      PORT: "4000"
+      API_V2_ENABLED: "true"
+      INDEXER_DISABLE_BLOCK_REWARD_FETCHER: "true"
+      INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER: "false"
+      INDEXER_EMPTY_BLOCKS_SANITIZER_ENABLED: "true"
+      DISABLE_EXCHANGE_RATES: "true"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "4000:4000"
+    networks:
+      - nairatag-explorer-net
+
+  frontend:
+    image: ghcr.io/blockscout/frontend:latest
+    container_name: nairatag-blockscout-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_APP_PROTOCOL: http
+      NEXT_PUBLIC_APP_HOST: localhost
+      NEXT_PUBLIC_APP_PORT: "4000"
+      NEXT_PUBLIC_API_PROTOCOL: http
+      NEXT_PUBLIC_API_HOST: backend
+      NEXT_PUBLIC_API_PORT: "4000"
+      NEXT_PUBLIC_API_BASE_PATH: /
+      NEXT_PUBLIC_NETWORK_NAME: "NairaTag Network"
+      NEXT_PUBLIC_NETWORK_SHORT_NAME: "NairaTag"
+      NEXT_PUBLIC_NETWORK_ID: "901"
+      NEXT_PUBLIC_NETWORK_CURRENCY_NAME: "Ether"
+      NEXT_PUBLIC_NETWORK_CURRENCY_SYMBOL: "ETH"
+      NEXT_PUBLIC_NETWORK_CURRENCY_DECIMALS: "18"
+      NEXT_PUBLIC_IS_TESTNET: "true"
+    ports:
+      - "3000:3000"
+    networks:
+      - nairatag-explorer-net
+
+networks:
+  nairatag-explorer-net:
+    driver: bridge
+
+volumes:
+  blockscout_data:

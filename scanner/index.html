@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+    <title>TagProtocol Scan - Block Explorer Chain 901</title>
+    <meta name="description" content="Real-time block explorer for TagProtocol Network Chain 901">
+    <style>
+@font-face {
+  font-family: 'Poppins Rounded';
+  src: url('/hub/PoppinsRounded-Rounded.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+:root{--bg:#060911;--bgs:rgba(13,20,38,.85);--bgx:#0d1426;--bgh:rgba(255,255,255,.04);--bd:rgba(255,255,255,.08);--bda:rgba(0,218,148,.35);--g:#00da94;--gd:rgba(0,218,148,.18);--c:#00b8d9;--o:#f0b429;--r:#ff5f6d;--t:#f0f4ff;--m:#6b7a99;--mb:#94a3b8;--mono:'JetBrains Mono',monospace;--sans:'Poppins Rounded',sans-serif;--rr:14px;--rs:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--t);font-family:var(--sans);min-height:100vh;background-image:radial-gradient(ellipse 70% 40% at 15% 0%,rgba(0,218,148,.07) 0%,transparent 60%),radial-gradient(ellipse 50% 30% at 85% 100%,rgba(0,184,217,.07) 0%,transparent 60%)}
+#topbar{position:sticky;top:0;z-index:100;background:rgba(6,9,17,.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);padding:0 24px}
+.ti{max-width:1200px;margin:0 auto;display:flex;align-items:center;gap:20px;height:60px}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0}
+.li{width:34px;height:34px;background:linear-gradient(135deg,var(--g),var(--c));border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;color:#000}
+.lt{font-size:1.05rem;font-weight:700}
+.lt span{color:var(--g)}
+.sw{flex:1;display:flex;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:10px;overflow:hidden;transition:border-color .2s}
+.sw:focus-within{border-color:var(--bda)}
+#ts{flex:1;background:transparent;border:none;outline:none;padding:10px 16px;color:var(--t);font-family:var(--mono);font-size:.875rem}
+#ts::placeholder{color:var(--m)}
+.sw button{background:var(--g);border:none;color:#000;padding:0 18px;font-weight:700;font-size:.85rem;cursor:pointer;transition:opacity .2s}
+.sw button:hover{opacity:.85}
+.np{display:flex;align-items:center;gap:7px;background:var(--gd);border:1px solid var(--bda);border-radius:20px;padding:5px 13px;font-size:.8rem;font-weight:600;color:var(--g);flex-shrink:0}
+.pu{width:7px;height:7px;background:var(--g);border-radius:50%;position:relative}
+.pu::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:var(--g);opacity:.4;animation:pr 1.6s ease-out infinite}
+@keyframes pr{0%{transform:scale(1);opacity:.4}100%{transform:scale(2.4);opacity:0}}
+.page{max-width:1200px;margin:0 auto;padding:28px 24px 60px}
+#sb{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:28px}
+.sc{background:var(--bgs);border:1px solid var(--bd);border-radius:var(--rr);padding:16px 18px;backdrop-filter:blur(10px);transition:border-color .2s,transform .2s;cursor:default}
+.sc:hover{border-color:var(--bda);transform:translateY(-2px)}
+.sl{font-size:.72rem;text-transform:uppercase;letter-spacing:.8px;color:var(--m);margin-bottom:7px}
+.sv{font-family:var(--mono);font-size:1.3rem;font-weight:600;color:var(--g)}
+.sv.n{color:var(--t)}.sv.c{color:var(--c)}.sv.gold{color:var(--o)}
+#ids{margin-bottom:20px}
+.iw{background:var(--bgs);border:1px solid var(--bd);border-radius:var(--rr);padding:24px;backdrop-filter:blur(12px)}
+.sh{font-size:1rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.sh .tag{color:var(--g)}
+.ib{display:flex;gap:10px;margin-bottom:16px}
+#hi{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 18px;color:var(--t);font-family:var(--mono);font-size:1rem;outline:none;transition:border-color .2s}
+#hi:focus{border-color:var(--bda)}
+#hi::placeholder{color:var(--m)}
+#rb{background:linear-gradient(135deg,var(--g),var(--c));color:#000;border:none;border-radius:var(--rs);padding:0 28px;font-weight:700;font-size:.95rem;cursor:pointer;transition:opacity .2s,transform .15s;white-space:nowrap}
+#rb:hover{opacity:.88}#rb:active{transform:scale(.97)}#rb:disabled{opacity:.45;cursor:not-allowed}
+.qh{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ql{font-size:.8rem;color:var(--m)}
+.qb{background:rgba(255,255,255,.05);border:1px solid var(--bd);color:var(--g);padding:4px 12px;border-radius:6px;font-family:var(--mono);font-size:.82rem;cursor:pointer;transition:background .15s,border-color .15s}
+.qb:hover{background:var(--gd);border-color:var(--bda)}
+#ir{margin-top:16px;border:1px solid var(--bd);border-radius:var(--rr);overflow:hidden;display:none;animation:fi .35s ease}
+.irh{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--bd);background:rgba(0,0,0,.2)}
+.iht{font-size:1.6rem;font-weight:800;color:var(--g);letter-spacing:-.5px}
+.ibg{padding:5px 12px;border-radius:20px;font-size:.78rem;font-weight:700;letter-spacing:.5px}
+.ba{background:rgba(0,218,148,.15);color:var(--g);border:1px solid var(--bda)}
+.bu{background:rgba(255,95,109,.12);color:var(--r);border:1px solid rgba(255,95,109,.3)}
+.bl{background:rgba(240,180,41,.1);color:var(--o);border:1px solid rgba(240,180,41,.3)}
+.irc{padding:4px 0}
+.irow{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 20px;border-bottom:1px solid var(--bd);font-size:.88rem;gap:16px}
+.irow:last-child{border-bottom:none}
+.ik{color:var(--m);min-width:200px;flex-shrink:0}
+.iv{font-family:var(--mono);word-break:break-all;text-align:right;flex:1}
+.iv.res{color:var(--g)}
+.nav-tabs{display:flex;gap:4px;margin-bottom:24px;background:rgba(255,255,255,.03);border:1px solid var(--bd);border-radius:10px;padding:4px;width:fit-content}
+.nt{padding:8px 20px;border-radius:7px;font-size:.875rem;font-weight:600;cursor:pointer;transition:background .2s,color .2s;color:var(--m);border:none;background:transparent}
+.nt.active{background:var(--g);color:#000}
+.nt:not(.active):hover{background:rgba(255,255,255,.06);color:var(--t)}
+.tc{display:none}.tc.active{display:block}
+.panel{background:var(--bgs);border:1px solid var(--bd);border-radius:var(--rr);backdrop-filter:blur(12px);overflow:hidden}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--bd)}
+.pt{font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:8px}
+.ptx{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.ib2{background:rgba(0,218,148,.15)}.it{background:rgba(0,184,217,.15)}
+.pl{font-size:.8rem;color:var(--g);cursor:pointer}.pl:hover{text-decoration:underline}
+.bll{min-height:360px}
+@keyframes fi{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.br,.tr{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--bd);transition:background .15s;cursor:pointer;animation:fi .4s ease}
+.br:hover,.tr:hover{background:var(--bgh)}
+.br:last-child,.tr:last-child{border-bottom:none}
+.bnum{background:var(--gd);color:var(--g);font-family:var(--mono);font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:6px;min-width:70px;text-align:center;flex-shrink:0}
+.bm{flex:1;min-width:0}
+.bh{font-family:var(--mono);font-size:.78rem;color:var(--mb);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt{font-size:.75rem;color:var(--m);margin-top:2px}
+.tcb{background:rgba(0,184,217,.12);color:var(--c);border:1px solid rgba(0,184,217,.25);font-family:var(--mono);font-size:.78rem;padding:3px 9px;border-radius:6px;flex-shrink:0}
+.txi{width:32px;height:32px;border-radius:8px;background:rgba(0,184,217,.12);display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0}
+.txm{flex:1;min-width:0}
+.txh{font-family:var(--mono);font-size:.78rem;color:var(--c);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.txft{font-size:.72rem;color:var(--m);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.txv{font-family:var(--mono);font-size:.78rem;color:var(--o);flex-shrink:0}
+#ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(6,9,17,.86);backdrop-filter:blur(8px);overflow-y:auto;padding:40px 20px}
+#ov.vis{display:flex;align-items:flex-start;justify-content:center}
+.dc{background:var(--bgx);border:1px solid var(--bd);border-radius:18px;width:100%;max-width:780px;animation:su .25s ease}
+@keyframes su{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--bd)}
+.dtx{font-size:1.1rem;font-weight:700}
+.cbtn{background:rgba(255,255,255,.07);border:none;color:var(--t);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.cbtn:hover{background:rgba(255,255,255,.14)}
+.db2{padding:20px 24px}
+.dr{display:flex;gap:16px;padding:13px 0;border-bottom:1px solid var(--bd);font-size:.9rem}
+.dr:last-child{border-bottom:none}
+.dk{color:var(--m);min-width:180px;flex-shrink:0;font-size:.82rem;padding-top:2px}
+.dv{font-family:var(--mono);color:var(--t);word-break:break-all;flex:1}
+.dv.g{color:var(--g)}.dv.c2{color:var(--c)}.dv.oo{color:var(--o)}
+.cp{background:rgba(255,255,255,.06);border:1px solid var(--bd);color:var(--mb);padding:2px 8px;border-radius:5px;font-size:.72rem;cursor:pointer;margin-left:8px;transition:background .15s;vertical-align:middle}
+.cp:hover{background:rgba(255,255,255,.12)}
+.sk{height:1em;border-radius:4px;background:linear-gradient(90deg,var(--bd) 25%,rgba(255,255,255,.05) 50%,var(--bd) 75%);background-size:200% 100%;animation:sh 1.4s infinite;display:inline-block;min-width:80px}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+#toastc{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:var(--bgx);border:1px solid var(--bd);border-left:3px solid var(--g);border-radius:var(--rs);padding:12px 18px;min-width:260px;max-width:360px;font-size:.85rem;animation:tin .3s ease;pointer-events:all}
+.toast.e{border-left-color:var(--r)}.toast.i{border-left-color:var(--c)}
+@keyframes tin{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+.es{text-align:center;padding:48px 20px;color:var(--m);font-size:.9rem}
+.esi{font-size:2.5rem;margin-bottom:12px}
+.ess{font-size:.8rem;margin-top:6px}
+footer{text-align:center;padding:32px 24px;color:var(--m);font-size:.82rem;border-top:1px solid var(--bd);margin-top:20px}
+footer a{color:var(--mb);text-decoration:none;cursor:pointer}
+footer a:hover{color:var(--g)}
+@media(max-width:860px){#sb{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.np{display:none}}
+</style>
+</head>
+<body>
+<nav id="topbar">
+  <div class="ti">
+    <div class="logo" onclick="goHome()">
+      <div class="li">&#x20A6;</div>
+      <div class="lt">TagProtocol<span>Scan</span></div>
+    </div>
+    <div class="sw">
+      <input type="text" id="ts" placeholder="Block # / tx hash / 0x address / handle..." autocomplete="off" spellcheck="false">
+      <button onclick="doSearch()">Search</button>
+    </div>
+    <a href="/hub/index.html" style="background: rgba(0,218,148,0.12); color: var(--g); border: 1px solid var(--bda); padding: 5px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; text-decoration: none; display: flex; align-items: center; gap: 6px; flex-shrink: 0; transition: background .2s;">
+      <span>🔄</span> TagProtocol Hub
+    </a>
+    <button onclick="addTagProtocolToWallet()" style="background: rgba(255, 152, 0, 0.12); color: #ff9800; border: 1px solid rgba(255, 152, 0, 0.4); padding: 5px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; flex-shrink: 0; transition: all .2s;" title="Add TagProtocol Network to MetaMask">
+      <span>🦊</span> Add to MetaMask
+    </button>
+    <div class="np" onclick="addTagProtocolToWallet()" style="cursor:pointer;" title="Click to add TagProtocol to MetaMask"><div class="pu"></div> Chain 901</div>
+  </div>
+</nav>
+
+<main class="page">
+  <!-- STATS -->
+  <div id="sb">
+    <div class="sc"><div class="sl">Latest Block</div><div class="sv" id="sblk"><span class="sk" style="width:80px"></span></div></div>
+    <div class="sc"><div class="sl">Recent Txs</div><div class="sv c" id="stxc"><span class="sk" style="width:60px"></span></div></div>
+    <div class="sc"><div class="sl">Gas Price</div><div class="sv gold" id="sgas"><span class="sk" style="width:70px"></span></div></div>
+    <div class="sc"><div class="sl">Block Time</div><div class="sv n">2.0 s</div></div>
+    <div class="sc"><div class="sl">Chain ID</div><div class="sv n">901</div></div>
+  </div>
+
+  <!-- IDENTITY RESOLVER -->
+  <section id="ids">
+    <div class="iw">
+      <div class="sh">&#x20A6; <span>NairaTag Identity Resolver</span> <span class="tag">NTS-100</span></div>
+      <div class="ib">
+        <input type="text" id="hi" placeholder="Enter handle (e.g. micheal) or 0x address..." value="micheal" autocomplete="off" spellcheck="false">
+        <button id="rb" onclick="resolveId()">Resolve</button>
+      </div>
+      <div class="qh">
+        <span class="ql">Try:</span>
+        <span class="qb" onclick="qr('micheal')">micheal</span>
+        <span class="qb" onclick="qr('nairatag')">nairatag</span>
+        <span class="qb" onclick="qr('dev')">dev</span>
+        <span class="qb" onclick="qr('test')">test</span>
+        <span class="qb" onclick="qr('jane')">jane</span>
+      </div>
+      <div id="ir">
+        <div class="irh">
+          <div class="iht" id="ititle">&#x20A6;micheal</div>
+          <div class="ibg bl" id="ibadge">LOADING...</div>
+        </div>
+        <div class="irc">
+          <div class="irow"><span class="ik">Resolved EVM Address</span><span class="iv res" id="iaddr">-</span></div>
+          <div class="irow"><span class="ik">Registry Owner</span><span class="iv" id="iown">-</span></div>
+          <div class="irow"><span class="ik">Node Hash</span><span class="iv" id="inode" style="font-size:.78rem;color:var(--mb)">-</span></div>
+          <div class="irow"><span class="ik">Registry</span><span class="iv" style="font-size:.78rem;color:var(--mb)">0x5FbDB2315678afecb367f032d93F642f64180aa3</span></div>
+          <div class="irow"><span class="ik">Resolver</span><span class="iv" style="font-size:.78rem;color:var(--mb)">0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <div class="nav-tabs">
+    <button class="nt active" id="tab-b" onclick="setTab('b')">&#x25FC; Blocks</button>
+    <button class="nt" id="tab-t" onclick="setTab('t')">&#x26A1; Transactions</button>
+    <button class="nt" id="tab-l" onclick="setTab('l')">&#x1F680; Doppler Launches</button>
+  </div>
+
+  <div class="tc active" id="tc-b">
+    <div class="panel">
+      <div class="ph">
+        <div class="pt"><div class="ptx ib2">&#x25FC;</div> Latest Blocks &#x2014; Chain 901</div>
+        <span class="pl" id="pbtn" onclick="togglePause()">&#x23F8; Pause</span>
+      </div>
+      <div class="bll" id="blockList">
+        <div class="es"><div class="esi">&#x25FC;</div><div>Connecting to TagProtocol...</div><div class="ess">127.0.0.1:9545</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tc" id="tc-t">
+    <div class="panel">
+      <div class="ph">
+        <div class="pt"><div class="ptx it">&#x26A1;</div> Recent Transactions</div>
+        <span style="font-size:.78rem;color:var(--m)">from recent blocks</span>
+      </div>
+      <div id="txList"><div class="es"><div class="esi">&#x26A1;</div><div>Loading...</div></div></div>
+    </div>
+  </div>
+
+  <div class="tc" id="tc-l">
+    <div class="panel">
+      <div class="ph">
+        <div class="pt"><div class="ptx ib2">&#x1F680;</div> Doppler Token Launches & Liquidity Migrations</div>
+        <span class="pl" onclick="loadDopplerScannerLaunches()">&#x21BB; Refresh</span>
+      </div>
+      <div id="launchList" style="padding:16px 20px;">
+        <div class="es"><div class="esi">&#x1F680;</div><div>Loading Doppler Launches...</div></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- DETAIL OVERLAY -->
+<div id="ov">
+  <div class="dc">
+    <div class="dh">
+      <div class="dtx" id="ovtitle">Details</div>
+      <button class="cbtn" onclick="closeOv()">&#x2715;</button>
+    </div>
+    <div class="db2" id="ovbody"></div>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div id="toastc"></div>
+
+<footer>
+  <div>TagProtocol Scan &nbsp;&middot;&nbsp; Chain 901 (OP Stack L2) &nbsp;&middot;&nbsp; Settled on Chain 900</div>
+  <div style="margin-top:6px">
+    Contracts:
+    <a onclick="showAddr('0x5FbDB2315678afecb367f032d93F642f64180aa3')">Registry</a> &middot;
+    <a onclick="showAddr('0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512')">Resolver</a> &middot;
+    <a onclick="showAddr('0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0')">PaymentRequest</a>
+  </div>
+</footer>
+
+<script>
+// === CONFIG ===
+const RPC = 'http://127.0.0.1:9545';
+const REGISTRY = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+const RESOLVER = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512';
+const PAYMENT  = '0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0';
+const NAIRA    = '\u20A6';
+const MAX = 15, POLL = 2000;
+
+// === STATE ===
+let known = 0, blocks = [], txs = [], paused = false, timer = null, rid = 1;
+
+// === RPC ===
+async function rpc(m, p=[]) {
+  const r = await fetch(RPC, {method:'POST',headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({jsonrpc:'2.0',method:m,params:p,id:rid++})});
+  const j = await r.json();
+  if (j.error) throw new Error(j.error.message);
+  return j.result;
+}
+
+async function batch(calls) {
+  const body = calls.map((c,i)=>({jsonrpc:'2.0',method:c[0],params:c[1]||[],id:rid+i}));
+  rid += calls.length;
+  const r = await fetch(RPC,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data = await r.json();
+  return Array.isArray(data) ? data.map(d=>d.result) : [data.result];
+}
+
+// === UTILS ===
+const h2d = h => h ? parseInt(h,16) : 0;
+const short = (s,a=8,b=6) => s && s.length>a+b+2 ? s.slice(0,a)+'...'+s.slice(-b) : (s||'-');
+const w2e = w => { if (!w||w==='0x0') return '0 ETH'; const e=Number(BigInt(w))/1e18; return e.toFixed(e<0.001?6:4)+' ETH'; };
+const ago = ts => { const d=Math.floor(Date.now()/1000)-ts; return d<5?'just now':d<60?d+'s ago':d<3600?Math.floor(d/60)+'m ago':Math.floor(d/3600)+'h ago'; };
+const gwei = h => { if(!h) return '-'; const g=parseInt(h,16)/1e9; return g<1?'<1 Gwei':g.toFixed(2)+' Gwei'; };
+
+// === TOAST ===
+function toast(msg, type='') {
+  const el = document.createElement('div');
+  el.className = 'toast'+(type?' '+type:'');
+  el.textContent = msg;
+  document.getElementById('toastc').appendChild(el);
+  setTimeout(()=>el.remove(), 3500);
+}
+
+function cp(t) { navigator.clipboard.writeText(t).then(()=>toast('Copied','i')); }
+
+// === TABS ===
+function setTab(k) {
+  ['b','t','l'].forEach(n=>{
+    const btn = document.getElementById('tab-'+n);
+    const pane = document.getElementById('tc-'+n);
+    if (btn) btn.classList.toggle('active', n===k);
+    if (pane) pane.classList.toggle('active', n===k);
+  });
+  if (k === 'l') loadDopplerScannerLaunches();
+}
+
+async function loadDopplerScannerLaunches() {
+  const container = document.getElementById('launchList');
+  if (!container) return;
+  container.innerHTML = '<div class="es"><span class="sk" style="width:200px"></span></div>';
+
+  try {
+    const res = await fetch('/config/v1-addresses.json');
+    const config = await res.json();
+    
+    // Deployed Doppler Launchpad & KEMI info
+    const dopplerAddr = (config.contracts && config.contracts.DopplerLaunchpad) || '0x36C02dA8a0983159322a80FFE9F24b1acfF8B570';
+    const lockerAddr  = (config.contracts && config.contracts.ImmutableLocker) || '0x9d4454B023096f34B160D6B654540c56A1F81688';
+    const migratorAddr= (config.contracts && config.contracts.V2Migrator) || '0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00';
+    
+    const kemi = config.tokens && config.tokens.KEMI ? config.tokens.KEMI : {
+      name: "Kemi Energy",
+      symbol: "KEMI",
+      tag: "₦kemi",
+      address: "0xeaF6B7a8eb2E3ff41E43a0d97cbCd749FA0cE94a",
+      initializer: "0x9E02f3a8567587D27d7EB1D087408D062b4c6a1c",
+      graduated: true
+    };
+    const pairAddr = (config.pairs && config.pairs.cNGN_KEMI) || '0x4a53E07ed9B64Bc3ce96398c50b3D298EED4F7e4';
+
+    container.innerHTML = `
+      <div style="background:rgba(255,255,255,0.02); border:1px solid var(--bd); border-radius:var(--rr); padding:20px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <div style="font-size:1.25rem; font-weight:800; color:var(--g); display:flex; align-items:center; gap:8px;">
+              <span>⚡</span> ${kemi.tag} &mdash; ${kemi.name} (${kemi.symbol})
+            </div>
+            <div style="font-size:0.8rem; color:var(--m); margin-top:4px;">
+              Doppler Fair-Launch &middot; Chain 901 Live &middot; Model B Registry Node
+            </div>
+          </div>
+          <span style="background:rgba(0,218,148,0.18); color:var(--g); border:1px solid var(--bda); font-size:0.75rem; font-weight:700; padding:4px 10px; border-radius:20px;">
+            &#x2705; MIGRATED & 100% LP LOCKED
+          </span>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px; font-size:0.85rem; margin-bottom:16px;">
+          <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
+            <div style="color:var(--m); font-size:0.72rem;">TOKEN CONTRACT</div>
+            <div style="font-family:var(--mono); color:var(--t); cursor:pointer;" onclick="showAddr('${kemi.address}')">${short(kemi.address, 10, 6)}</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
+            <div style="color:var(--m); font-size:0.72rem;">IMMUTABLE LOCKER</div>
+            <div style="font-family:var(--mono); color:var(--o); cursor:pointer;" onclick="showAddr('${lockerAddr}')">${short(lockerAddr, 10, 6)}</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
+            <div style="color:var(--m); font-size:0.72rem;">AMM PAIR (cNGN/KEMI)</div>
+            <div style="font-family:var(--mono); color:var(--c); cursor:pointer;" onclick="showAddr('${pairAddr}')">${short(pairAddr, 10, 6)}</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:8px;">
+            <div style="color:var(--m); font-size:0.72rem;">PERMANENT LP LOCKED</div>
+            <div style="font-family:var(--mono); color:var(--g); font-weight:700;">63,245.55 LP (100%)</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="qb" onclick="document.getElementById('hi').value='kemi'; resolveId(); goHome();">
+            &#x1F50D; Resolve ₦kemi in Identity Engine
+          </button>
+          <button class="qb" onclick="showAddr('${kemi.address}')">
+            &#x1F4C4; View Token Bytecode & State
+          </button>
+          <button class="qb" onclick="showAddr('${pairAddr}')">
+            &#x1F4CA; View AMM Pair Liquidity
+          </button>
+          <a href="/hub/index.html#swap" target="_blank" class="qb" style="text-decoration:none; display:inline-flex; align-items:center;">
+            &#x1F504; Swap ₦kemi on Hub
+          </a>
+        </div>
+      </div>
+
+      <div style="background:rgba(0,218,148,0.05); border:1px solid rgba(0,218,148,0.2); border-radius:var(--rr); padding:14px 18px; font-size:0.8rem; color:var(--mb); line-height:1.5;">
+        <strong style="color:var(--g);">&#x1F6E1; Doppler Security Invariant Verification</strong>:
+        In this deployment, 100% of Uniswap-v2 style LP tokens minted at graduation are permanently transferred to <code>NairaTagImmutableLocker</code> with <code>unlockTimestamp = type(uint256).max</code>. The tag <code>₦kemi</code> is owned by the token contract itself (Model B).
+      </div>
+    `;
+  } catch(e) {
+    container.innerHTML = '<div class="es">Error loading Doppler launches: ' + e.message + '</div>';
+  }
+}
+
+// === PAUSE ===
+function togglePause() {
+  paused = !paused;
+  document.getElementById('pbtn').textContent = paused ? '\u25B6 Resume' : '\u23F8 Pause';
+  if (!paused) poll();
+  toast(paused?'Feed paused':'Feed resumed','i');
+}
+
+// === OVERLAY ===
+function openOv(title, body) {
+  document.getElementById('ovtitle').innerHTML = title;
+  document.getElementById('ovbody').innerHTML = body;
+  document.getElementById('ov').classList.add('vis');
+}
+function closeOv() { document.getElementById('ov').classList.remove('vis'); }
+document.getElementById('ov').addEventListener('click', e=>{ if(e.target.id==='ov') closeOv(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeOv(); });
+
+function drow(k, v, cls='', copy=false) {
+  const cp2 = copy ? `<button class="cp" onclick="cp('${v.replace(/'/g,"\\'").replace(/</g,'&lt;')}')">copy</button>` : '';
+  return `<div class="dr"><div class="dk">${k}</div><div class="dv ${cls}">${v}${cp2}</div></div>`;
+}
+
+// === BLOCK DETAIL ===
+async function showBlock(num) {
+  openOv('Block #'+num, '<div class="es"><span class="sk" style="width:160px"></span></div>');
+  try {
+    const b = await rpc('eth_getBlockByNumber', ['0x'+num.toString(16), true]);
+    if (!b) { document.getElementById('ovbody').innerHTML='<div class="es">Not found</div>'; return; }
+    const txRows = b.transactions.slice(0,20).map(tx=>`
+      <div class="tr" onclick="closeOv();setTimeout(()=>showTx('${tx.hash}'),150)">
+        <div class="txi">&#x26A1;</div>
+        <div class="txm"><div class="txh">${short(tx.hash,12,8)}</div><div class="txft">${short(tx.from)} &#x2192; ${tx.to||'(deploy)'}</div></div>
+        <div class="txv">${w2e(tx.value)}</div>
+      </div>`).join('')||'<div class="es" style="padding:20px">No transactions</div>';
+    document.getElementById('ovbody').innerHTML =
+      drow('Block Number',num,'')+
+      drow('Block Hash',b.hash,'',true)+
+      drow('Parent Hash',b.parentHash,'',true)+
+      drow('Timestamp',new Date(h2d(b.timestamp)*1000).toLocaleString())+
+      drow('Transactions',b.transactions.length+' tx'+(b.transactions.length!==1?'s':''))+
+      drow('Gas Used',h2d(b.gasUsed).toLocaleString())+
+      drow('Gas Limit',h2d(b.gasLimit).toLocaleString())+
+      drow('Sequencer',b.miner,'',true)+
+      `<div class="dr" style="flex-direction:column;gap:12px">
+        <div class="dk" style="font-size:.9rem;font-weight:600;color:var(--mb)">Transactions</div>
+        <div style="margin:0 -24px">${txRows}</div>
+      </div>`;
+    document.getElementById('ovtitle').innerHTML = 'Block #'+num+' <span style="font-size:.8rem;color:var(--m)">'+b.transactions.length+' txs</span>';
+  } catch(e) { document.getElementById('ovbody').innerHTML='<div class="es">'+e.message+'</div>'; }
+}
+
+// === TX DETAIL ===
+async function showTx(hash) {
+  openOv('Transaction', '<div class="es"><span class="sk" style="width:200px"></span></div>');
+  try {
+    const [tx, rc] = await Promise.all([
+      rpc('eth_getTransactionByHash', [hash]),
+      rpc('eth_getTransactionReceipt', [hash]).catch(()=>null)
+    ]);
+    if (!tx) { document.getElementById('ovbody').innerHTML='<div class="es">Not found</div>'; return; }
+    const ok = rc ? h2d(rc.status)===1 : null;
+    const stxt = ok===null?'Pending':(ok?'&#x2705; Success':'&#x274C; Failed');
+    const scls = ok===null?'oo':(ok?'g':'');
+    document.getElementById('ovbody').innerHTML =
+      drow('Tx Hash',tx.hash,'',true)+
+      drow('Status',stxt,scls)+
+      `<div class="dr"><div class="dk">Block</div><div class="dv"><span onclick="closeOv();setTimeout(()=>showBlock(${h2d(tx.blockNumber)}),150)" style="cursor:pointer;color:var(--c)">#${h2d(tx.blockNumber)}</span></div></div>`+
+      drow('From',tx.from,'',true)+
+      drow('To',tx.to||'(contract creation)','',!!tx.to)+
+      drow('Value',w2e(tx.value),'oo')+
+      drow('Gas Limit',h2d(tx.gas).toLocaleString())+
+      (rc?drow('Gas Used',h2d(rc.gasUsed).toLocaleString()+' ('+Math.round(h2d(rc.gasUsed)/h2d(tx.gas)*100)+'%)'):'') +
+      drow('Nonce',h2d(tx.nonce))+
+      (tx.input&&tx.input!=='0x'?drow('Input Data',tx.input.slice(0,66)+(tx.input.length>66?'...':'')):'') +
+      (rc&&rc.contractAddress?drow('Contract Address',rc.contractAddress,'g',true):'') +
+      (rc&&rc.logs&&rc.logs.length?drow('Event Logs',rc.logs.length+' log(s)'):'');
+    document.getElementById('ovtitle').innerHTML = '&#x26A1; '+short(hash,12,8);
+  } catch(e) { document.getElementById('ovbody').innerHTML='<div class="es">'+e.message+'</div>'; }
+}
+
+// === ADDRESS DETAIL ===
+async function showAddr(addr) {
+  openOv('Address', '<div class="es"><span class="sk" style="width:160px"></span></div>');
+  try {
+    const [code, bal, nonce] = await batch([
+      ['eth_getCode',[addr,'latest']],
+      ['eth_getBalance',[addr,'latest']],
+      ['eth_getTransactionCount',[addr,'latest']]
+    ]);
+    const isC = code && code!=='0x' && code.length>4;
+    const name = addr===REGISTRY?'NairaTagRegistry':addr===RESOLVER?'NairaTagResolver':addr===PAYMENT?'NairaTagPaymentRequest':null;
+    document.getElementById('ovbody').innerHTML =
+      drow('Address',addr,'',true)+
+      drow('Type',isC?'&#x1F4C4; Smart Contract'+(name?' ('+name+')':''):'&#x1F464; EOA')+
+      drow('Balance',w2e(bal),'oo')+
+      drow('Nonce / Tx Count',h2d(nonce))+
+      (isC?drow('Bytecode Size',(code.length-2)/2+' bytes'):'');
+    document.getElementById('ovtitle').innerHTML = (isC?'&#x1F4C4;':'&#x1F464;')+' '+short(addr);
+  } catch(e) { document.getElementById('ovbody').innerHTML='<div class="es">'+e.message+'</div>'; }
+}
+
+// === IDENTITY RESOLVE ===
+function encodeResolveCall(display) {
+  const b = new TextEncoder().encode(display);
+  const lenHex = b.length.toString(16).padStart(64,'0');
+  const dataHex = Array.from(b).map(x=>x.toString(16).padStart(2,'0')).join('');
+  const padded = dataHex.padEnd(Math.ceil(dataHex.length/64)*64,'0');
+  return '0x461a4478'+'0000000000000000000000000000000000000000000000000000000000000020'+lenHex+padded;
+}
+
+async function resolveId() {
+  let raw = document.getElementById('hi').value.trim();
+  if (!raw) return;
+  const btn = document.getElementById('rb');
+  btn.disabled = true; btn.textContent = 'Resolving...';
+  const res = document.getElementById('ir');
+  res.style.display = 'block';
+  const setBadge = (t,cls) => { const el=document.getElementById('ibadge'); el.textContent=t; el.className='ibg '+cls; };
+  setBadge('LOADING...','bl');
+
+  const canonical = raw.replace(new RegExp('^'+NAIRA),'').toLowerCase();
+  const display = NAIRA+canonical;
+
+  try {
+    if (raw.startsWith('0x') && raw.length===42) {
+      document.getElementById('ititle').textContent = short(raw);
+      document.getElementById('iaddr').textContent = raw;
+      document.getElementById('iown').textContent = raw;
+      document.getElementById('inode').textContent = '(address lookup)';
+      setBadge('ADDRESS','ba');
+      await showAddr(raw);
+      btn.disabled=false; btn.textContent='Resolve'; return;
+    }
+
+    document.getElementById('ititle').textContent = display;
+    document.getElementById('inode').textContent = 'keccak256("'+canonical+'")';
+
+    const hexR = await rpc('eth_call',[{to:REGISTRY,data:encodeResolveCall(display)},'latest']);
+    const resolved = '0x'+hexR.slice(-40);
+    const zero = '0x'+'0'.repeat(40);
+
+    if (resolved===zero) {
+      document.getElementById('iaddr').textContent = 'Unregistered';
+      document.getElementById('iown').textContent = '-';
+      setBadge('UNREGISTERED','bu');
+    } else {
+      document.getElementById('iaddr').textContent = resolved;
+      document.getElementById('iown').textContent = resolved;
+      setBadge('\u2713 ACTIVE  NTS-100','ba');
+      toast(display+' resolved successfully','i');
+    }
+  } catch(e) {
+    document.getElementById('iaddr').textContent = 'Error: '+e.message;
+    setBadge('ERROR','bu');
+    toast('Error: '+e.message,'e');
+  }
+  btn.disabled=false; btn.textContent='Resolve';
+}
+
+function qr(h) { document.getElementById('hi').value=h; resolveId(); }
+
+// === TOP SEARCH ===
+async function doSearch() {
+  const q = document.getElementById('ts').value.trim();
+  if (!q) return;
+  if (q.startsWith('0x') && q.length===66) {
+    try { const tx=await rpc('eth_getTransactionByHash',[q]); if(tx){showTx(q);return;} } catch(_) {}
+    try { const b=await rpc('eth_getBlockByHash',[q,false]); if(b){showBlock(h2d(b.number));return;} } catch(_) {}
+    toast('Hash not found','e');
+  } else if (q.startsWith('0x') && q.length===42) {
+    showAddr(q);
+  } else if (/^\d+$/.test(q)) {
+    showBlock(parseInt(q,10));
+  } else {
+    const h = q.startsWith(NAIRA) ? q.slice(NAIRA.length) : q;
+    document.getElementById('hi').value = h;
+    document.getElementById('ids').scrollIntoView({behavior:'smooth'});
+    resolveId();
+  }
+}
+
+function goHome() { window.scrollTo({top:0,behavior:'smooth'}); }
+
+// === BLOCK FEED POLL ===
+async function poll() {
+  if (paused) return;
+  try {
+    const hexBlk = await rpc('eth_blockNumber');
+    const num = h2d(hexBlk);
+    document.getElementById('sblk').textContent = '#'+num.toLocaleString();
+    if (num===known) return;
+
+    const from = known===0 ? Math.max(0,num-MAX+1) : known+1;
+    const nums = [];
+    for (let n=num; n>=from && nums.length<8; n--) nums.push(n);
+    const calls = nums.map(n=>['eth_getBlockByNumber',['0x'+n.toString(16),true]]);
+    const res = await batch(calls);
+
+    for (const b of res) {
+      if (!b) continue;
+      const bnum = h2d(b.number);
+      if (blocks.find(s=>s.n===bnum)) continue;
+      blocks.unshift({n:bnum,h:b.hash,ts:h2d(b.timestamp),tc:b.transactions.length});
+      for (const tx of b.transactions.slice(0,5)) {
+        if (!txs.find(t=>t.h===tx.hash)) {
+          txs.unshift({h:tx.hash,fr:tx.from,to:tx.to,v:tx.value,bn:bnum});
+        }
+      }
+    }
+    blocks = blocks.slice(0,MAX*2);
+    txs = txs.slice(0,80);
+    known = num;
+    document.getElementById('stxc').textContent = txs.length.toLocaleString();
+    renderBlocks(); renderTxs();
+  } catch(e) {
+    document.getElementById('sblk').textContent = 'Offline';
+    document.getElementById('blockList').innerHTML =
+      '<div class="es"><div class="esi">&#x26A0;</div><div>Cannot reach TagProtocol</div><div class="ess">'+e.message+'</div></div>';
+  }
+}
+
+function renderBlocks() {
+  const sorted = [...blocks].sort((a,b)=>b.n-a.n).slice(0,MAX);
+  document.getElementById('blockList').innerHTML = sorted.length===0
+    ? '<div class="es">No blocks yet</div>'
+    : sorted.map(b=>`
+        <div class="br" onclick="showBlock(${b.n})">
+          <div class="bnum">#${b.n.toLocaleString()}</div>
+          <div class="bm"><div class="bh">${short(b.h,14,8)}</div><div class="bt">${ago(b.ts)}</div></div>
+          <div class="tcb">${b.tc} tx${b.tc!==1?'s':''}</div>
+        </div>`).join('');
+}
+
+function renderTxs() {
+  document.getElementById('txList').innerHTML = txs.length===0
+    ? '<div class="es"><div class="esi">&#x1F4A4;</div><div>No transactions yet in recent blocks</div></div>'
+    : txs.slice(0,30).map(tx=>`
+        <div class="tr" onclick="showTx('${tx.h}')">
+          <div class="txi">&#x26A1;</div>
+          <div class="txm"><div class="txh">${short(tx.h,12,8)}</div><div class="txft">From ${short(tx.fr)} &#x2192; ${tx.to?short(tx.to):'(deploy)'}</div></div>
+          <div class="txv">${w2e(tx.v)}</div>
+        </div>`).join('');
+}
+
+// === KEYBOARD ===
+document.getElementById('ts').addEventListener('keydown', e=>{ if(e.key==='Enter') doSearch(); });
+document.getElementById('hi').addEventListener('keydown', e=>{ if(e.key==='Enter') resolveId(); });
+
+async function addTagProtocolToWallet() {
+  if (typeof window.ethereum === 'undefined') {
+    toast('MetaMask or Web3 wallet extension not found.', 'e');
+    return;
+  }
+  try {
+    await window.ethereum.request({
+      method: 'wallet_addEthereumChain',
+      params: [{
+        chainId: '0x385', // 901
+        chainName: 'TagProtocol',
+        nativeCurrency: {
+          name: 'Ether',
+          symbol: 'ETH',
+          decimals: 18
+        },
+        rpcUrls: ['https://plethora-manliness-uniformed.ngrok-free.dev', 'http://127.0.0.1:8545', 'http://127.0.0.1:9545'],
+        blockExplorerUrls: [window.location.origin + '/scanner/index.html']
+      }]
+    });
+    toast('✓ TagProtocol added to wallet!', 'i');
+  } catch(err) {
+    console.error(err);
+    toast(err.message || 'Failed to add network', 'e');
+  }
+}
+
+// === INIT ===
+rpc('eth_gasPrice').then(h=>{ document.getElementById('sgas').textContent=gwei(h); }).catch(()=>{});
+poll();
+timer = setInterval(poll, POLL);
+setTimeout(resolveId, 700);
+</script>
+
+</body>
+</html>

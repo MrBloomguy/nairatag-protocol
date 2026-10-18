@@ -1,0 +1,39 @@
+# Node & dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Foundry & Solidity build artifacts
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# Devnet state & ephemeral volumes
+op-stack/configuration/data/
+*.jwt
+*.hex
+!jwt.hex.example
+
+# Environment files with sensitive credentials
+*.env
+!*.env.example
+!config/development.env
+*.pem
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Deployer artifacts server & local state
+op-stack/deployer/artifacts-server/
+op-stack/deployer/anvil-l1-state.json
+op-stack/deployer/.deployer.bak/
+op-stack/deployer/.deployer/state.json
+op-stack/logs/
+*.log
+*.pid
+*.tgz
+*.tzst
+
+.vercel
+scratch/

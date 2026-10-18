@@ -1,0 +1,18 @@
+{
+  "network": "Base Sepolia",
+  "chainId": 84532,
+  "rpcUrl": "https://sepolia.base.org",
+  "deployBlock": 46907902,
+  "contracts": {
+    "registry": "0xD43fDA69A1b43bFEEfB4a7E9113B434A2866319e",
+    "resolver": "0x1d96e2a476323Dc87a5fe6732DfEB71a05354a79",
+    "paymentRequest": "0xC641F7D1bf86BBb47CFF7A60773b0322Ae87d283"
+  },
+  "deploymentTransactions": {
+    "registry": "0x126057ef008b43f57f028cd405807e6924156b85bb504f7676e687139870f1bb",
+    "resolver": "0xb95b9133600019a0255222ad70a374a7c836983fb0f4760b162df7a898528474",
+    "paymentRequest": "0xa80056f171c3d168ad9fd5d2aedecf4a577e5d7b951315db09a52810d2876d38"
+  },
+  "status": "verified-deployment",
+  "agentWritesEnabled": true
+}

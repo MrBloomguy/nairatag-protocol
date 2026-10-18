@@ -1,0 +1,17 @@
+{
+  "name": "@nairatag/x-bot",
+  "version": "1.0.0",
+  "description": "NairaTag X Mobile Bot (@NairaTagBot) Action Bridge",
+  "main": "src/x-bot-service.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/x-bot.test.js"
+  },
+  "dependencies": {
+    "@nairatag/parser": "file:../../packages/nairatag-parser",
+    "@nairatag/resolver": "file:../../packages/nairatag-resolver",
+    "@nairatag/actions": "file:../../packages/nairatag-actions"
+  },
+  "author": "NairaTag Network",
+  "license": "MIT"
+}

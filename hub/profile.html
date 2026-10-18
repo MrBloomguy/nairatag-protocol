@@ -1,0 +1,2531 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Favicon & Site Icons -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
+  <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
+  <title>Agent Profile &amp; Daily Streak · NairaTag Network</title>
+  <meta name="description" content="View and manage your sovereign NairaTag agent profile, onchain reputation, daily streak rewards, and autonomous bot operations on Celo.">
+  
+  <link rel="stylesheet" href="/hub/theme.css">
+  <link rel="stylesheet" href="/hub/notifications.css">
+  <script src="/hub/theme.js"></script>
+  <script src="/hub/notifications.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/hub/supabase.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Canvas Confetti for Celebrations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --font-sans: 'Poppins Rounded', 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+      --bg-page: #09090d;
+      --bg-card: #0f0e15;
+      --bg-surface: #15141e;
+      --bg-subtle: #1a1926;
+      --line: #222030;
+      --line-subtle: #191824;
+      --ink: #f8fafc;
+      --ink-muted: #94a3b8;
+      --ink-light: #64748b;
+
+      /* NairaTag Brand Royal Violet & Luxury Accents */
+      --primary: #7a45e5;
+      --primary-hover: #6a34d4;
+      --primary-soft: rgba(122, 69, 229, 0.16);
+      --primary-border: rgba(122, 69, 229, 0.35);
+
+      --accent-purple: #c084fc;
+      --accent-purple-soft: rgba(192, 132, 252, 0.16);
+
+      --gold: #ffd700;
+      --gold-soft: rgba(255, 215, 0, 0.14);
+      --gold-border: rgba(255, 215, 0, 0.35);
+
+      --success: #10b981;
+      --success-soft: rgba(16, 185, 129, 0.16);
+      --success-text: #34d399;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 26px;
+      --radius-pill: 9999px;
+      --no-shadow: none !important;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; box-shadow: var(--no-shadow); }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-page);
+      color: var(--ink);
+      height: 100vh;
+      overflow: hidden;
+      font-size: 13.5px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── Universal App Layout ─── */
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      padding: 6px;
+      gap: 6px;
+      background: var(--bg-page);
+    }
+
+    /* ─── Official NairaTag Sidebar ─── */
+    .app-sidebar {
+      width: 220px; min-width: 220px;
+      height: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 9px; flex-shrink: 0;
+      transition: width 0.2s cubic-bezier(0.16,1,0.3,1), min-width 0.2s cubic-bezier(0.16,1,0.3,1), padding 0.2s ease;
+      overflow: hidden; z-index: 100;
+    }
+    .app-sidebar.collapsed { width: 48px; min-width: 48px; padding: 8px 5px; }
+    .sidebar-header { display:flex; align-items:center; justify-content:space-between; gap:6px; padding-bottom:7px; border-bottom:1px solid var(--line); flex-shrink:0; }
+    .brand-logo { display:flex; align-items:center; gap:7px; text-decoration:none; color:var(--ink); }
+    .brand-mark { width:26px; height:26px; border-radius:6px; background:#7a45e5; color:#fff; display:grid; place-items:center; font-weight:800; font-size:13px; flex-shrink:0; }
+    .brand-mark-img { width: 16px; height: 16px; object-fit: contain; }
+    .brand-text { font-weight:800; font-size:13.5px; letter-spacing:-0.01em; white-space:nowrap; transition:opacity 0.15s ease; color: #ffffff; }
+    .app-sidebar.collapsed .brand-text { display:none; }
+    .sidebar-toggle-btn { width:26px; height:26px; border-radius:6px; background:transparent; border:1px solid var(--line); display:grid; place-items:center; cursor:pointer; color:var(--ink-muted); flex-shrink:0; }
+    .sidebar-toggle-btn:hover { background:var(--bg-surface); color:var(--ink); }
+    .sidebar-scroll { flex:1; overflow-y:auto; overflow-x:hidden; margin:9px -4px; padding:0 4px; display:flex; flex-direction:column; gap:12px; scrollbar-width:none; }
+    .sidebar-scroll::-webkit-scrollbar { display:none; }
+    .sidebar-nav-group { display:flex; flex-direction:column; gap:3px; }
+    .sidebar-nav-title { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-light); padding:3px 7px; }
+    .app-sidebar.collapsed .sidebar-nav-title { display:none; }
+    .sidebar-menu { display:flex; flex-direction:column; gap:2px; }
+    .sidebar-menu-item { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:var(--radius-sm); font-size:12px; font-weight:600; color:var(--ink-muted); text-decoration:none; border:1px solid transparent; background:transparent; cursor:pointer; width:100%; text-align:left; transition:background 0.12s ease, color 0.12s ease, border-color 0.12s ease; white-space:nowrap; }
+    .sidebar-menu-item:hover { background:var(--bg-surface); color:var(--ink); border-color:var(--line); }
+    .sidebar-menu-item.active { background:var(--primary-soft); color:#c084fc; border-color:var(--primary-border); }
+    .menu-icon { font-size:13.5px; width:17px; text-align:center; flex-shrink:0; }
+    .menu-label { flex:1; overflow:hidden; text-overflow:ellipsis; }
+    .menu-badge { font-size:10.5px; font-weight:800; min-width:18px; height:18px; padding:0 5.5px; border-radius:9999px; display:inline-flex; align-items:center; justify-content:center; background:#f05252 !important; color:#ffffff !important; border:none !important; line-height:1; margin-left:auto; flex-shrink:0; box-shadow:0 1px 3px rgba(240,82,82,0.4); font-family:var(--font-sans, system-ui, -apple-system, sans-serif); letter-spacing:-0.01em; transition:transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .sidebar-menu-item:hover .menu-badge { transform:scale(1.08); }
+    .menu-badge.badge-count-claim, .menu-badge.badge-count-chat, .menu-badge.badge-count-tasks { background:#f05252 !important; color:#ffffff !important; border:none !important; }
+
+    /* ─── Main Viewport ─── */
+    .main-viewport {
+      flex: 1; height: 100%;
+      display: flex; flex-direction: column;
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      overflow: hidden; min-width: 0;
+    }
+
+    /* ─── App Header ─── */
+    .app-header {
+      height: 46px; min-height: 46px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg-card); flex-shrink: 0;
+    }
+    .header-left { display: flex; align-items: center; gap: 8px; }
+    .header-sidebar-btn {
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--line);
+      background: var(--bg-surface); color: var(--ink); display: none; place-items: center; cursor: pointer;
+    }
+    .header-breadcrumb {
+      display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-muted);
+    }
+    .header-breadcrumb a { color: var(--ink-muted); text-decoration: none; }
+    .header-breadcrumb a:hover { color: #c084fc; }
+    .header-breadcrumb strong { color: var(--ink); font-weight: 700; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    .header-tag-pill {
+      display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-pill);
+      background: rgba(122, 69, 229, 0.12); border: 1px solid var(--primary-border);
+      color: #c084fc; font-size: 11.5px; font-weight: 700; font-family: var(--font-mono);
+    }
+    .header-tag-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); }
+    .theme-toggle-btn {
+      width: 30px; height: 30px; border-radius: var(--radius-sm); border: 1px solid var(--line);
+      background: var(--bg-surface); cursor: pointer; font-size: 13.5px; display: grid; place-items: center; color: var(--ink);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* DESKTOP & RESPONSIVE PROFILE PAGE BODY                              */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .profile-page-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 20px 24px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--bg-page);
+      scrollbar-width: thin;
+      scrollbar-color: var(--line) transparent;
+    }
+
+    /* 2-Column Desktop Grid Layout */
+    .profile-desktop-grid {
+      width: 100%;
+      max-width: 1140px;
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .profile-main-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .profile-side-col {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* 1. PROFILE IDENTITY SHOWCASE CARD (REF 3 & 4)                       */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .profile-showcase-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 22px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-showcase-card::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 220px; height: 180px;
+      background: radial-gradient(circle, rgba(122, 69, 229, 0.16) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .profile-id-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    /* Cosmic Avatar Ring */
+    .avatar-halo-wrap {
+      position: relative;
+      width: 82px; height: 82px;
+      flex-shrink: 0;
+    }
+    .avatar-halo-ring {
+      position: absolute;
+      inset: -3px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffd700, #c084fc, #7a45e5, #ffd700);
+      background-size: 300% 300%;
+      animation: rotateHalo 6s linear infinite;
+    }
+    @keyframes rotateHalo {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .avatar-core-box {
+      position: absolute;
+      inset: 3px;
+      border-radius: 50%;
+      background: #14131c;
+      overflow: hidden;
+      display: grid; place-items: center;
+      border: 2px solid var(--bg-card);
+    }
+    .avatar-core-box img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .avatar-crown-badge {
+      position: absolute; top: -6px; right: -2px;
+      background: linear-gradient(135deg, #ffd700, #f59e0b);
+      color: #000; width: 22px; height: 22px; border-radius: 50%;
+      display: grid; place-items: center; font-size: 11px; font-weight: 900;
+      border: 2px solid var(--bg-card);
+    }
+
+    /* Identity Details */
+    .id-details-box {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .id-name-badges-row {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .agent-handle-title {
+      font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.02em;
+    }
+    .vip-tier-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: linear-gradient(135deg, #ffd700, #f59e0b);
+      color: #121008; font-size: 10px; font-weight: 800;
+      padding: 2px 8px; border-radius: var(--radius-pill); letter-spacing: 0.04em;
+    }
+    .level-tier-pill {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: var(--success-soft); border: 1px solid rgba(16, 185, 129, 0.35);
+      color: var(--success-text); font-size: 10.5px; font-weight: 700;
+      padding: 1.5px 7px; border-radius: var(--radius-pill);
+    }
+    .id-address-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-family: var(--font-mono); color: var(--ink-muted);
+      background: var(--bg-surface); padding: 4px 10px; border-radius: 6px;
+      border: 1px solid var(--line); cursor: pointer; width: fit-content; margin-top: 2px;
+    }
+    .id-address-pill:hover { background: var(--bg-subtle); color: #ffffff; }
+
+    /* Network Stats Bar */
+    .network-metrics-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .net-col { display: flex; flex-direction: column; gap: 2px; }
+    .net-val { font-size: 18px; font-weight: 800; color: #ffffff; font-family: var(--font-mono); }
+    .net-lbl { font-size: 11px; color: var(--ink-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* 2. DUAL ASSET CARDS (COINS & POINTS - COMPACT SLEEK CARDS)          */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .dual-assets-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .asset-bento-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px 14px;
+      display: flex; flex-direction: column; justify-content: space-between; gap: 8px;
+    }
+    .asset-bento-card.card-coins {
+      border-color: rgba(255, 215, 0, 0.22);
+      background: linear-gradient(145deg, #15131a 0%, #191421 100%);
+    }
+    .asset-bento-card.card-points {
+      border-color: rgba(192, 132, 252, 0.22);
+      background: linear-gradient(145deg, #151322 0%, #1c142c 100%);
+    }
+    .asset-top-row { display: flex; align-items: center; justify-content: space-between; }
+    .asset-title { font-size: 11px; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .asset-badge { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; }
+    .badge-coins { background: rgba(255, 215, 0, 0.15); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3); }
+    .badge-points { background: rgba(192, 132, 252, 0.18); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.35); }
+    .asset-big-val { font-size: 18px; font-weight: 800; color: #ffffff; font-family: var(--font-mono); letter-spacing: -0.01em; }
+    .asset-btns-row { display: flex; align-items: center; gap: 6px; }
+    .asset-action-pill {
+      flex: 1; padding: 4px 0; border-radius: 6px; background: var(--bg-surface);
+      border: 1px solid var(--line); color: #ffffff; font-size: 11px; font-weight: 600;
+      text-align: center; text-decoration: none; cursor: pointer; transition: all 0.15s ease;
+    }
+    .asset-action-pill:hover { background: var(--bg-subtle); border-color: var(--primary-border); }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* 3. 4-ICON QUICK SERVICES ROW                                        */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .services-bento-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px 12px;
+    }
+    .services-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    .service-tile-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      background: transparent; border: none; cursor: pointer; position: relative;
+    }
+    .service-tile-btn:active { transform: scale(0.92); }
+    .service-icon-wrapper {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: grid; place-items: center; font-size: 20px;
+      position: relative; transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .service-tile-btn:hover .service-icon-wrapper { transform: translateY(-3px); }
+
+    .tile-reward { background: rgba(236, 72, 153, 0.16); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .tile-rank { background: rgba(245, 158, 11, 0.16); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .tile-agent { background: rgba(168, 85, 247, 0.16); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
+    .tile-invite { background: rgba(239, 68, 68, 0.16); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    .service-name { font-size: 11.5px; font-weight: 600; color: #e2e8f0; }
+    .tile-badge {
+      position: absolute; top: -5px; right: -3px;
+      background: #ef4444; color: #ffffff; font-size: 9px; font-weight: 800;
+      padding: 1px 6px; border-radius: var(--radius-pill); border: 1.5px solid var(--bg-card);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* 5. AGENT OPERATIONS SECTION (REF 4)                                 */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .agent-ops-box {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px 16px;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .ops-title-row { display: flex; align-items: center; justify-content: space-between; }
+    .ops-main-heading { font-size: 14px; font-weight: 800; color: #ffffff; }
+    .ops-link-all { font-size: 12px; font-weight: 600; color: #c084fc; text-decoration: none; }
+    .ops-4-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .ops-btn-unit {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      background: transparent; border: none; cursor: pointer;
+    }
+    .ops-btn-unit:active { transform: scale(0.92); }
+    .ops-icon-circle {
+      width: 44px; height: 44px; border-radius: 12px;
+      display: grid; place-items: center; font-size: 20px;
+      background: var(--bg-surface); border: 1px solid var(--line); color: #ffffff;
+    }
+    .ops-label-text { font-size: 11px; font-weight: 600; color: var(--ink-muted); }
+
+    .ops-cards-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ops-banner-card {
+      background: var(--bg-surface); border: 1px solid var(--line);
+      border-radius: var(--radius-sm); padding: 12px 14px;
+      display: flex; align-items: center; gap: 10px; text-decoration: none;
+    }
+    .ops-banner-card:hover { border-color: var(--primary-border); }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* 5B. STREAMLINED VIRTUAL ACCOUNT (DVA) CARD                         */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .va-compact-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(122, 69, 229, 0.06)), var(--bg-card);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 10px;
+      position: relative;
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                  border-color 0.25s ease,
+                  box-shadow 0.25s ease;
+    }
+    .va-compact-card:hover {
+      border-color: rgba(16, 185, 129, 0.55);
+      box-shadow: 0 10px 28px -4px rgba(16, 185, 129, 0.16), 0 6px 16px -3px rgba(122, 69, 229, 0.14);
+    }
+    .va-compact-top {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    }
+    .va-bank-tag {
+      display: flex; align-items: center; gap: 7px;
+    }
+    .va-bank-icon {
+      font-size: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.6));
+      animation: electricPulse 3s ease-in-out infinite;
+    }
+    @keyframes electricPulse {
+      0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5)); }
+      50% { transform: scale(1.2); filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.95)); }
+    }
+    .va-bank-name { font-size: 13px; font-weight: 800; color: #ffffff; }
+    .va-acc-name-pill {
+      font-size: 11px; font-weight: 700; color: #10b981;
+      background: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 2px 8px; border-radius: var(--radius-pill);
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .va-acc-name-pill:hover {
+      background: rgba(16, 185, 129, 0.24);
+      border-color: #10b981;
+      transform: scale(1.04);
+    }
+    .va-num-group {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0, 0, 0, 0.45); border: 1px solid var(--line);
+      padding: 4px 8px 4px 12px; border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  border-color 0.2s ease,
+                  box-shadow 0.2s ease;
+      position: relative;
+    }
+    .va-num-group:hover {
+      border-color: #10b981;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.22);
+    }
+    .va-num-group:active {
+      transform: scale(0.97);
+    }
+    .va-num-group.copy-success-pulse {
+      animation: copyRipple 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      border-color: #10b981;
+    }
+    @keyframes copyRipple {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .va-nuban-text {
+      font-family: var(--font-mono); font-size: 15px; font-weight: 800; color: #ffffff; letter-spacing: 0.04em;
+      transition: color 0.15s ease;
+    }
+    .va-num-group:hover .va-nuban-text {
+      color: #34d399;
+    }
+    .va-copy-mini-btn {
+      background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; border: none;
+      font-size: 10.5px; font-weight: 800; padding: 4px 10px;
+      border-radius: var(--radius-pill); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 4px;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .va-copy-mini-btn:hover {
+      filter: brightness(1.15);
+      transform: scale(1.06);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    .va-copy-mini-btn:active {
+      transform: scale(0.92);
+    }
+    .va-compact-actions {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+    }
+    .va-pill-action {
+      background: var(--bg-surface); border: 1px solid var(--line);
+      border-radius: var(--radius-pill); padding: 7px 10px;
+      color: #ffffff; font-size: 11.5px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+      position: relative; overflow: hidden;
+      transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  border-color 0.2s ease,
+                  background 0.2s ease,
+                  color 0.2s ease,
+                  box-shadow 0.22s ease;
+    }
+    .va-pill-action::after {
+      content: '';
+      position: absolute; top: 0; left: -100%; width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.14), transparent);
+      transform: skewX(-20deg);
+      transition: none;
+    }
+    .va-pill-action:hover {
+      border-color: #7a45e5;
+      background: rgba(122, 69, 229, 0.16);
+      color: #c084fc;
+      transform: translateY(-2.5px);
+      box-shadow: 0 8px 18px rgba(122, 69, 229, 0.28);
+    }
+    .va-pill-action:hover::after {
+      left: 140%;
+      transition: left 0.6s ease;
+    }
+    .va-pill-action:active {
+      transform: translateY(0) scale(0.95);
+      box-shadow: 0 2px 6px rgba(122, 69, 229, 0.15);
+    }
+    .va-pill-action.primary {
+      background: rgba(122, 69, 229, 0.18); border-color: rgba(122, 69, 229, 0.45); color: #c084fc;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* 5C. TRANSACTION ACTIVITIES & HISTORY FEED                          */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .tx-history-box {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .tx-head-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .tx-title { font-size: 14px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 6px; }
+    .tx-head-actions { display: flex; align-items: center; gap: 8px; }
+    .tx-btn-refresh {
+      background: transparent; border: none; color: #c084fc; font-size: 11.5px; font-weight: 700; cursor: pointer;
+    }
+    .tx-link-explorer {
+      font-size: 11.5px; font-weight: 700; color: var(--ink-muted); text-decoration: none;
+    }
+    .tx-link-explorer:hover { color: #ffffff; }
+    .tx-feed-list { display: flex; flex-direction: column; gap: 8px; }
+    .tx-item-card {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      background: var(--bg-surface); border: 1px solid var(--line);
+      border-radius: var(--radius-md); padding: 11px 14px;
+      transition: border-color 0.15s ease;
+    }
+    .tx-item-card:hover { border-color: rgba(192, 132, 252, 0.3); }
+    .tx-item-left { display: flex; align-items: center; gap: 10px; }
+    .tx-icon-pill {
+      width: 34px; height: 34px; border-radius: 10px;
+      display: grid; place-items: center; font-size: 15px; flex-shrink: 0;
+    }
+    .tx-icon-pill.deposit { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+    .tx-icon-pill.transfer { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+    .tx-icon-pill.streak { background: rgba(255, 215, 0, 0.15); color: #ffd700; }
+    .tx-icon-pill.agent { background: rgba(122, 69, 229, 0.15); color: #c084fc; }
+    .tx-details { display: flex; flex-direction: column; gap: 2px; }
+    .tx-title-text { font-size: 12.5px; font-weight: 700; color: #ffffff; }
+    .tx-meta-sub { font-size: 10.5px; color: var(--ink-muted); }
+    .tx-item-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+    .tx-amount-text { font-size: 13px; font-weight: 800; }
+    .tx-amount-text.pos { color: #34d399; }
+    .tx-amount-text.neg { color: #f87171; }
+    .tx-amount-text.pts { color: #ffd700; }
+    .tx-status-pill {
+      font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: var(--radius-pill);
+      background: rgba(255, 255, 255, 0.08); color: var(--ink-muted);
+    }
+    .tx-status-pill.success { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* 7. WALLET INTERACTION MODALS (SEND & RECEIVE)                      */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .wallet-modal-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      z-index: 250000; display: none; align-items: center; justify-content: center;
+      padding: 16px; opacity: 0; pointer-events: none;
+      transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wallet-modal-overlay.open { display: flex !important; opacity: 1 !important; pointer-events: auto !important; }
+    .wallet-modal-card {
+      width: 100%; max-width: 450px; background: #110f19;
+      border: 1px solid rgba(192, 132, 252, 0.35); border-radius: var(--radius-xl);
+      padding: 22px 20px; display: flex; flex-direction: column; gap: 14px;
+      position: relative; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.75);
+      transform: scale(0.92) translateY(16px);
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.24s ease;
+    }
+    .wallet-modal-overlay.open .wallet-modal-card {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+    .modal-head-row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-head-title { font-size: 16px; font-weight: 800; color: #ffffff; }
+    .modal-close-btn {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bg-surface); border: 1px solid var(--line);
+      color: #ffffff; display: grid; place-items: center; cursor: pointer; font-size: 13px;
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  background 0.15s ease,
+                  border-color 0.15s ease;
+    }
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg) scale(1.1);
+    }
+    .modal-close-btn:active {
+      transform: rotate(90deg) scale(0.92);
+    }
+    .modal-rail-tabs {
+      display: flex; background: var(--bg-surface); border: 1px solid var(--line);
+      border-radius: var(--radius-pill); padding: 3px; gap: 3px;
+    }
+    .modal-rail-tab {
+      flex: 1; padding: 7px 10px; border-radius: var(--radius-pill);
+      background: transparent; border: none; color: var(--ink-muted);
+      font-size: 11.5px; font-weight: 700; cursor: pointer; text-align: center;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-rail-tab:hover:not(.active) {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .modal-rail-tab.active {
+      background: linear-gradient(135deg, #7a45e5, #6a34d4); color: #ffffff;
+      box-shadow: 0 4px 14px rgba(122, 69, 229, 0.45);
+      transform: scale(1.02);
+    }
+    .rx-panel-content {
+      animation: panelSlideFade 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes panelSlideFade {
+      0% { opacity: 0; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .modal-form-group { display: flex; flex-direction: column; gap: 5px; }
+    .modal-form-lbl {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 11.5px; font-weight: 700; color: var(--ink-muted);
+    }
+    .modal-input-field {
+      width: 100%; height: 42px; background: var(--bg-surface);
+      border: 1px solid var(--line); border-radius: var(--radius-md);
+      color: #ffffff; padding: 0 14px; font-size: 13.5px; font-family: var(--font-sans);
+      outline: none; transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .modal-input-field:focus {
+      border-color: #7a45e5;
+      box-shadow: 0 0 0 3px rgba(122, 69, 229, 0.25);
+    }
+    .modal-select-field {
+      width: 100%; height: 42px; background: var(--bg-surface);
+      border: 1px solid var(--line); border-radius: var(--radius-md);
+      color: #ffffff; padding: 0 14px; font-size: 13px; font-family: var(--font-sans);
+      outline: none; cursor: pointer; transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .modal-select-field:focus {
+      border-color: #7a45e5;
+      box-shadow: 0 0 0 3px rgba(122, 69, 229, 0.25);
+    }
+    .modal-qr-box {
+      width: 160px; height: 160px; margin: 6px auto;
+      background: #ffffff; padding: 10px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-qr-box:hover {
+      transform: scale(1.04);
+    }
+    .modal-qr-box img, .modal-qr-box canvas { width: 100%; height: 100%; }
+    .btn-modal-action {
+      width: 100%; height: 44px; border-radius: var(--radius-pill);
+      background: linear-gradient(135deg, #7a45e5, #6a34d4);
+      color: #ffffff; border: none; font-size: 13.5px; font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 6px 18px rgba(122, 69, 229, 0.4);
+      position: relative; overflow: hidden;
+    }
+    .btn-modal-action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(122, 69, 229, 0.55);
+      filter: brightness(1.08);
+    }
+    .btn-modal-action:active {
+      transform: translateY(0) scale(0.97);
+    }
+    .btn-modal-action:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* 6. RIGHT SIDEBAR: DAILY STREAK CHALLENGE HUB (DESKTOP)             */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .streak-hub-card {
+      background: var(--bg-card);
+      border: 1px solid rgba(192, 132, 252, 0.28);
+      border-radius: var(--radius-lg);
+      padding: 22px 20px;
+      display: flex; flex-direction: column; gap: 18px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+    .streak-hub-card::before {
+      content: '';
+      position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
+      width: 240px; height: 160px;
+      background: radial-gradient(circle, rgba(122, 69, 229, 0.35) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Flame Hero */
+    .flame-center-box {
+      display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px;
+      position: relative; z-index: 1;
+    }
+    .flame-svg-icon {
+      width: 76px; height: 76px; filter: drop-shadow(0 8px 24px rgba(122, 69, 229, 0.7));
+      animation: flameFloat 3s ease-in-out infinite;
+    }
+    @keyframes flameFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    .streak-count-header { font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: -0.02em; }
+    .streak-sub-status { font-size: 11.5px; color: #c084fc; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; }
+
+    /* 7-Day Flame Track */
+    .seven-day-flame-bar {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+      background: var(--bg-surface); border: 1px solid var(--line);
+      border-radius: var(--radius-md); padding: 12px 6px;
+    }
+    .day-slot { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+    .day-icon-circle {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--bg-card); border: 1.5px solid var(--line);
+      display: grid; place-items: center; font-size: 12px; color: var(--ink-muted);
+    }
+    .day-slot.active .day-icon-circle {
+      background: linear-gradient(135deg, #7a45e5, #c084fc);
+      border-color: #ffd700; color: #ffffff;
+      box-shadow: 0 0 10px rgba(122, 69, 229, 0.6);
+    }
+    .day-slot.reward .day-icon-circle {
+      background: rgba(255, 215, 0, 0.12); border-color: rgba(255, 215, 0, 0.35); color: #ffd700;
+    }
+    .day-label { font-size: 10px; font-weight: 600; color: var(--ink-muted); }
+    .day-slot.active .day-label { color: #ffffff; font-weight: 700; }
+
+    /* 14 Days Challenge Card */
+    .challenge-widget-card {
+      background: var(--bg-surface); border: 1px solid var(--line);
+      border-radius: var(--radius-md); padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .challenge-top { display: flex; justify-content: space-between; align-items: center; }
+    .challenge-name { font-size: 12.5px; font-weight: 800; color: #ffffff; }
+    .challenge-day-count { font-size: 11.5px; font-weight: 700; color: #c084fc; font-family: var(--font-mono); }
+    .challenge-bar-bg { width: 100%; height: 8px; border-radius: var(--radius-pill); background: var(--bg-card); overflow: hidden; }
+    .challenge-bar-fill {
+      height: 100%; width: 58%; border-radius: var(--radius-pill);
+      background: linear-gradient(90deg, #7a45e5, #c084fc, #ffd700);
+      box-shadow: 0 0 8px rgba(122, 69, 229, 0.6);
+      transition: width 0.5s ease;
+    }
+    .challenge-steps { display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: var(--ink-light); }
+
+    /* 2-Column Stats */
+    .streak-stats-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .streak-stat-box {
+      background: var(--bg-surface); border: 1px solid var(--line);
+      border-radius: var(--radius-sm); padding: 10px; text-align: center;
+    }
+    .stat-val-bold { font-size: 13.5px; font-weight: 800; color: #ffffff; }
+    .stat-lbl-sub { font-size: 10px; color: var(--ink-muted); margin-top: 1px; }
+
+    /* Milestones List */
+    .milestones-strip-card {
+      background: var(--bg-surface); border: 1px solid var(--line);
+      border-radius: var(--radius-md); padding: 12px 14px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .milestones-header { font-size: 11px; font-weight: 800; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .milestone-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 4px 0; }
+    .milestone-pill { font-size: 10.5px; font-weight: 700; color: #ffd700; background: rgba(255, 215, 0, 0.12); padding: 2px 7px; border-radius: var(--radius-pill); }
+
+    /* Check-In Primary Action Button */
+    .btn-streak-checkin {
+      width: 100%; height: 46px; border-radius: var(--radius-pill);
+      background: linear-gradient(135deg, #7a45e5, #6a34d4);
+      color: #ffffff; border: none; font-size: 14px; font-weight: 800;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+      box-shadow: 0 6px 20px rgba(122, 69, 229, 0.4);
+      transition: all 0.2s ease;
+    }
+    .btn-streak-checkin:active { transform: scale(0.97); }
+
+    /* Mobile Sub-page Container */
+    .mobile-streak-subpage {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+      height: 100%;
+      background: var(--bg-page);
+      overflow-y: auto;
+      padding: 14px 14px 40px;
+      scrollbar-width: none;
+    }
+    .mobile-streak-subpage::-webkit-scrollbar { display: none; }
+    .subpage-top-nav {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .subpage-back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: var(--radius-pill);
+      background: var(--bg-surface);
+      border: 1px solid var(--line);
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .subpage-back-btn:active { transform: scale(0.96); }
+    .subpage-heading {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* MOBILE-SPECIFIC RESPONSIVE OVERRIDES                                */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    @media (max-width: 900px) {
+      .profile-desktop-grid {
+        grid-template-columns: 1fr;
+        max-width: 580px;
+      }
+      /* On mobile, streak section is a sub/inner page, NOT stacked below the profile */
+      .profile-side-col {
+        display: none !important;
+      }
+      .app-layout { padding: 0 !important; gap: 0 !important; }
+      .main-viewport { border-radius: 0 !important; border: none !important; }
+      .header-sidebar-btn { display: grid !important; }
+      .profile-page-body { padding: 14px 14px 40px !important; }
+
+      body.in-streak-subpage .profile-page-body {
+        display: none !important;
+      }
+      body.in-streak-subpage .mobile-streak-subpage {
+        display: flex !important;
+      }
+
+      .va-compact-top {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 9px;
+      }
+      .va-bank-tag {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .va-num-group {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        box-sizing: border-box;
+      }
+      .va-compact-actions {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+      .va-pill-action {
+        padding: 8px 4px;
+        font-size: 10.5px;
+        white-space: nowrap;
+        justify-content: center;
+      }
+    }
+
+    @media (min-width: 901px) {
+      .mobile-streak-subpage {
+        display: none !important;
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* CELEBRATION MODAL OVERLAY (FOR CELEBRATIONS & MOBILE SHEET)         */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    .celebration-modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      z-index: 200000; display: none; align-items: center; justify-content: center;
+      padding: 16px; opacity: 0; transition: opacity 0.25s ease;
+    }
+    .celebration-modal-backdrop.open { display: flex; opacity: 1; }
+    .celebration-modal-card {
+      width: 100%; max-width: 440px; background: #12101a;
+      border: 1px solid rgba(192, 132, 252, 0.35); border-radius: var(--radius-xl);
+      padding: 26px 24px; display: flex; flex-direction: column; align-items: center; text-align: center;
+      gap: 16px; position: relative;
+    }
+    .modal-close-x {
+      position: absolute; top: 16px; right: 16px; width: 32px; height: 32px;
+      border-radius: 50%; background: var(--bg-surface); border: 1px solid var(--line);
+      color: #ffffff; display: grid; place-items: center; cursor: pointer;
+    }
+
+    /* Toast */
+    .toast-pill {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(12px);
+      background: #181624; border: 1px solid #7a45e5; color: #ffffff;
+      padding: 9px 20px; border-radius: var(--radius-pill); font-size: 12.5px; font-weight: 700;
+      opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 300000;
+    }
+    .toast-pill.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ═══════════════════════════════════════════════════════════════════ */
+    /* 8. COMPLETE UNIVERSAL LIGHT / WHITE MODE STYLING SYSTEM             */
+    /* ═══════════════════════════════════════════════════════════════════ */
+    :root[data-theme="light"],
+    [data-theme="light"] {
+      color-scheme: light;
+      --bg-page: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-surface: #f1f5f9;
+      --bg-subtle: #f8fafc;
+      --line: #e2e8f0;
+      --line-subtle: #edf2f7;
+      --ink: #0f172a;
+      --ink-muted: #64748b;
+      --ink-light: #94a3b8;
+
+      --primary: #7a45e5;
+      --primary-hover: #6a34d4;
+      --primary-soft: rgba(122, 69, 229, 0.08);
+      --primary-border: rgba(122, 69, 229, 0.28);
+
+      --accent-purple: #7a45e5;
+      --accent-purple-soft: rgba(122, 69, 229, 0.08);
+
+      --gold: #d97706;
+      --gold-soft: rgba(217, 119, 6, 0.12);
+      --gold-border: rgba(217, 119, 6, 0.3);
+
+      --success: #10b981;
+      --success-soft: rgba(16, 185, 129, 0.12);
+      --success-text: #059669;
+    }
+
+    [data-theme="light"] body {
+      background-color: #f8fafc !important;
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .app-layout {
+      background-color: #f8fafc !important;
+    }
+    [data-theme="light"] .app-sidebar,
+    [data-theme="light"] .main-viewport {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .app-header {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .brand-text {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .profile-page-body {
+      background-color: #f8fafc !important;
+    }
+
+    /* Identity Hero Card */
+    [data-theme="light"] .profile-showcase-card {
+      background-color: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
+    }
+    [data-theme="light"] .avatar-core-box {
+      background-color: #ffffff !important;
+      border-color: #ffffff !important;
+    }
+    [data-theme="light"] .avatar-crown-badge {
+      border-color: #ffffff !important;
+    }
+    [data-theme="light"] .agent-handle-title {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .id-address-pill {
+      background: #f1f5f9 !important;
+      color: #475569 !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .id-address-pill:hover {
+      background: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .network-metrics-strip {
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .net-val {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .net-lbl {
+      color: #64748b !important;
+    }
+
+    /* Dual Asset Bento Cards */
+    [data-theme="light"] .asset-bento-card.card-coins {
+      background: linear-gradient(145deg, #fffbeb 0%, #fef3c7 100%) !important;
+      border-color: rgba(245, 158, 11, 0.35) !important;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.08) !important;
+    }
+    [data-theme="light"] .asset-bento-card.card-points {
+      background: linear-gradient(145deg, #faf5ff 0%, #f3e8ff 100%) !important;
+      border-color: rgba(168, 85, 247, 0.35) !important;
+      box-shadow: 0 4px 14px rgba(168, 85, 247, 0.08) !important;
+    }
+    [data-theme="light"] .asset-big-val {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .asset-action-pill {
+      background: #ffffff !important;
+      border-color: rgba(0, 0, 0, 0.12) !important;
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .asset-action-pill:hover {
+      background: #f1f5f9 !important;
+      color: #7a45e5 !important;
+    }
+
+    /* Streamlined Virtual Account Card */
+    [data-theme="light"] .va-compact-card {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(122, 69, 229, 0.05)), #ffffff !important;
+      border-color: rgba(16, 185, 129, 0.35) !important;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04) !important;
+    }
+    [data-theme="light"] .va-bank-name {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .va-num-group {
+      background: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    }
+    [data-theme="light"] .va-nuban-text {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .va-num-group:hover .va-nuban-text {
+      color: #059669 !important;
+    }
+    [data-theme="light"] .va-pill-action {
+      background: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      color: #0f172a !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    }
+    [data-theme="light"] .va-pill-action:hover {
+      background: rgba(122, 69, 229, 0.08) !important;
+      color: #7a45e5 !important;
+      border-color: #7a45e5 !important;
+    }
+
+    /* Quick Services Bento Card */
+    [data-theme="light"] .services-bento-card {
+      background: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .service-name {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .tile-badge {
+      border-color: #ffffff !important;
+    }
+
+    /* Agent Operations */
+    [data-theme="light"] .agent-ops-box {
+      background: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .ops-main-heading {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .ops-icon-circle {
+      background: #f1f5f9 !important;
+      border-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .ops-banner-card {
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .ops-banner-card strong {
+      color: #0f172a !important;
+    }
+
+    /* Transaction Activity Feed */
+    [data-theme="light"] .tx-history-box {
+      background: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .tx-title {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .tx-item-card {
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .tx-title-text {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .tx-link-explorer:hover {
+      color: #0f172a !important;
+    }
+
+    /* Desktop Streak Hub Card */
+    [data-theme="light"] .streak-hub-card {
+      background: #ffffff !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.05) !important;
+    }
+    [data-theme="light"] .flame-days-count {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .streak-stat-box {
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .stat-val-bold {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .challenge-widget-card {
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .challenge-name {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .challenge-bar-bg {
+      background: #e2e8f0 !important;
+    }
+    [data-theme="light"] .milestones-strip-card {
+      background: #f8fafc !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .milestone-row span:first-child {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .day-slot {
+      background: #f1f5f9 !important;
+      color: #64748b !important;
+    }
+    [data-theme="light"] .day-slot.active {
+      background: #7a45e5 !important;
+      color: #ffffff !important;
+    }
+    [data-theme="light"] .day-slot.active .day-label {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .day-label {
+      color: #64748b !important;
+    }
+
+    /* Modals in Light Mode */
+    [data-theme="light"] .wallet-modal-overlay {
+      background: rgba(15, 23, 42, 0.65) !important;
+    }
+    [data-theme="light"] .wallet-modal-card {
+      background: #ffffff !important;
+      border-color: rgba(122, 69, 229, 0.25) !important;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18) !important;
+    }
+    [data-theme="light"] .modal-head-title {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .modal-close-btn {
+      background: #f1f5f9 !important;
+      border-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .modal-close-btn:hover {
+      background: #e2e8f0 !important;
+    }
+    [data-theme="light"] .modal-rail-tabs {
+      background: #f1f5f9 !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .modal-rail-tab {
+      color: #64748b !important;
+    }
+    [data-theme="light"] .modal-rail-tab:hover:not(.active) {
+      color: #0f172a !important;
+      background: rgba(0, 0, 0, 0.04) !important;
+    }
+    [data-theme="light"] .modal-input-field,
+    [data-theme="light"] .modal-select-field {
+      background: #f8fafc !important;
+      color: #0f172a !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .modal-qr-box {
+      background: #ffffff !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+    [data-theme="light"] .rx-display-addr {
+      background: #f8fafc !important;
+      color: #0f172a !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] #send-modal-avail strong {
+      color: #0f172a !important;
+    }
+
+    /* Celebration Modal */
+    [data-theme="light"] .celebration-modal-card {
+      background: #ffffff !important;
+      border-color: rgba(122, 69, 229, 0.3) !important;
+      color: #0f172a !important;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2) !important;
+    }
+    [data-theme="light"] .celebration-modal-card h2 {
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .modal-close-x {
+      background: #f1f5f9 !important;
+      border-color: #e2e8f0 !important;
+      color: #0f172a !important;
+    }
+    [data-theme="light"] .seven-day-flame-bar {
+      background: #f8fafc !important;
+    }
+
+    /* Mobile Streak Subpage */
+    [data-theme="light"] .mobile-streak-subpage {
+      background: #f8fafc !important;
+    }
+    [data-theme="light"] .mobile-streak-hero {
+      background: #ffffff !important;
+      border-color: #e2e8f0 !important;
+    }
+    [data-theme="light"] .mobile-hero-title {
+      color: #0f172a !important;
+    }
+
+    /* App Toast */
+    [data-theme="light"] .toast-pill {
+      background: #ffffff !important;
+      border-color: #7a45e5 !important;
+      color: #0f172a !important;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toast -->
+  <div id="app-toast" class="toast-pill">✨ Onchain identity synced!</div>
+
+  <div class="app-layout">
+
+    <!-- Official NairaTag Sidebar -->
+    <aside class="app-sidebar" id="app-sidebar">
+      <div class="sidebar-header">
+        <a class="brand-logo" href="/agent">
+          <div class="brand-mark"><img src="/hub/nairatag-icon.png" alt="₦" class="brand-mark-img" /></div>
+          <span class="brand-text">NairaTag</span>
+        </a>
+        <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" type="button" title="Collapse sidebar">
+          <span id="sidebar-toggle-icon">◨</span>
+        </button>
+      </div>
+
+      <div class="sidebar-scroll">
+        <!-- Protocol Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Protocol</div>
+          <nav class="sidebar-menu" aria-label="Protocol Navigation">
+            <a class="sidebar-menu-item active" id="menu-profile" href="/profile" title="Agent Profile &amp; Streaks">
+              <span class="menu-icon">👤</span>
+              <span class="menu-label">Profile</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-claim" href="/claim" title="Claim ₦Tag">
+              <span class="menu-icon">✦</span>
+              <span class="menu-label">Claim</span>
+              <span class="menu-badge badge-count-claim">1</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-agent" href="/agent" title="Open AI Chat">
+              <span class="menu-icon">💬</span>
+              <span class="menu-label">Chat</span>
+              <span class="menu-badge badge-count-chat">2</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-tasks" href="/tasks" title="Agent Tasks &amp; Bounties">
+              <span class="menu-icon">🎯</span>
+              <span class="menu-label">Tasks</span>
+              <span class="menu-badge badge-count-tasks">5</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-explorer" href="/explorer" title="Identity Explorer">
+              <span class="menu-icon">🌐</span>
+              <span class="menu-label">Explorer</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-swap" href="/swap" title="Swap Assets">
+              <span class="menu-icon">⇄</span>
+              <span class="menu-label">Swap</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-earnings" href="/earnings" title="Agent Earnings Leaderboard">
+              <span class="menu-icon">🏆</span>
+              <span class="menu-label">Earnings</span>
+            </a>
+          </nav>
+        </div>
+
+        <!-- Knowledge & Info Group -->
+        <div class="sidebar-nav-group">
+          <div class="sidebar-nav-title">Knowledge &amp; Info</div>
+          <nav class="sidebar-menu" aria-label="Knowledge and Documentation">
+            <a class="sidebar-menu-item" id="menu-about" href="/about" title="About ₦Tag Network">
+              <span class="menu-icon">ℹ</span>
+              <span class="menu-label">About</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-docs" href="/docs" title="Developer Docs &amp; SDK">
+              <span class="menu-icon">📖</span>
+              <span class="menu-label">Docs</span>
+            </a>
+            <a class="sidebar-menu-item" id="menu-faq" href="/faq" title="Frequently Asked Questions">
+              <span class="menu-icon">❓</span>
+              <span class="menu-label">FAQ</span>
+            </a>
+          </nav>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Viewport -->
+    <div class="main-viewport">
+      
+      <!-- Official NairaTag Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="header-sidebar-btn" id="header-sidebar-btn" type="button" title="Open menu" aria-label="Open menu">☰</button>
+        </div>
+
+        <div class="header-right">
+          <button type="button" class="header-auth-btn" id="header-auth-btn" onclick="window.NairaTagSupabase ? window.NairaTagSupabase.openAuthModal('signin') : null" title="Sign In or Open Dashboard">
+            <span id="auth-btn-icon">📊</span>
+            <span id="auth-btn-text">Dashboard</span>
+          </button>
+          <div class="header-tag-pill" id="header-user-tag-badge">
+            <div class="header-tag-dot"></div>
+            <span id="header-handle-text">₦olusegun</span>
+          </div>
+          <button class="theme-toggle-btn" id="theme-toggle-btn" type="button" title="Toggle theme">☀️</button>
+        </div>
+      </header>
+
+      <!-- Profile Page Body: Multi-Column Web Desktop & Responsive Mobile Layout -->
+      <main class="profile-page-body">
+        <div class="profile-desktop-grid">
+
+          <!-- ═════ LEFT COLUMN: PROFILE IDENTITY & ECOSYSTEM ═════ -->
+          <div class="profile-main-col">
+
+            <!-- 1. Profile Showcase Card (Matching Reference 3 & 4) -->
+            <section class="profile-showcase-card">
+              <div class="profile-id-row">
+                <!-- Cosmic Halo Avatar -->
+                <div class="avatar-halo-wrap">
+                  <div class="avatar-halo-ring"></div>
+                  <div class="avatar-core-box">
+                    <img id="agent-avatar-img" src="/hub/avatars/rema.gif" alt="Agent Avatar" onerror="this.src='/hub/nairatag-icon.png'">
+                  </div>
+                  <div class="avatar-crown-badge">👑</div>
+                </div>
+
+                <!-- Identity Details -->
+                <div class="id-details-box">
+                  <div class="id-name-badges-row">
+                    <span class="agent-handle-title" id="disp-agent-handle">₦olusegun</span>
+                    <span class="vip-tier-pill">VIP 💎</span>
+                    <span class="level-tier-pill">Lv. 4</span>
+                  </div>
+                  <div class="id-address-pill" onclick="copyAddress()" title="Click to copy onchain address">
+                    <span>ID: <strong id="disp-short-address">0x8a92...4b1f</strong></span>
+                    <span style="opacity:0.7;">📋</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4-Column Network Metrics Strip -->
+              <div class="network-metrics-strip">
+                <div class="net-col">
+                  <span class="net-val" id="stat-tasks">18</span>
+                  <span class="net-lbl">Tasks</span>
+                </div>
+                <div class="net-col">
+                  <span class="net-val">895</span>
+                  <span class="net-lbl">Following</span>
+                </div>
+                <div class="net-col">
+                  <span class="net-val">1,626</span>
+                  <span class="net-lbl">Followers</span>
+                </div>
+                <div class="net-col">
+                  <span class="net-val">98</span>
+                  <span class="net-lbl">Rep Score</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- 2. Dual Asset Cards (cNGN Coins & Reward Points - Compact Refined Desktop & Mobile) -->
+            <section class="dual-assets-grid">
+              <div class="asset-bento-card card-coins">
+                <div class="asset-top-row">
+                  <span class="asset-title">cNGN Coins</span>
+                  <div class="asset-badge badge-coins">🪙</div>
+                </div>
+                <div class="asset-big-val" id="disp-cngn-balance">₦1,350</div>
+                <div class="asset-btns-row">
+                  <button type="button" class="asset-action-pill" onclick="openReceiveModal('naira')" style="cursor:pointer; border:none; font-family:inherit;">+ Top Up</button>
+                  <button type="button" class="asset-action-pill" onclick="openSendModal()" style="cursor:pointer; border:none; font-family:inherit;">Send</button>
+                </div>
+              </div>
+
+              <div class="asset-bento-card card-points">
+                <div class="asset-top-row">
+                  <span class="asset-title">Reward Points</span>
+                  <div class="asset-badge badge-points">✨</div>
+                </div>
+                <div class="asset-big-val" id="disp-points-balance">319,968</div>
+                <div class="asset-btns-row">
+                  <button class="asset-action-pill" onclick="triggerCelebrationModal()">Streak</button>
+                  <a href="/tasks" class="asset-action-pill">Redeem</a>
+                </div>
+              </div>
+            </section>
+
+            <!-- 3. Clean Compact Naira Virtual Account (DVA) -->
+            <section class="va-compact-card" id="profile-va-card">
+              <div class="va-compact-top">
+                <div class="va-bank-tag">
+                  <span class="va-bank-icon">⚡</span>
+                  <span class="va-bank-name" id="va-bank-name">Wema Bank</span>
+                  <span class="va-acc-name-pill" id="va-account-name">₦olusegun</span>
+                </div>
+                <div class="va-num-group" onclick="copyVaAccount()" title="Click to copy account number">
+                  <span class="va-nuban-text" id="va-nuban-number">9820491823</span>
+                  <button type="button" class="va-copy-mini-btn" onclick="event.stopPropagation(); copyVaAccount();" title="Copy account number">📋 Copy</button>
+                </div>
+              </div>
+
+              <div class="va-compact-actions">
+                <button type="button" class="va-pill-action" onclick="openReceiveModal('naira')">
+                  <span>📥 Deposit Details</span>
+                </button>
+                <button type="button" class="va-pill-action" onclick="openReceiveModal('crypto')">
+                  <span>⚡ Crypto QR</span>
+                </button>
+                <button type="button" class="va-pill-action" onclick="openSendModal()">
+                  <span>↗ Send cNGN</span>
+                </button>
+              </div>
+            </section>
+
+            <!-- 4. Quick Services 4-Icon Row -->
+            <section class="services-bento-card">
+              <div class="services-grid-4">
+                <!-- 1. Reward / Streak -->
+                <button class="service-tile-btn" onclick="openStreakView()" title="Daily Streak Check-in">
+                  <div class="service-icon-wrapper tile-reward">
+                    <span>🎁</span>
+                    <span class="tile-badge">Streak</span>
+                  </div>
+                  <span class="service-name">Reward</span>
+                </button>
+
+                <!-- 2. Rank -->
+                <a href="/earnings" class="service-tile-btn" title="Agent Leaderboard" style="text-decoration:none;">
+                  <div class="service-icon-wrapper tile-rank">
+                    <span>🏆</span>
+                  </div>
+                  <span class="service-name">Rank</span>
+                </a>
+
+                <!-- 3. AI Autopilot -->
+                <a href="/agent" class="service-tile-btn" title="Autonomous AI Chat" style="text-decoration:none;">
+                  <div class="service-icon-wrapper tile-agent">
+                    <span>🤖</span>
+                  </div>
+                  <span class="service-name">Agent AI</span>
+                </a>
+
+                <!-- 4. Invite -->
+                <button class="service-tile-btn" onclick="shareReferral()" title="Invite Friends (+100 PTS)">
+                  <div class="service-icon-wrapper tile-invite">
+                    <span>✉️</span>
+                    <span class="tile-badge">+100</span>
+                  </div>
+                  <span class="service-name">Invite</span>
+                </button>
+              </div>
+            </section>
+
+            <!-- 5. Agent Operations Section (Matching Reference 4 Bottom) -->
+            <section class="agent-ops-box">
+              <div class="ops-title-row">
+                <span class="ops-main-heading">Agent Operations</span>
+                <a href="/agent" class="ops-link-all">All &gt;</a>
+              </div>
+
+              <div class="ops-4-grid">
+                <button class="ops-btn-unit" onclick="window.location.href='/agent'">
+                  <div class="ops-icon-circle">👤</div>
+                  <span class="ops-label-text">Agent Hub</span>
+                </button>
+                <button class="ops-btn-unit" onclick="showToast('➕ Add Host: Delegate execution permissions to external bot')">
+                  <div class="ops-icon-circle">➕</div>
+                  <span class="ops-label-text">Add Host</span>
+                </button>
+                <button class="ops-btn-unit" onclick="shareReferral()">
+                  <div class="ops-icon-circle">🤝</div>
+                  <span class="ops-label-text">Invite Bot</span>
+                </button>
+                <button class="ops-btn-unit" onclick="window.location.href='/swap'">
+                  <div class="ops-icon-circle">💱</div>
+                  <span class="ops-label-text">Gasless Swap</span>
+                </button>
+              </div>
+
+              <div class="ops-cards-row">
+                <a href="/earnings" class="ops-banner-card">
+                  <span style="font-size:20px;">📑</span>
+                  <div>
+                    <strong style="color:#ffffff; font-size:12px; display:block;">Agent Rewards</strong>
+                    <span style="color:var(--ink-muted); font-size:10px;">Fee share payouts</span>
+                  </div>
+                </a>
+                <a href="/earnings" class="ops-banner-card">
+                  <span style="font-size:20px;">📊</span>
+                  <div>
+                    <strong style="color:#ffffff; font-size:12px; display:block;">Agent Ranking</strong>
+                    <span style="color:var(--ink-muted); font-size:10px;">Top 5% Network Tier</span>
+                  </div>
+                </a>
+              </div>
+            </section>
+
+            <!-- 6. Transaction Activities & History Feed (Live Sync & Explorer Bridge) -->
+            <section class="tx-history-box" id="profile-tx-history">
+              <div class="tx-head-row">
+                <div class="tx-title">
+                  <span>⚡</span>
+                  <span>Transaction &amp; Activity History</span>
+                </div>
+                <div class="tx-head-actions">
+                  <button type="button" class="tx-btn-refresh" onclick="refreshActivityFeed()">🔄 Refresh</button>
+                  <a href="/explorer" class="tx-link-explorer">Explorer ↗</a>
+                </div>
+              </div>
+
+              <div class="tx-feed-list" id="profile-activity-feed">
+                <!-- Activity Items -->
+                <div class="tx-item-card">
+                  <div class="tx-item-left">
+                    <div class="tx-icon-pill deposit">↙️</div>
+                    <div class="tx-details">
+                      <span class="tx-title-text">Bank Transfer Received (DVA)</span>
+                      <span class="tx-meta-sub">Flutterwave NIP · Today, 14:32</span>
+                    </div>
+                  </div>
+                  <div class="tx-item-right">
+                    <span class="tx-amount-text pos">+₦15,000.00</span>
+                    <span class="tx-status-pill success">Completed</span>
+                  </div>
+                </div>
+
+                <div class="tx-item-card">
+                  <div class="tx-item-left">
+                    <div class="tx-icon-pill transfer">↗️</div>
+                    <div class="tx-details">
+                      <span class="tx-title-text">Transfer to ₦femi</span>
+                      <span class="tx-meta-sub">Zero Gas Relay · Yesterday</span>
+                    </div>
+                  </div>
+                  <div class="tx-item-right">
+                    <span class="tx-amount-text neg">-₦3,500.00</span>
+                    <span class="tx-status-pill success">Confirmed</span>
+                  </div>
+                </div>
+
+                <div class="tx-item-card">
+                  <div class="tx-item-left">
+                    <div class="tx-icon-pill streak">🔥</div>
+                    <div class="tx-details">
+                      <span class="tx-title-text">Daily Streak Check-in (+25 PTS)</span>
+                      <span class="tx-meta-sub">Reputation Reward · Oct 16</span>
+                    </div>
+                  </div>
+                  <div class="tx-item-right">
+                    <span class="tx-amount-text pts">+25 PTS</span>
+                    <span class="tx-status-pill success">Claimed</span>
+                  </div>
+                </div>
+
+                <div class="tx-item-card">
+                  <div class="tx-item-left">
+                    <div class="tx-icon-pill agent">⚡</div>
+                    <div class="tx-details">
+                      <span class="tx-title-text">Agent Fee Share Settlement</span>
+                      <span class="tx-meta-sub">Autonomous Bot Pool · Oct 15</span>
+                    </div>
+                  </div>
+                  <div class="tx-item-right">
+                    <span class="tx-amount-text pos">+₦1,350.00</span>
+                    <span class="tx-status-pill success">Auto-Settled</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+          </div>
+
+          <!-- ═════ RIGHT COLUMN: DAILY STREAK & CHALLENGE HUB ═════ -->
+          <div class="profile-side-col">
+
+            <!-- Daily Streak Challenge Hub (Desktop & Mobile Unified) -->
+            <section class="streak-hub-card">
+              <!-- Flame Hero Visual (Ref 1 & 2) -->
+              <div class="flame-center-box">
+                <svg class="flame-svg-icon" viewBox="0 0 100 120" fill="none">
+                  <defs>
+                    <linearGradient id="hubFlameGrad" x1="50" y1="10" x2="50" y2="110" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#ffd700" />
+                      <stop offset="35%" stop-color="#c084fc" />
+                      <stop offset="85%" stop-color="#7a45e5" />
+                      <stop offset="100%" stop-color="#4c1d95" />
+                    </linearGradient>
+                    <linearGradient id="hubFlameCore" x1="50" y1="40" x2="50" y2="100" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stop-color="#ffffff" />
+                      <stop offset="40%" stop-color="#ffd700" />
+                      <stop offset="100%" stop-color="#c084fc" />
+                    </linearGradient>
+                  </defs>
+                  <path d="M50 5C45 25 30 38 22 55C14 72 18 95 35 107C45 114 62 114 72 105C85 93 88 74 80 56C72 38 60 25 50 5Z" fill="url(#hubFlameGrad)" />
+                  <path d="M50 45C46 56 38 64 35 74C32 84 36 96 46 101C52 104 60 103 65 98C71 91 72 81 68 72C64 63 56 56 50 45Z" fill="url(#hubFlameCore)" opacity="0.9" />
+                </svg>
+                <div class="streak-count-header" id="streak-header-num">3 days streak!</div>
+                <div class="streak-sub-status">Keep the fire burning</div>
+              </div>
+
+              <!-- 7-Day Flame Track (Ref 1 & 2) -->
+              <div class="seven-day-flame-bar">
+                <div class="day-slot active">
+                  <div class="day-icon-circle">🔥</div>
+                  <span class="day-label">Su</span>
+                </div>
+                <div class="day-slot active">
+                  <div class="day-icon-circle">🔥</div>
+                  <span class="day-label">Mo</span>
+                </div>
+                <div class="day-slot active">
+                  <div class="day-icon-circle">🔥</div>
+                  <span class="day-label">Tu</span>
+                </div>
+                <div class="day-slot">
+                  <div class="day-icon-circle">·</div>
+                  <span class="day-label">We</span>
+                </div>
+                <div class="day-slot">
+                  <div class="day-icon-circle">·</div>
+                  <span class="day-label">Th</span>
+                </div>
+                <div class="day-slot">
+                  <div class="day-icon-circle">·</div>
+                  <span class="day-label">Fr</span>
+                </div>
+                <div class="day-slot reward">
+                  <div class="day-icon-circle">🎁</div>
+                  <span class="day-label">Sa</span>
+                </div>
+              </div>
+
+              <!-- 14 Days Challenge Card (Ref 2) -->
+              <div class="challenge-widget-card">
+                <div class="challenge-top">
+                  <span class="challenge-name">14 Days Challenge</span>
+                  <span class="challenge-day-count" id="challenge-days-label">Day 8 of 14</span>
+                </div>
+                <div class="challenge-bar-bg">
+                  <div class="challenge-bar-fill" id="challenge-progress-fill"></div>
+                </div>
+                <div class="challenge-steps">
+                  <span>Day 1</span>
+                  <span>Day 7 🏅</span>
+                  <span>Day 14 🏆</span>
+                  <span>Day 30 👑</span>
+                </div>
+              </div>
+
+              <!-- 2-Column Stats -->
+              <div class="streak-stats-pair">
+                <div class="streak-stat-box">
+                  <div class="stat-val-bold">Oct 14, 2026</div>
+                  <div class="stat-lbl-sub">Streak Started</div>
+                </div>
+                <div class="streak-stat-box">
+                  <div class="stat-val-bold">11 days</div>
+                  <div class="stat-lbl-sub">Streak Record</div>
+                </div>
+              </div>
+
+              <!-- Milestones List -->
+              <div class="milestones-strip-card">
+                <div class="milestones-header">Streak Milestones</div>
+                <div class="milestone-row">
+                  <span>📅 7 Days Streak</span>
+                  <span class="milestone-pill">+150 PTS &amp; Badge</span>
+                </div>
+                <div class="milestone-row">
+                  <span>⚡ 14 Days Streak</span>
+                  <span class="milestone-pill">+500 PTS &amp; 1.5x</span>
+                </div>
+                <div class="milestone-row">
+                  <span>👑 30 Days Streak</span>
+                  <span class="milestone-pill">+1,500 PTS &amp; Gold Pass</span>
+                </div>
+              </div>
+
+              <!-- Check-In Action Button -->
+              <button class="btn-streak-checkin" id="btn-checkin-hub" onclick="recordDailyCheckin()">
+                <span>🔥 Check In Today (+25 PTS)</span>
+              </button>
+            </section>
+
+          </div>
+
+        </div>
+      </main>
+
+      <!-- Mobile Streak Sub-Page (Dedicated inner view on mobile, NOT stacked below) -->
+      <section id="mobile-streak-subpage" class="mobile-streak-subpage">
+        <div class="subpage-top-nav">
+          <button class="subpage-back-btn" onclick="closeMobileStreakSubpage()" type="button">
+            <span>←</span> Back to Profile
+          </button>
+          <span class="subpage-heading">Daily Streak Challenge</span>
+        </div>
+
+        <div class="streak-hub-card">
+          <!-- Flame Hero Visual -->
+          <div class="flame-center-box">
+            <svg class="flame-svg-icon" viewBox="0 0 100 120" fill="none">
+              <path d="M50 5C45 25 30 38 22 55C14 72 18 95 35 107C45 114 62 114 72 105C85 93 88 74 80 56C72 38 60 25 50 5Z" fill="url(#hubFlameGrad)" />
+              <path d="M50 45C46 56 38 64 35 74C32 84 36 96 46 101C52 104 60 103 65 98C71 91 72 81 68 72C64 63 56 56 50 45Z" fill="url(#hubFlameCore)" opacity="0.9" />
+            </svg>
+            <div class="streak-count-header" id="mobile-streak-num">3 days streak!</div>
+            <div class="streak-sub-status">Keep the fire burning</div>
+          </div>
+
+          <!-- 7-Day Flame Track -->
+          <div class="seven-day-flame-bar">
+            <div class="day-slot active"><div class="day-icon-circle">🔥</div><span class="day-label">Su</span></div>
+            <div class="day-slot active"><div class="day-icon-circle">🔥</div><span class="day-label">Mo</span></div>
+            <div class="day-slot active"><div class="day-icon-circle">🔥</div><span class="day-label">Tu</span></div>
+            <div class="day-slot"><div class="day-icon-circle">·</div><span class="day-label">We</span></div>
+            <div class="day-slot"><div class="day-icon-circle">·</div><span class="day-label">Th</span></div>
+            <div class="day-slot"><div class="day-icon-circle">·</div><span class="day-label">Fr</span></div>
+            <div class="day-slot reward"><div class="day-icon-circle">🎁</div><span class="day-label">Sa</span></div>
+          </div>
+
+          <!-- 14 Days Challenge Card -->
+          <div class="challenge-widget-card">
+            <div class="challenge-top">
+              <span class="challenge-name">14 Days Challenge</span>
+              <span class="challenge-day-count">Day 8 of 14</span>
+            </div>
+            <div class="challenge-bar-bg">
+              <div class="challenge-bar-fill"></div>
+            </div>
+            <div class="challenge-steps">
+              <span>Day 1</span>
+              <span>Day 7 🏅</span>
+              <span>Day 14 🏆</span>
+              <span>Day 30 👑</span>
+            </div>
+          </div>
+
+          <!-- 2-Column Stats -->
+          <div class="streak-stats-pair">
+            <div class="streak-stat-box">
+              <div class="stat-val-bold">Oct 14, 2026</div>
+              <div class="stat-lbl-sub">Streak Started</div>
+            </div>
+            <div class="streak-stat-box">
+              <div class="stat-val-bold">11 days</div>
+              <div class="stat-lbl-sub">Streak Record</div>
+            </div>
+          </div>
+
+          <!-- Milestones List -->
+          <div class="milestones-strip-card">
+            <div class="milestones-header">Streak Milestones</div>
+            <div class="milestone-row">
+              <span>📅 7 Days Streak</span>
+              <span class="milestone-pill">+150 PTS &amp; Badge</span>
+            </div>
+            <div class="milestone-row">
+              <span>⚡ 14 Days Streak</span>
+              <span class="milestone-pill">+500 PTS &amp; 1.5x</span>
+            </div>
+            <div class="milestone-row">
+              <span>👑 30 Days Streak</span>
+              <span class="milestone-pill">+1,500 PTS &amp; Gold Pass</span>
+            </div>
+          </div>
+
+          <!-- Check-In Action Button -->
+          <button class="btn-streak-checkin" id="btn-checkin-mobile" onclick="recordDailyCheckin()">
+            <span>🔥 Check In Today (+25 PTS)</span>
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- CELEBRATION MODAL (MATCHING REFERENCE 1 STREAK START)               -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div id="celebration-modal" class="celebration-modal-backdrop" onclick="handleModalBackdrop(event)">
+    <div class="celebration-modal-card">
+      <button class="modal-close-x" onclick="closeCelebrationModal()">✕</button>
+
+      <div style="font-size: 58px; filter: drop-shadow(0 8px 24px rgba(122,69,229,0.8));">🔥</div>
+
+      <div class="seven-day-flame-bar" style="width:100%; border:none; background:rgba(255,255,255,0.04);">
+        <div class="day-slot active"><div class="day-icon-circle">✓</div><span class="day-label">Thu</span></div>
+        <div class="day-slot"><div class="day-icon-circle">🔥</div><span class="day-label">Fri</span></div>
+        <div class="day-slot"><div class="day-icon-circle">3</div><span class="day-label">Sat</span></div>
+        <div class="day-slot"><div class="day-icon-circle">4</div><span class="day-label">Sun</span></div>
+        <div class="day-slot"><div class="day-icon-circle">5</div><span class="day-label">Mon</span></div>
+        <div class="day-slot"><div class="day-icon-circle">6</div><span class="day-label">Tue</span></div>
+        <div class="day-slot reward"><div class="day-icon-circle">🎁</div><span class="day-label">Wed</span></div>
+      </div>
+
+      <h2 style="font-size:20px; font-weight:800; color:#ffffff;">You've started a streak!</h2>
+      <p style="font-size:12.5px; color:var(--ink-muted); line-height:1.4;">
+        Check in daily to build your streak &amp; earn rewards.
+      </p>
+
+      <button class="btn-streak-checkin" onclick="closeCelebrationModal(); recordDailyCheckin();">
+        <span>Continue &amp; Claim Today's Streak</span>
+      </button>
+    </div>
+  </div>
+  <!-- ============================================================= -->
+  <!-- MODAL: SEND CRYPTO / CNGN                                     -->
+  <!-- ============================================================= -->
+  <div class="wallet-modal-overlay" id="modal-send-crypto" onclick="if(event.target===this)closeSendModal()">
+    <div class="wallet-modal-card">
+      <div class="modal-head-row">
+        <span class="modal-head-title">↗ Send from ₦Tag</span>
+        <button type="button" class="modal-close-btn" onclick="closeSendModal()">✕</button>
+      </div>
+
+      <div class="modal-form-group">
+        <div class="modal-form-lbl">
+          <span>Select Asset</span>
+          <span style="color:#c084fc; font-size:10.5px;">Chain 901 / Celo</span>
+        </div>
+        <select class="modal-select-field" id="send-modal-asset" onchange="updateSendMaxLabel()">
+          <option value="cNGN">cNGN Coins (Mento Stablecoin)</option>
+          <option value="CELO">CELO (Celo Sepolia)</option>
+          <option value="USDC">USDC (USD Stablecoin)</option>
+        </select>
+      </div>
+
+      <div class="modal-form-group">
+        <div class="modal-form-lbl">
+          <span>Recipient</span>
+          <span style="color:#10b981; font-size:10.5px;" id="send-resolved-badge">✓ Tag &amp; Address Resolver</span>
+        </div>
+        <input type="text" class="modal-input-field" id="send-modal-recipient" placeholder="e.g. ₦femi or 0x..." oninput="handleRecipientInput()" spellcheck="false" />
+      </div>
+
+      <div class="modal-form-group">
+        <div class="modal-form-lbl">
+          <span>Amount</span>
+          <span>Avail: <strong id="send-modal-avail" style="color:#ffffff;">₦1,350</strong> <button type="button" onclick="fillSendMax()" style="background:transparent; border:none; color:#c084fc; font-weight:800; cursor:pointer; padding:0 2px;">MAX</button></span>
+        </div>
+        <input type="number" class="modal-input-field" id="send-modal-amount" placeholder="0.00" min="1" step="any" />
+      </div>
+
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--ink-muted); padding:2px 4px;">
+        <span>Network Gas Fee:</span>
+        <span style="color:#10b981; font-weight:700;">₦0.00 (Gasless via Agent Relay ⚡)</span>
+      </div>
+
+      <button type="button" class="btn-modal-action" id="btn-submit-send" onclick="executeSend()">
+        <span>Confirm &amp; Send</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================= -->
+  <!-- MODAL: DUAL-RAIL RECEIVE (CRYPTO & NAIRA DVA)                 -->
+  <!-- ============================================================= -->
+  <div class="wallet-modal-overlay" id="modal-receive-dual" onclick="if(event.target===this)closeReceiveModal()">
+    <div class="wallet-modal-card">
+      <div class="modal-head-row">
+        <span class="modal-head-title">↙ Receive to ₦Tag</span>
+        <button type="button" class="modal-close-btn" onclick="closeReceiveModal()">✕</button>
+      </div>
+
+      <!-- Segmented Rail Selector Tabs -->
+      <div class="modal-rail-tabs">
+        <button type="button" class="modal-rail-tab active" id="tab-rx-btn-crypto" onclick="switchRxRail('crypto')">
+          <span>⚡ Receive Crypto</span>
+        </button>
+        <button type="button" class="modal-rail-tab" id="tab-rx-btn-naira" onclick="switchRxRail('naira')">
+          <span>🇳🇬 Receive Naira (Bank &amp; DVA)</span>
+        </button>
+      </div>
+
+      <!-- Rail 1: Crypto QR -->
+      <div id="rx-panel-crypto" class="rx-panel-content" style="display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:11.5px; color:var(--ink-muted); text-align:center;">
+          Direct onchain receipt for <strong style="color:#ffffff;">cNGN, CELO, USDC</strong> on Celo Sepolia.
+        </div>
+        <div class="modal-qr-box" id="rx-qr-container"></div>
+        <div style="font-family:var(--font-mono); font-size:11.5px; word-break:break-all; text-align:center; color:#ffffff; background:var(--bg-surface); padding:9px; border-radius:8px; border:1px solid var(--line);" id="rx-display-addr">
+          0x...
+        </div>
+        <div style="font-size:11px; text-align:center; color:var(--ink-muted);">
+          Senders in Web3 apps can also send directly to your tag: <strong style="color:#c084fc;" id="rx-tag-hint">₦olusegun</strong>
+        </div>
+        <button type="button" class="btn-modal-action" onclick="copyAddress(); closeReceiveModal();">
+          <span>📋 Copy Address</span>
+        </button>
+      </div>
+
+      <!-- Rail 2: Naira Bank Transfer & Web Checkout -->
+      <div id="rx-panel-naira" class="rx-panel-content" style="display:none; flex-direction:column; gap:10px;">
+        <div style="font-size:11.5px; color:var(--ink-muted); text-align:center;">
+          Instant transfer from any Nigerian bank (OPay, Kuda, GTBank, PalmPay, etc.).
+        </div>
+        <div class="va-account-display-row" style="margin-top:2px;">
+          <div class="va-number-group">
+            <span class="va-number-label">Bank Account Number (NUBAN)</span>
+            <span class="va-number-digits" id="rx-modal-nuban">9820491823</span>
+          </div>
+          <button type="button" class="btn-copy-va" onclick="copyVaAccount()">
+            <span>📋</span><span>Copy</span>
+          </button>
+        </div>
+        <div class="va-meta-grid">
+          <div class="va-meta-cell">
+            <span class="va-meta-lbl">Bank Name</span>
+            <span class="va-meta-val">Wema Bank / Flutterwave</span>
+          </div>
+          <div class="va-meta-cell">
+            <span class="va-meta-lbl">Account Name</span>
+            <span class="va-meta-val" id="rx-modal-acc-name">NairaTag • ₦olusegun</span>
+          </div>
+        </div>
+
+        <div style="margin-top:4px; display:flex; flex-direction:column; gap:6px;">
+          <span style="font-size:10.5px; font-weight:700; color:var(--ink-muted); text-transform:uppercase;">Web Checkout Link</span>
+          <div style="display:flex; gap:6px;">
+            <input type="text" class="modal-input-field" id="rx-modal-paylink" readonly style="font-size:11.5px; flex:1;" value="https://nairatag.ng/pay/olusegun" />
+            <button type="button" class="btn-copy-va" onclick="copyPayLink()" style="padding:0 14px; font-size:11px;">📋 Copy</button>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-action" onclick="closeReceiveModal();">
+          <span>Done</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    let userHandle = localStorage.getItem('nairatag_tag') || '₦olusegun';
+    userHandle = '₦' + userHandle.replace(/^[₦@#\s]+/g, '');
+    let userAddress = localStorage.getItem('nairatag_address') || '0x8a927c3d14f923b89047192834b1fa09148b4b1f';
+    let userPoints = parseInt(localStorage.getItem('nairatag_points') || '319968', 10);
+    let userStreak = parseInt(localStorage.getItem('nairatag_streak') || '3', 10);
+    let lastCheckin = localStorage.getItem('nairatag_last_checkin') || '';
+    let userCngn = localStorage.getItem('nairatag_balance_cngn') || '1,350';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initProfile();
+      initSidebar();
+      initTheme();
+      checkQueryParams();
+    });
+
+    function initProfile() {
+      const cleanHandle = userHandle.replace(/^[₦@#\s]+/g, '');
+      document.getElementById('disp-agent-handle').textContent = userHandle;
+      document.getElementById('header-handle-text').textContent = userHandle;
+      document.getElementById('disp-short-address').textContent = userAddress.slice(0, 6) + '...' + userAddress.slice(-4);
+      document.getElementById('disp-cngn-balance').textContent = '₦' + userCngn;
+      document.getElementById('disp-points-balance').textContent = userPoints.toLocaleString();
+      document.getElementById('streak-header-num').textContent = `${userStreak} days streak!`;
+      const mobNum = document.getElementById('mobile-streak-num');
+      if (mobNum) mobNum.textContent = `${userStreak} days streak!`;
+
+      // Virtual Account & Receive details
+      const storedVa = localStorage.getItem('nairatag_va_number') || '9820491823';
+      const vaNuban = document.getElementById('va-nuban-number');
+      const rxNuban = document.getElementById('rx-modal-nuban');
+      if (vaNuban) vaNuban.textContent = storedVa;
+      if (rxNuban) rxNuban.textContent = storedVa;
+
+      const vaName = document.getElementById('va-account-name');
+      const rxName = document.getElementById('rx-modal-acc-name');
+      if (vaName) vaName.textContent = `NairaTag • ${userHandle}`;
+      if (rxName) rxName.textContent = `NairaTag • ${userHandle}`;
+
+      const rxTagHint = document.getElementById('rx-tag-hint');
+      if (rxTagHint) rxTagHint.textContent = userHandle;
+
+      const rxPaylink = document.getElementById('rx-modal-paylink');
+      if (rxPaylink) rxPaylink.value = `https://nairatag.ng/pay/${cleanHandle}`;
+
+      const rxAddr = document.getElementById('rx-display-addr');
+      if (rxAddr) rxAddr.textContent = userAddress;
+
+      const sendAvail = document.getElementById('send-modal-avail');
+      if (sendAvail) sendAvail.textContent = '₦' + userCngn;
+
+      // Deterministic avatar
+      const names = ['rema', 'asake', 'burna', 'davido', 'tiwa', 'wizkid', 'olamide'];
+      let hash = 0;
+      for (let i = 0; i < userHandle.length; i++) hash = (hash << 5) - hash + userHandle.charCodeAt(i);
+      const chosen = names[Math.abs(hash) % names.length];
+      document.getElementById('agent-avatar-img').src = `/hub/avatars/${chosen}.gif`;
+
+      // Checkin button state
+      const today = new Date().toDateString();
+      if (lastCheckin === today) {
+        ['btn-checkin-hub', 'btn-checkin-mobile'].forEach(id => {
+          const btn = document.getElementById(id);
+          if (btn) {
+            btn.innerHTML = '<span>✓ Checked In Today (+25 PTS Claimed)</span>';
+            btn.style.background = 'rgba(16, 185, 129, 0.2)';
+            btn.style.color = '#34d399';
+            btn.style.border = '1px solid rgba(16, 185, 129, 0.4)';
+            btn.disabled = true;
+          }
+        });
+      }
+
+      // Check URL query parameters or hash to auto-open modals
+      const urlParams = new URLSearchParams(window.location.search);
+      const modalParam = urlParams.get('modal') || (window.location.hash ? window.location.hash.replace('#', '') : '');
+      if (modalParam === 'deposit' || modalParam === 'naira') {
+        openReceiveModal('naira');
+      } else if (modalParam === 'crypto') {
+        openReceiveModal('crypto');
+      } else if (modalParam === 'send') {
+        openSendModal();
+      }
+    }
+
+    function recordDailyCheckin() {
+      const today = new Date().toDateString();
+      if (lastCheckin === today) {
+        showToast('Already checked in today! See you tomorrow.');
+        return;
+      }
+
+      userStreak += 1;
+      userPoints += 25;
+      lastCheckin = today;
+
+      localStorage.setItem('nairatag_streak', userStreak.toString());
+      localStorage.setItem('nairatag_points', userPoints.toString());
+      localStorage.setItem('nairatag_last_checkin', today);
+
+      initProfile();
+      shootConfetti();
+      showToast('🔥 Check-in successful! +25 PTS added to balance!');
+    }
+
+    function shootConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 90,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#7a45e5', '#ffd700', '#c084fc', '#10b981']
+        });
+      }
+    }
+
+    function checkQueryParams() {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get('streak') === 'true' || window.location.hash === '#streak') {
+        openStreakView();
+      }
+    }
+
+    function openStreakView() {
+      if (window.innerWidth <= 900) {
+        openMobileStreakSubpage();
+      } else {
+        triggerCelebrationModal();
+      }
+    }
+
+    function openMobileStreakSubpage() {
+      document.body.classList.add('in-streak-subpage');
+      window.scrollTo(0, 0);
+    }
+
+    function closeMobileStreakSubpage() {
+      document.body.classList.remove('in-streak-subpage');
+    }
+
+    function triggerCelebrationModal() {
+      document.getElementById('celebration-modal').classList.add('open');
+      shootConfetti();
+    }
+
+    function closeCelebrationModal() {
+      document.getElementById('celebration-modal').classList.remove('open');
+    }
+
+    function handleModalBackdrop(e) {
+      if (e.target.id === 'celebration-modal') closeCelebrationModal();
+    }
+
+    // Sidebar & Navigation
+    function initSidebar() {
+      const sidebar = document.getElementById('app-sidebar');
+      const toggleBtn = document.getElementById('sidebar-toggle-btn');
+      const toggleIcon = document.getElementById('sidebar-toggle-icon');
+      if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+          sidebar.classList.toggle('collapsed');
+          toggleIcon.textContent = sidebar.classList.contains('collapsed') ? '▨' : '◨';
+        });
+      }
+
+      const mobileToggle = document.getElementById('header-sidebar-btn');
+      if (mobileToggle && sidebar) {
+        mobileToggle.addEventListener('click', () => {
+          sidebar.classList.toggle('collapsed');
+        });
+      }
+    }
+
+    // Theme
+    function initTheme() {
+      const btn = document.getElementById('theme-toggle-btn');
+      if (!btn) return;
+      const urlTheme = new URLSearchParams(window.location.search).get('theme');
+      const saved = (urlTheme === 'dark' || urlTheme === 'light') ? urlTheme : (localStorage.getItem('nairatag_theme') || 'dark');
+      document.documentElement.setAttribute('data-theme', saved);
+      document.documentElement.classList.toggle('dark', saved === 'dark');
+      btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+      btn.addEventListener('click', () => {
+        if (typeof window.toggleTheme === 'function') {
+          window.toggleTheme();
+          const current = document.documentElement.getAttribute('data-theme');
+          btn.textContent = current === 'dark' ? '☀️' : '🌙';
+        } else {
+          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          const next = isDark ? 'light' : 'dark';
+          document.documentElement.setAttribute('data-theme', next);
+          document.documentElement.classList.toggle('dark', next === 'dark');
+          localStorage.setItem('nairatag_theme', next);
+          btn.textContent = next === 'dark' ? '☀️' : '🌙';
+        }
+      });
+    }
+
+    function copyAddress() {
+      navigator.clipboard.writeText(userAddress).then(() => {
+        showToast('Onchain address copied to clipboard!');
+        const btn = document.querySelector('#modal-receive-dual .btn-modal-action');
+        if (btn) {
+          const original = btn.innerHTML;
+          btn.innerHTML = '<span>✓ Address Copied!</span>';
+          btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+          btn.style.boxShadow = '0 8px 24px rgba(16, 185, 129, 0.5)';
+          btn.style.transform = 'scale(1.02)';
+          setTimeout(() => {
+            btn.innerHTML = original;
+            btn.style.background = '';
+            btn.style.boxShadow = '';
+            btn.style.transform = '';
+          }, 1600);
+        }
+      });
+    }
+
+    function shareReferral() {
+      const clean = userHandle.replace('₦', '');
+      const url = `https://nairatag.ng/onboarding?ref=${encodeURIComponent(clean)}`;
+      if (navigator.share) {
+        navigator.share({
+          title: `${userHandle} on NairaTag`,
+          text: `Join me on NairaTag Network with handle ${userHandle}!`,
+          url: url
+        }).catch(() => copyReferralFallback(url));
+      } else {
+        copyReferralFallback(url);
+      }
+    }
+
+    function copyReferralFallback(url) {
+      navigator.clipboard.writeText(url).then(() => {
+        showToast('🎁 Referral link copied to clipboard!');
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('app-toast');
+      t.textContent = msg;
+      t.classList.add('visible');
+      setTimeout(() => t.classList.remove('visible'), 2800);
+    }
+
+    function showVipToast() {
+      showToast('👑 Sovereign VIP Pass: Gasless Celo relaying & 2x PTS Multiplier active!');
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // WALLET INTERACTION & MODAL HANDLERS
+    // ═══════════════════════════════════════════════════════════════════
+    function copyVaAccount() {
+      const nuban = document.getElementById('va-nuban-number')?.textContent || '9820491823';
+      navigator.clipboard.writeText(nuban).then(() => {
+        showToast(`✅ Copied Virtual Account: ${nuban} (Wema Bank)`);
+
+        // Micro-interaction: button morph & ripple
+        const btns = document.querySelectorAll('.va-copy-mini-btn, .btn-copy-va');
+        btns.forEach(b => {
+          const orig = b.innerHTML;
+          b.innerHTML = '<span>✓ Copied!</span>';
+          b.style.filter = 'brightness(1.25)';
+          b.style.transform = 'scale(1.08)';
+          setTimeout(() => {
+            b.innerHTML = orig;
+            b.style.filter = '';
+            b.style.transform = '';
+          }, 1600);
+        });
+
+        const pill = document.querySelector('.va-num-group');
+        if (pill) {
+          pill.classList.remove('copy-success-pulse');
+          void pill.offsetWidth;
+          pill.classList.add('copy-success-pulse');
+        }
+      });
+    }
+
+    function copyPayLink() {
+      const link = document.getElementById('rx-modal-paylink')?.value || 'https://nairatag.ng/pay';
+      navigator.clipboard.writeText(link).then(() => {
+        showToast('🔗 Payment link copied to clipboard!');
+        const btn = event?.currentTarget;
+        if (btn) {
+          const orig = btn.innerHTML;
+          btn.innerHTML = '<span>✓ Copied</span>';
+          btn.style.filter = 'brightness(1.25)';
+          setTimeout(() => {
+            btn.innerHTML = orig;
+            btn.style.filter = '';
+          }, 1600);
+        }
+      });
+    }
+
+    // SEND MODAL
+    function openSendModal() {
+      const modal = document.getElementById('modal-send-crypto');
+      if (modal) {
+        modal.classList.add('open');
+        updateSendMaxLabel();
+      }
+    }
+
+    function closeSendModal() {
+      const modal = document.getElementById('modal-send-crypto');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function updateSendMaxLabel() {
+      const asset = document.getElementById('send-modal-asset')?.value || 'cNGN';
+      const availEl = document.getElementById('send-modal-avail');
+      if (!availEl) return;
+      if (asset === 'cNGN') availEl.textContent = '₦' + userCngn;
+      else if (asset === 'CELO') availEl.textContent = '0.0450 CELO';
+      else if (asset === 'USDC') availEl.textContent = '10.00 USDC';
+    }
+
+    function fillSendMax() {
+      const asset = document.getElementById('send-modal-asset')?.value || 'cNGN';
+      const input = document.getElementById('send-modal-amount');
+      if (!input) return;
+      if (asset === 'cNGN') {
+        const raw = parseFloat(userCngn.replace(/,/g, '')) || 0;
+        input.value = raw.toString();
+      } else if (asset === 'CELO') {
+        input.value = '0.045';
+      } else if (asset === 'USDC') {
+        input.value = '10';
+      }
+    }
+
+    function handleRecipientInput() {
+      const val = document.getElementById('send-modal-recipient')?.value.trim() || '';
+      const badge = document.getElementById('send-resolved-badge');
+      if (!badge) return;
+      if (!val) {
+        badge.textContent = '✓ Tag & Address Resolver';
+        badge.style.color = '#10b981';
+      } else if (val.startsWith('0x') && val.length === 42) {
+        badge.textContent = '✓ Valid Onchain Address';
+        badge.style.color = '#34d399';
+      } else if (val.startsWith('₦') || /^[a-zA-Z0-9_]+$/.test(val)) {
+        badge.textContent = `✓ Resolved: ${val.startsWith('₦') ? val : '₦' + val} (0x71C...3a19)`;
+        badge.style.color = '#34d399';
+      } else {
+        badge.textContent = 'Resolving...';
+        badge.style.color = '#c084fc';
+      }
+    }
+
+    function executeSend() {
+      const recipient = document.getElementById('send-modal-recipient')?.value.trim();
+      const amountStr = document.getElementById('send-modal-amount')?.value.trim();
+      const asset = document.getElementById('send-modal-asset')?.value || 'cNGN';
+      const btn = document.getElementById('btn-submit-send');
+
+      if (!recipient) {
+        showToast('Please enter a recipient ₦Tag or 0x address');
+        return;
+      }
+      const amount = parseFloat(amountStr);
+      if (isNaN(amount) || amount <= 0) {
+        showToast('Please enter a valid amount to send');
+        return;
+      }
+
+      const currentBalance = parseFloat(userCngn.replace(/,/g, '')) || 0;
+      if (asset === 'cNGN' && amount > currentBalance) {
+        showToast(`Insufficient cNGN balance (Available: ₦${userCngn})`);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span>⚡ Broadcasting to Sequencer...</span>';
+
+      setTimeout(() => {
+        if (asset === 'cNGN') {
+          const newBal = Math.max(0, currentBalance - amount);
+          userCngn = newBal.toLocaleString('en-US');
+          localStorage.setItem('nairatag_balance_cngn', userCngn);
+          document.getElementById('disp-cngn-balance').textContent = '₦' + userCngn;
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<span>Confirm &amp; Send</span>';
+        closeSendModal();
+
+        showToast(`🚀 Sent ${amount} ${asset} to ${recipient}!`);
+        addActivityItem(`Transfer to ${recipient}`, `-${asset === 'cNGN' ? '₦' : ''}${amount.toLocaleString()} ${asset !== 'cNGN' ? asset : ''}`, false, 'transfer');
+        document.getElementById('send-modal-amount').value = '';
+        document.getElementById('send-modal-recipient').value = '';
+      }, 1100);
+    }
+
+    // RECEIVE MODAL
+    let qrRendered = false;
+    function openReceiveModal(rail = 'naira') {
+      const modal = document.getElementById('modal-receive-dual');
+      if (modal) {
+        modal.classList.add('open');
+        switchRxRail(rail);
+        if (!qrRendered && typeof QRCode !== 'undefined') {
+          const container = document.getElementById('rx-qr-container');
+          if (container) {
+            container.innerHTML = '';
+            new QRCode(container, {
+              text: userAddress,
+              width: 140,
+              height: 140,
+              colorDark: '#09090d',
+              colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel.M
+            });
+            qrRendered = true;
+          }
+        }
+      }
+    }
+
+    function closeReceiveModal() {
+      const modal = document.getElementById('modal-receive-dual');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function switchRxRail(rail) {
+      const pCrypto = document.getElementById('rx-panel-crypto');
+      const pNaira = document.getElementById('rx-panel-naira');
+      const bCrypto = document.getElementById('tab-rx-btn-crypto');
+      const bNaira = document.getElementById('tab-rx-btn-naira');
+
+      if (rail === 'crypto') {
+        pCrypto.style.display = 'flex';
+        pCrypto.style.animation = 'none';
+        void pCrypto.offsetWidth;
+        pCrypto.style.animation = 'panelSlideFade 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+        pNaira.style.display = 'none';
+        bCrypto.classList.add('active');
+        bNaira.classList.remove('active');
+      } else {
+        pCrypto.style.display = 'none';
+        pNaira.style.display = 'flex';
+        pNaira.style.animation = 'none';
+        void pNaira.offsetWidth;
+        pNaira.style.animation = 'panelSlideFade 0.22s cubic-bezier(0.16, 1, 0.3, 1)';
+        bCrypto.classList.remove('active');
+        bNaira.classList.add('active');
+      }
+    }
+
+    // TRANSACTION ACTIVITY FEED
+    function refreshActivityFeed() {
+      showToast('🔄 Syncing onchain activity & bank deposits...');
+      setTimeout(() => {
+        showToast('✨ Activity feed is fully synced & up to date!');
+      }, 700);
+    }
+
+    function addActivityItem(title, amountStr, isPositive, type = 'transfer') {
+      const feed = document.getElementById('profile-activity-feed');
+      if (!feed) return;
+      const card = document.createElement('div');
+      card.className = 'tx-item-card';
+
+      let icon = '↗️';
+      let iconClass = 'transfer';
+      if (type === 'deposit') { icon = '↙️'; iconClass = 'deposit'; }
+      else if (type === 'streak') { icon = '🔥'; iconClass = 'streak'; }
+      else if (type === 'agent') { icon = '⚡'; iconClass = 'agent'; }
+
+      card.innerHTML = `
+        <div class="tx-item-left">
+          <div class="tx-icon-pill ${iconClass}">${icon}</div>
+          <div class="tx-details">
+            <span class="tx-title-text">${title}</span>
+            <span class="tx-meta-sub">Zero Gas Relay · Just now</span>
+          </div>
+        </div>
+        <div class="tx-item-right">
+          <span class="tx-amount-text ${isPositive ? 'pos' : 'neg'}">${amountStr}</span>
+          <span class="tx-status-pill success">Confirmed</span>
+        </div>
+      `;
+      feed.prepend(card);
+    }
+  </script>
+</body>
+</html>
