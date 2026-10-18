@@ -51,6 +51,14 @@ import {
   Briefcase,
   Phone,
   Plus,
+  Home,
+  Users,
+  Tag,
+  Store,
+  Bell,
+  Smartphone,
+  Ticket,
+  TrendingUp,
 } from 'lucide-react';
 import {
   connectWallet,
@@ -519,11 +527,12 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Navigation: 'pay' | 'claim' | 'tasks' | 'agents' | 'faq'
+  // Navigation: 'pay' (Home) | 'agents' | 'tasks' (Rewards) | 'prices' | 'markets' | 'claim' | 'faq'
+  const VALID_TABS = ['pay', 'claim', 'tasks', 'agents', 'faq', 'prices', 'markets'];
   const [mainTab, setMainTabState] = useState(() => {
     try {
       const hash = window.location.hash.replace('#', '').toLowerCase();
-      if (['pay', 'claim', 'tasks', 'agents', 'faq'].includes(hash)) {
+      if (VALID_TABS.includes(hash)) {
         return hash;
       }
     } catch {}
@@ -541,7 +550,7 @@ export default function App() {
     const handleHash = () => {
       try {
         const hash = window.location.hash.replace('#', '').toLowerCase();
-        if (['pay', 'claim', 'tasks', 'agents', 'faq'].includes(hash)) {
+        if (VALID_TABS.includes(hash)) {
           setMainTabState(hash);
         }
       } catch {}
@@ -549,6 +558,39 @@ export default function App() {
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
+
+  // Notifications Popover State (Bell icon)
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  // Daily Bonus Live Countdown Timer (hh : mm : ss matching screenshot)
+  const [dailyCountdown, setDailyCountdown] = useState('09 : 35 : 17');
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date();
+      const nextDay = new Date(now);
+      nextDay.setUTCHours(24, 0, 0, 0);
+      const diff = Math.max(0, Math.floor((nextDay.getTime() - now.getTime()) / 1000));
+      const hours = String(Math.floor(diff / 3600)).padStart(2, '0');
+      const mins = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+      const secs = String(diff % 60).padStart(2, '0');
+      setDailyCountdown(`${hours} : ${mins} : ${secs}`);
+    };
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Daily Bonus Missions Tracking (Report Market Price, Agent Mission, Commodity Alert)
+  const [dailyMissionsDone, setDailyMissionsDone] = useState({
+    price: false,
+    agent: false,
+    alert: false,
+  });
+
+  // Price Report Dialog
+  const [isPriceReportModalOpen, setIsPriceReportModalOpen] = useState(false);
+  const [priceReportCommodity, setPriceReportCommodity] = useState('Lagos Fuel (PMS)');
+  const [priceReportValue, setPriceReportValue] = useState('1050');
 
   // FAQ Page State
   const [faqSearchQuery, setFaqSearchQuery] = useState('');
@@ -913,6 +955,46 @@ export default function App() {
     setUserPoints((prev) => prev + earnedPoints);
     triggerCelebrationConfetti();
     showToast(`🎉 Quest completed! +${earnedPoints} Protocol Points & ${task.rewardUSDC} USDC reward queued!`, 'success', 3500);
+  };
+
+  // Daily Bonus Mission Actions (Matching Reference Screen)
+  const handleDailyPriceReport = () => {
+    if (dailyMissionsDone.price) {
+      showToast("Today's price report already submitted!", 'info');
+      return;
+    }
+    setDailyMissionsDone((prev) => ({ ...prev, price: true }));
+    setUserPoints((prev) => prev + 100);
+    triggerCelebrationConfetti();
+    showToast('📊 Market Price Verified! +100 Protocol Points added to your balance.', 'success', 3500);
+  };
+
+  const handleDailyAgentMission = () => {
+    if (dailyMissionsDone.agent) {
+      showToast("Today's agent mission already completed!", 'info');
+      return;
+    }
+    setDailyMissionsDone((prev) => ({ ...prev, agent: true }));
+    setUserPoints((prev) => prev + 150);
+    triggerCelebrationConfetti();
+    showToast('🤖 Agent Mission Completed! High-gap coverage verified. +150 Points.', 'success', 3500);
+  };
+
+  const handleDailyCommodityAlert = () => {
+    if (dailyMissionsDone.alert) {
+      showToast('Commodity alert already active for today!', 'info');
+      return;
+    }
+    setDailyMissionsDone((prev) => ({ ...prev, alert: true }));
+    setUserPoints((prev) => prev + 50);
+    triggerCelebrationConfetti();
+    showToast('🔔 Price Alert Set on Arc Commodities! +50 Points.', 'success', 3500);
+  };
+
+  const handleInviteToEarn = () => {
+    const inviteUrl = `https://arc.nairatag.ng?ref=${myTag ? `₦${myTag.tag}` : 'sovereign'}`;
+    triggerCopy('invite_link', inviteUrl);
+    showToast('🔗 Invite Link Copied! Share with friends to earn 10% fee rebates on Arc.', 'success', 3500);
   };
 
   const handleCreateTask = (e) => {
@@ -1329,6 +1411,24 @@ export default function App() {
           >
             <Bot size={14} />
             <span>AgentTags</span>
+            <span className="nav-badge-pill" style={{ background: '#7c3aed' }}>8</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-tab-btn ${mainTab === 'prices' ? 'active' : ''}`}
+            onClick={() => setMainTab('prices')}
+          >
+            <Tag size={14} />
+            <span>Prices</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-tab-btn ${mainTab === 'markets' ? 'active' : ''}`}
+            onClick={() => setMainTab('markets')}
+          >
+            <Store size={14} />
+            <span>Markets</span>
+            <span className="nav-badge-pill" style={{ background: '#047857' }}>12</span>
           </button>
           <button
             type="button"
@@ -1426,7 +1526,80 @@ export default function App() {
             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
           </button>
 
-          {/* Connect / Connected Wallet Pill */}
+          {/* Notification Bell with Badge 3 (Matching Reference Screenshot) */}
+          <div className="header-bell-wrapper">
+            <button
+              type="button"
+              className="header-bell-btn"
+              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              aria-label="3 new protocol notifications"
+              title="Notifications"
+            >
+              <Bell size={18} />
+              <span className="header-bell-badge">3</span>
+            </button>
+
+            {isNotificationOpen && (
+              <>
+                <div className="more-menu-backdrop" onClick={() => setIsNotificationOpen(false)} />
+                <div className="notifications-popover" onClick={(e) => e.stopPropagation()}>
+                  <div className="notifications-popover-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Bell size={14} color="#5B4FFF" />
+                      <span style={{ fontSize: '13px', fontWeight: 800 }}>Protocol Notifications</span>
+                    </div>
+                    <span className="nav-badge-pill" style={{ background: '#ef4444' }}>3 New</span>
+                  </div>
+
+                  <div className="notifications-list">
+                    <div
+                      className="notification-item unread"
+                      onClick={() => {
+                        setMainTab('tasks');
+                        setIsNotificationOpen(false);
+                      }}
+                    >
+                      <div className="notif-dot" />
+                      <div className="notif-content">
+                        <div className="notif-title">🎁 Daily Bonus Quests Ready</div>
+                        <div className="notif-sub">Claim up to +250 protocol points & rewards today</div>
+                      </div>
+                    </div>
+
+                    <div
+                      className="notification-item unread"
+                      onClick={() => {
+                        setMainTab('agents');
+                        setIsNotificationOpen(false);
+                      }}
+                    >
+                      <div className="notif-dot" />
+                      <div className="notif-content">
+                        <div className="notif-title">🤖 ₦chowdeck Settled on Arc</div>
+                        <div className="notif-sub">Sub-second USDC micro-payment finality verified</div>
+                      </div>
+                    </div>
+
+                    <div
+                      className="notification-item unread"
+                      onClick={() => {
+                        setMainTab('tasks');
+                        setIsNotificationOpen(false);
+                      }}
+                    >
+                      <div className="notif-dot" />
+                      <div className="notif-content">
+                        <div className="notif-title">🔒 Escrow Milestone #b001 Verified</div>
+                        <div className="notif-sub">Arc Osaka smart escrow locked $120 USDC</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Connect / Connected Wallet Pill (with Shield Sign in matching screenshot) */}
           {walletAddress ? (
             <div
               className="wallet-connected-pill"
@@ -1444,7 +1617,8 @@ export default function App() {
               className="wallet-btn-pill header-connect-pill"
               onClick={() => setIsConnectModalOpen(true)}
             >
-              <span>Connect</span>
+              <ShieldCheck size={16} />
+              <span>Sign in</span>
             </button>
           )}
         </div>
@@ -1545,6 +1719,42 @@ export default function App() {
                   <span className="mobile-nav-desc">Autonomous ERC-8004 reputation directory</span>
                 </div>
                 {mainTab === 'agents' && <span className="mobile-nav-active-pill">Active</span>}
+              </button>
+
+              <button
+                type="button"
+                className={`mobile-nav-link ${mainTab === 'prices' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainTab('prices');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon-box">
+                  <Tag size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <span className="mobile-nav-title">Market Prices</span>
+                  <span className="mobile-nav-desc">Real-time Nigerian commodity & FX oracle feeds</span>
+                </div>
+                {mainTab === 'prices' && <span className="mobile-nav-active-pill">Active</span>}
+              </button>
+
+              <button
+                type="button"
+                className={`mobile-nav-link ${mainTab === 'markets' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainTab('markets');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon-box">
+                  <Store size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <span className="mobile-nav-title">Arc Markets</span>
+                  <span className="mobile-nav-desc">12 verified merchants & stores accepting USDC</span>
+                </div>
+                {mainTab === 'markets' && <span className="mobile-nav-active-pill">Active</span>}
               </button>
 
               <button
@@ -2382,6 +2592,131 @@ export default function App() {
               </button>
             </div>
 
+            {/* ─── 1. INVITE TO EARN BANNER (MATCHING REFERENCE SCREENSHOT) ─── */}
+            <div className="invite-earn-banner">
+              <div className="invite-milestones-row">
+                <span>1 User</span>
+                <span>3 Users</span>
+                <span>5 Users</span>
+              </div>
+              <button
+                type="button"
+                className="invite-action-btn"
+                onClick={handleInviteToEarn}
+              >
+                <Share2 size={16} />
+                <span>Invite to Earn</span>
+              </button>
+            </div>
+
+            {/* ─── 2. DAILY BONUS CARD (MATCHING REFERENCE SCREENSHOT) ─── */}
+            <div className="daily-bonus-card">
+              <div className="daily-bonus-header">
+                <span className="daily-bonus-title">Daily Bonus</span>
+                <div className="daily-bonus-timer" title="Time remaining until daily bonus reset">
+                  <Clock size={12} />
+                  <span>{dailyCountdown}</span>
+                </div>
+              </div>
+
+              <div className="daily-mission-list">
+                {/* Mission 1: Report Market Price */}
+                <div className="daily-mission-item">
+                  <div className="daily-mission-icon" style={{ background: '#f3e8ff', color: '#9333ea' }}>
+                    <ArrowDownUp size={18} />
+                  </div>
+                  <div className="daily-mission-info">
+                    <div className="daily-mission-title">Report Market Price</div>
+                    <div className="daily-mission-sub">
+                      {dailyMissionsDone.price ? 'Verified today (1/1)' : 'Submit 1 verified price report (0/1 per day)'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`daily-mission-go-btn ${dailyMissionsDone.price ? 'completed' : ''}`}
+                    onClick={handleDailyPriceReport}
+                    disabled={dailyMissionsDone.price}
+                  >
+                    {dailyMissionsDone.price ? 'Claimed' : 'Go'}
+                  </button>
+                </div>
+
+                {/* Mission 2: Complete Agent Mission */}
+                <div className="daily-mission-item">
+                  <div className="daily-mission-icon" style={{ background: '#e0f2fe', color: '#0284c7' }}>
+                    <Bot size={18} />
+                  </div>
+                  <div className="daily-mission-info">
+                    <div className="daily-mission-title">Complete Agent Mission</div>
+                    <div className="daily-mission-sub">
+                      {dailyMissionsDone.agent ? 'Agent task completed (1/1)' : 'Claim high-gap market coverage (Once per day)'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`daily-mission-go-btn ${dailyMissionsDone.agent ? 'completed' : ''}`}
+                    onClick={handleDailyAgentMission}
+                    disabled={dailyMissionsDone.agent}
+                  >
+                    {dailyMissionsDone.agent ? 'Claimed' : 'Go'}
+                  </button>
+                </div>
+
+                {/* Mission 3: Data & Commodity Alert */}
+                <div className="daily-mission-item">
+                  <div className="daily-mission-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
+                    <Smartphone size={18} />
+                  </div>
+                  <div className="daily-mission-info">
+                    <div className="daily-mission-title">Data & Commodity Alert</div>
+                    <div className="daily-mission-sub">
+                      {dailyMissionsDone.alert ? 'Alert active for today' : 'Set 1 price alert on any commodity'}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`daily-mission-go-btn ${dailyMissionsDone.alert ? 'completed' : ''}`}
+                    onClick={handleDailyCommodityAlert}
+                    disabled={dailyMissionsDone.alert}
+                  >
+                    {dailyMissionsDone.alert ? 'Claimed' : 'Go'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* ─── 3. MY COUPONS SECTION (MATCHING REFERENCE SCREENSHOT) ─── */}
+            <div className="coupons-card-wrap">
+              <div className="coupons-header-row">
+                <span className="coupons-header-title">My Coupons</span>
+                <HelpCircle size={15} color="var(--privy-color-foreground-3)" />
+              </div>
+
+              <div className="coupons-list-row">
+                <div className="coupon-ticket-pill">
+                  <div className="coupon-ticket-left">
+                    <Ticket size={16} color="#7c3aed" />
+                    <div>
+                      <div className="coupon-name">Zero Gas Pass</div>
+                      <div className="coupon-desc">100% Arc network fee rebate</div>
+                    </div>
+                  </div>
+                  <span className="coupon-status-tag">Active</span>
+                </div>
+
+                <div className="coupon-ticket-pill">
+                  <div className="coupon-ticket-left">
+                    <Sparkles size={16} color="#059669" />
+                    <div>
+                      <div className="coupon-name">10% Referral Boost</div>
+                      <div className="coupon-desc">+10% points on invited tag pays</div>
+                    </div>
+                  </div>
+                  <span className="coupon-status-tag">Active</span>
+                </div>
+              </div>
+            </div>
+
             {/* Protocol Stats Grid */}
             <div className="tasks-stats-grid">
               <div className="tasks-stat-card">
@@ -2718,7 +3053,371 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            TAB 5: PRICES & COMMODITY ORACLES (MATCHING REFERENCE DATA FEEDS)
+            ─────────────────────────────────────────────────────────────────── */}
+        {mainTab === 'prices' && (
+          <div className="tasks-page-container">
+            <div className="tasks-top-bar">
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <Tag size={20} color="#059669" />
+                  <h1 className="tasks-header-title">Market Prices & Oracles</h1>
+                  <span className="card-net-pill" style={{ background: '#ecfdf5', color: '#047857', borderColor: '#a7f3d0' }}>
+                    Live Feeds
+                  </span>
+                </div>
+                <p className="tasks-header-subtitle">
+                  Real-time Nigerian market rates and decentralized commodity price feeds powering Arc autonomous AI agents and sub-second USDC settlements.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-action-primary"
+                style={{ padding: '8px 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onClick={() => setMainTab('pay')}
+              >
+                <ArrowDownUp size={14} />
+                <span>Swap / Pay</span>
+              </button>
+            </div>
+
+            {/* Live Exchange & Settlement Rate Cards */}
+            <div className="tasks-stats-grid">
+              <div className="tasks-stat-card">
+                <div className="stat-label">
+                  <Coins size={13} />
+                  <span>Arc USDC / NGN</span>
+                </div>
+                <div className="stat-value" style={{ color: '#059669' }}>₦1,485.00</div>
+                <div className="stat-desc">Native Arc Osaka reference rate (+0.35%)</div>
+              </div>
+
+              <div className="tasks-stat-card">
+                <div className="stat-label">
+                  <Zap size={13} />
+                  <span>Arc Network Fee</span>
+                </div>
+                <div className="stat-value">&lt; $0.001</div>
+                <div className="stat-desc">Sub-cent gas floor (0.00002 USDC)</div>
+              </div>
+
+              <div className="tasks-stat-card">
+                <div className="stat-label">
+                  <Clock size={13} />
+                  <span>Finality Speed</span>
+                </div>
+                <div className="stat-value" style={{ color: '#2563eb' }}>&lt; 0.85s</div>
+                <div className="stat-desc">Deterministic EVM block settlement</div>
+              </div>
+
+              <div className="tasks-stat-card">
+                <div className="stat-label">
+                  <TrendingUp size={13} />
+                  <span>24h Protocol Vol</span>
+                </div>
+                <div className="stat-value">$482,000</div>
+                <div className="stat-desc">≈ ₦715,770,000 NGN processed</div>
+              </div>
+            </div>
+
+            {/* Daily Bonus Quick-Actions Banner */}
+            <div className="daily-bonus-card" style={{ marginTop: '16px' }}>
+              <div className="daily-bonus-header">
+                <div>
+                  <span className="daily-bonus-title">Price Reporting & Oracles</span>
+                  <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', marginTop: '2px' }}>
+                    Earn Protocol Points by verifying real-world consumer commodity prices on Arc Osaka.
+                  </div>
+                </div>
+                <div className="daily-bonus-timer">
+                  <Clock size={12} />
+                  <span>{dailyCountdown}</span>
+                </div>
+              </div>
+
+              <div className="daily-mission-list">
+                <div className="daily-mission-item">
+                  <div className="daily-mission-icon" style={{ background: '#f3e8ff', color: '#9333ea' }}>
+                    <ArrowDownUp size={18} />
+                  </div>
+                  <div className="daily-mission-info">
+                    <div className="daily-mission-title">Report Lagos Fuel (PMS) Price</div>
+                    <div className="daily-mission-sub">Current Oracle: ₦1,050/L · Verified across 18 nodes</div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`daily-mission-go-btn ${dailyMissionsDone.price ? 'completed' : ''}`}
+                    onClick={handleDailyPriceReport}
+                    disabled={dailyMissionsDone.price}
+                  >
+                    {dailyMissionsDone.price ? 'Submitted' : 'Report +100 Pts'}
+                  </button>
+                </div>
+
+                <div className="daily-mission-item">
+                  <div className="daily-mission-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
+                    <Smartphone size={18} />
+                  </div>
+                  <div className="daily-mission-info">
+                    <div className="daily-mission-title">Set Data & Commodity Price Alert</div>
+                    <div className="daily-mission-sub">Get notified via Telegram/WhatsApp when prices swing &gt; 3%</div>
+                  </div>
+                  <button
+                    type="button"
+                    className={`daily-mission-go-btn ${dailyMissionsDone.alert ? 'completed' : ''}`}
+                    onClick={handleDailyCommodityAlert}
+                    disabled={dailyMissionsDone.alert}
+                  >
+                    {dailyMissionsDone.alert ? 'Alert Active' : 'Set Alert +50 Pts'}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Verified Commodity Price Matrix */}
+            <div style={{ marginTop: '16px' }}>
+              <div style={{ fontSize: '14px', fontWeight: 800, marginBottom: '10px', color: 'var(--privy-color-foreground)' }}>
+                Nigerian Consumer Price Feeds (Verified onchain)
+              </div>
+              <div className="tasks-stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
+                {[
+                  { name: 'Chowdeck Fast Food Index', price: '₦3,850', unit: 'avg meal', change: '+1.2%', time: '2m ago' },
+                  { name: 'Lagos Fuel / Petrol (PMS)', price: '₦1,050', unit: 'per litre', change: '0.0%', time: '8m ago' },
+                  { name: 'MTN Mobile Data (10GB)', price: '₦4,500', unit: '30-day plan', change: '0.0%', time: '1h ago' },
+                  { name: 'Jumia Smartphone Basket', price: '₦185,000', unit: 'median unit', change: '-2.1%', time: '3h ago' },
+                  { name: 'Lagos Ride Hailing (10km)', price: '₦4,200', unit: 'median fare', change: '+3.4%', time: '15m ago' },
+                  { name: 'Alaba Tech Hardware Index', price: '₦48,000', unit: 'accessories', change: '+0.5%', time: '45m ago' },
+                ].map((feed, idx) => (
+                  <div key={idx} className="tasks-stat-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="tasks-stat-card-label">{feed.unit}</span>
+                      <span style={{ fontSize: '10px', color: feed.change.startsWith('+') ? '#059669' : feed.change === '0.0%' ? 'var(--privy-color-foreground-3)' : '#dc2626', fontWeight: 700 }}>
+                        {feed.change}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '17px', fontWeight: 800, color: 'var(--privy-color-foreground)', marginTop: '4px' }}>
+                      {feed.price}
+                    </div>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--privy-color-foreground-2)', marginTop: '2px' }}>
+                      {feed.name}
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: 'var(--privy-color-foreground-3)', marginTop: '4px' }}>
+                      Updated {feed.time} via Arc Oracle
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            TAB 6: MARKETS & MERCHANT DIRECTORY (12 VERIFIED NODES)
+            ─────────────────────────────────────────────────────────────────── */}
+        {mainTab === 'markets' && (
+          <div className="tasks-page-container">
+            <div className="tasks-top-bar">
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <Store size={20} color="#047857" />
+                  <h1 className="tasks-header-title">Arc Merchant Markets</h1>
+                  <span className="card-net-pill" style={{ background: '#ecfdf5', color: '#047857', borderColor: '#a7f3d0' }}>
+                    12 Verified Stores
+                  </span>
+                </div>
+                <p className="tasks-header-subtitle">
+                  Explore Nigerian retail merchants, agents, and stores accepting deterministic sub-second USDC payments on Arc Osaka EVM.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-action-primary"
+                style={{ padding: '8px 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onClick={() => setMainTab('claim')}
+              >
+                <Sparkles size={14} />
+                <span>+ List Your Store</span>
+              </button>
+            </div>
+
+            {/* List Your Store Promo Banner */}
+            <div className="invite-earn-banner" style={{ background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '15px', fontWeight: 800 }}>Accept Native USDC with Zero Gas</div>
+                  <div style={{ fontSize: '11.5px', opacity: 0.9, marginTop: '2px' }}>
+                    Connect your store or AI agent to the NairaTag protocol on Arc Osaka.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="invite-action-btn"
+                  style={{ width: 'auto', padding: '8px 16px', color: '#047857' }}
+                  onClick={() => setMainTab('claim')}
+                >
+                  Claim ₦Tag
+                </button>
+              </div>
+            </div>
+
+            {/* 12 Verified Market Vendors Grid */}
+            <div className="tasks-stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', marginTop: '16px' }}>
+              {[
+                { tag: 'chowdeck', name: 'Chowdeck Express', cat: '🍔 Food & Dining', vol: '₦145,000', rep: '99%', desc: 'Food delivery and instant checkout' },
+                { tag: 'jumia_pay', name: 'Jumia Arc Pay', cat: '🛍️ E-Commerce', vol: '₦420,000', rep: '98%', desc: 'Online consumer electronics checkout' },
+                { tag: 'alaba_tech', name: 'Alaba Tech Mart', cat: '💻 Electronics', vol: '₦980,000', rep: '99%', desc: 'Hardware components & computer wholesale' },
+                { tag: 'lagos_ride', name: 'Lagos Mobility', cat: '🚖 Transport', vol: '₦310,000', rep: '97%', desc: 'Peer-to-peer ride hailing fares' },
+                { tag: 'fuel_station', name: 'CleanFuel Arc', cat: '⛽ Energy', vol: '₦550,000', rep: '98%', desc: 'Automated fuel pump micropayments' },
+                { tag: 'spar_market', name: 'SPAR Checkout', cat: '🛒 Groceries', vol: '₦640,000', rep: '99%', desc: 'In-store QR code USDC point of sale' },
+                { tag: 'ikeja_mall', name: 'Ikeja Fashion Outlet', cat: '👗 Retail', vol: '₦280,000', rep: '96%', desc: 'Apparel and accessories merchant node' },
+                { tag: 'ph_logistics', name: 'PH Freight Haulage', cat: '📦 Logistics', vol: '₦190,000', rep: '98%', desc: 'Port Harcourt delivery & haulage node' },
+                { tag: 'abuja_suites', name: 'Abuja Grand Suites', cat: '🏨 Hospitality', vol: '₦750,000', rep: '99%', desc: 'Hotel reservations and conference rooms' },
+                { tag: 'kaduna_agri', name: 'Kaduna Grain Depot', cat: '🌾 Agriculture', vol: '₦410,000', rep: '97%', desc: 'Commodity grain trading and escrow' },
+                { tag: 'kano_textiles', name: 'Kano Wholesale Fabric', cat: '🧵 Textiles', vol: '₦330,000', rep: '98%', desc: 'Northern Nigeria fabric market node' },
+                { tag: 'ibadan_hub', name: 'Ibadan Creative Studio', cat: '🎨 Digital Hub', vol: '₦160,000', rep: '99%', desc: 'Freelance & digital services node' },
+              ].map((m, idx) => (
+                <div key={idx} className="tasks-stat-card" style={{ padding: '14px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <span style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)', fontWeight: 700 }}>
+                        {m.cat}
+                      </span>
+                      <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--privy-color-foreground)', marginTop: '2px' }}>
+                        {m.name}
+                      </div>
+                    </div>
+                    <span className="card-net-pill" style={{ fontSize: '10px', color: '#047857', background: '#ecfdf5' }}>
+                      {m.rep} Trust
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '8px 0 4px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#5B4FFF', fontFamily: 'var(--font-mono)' }}>
+                      ₦{m.tag}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>• Vol: {m.vol}</span>
+                  </div>
+
+                  <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', lineHeight: 1.3 }}>
+                    {m.desc}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid var(--privy-color-border-subtle)' }}>
+                    <button
+                      type="button"
+                      className="btn-action-primary"
+                      style={{ flex: 1, padding: '6px 10px', fontSize: '11.5px', justifyContent: 'center' }}
+                      onClick={() => {
+                        setRecipientInput(`₦${m.tag}`);
+                        setMainTab('pay');
+                        showToast(`Pre-filled recipient: ₦${m.tag.toUpperCase()}`, 'info');
+                      }}
+                    >
+                      <Send size={11} />
+                      <span>Pay ₦Tag</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-chip-btn"
+                      style={{ padding: '6px 10px', fontSize: '11.5px' }}
+                      onClick={() => triggerCopy(`copy_market_${m.tag}`, `₦${m.tag}`)}
+                    >
+                      <Copy size={11} />
+                      <span>{copiedKey === `copy_market_${m.tag}` ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </main>
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MOBILE FIXED FOOTER MENU (MATCHING EXACT USER SCREENSHOT STYLE)
+          ─────────────────────────────────────────────────────────────────── */}
+      <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
+        {/* 1. Home */}
+        <button
+          type="button"
+          className={`mobile-footer-item ${mainTab === 'pay' ? 'active' : ''}`}
+          onClick={() => setMainTab('pay')}
+          aria-label="Home"
+        >
+          <div className="mobile-footer-icon-wrap">
+            <Home size={22} strokeWidth={mainTab === 'pay' ? 2.4 : 1.8} />
+          </div>
+          <span className="mobile-footer-label">Home</span>
+        </button>
+
+        {/* 2. Agents (with Purple Pill Badge "8") */}
+        <button
+          type="button"
+          className={`mobile-footer-item ${mainTab === 'agents' ? 'active' : ''}`}
+          onClick={() => setMainTab('agents')}
+          aria-label="Agents"
+        >
+          <div className="mobile-footer-icon-wrap">
+            <Users size={22} strokeWidth={mainTab === 'agents' ? 2.4 : 1.8} />
+            <span className="mobile-footer-badge badge-purple">8</span>
+          </div>
+          <span className="mobile-footer-label">Agents</span>
+        </button>
+
+        {/* 3. Rewards (Rosette Icon with Emerald Green Active Styling) */}
+        <button
+          type="button"
+          className={`mobile-footer-item ${mainTab === 'tasks' ? 'active' : ''}`}
+          onClick={() => setMainTab('tasks')}
+          aria-label="Rewards"
+        >
+          <div className="mobile-footer-icon-wrap">
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={mainTab === 'tasks' ? '2.4' : '1.8'}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="3.5" />
+              <path d="M12 2.5a2 2 0 0 1 2 2v.5a2 2 0 0 0 1.4 1.9l.47.16a2 2 0 0 1 1.25 2.5l-.17.47a2 2 0 0 0 .6 2.3l.36.26a2 2 0 0 1 0 2.8l-.36.26a2 2 0 0 0-.6 2.3l.17.47a2 2 0 0 1-1.25 2.5l-.47.16A2 2 0 0 0 14 21.5v.5a2 2 0 0 1-4 0v-.5a2 2 0 0 0-1.4-1.9l-.47-.16a2 2 0 0 1-1.25-2.5l.17-.47a2 2 0 0 0-.6-2.3l-.36-.26a2 2 0 0 1 0-2.8l.36-.26a2 2 0 0 0 .6-2.3l-.17-.47a2 2 0 0 1 1.25-2.5l.47-.16A2 2 0 0 0 10 5v-.5a2 2 0 0 1 2-2z" />
+            </svg>
+          </div>
+          <span className="mobile-footer-label">Rewards</span>
+        </button>
+
+        {/* 4. Prices */}
+        <button
+          type="button"
+          className={`mobile-footer-item ${mainTab === 'prices' ? 'active' : ''}`}
+          onClick={() => setMainTab('prices')}
+          aria-label="Prices"
+        >
+          <div className="mobile-footer-icon-wrap">
+            <Tag size={22} strokeWidth={mainTab === 'prices' ? 2.4 : 1.8} />
+          </div>
+          <span className="mobile-footer-label">Prices</span>
+        </button>
+
+        {/* 5. Markets (with Forest Green Pill Badge "12") */}
+        <button
+          type="button"
+          className={`mobile-footer-item ${mainTab === 'markets' || mainTab === 'claim' ? 'active' : ''}`}
+          onClick={() => setMainTab('markets')}
+          aria-label="Markets"
+        >
+          <div className="mobile-footer-icon-wrap">
+            <Store size={22} strokeWidth={mainTab === 'markets' || mainTab === 'claim' ? 2.4 : 1.8} />
+            <span className="mobile-footer-badge badge-green">12</span>
+          </div>
+          <span className="mobile-footer-label">Markets</span>
+        </button>
+      </nav>
 
       {/* ───────────────────────────────────────────────────────────────────
           MODAL 0: TRANSACTION REVIEW STATE MODAL
