@@ -527,15 +527,15 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Navigation: 'pay' (Home) | 'agents' | 'tasks' (Rewards) | 'prices' | 'markets' | 'claim' | 'faq'
-  const VALID_TABS = ['pay', 'claim', 'tasks', 'agents', 'faq', 'prices', 'markets'];
+  // Navigation: 'pay' (Home) | 'claim' | 'tasks' (Rewards) | 'agents' | 'faq'
+  const VALID_TABS = ['pay', 'claim', 'tasks', 'agents', 'faq'];
   const [mainTab, setMainTabState] = useState(() => {
     try {
       const hash = window.location.hash.replace('#', '').toLowerCase();
       if (VALID_TABS.includes(hash)) {
         return hash;
       }
-    } catch {}
+    } catch { }
     return 'pay';
   });
 
@@ -543,7 +543,7 @@ export default function App() {
     setMainTabState(tab);
     try {
       window.location.hash = tab;
-    } catch {}
+    } catch { }
   }, []);
 
   useEffect(() => {
@@ -553,7 +553,7 @@ export default function App() {
         if (VALID_TABS.includes(hash)) {
           setMainTabState(hash);
         }
-      } catch {}
+      } catch { }
     };
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
@@ -1361,10 +1361,6 @@ export default function App() {
             <div className="brand-badge" title="NairaTag on Arc">
               <img src="/nairatag-logo.png" alt="NairaTag" className="brand-logo-img" />
             </div>
-            <div className="brand-title-wrap desktop-only">
-              <span className="brand-title">NairaTag</span>
-              <span className="brand-subtitle">Send USDC on Arc to a name</span>
-            </div>
           </div>
 
           <button
@@ -1410,25 +1406,8 @@ export default function App() {
             onClick={() => setMainTab('agents')}
           >
             <Bot size={14} />
-            <span>AgentTags</span>
+            <span>Agents</span>
             <span className="nav-badge-pill" style={{ background: '#7c3aed' }}>8</span>
-          </button>
-          <button
-            type="button"
-            className={`nav-tab-btn ${mainTab === 'prices' ? 'active' : ''}`}
-            onClick={() => setMainTab('prices')}
-          >
-            <Tag size={14} />
-            <span>Prices</span>
-          </button>
-          <button
-            type="button"
-            className={`nav-tab-btn ${mainTab === 'markets' ? 'active' : ''}`}
-            onClick={() => setMainTab('markets')}
-          >
-            <Store size={14} />
-            <span>Markets</span>
-            <span className="nav-badge-pill" style={{ background: '#047857' }}>12</span>
           </button>
           <button
             type="button"
@@ -1532,7 +1511,7 @@ export default function App() {
               type="button"
               className="header-bell-btn"
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-              aria-label="3 new protocol notifications"
+              aria-label="3 new notifications"
               title="Notifications"
             >
               <Bell size={18} />
@@ -1546,7 +1525,7 @@ export default function App() {
                   <div className="notifications-popover-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <Bell size={14} color="#5B4FFF" />
-                      <span style={{ fontSize: '13px', fontWeight: 800 }}>Protocol Notifications</span>
+                      <span style={{ fontSize: '13px', fontWeight: 800 }}>Notifications</span>
                     </div>
                     <span className="nav-badge-pill" style={{ background: '#ef4444' }}>3 New</span>
                   </div>
@@ -1721,41 +1700,7 @@ export default function App() {
                 {mainTab === 'agents' && <span className="mobile-nav-active-pill">Active</span>}
               </button>
 
-              <button
-                type="button"
-                className={`mobile-nav-link ${mainTab === 'prices' ? 'active' : ''}`}
-                onClick={() => {
-                  setMainTab('prices');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <div className="mobile-nav-icon-box">
-                  <Tag size={18} />
-                </div>
-                <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Market Prices</span>
-                  <span className="mobile-nav-desc">Real-time Nigerian commodity & FX oracle feeds</span>
-                </div>
-                {mainTab === 'prices' && <span className="mobile-nav-active-pill">Active</span>}
-              </button>
 
-              <button
-                type="button"
-                className={`mobile-nav-link ${mainTab === 'markets' ? 'active' : ''}`}
-                onClick={() => {
-                  setMainTab('markets');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <div className="mobile-nav-icon-box">
-                  <Store size={18} />
-                </div>
-                <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Arc Markets</span>
-                  <span className="mobile-nav-desc">12 verified merchants & stores accepting USDC</span>
-                </div>
-                {mainTab === 'markets' && <span className="mobile-nav-active-pill">Active</span>}
-              </button>
 
               <button
                 type="button"
@@ -2915,14 +2860,7 @@ export default function App() {
           <div className="faq-page-container">
             {/* Hero Section */}
             <div className="faq-hero-card">
-              <div className="faq-pill-badge">
-                <HelpCircle size={12} />
-                <span>Protocol Knowledge Base</span>
-              </div>
               <h1 className="faq-title">Frequently Asked Questions</h1>
-              <p className="faq-subtitle">
-                Everything you need to know about sovereign ₦Tags on Arc Osaka EVM, USDC instant settlements, autonomous ERC-8004 AI agents, and non-custodial resolvers.
-              </p>
             </div>
 
             {/* Filter & Search Bar */}
@@ -3054,285 +2992,6 @@ export default function App() {
           </div>
         )}
 
-        {/* ───────────────────────────────────────────────────────────────────
-            TAB 5: PRICES & COMMODITY ORACLES (MATCHING REFERENCE DATA FEEDS)
-            ─────────────────────────────────────────────────────────────────── */}
-        {mainTab === 'prices' && (
-          <div className="tasks-page-container">
-            <div className="tasks-top-bar">
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <Tag size={20} color="#059669" />
-                  <h1 className="tasks-header-title">Market Prices & Oracles</h1>
-                  <span className="card-net-pill" style={{ background: '#ecfdf5', color: '#047857', borderColor: '#a7f3d0' }}>
-                    Live Feeds
-                  </span>
-                </div>
-                <p className="tasks-header-subtitle">
-                  Real-time Nigerian market rates and decentralized commodity price feeds powering Arc autonomous AI agents and sub-second USDC settlements.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn-action-primary"
-                style={{ padding: '8px 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                onClick={() => setMainTab('pay')}
-              >
-                <ArrowDownUp size={14} />
-                <span>Swap / Pay</span>
-              </button>
-            </div>
-
-            {/* Live Exchange & Settlement Rate Cards */}
-            <div className="tasks-stats-grid">
-              <div className="tasks-stat-card">
-                <div className="stat-label">
-                  <Coins size={13} />
-                  <span>Arc USDC / NGN</span>
-                </div>
-                <div className="stat-value" style={{ color: '#059669' }}>₦1,485.00</div>
-                <div className="stat-desc">Native Arc Osaka reference rate (+0.35%)</div>
-              </div>
-
-              <div className="tasks-stat-card">
-                <div className="stat-label">
-                  <Zap size={13} />
-                  <span>Arc Network Fee</span>
-                </div>
-                <div className="stat-value">&lt; $0.001</div>
-                <div className="stat-desc">Sub-cent gas floor (0.00002 USDC)</div>
-              </div>
-
-              <div className="tasks-stat-card">
-                <div className="stat-label">
-                  <Clock size={13} />
-                  <span>Finality Speed</span>
-                </div>
-                <div className="stat-value" style={{ color: '#2563eb' }}>&lt; 0.85s</div>
-                <div className="stat-desc">Deterministic EVM block settlement</div>
-              </div>
-
-              <div className="tasks-stat-card">
-                <div className="stat-label">
-                  <TrendingUp size={13} />
-                  <span>24h Protocol Vol</span>
-                </div>
-                <div className="stat-value">$482,000</div>
-                <div className="stat-desc">≈ ₦715,770,000 NGN processed</div>
-              </div>
-            </div>
-
-            {/* Daily Bonus Quick-Actions Banner */}
-            <div className="daily-bonus-card" style={{ marginTop: '16px' }}>
-              <div className="daily-bonus-header">
-                <div>
-                  <span className="daily-bonus-title">Price Reporting & Oracles</span>
-                  <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', marginTop: '2px' }}>
-                    Earn Protocol Points by verifying real-world consumer commodity prices on Arc Osaka.
-                  </div>
-                </div>
-                <div className="daily-bonus-timer">
-                  <Clock size={12} />
-                  <span>{dailyCountdown}</span>
-                </div>
-              </div>
-
-              <div className="daily-mission-list">
-                <div className="daily-mission-item">
-                  <div className="daily-mission-icon" style={{ background: '#f3e8ff', color: '#9333ea' }}>
-                    <ArrowDownUp size={18} />
-                  </div>
-                  <div className="daily-mission-info">
-                    <div className="daily-mission-title">Report Lagos Fuel (PMS) Price</div>
-                    <div className="daily-mission-sub">Current Oracle: ₦1,050/L · Verified across 18 nodes</div>
-                  </div>
-                  <button
-                    type="button"
-                    className={`daily-mission-go-btn ${dailyMissionsDone.price ? 'completed' : ''}`}
-                    onClick={handleDailyPriceReport}
-                    disabled={dailyMissionsDone.price}
-                  >
-                    {dailyMissionsDone.price ? 'Submitted' : 'Report +100 Pts'}
-                  </button>
-                </div>
-
-                <div className="daily-mission-item">
-                  <div className="daily-mission-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
-                    <Smartphone size={18} />
-                  </div>
-                  <div className="daily-mission-info">
-                    <div className="daily-mission-title">Set Data & Commodity Price Alert</div>
-                    <div className="daily-mission-sub">Get notified via Telegram/WhatsApp when prices swing &gt; 3%</div>
-                  </div>
-                  <button
-                    type="button"
-                    className={`daily-mission-go-btn ${dailyMissionsDone.alert ? 'completed' : ''}`}
-                    onClick={handleDailyCommodityAlert}
-                    disabled={dailyMissionsDone.alert}
-                  >
-                    {dailyMissionsDone.alert ? 'Alert Active' : 'Set Alert +50 Pts'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Verified Commodity Price Matrix */}
-            <div style={{ marginTop: '16px' }}>
-              <div style={{ fontSize: '14px', fontWeight: 800, marginBottom: '10px', color: 'var(--privy-color-foreground)' }}>
-                Nigerian Consumer Price Feeds (Verified onchain)
-              </div>
-              <div className="tasks-stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))' }}>
-                {[
-                  { name: 'Chowdeck Fast Food Index', price: '₦3,850', unit: 'avg meal', change: '+1.2%', time: '2m ago' },
-                  { name: 'Lagos Fuel / Petrol (PMS)', price: '₦1,050', unit: 'per litre', change: '0.0%', time: '8m ago' },
-                  { name: 'MTN Mobile Data (10GB)', price: '₦4,500', unit: '30-day plan', change: '0.0%', time: '1h ago' },
-                  { name: 'Jumia Smartphone Basket', price: '₦185,000', unit: 'median unit', change: '-2.1%', time: '3h ago' },
-                  { name: 'Lagos Ride Hailing (10km)', price: '₦4,200', unit: 'median fare', change: '+3.4%', time: '15m ago' },
-                  { name: 'Alaba Tech Hardware Index', price: '₦48,000', unit: 'accessories', change: '+0.5%', time: '45m ago' },
-                ].map((feed, idx) => (
-                  <div key={idx} className="tasks-stat-card">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="tasks-stat-card-label">{feed.unit}</span>
-                      <span style={{ fontSize: '10px', color: feed.change.startsWith('+') ? '#059669' : feed.change === '0.0%' ? 'var(--privy-color-foreground-3)' : '#dc2626', fontWeight: 700 }}>
-                        {feed.change}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: '17px', fontWeight: 800, color: 'var(--privy-color-foreground)', marginTop: '4px' }}>
-                      {feed.price}
-                    </div>
-                    <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--privy-color-foreground-2)', marginTop: '2px' }}>
-                      {feed.name}
-                    </div>
-                    <div style={{ fontSize: '9.5px', color: 'var(--privy-color-foreground-3)', marginTop: '4px' }}>
-                      Updated {feed.time} via Arc Oracle
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ───────────────────────────────────────────────────────────────────
-            TAB 6: MARKETS & MERCHANT DIRECTORY (12 VERIFIED NODES)
-            ─────────────────────────────────────────────────────────────────── */}
-        {mainTab === 'markets' && (
-          <div className="tasks-page-container">
-            <div className="tasks-top-bar">
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <Store size={20} color="#047857" />
-                  <h1 className="tasks-header-title">Arc Merchant Markets</h1>
-                  <span className="card-net-pill" style={{ background: '#ecfdf5', color: '#047857', borderColor: '#a7f3d0' }}>
-                    12 Verified Stores
-                  </span>
-                </div>
-                <p className="tasks-header-subtitle">
-                  Explore Nigerian retail merchants, agents, and stores accepting deterministic sub-second USDC payments on Arc Osaka EVM.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn-action-primary"
-                style={{ padding: '8px 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                onClick={() => setMainTab('claim')}
-              >
-                <Sparkles size={14} />
-                <span>+ List Your Store</span>
-              </button>
-            </div>
-
-            {/* List Your Store Promo Banner */}
-            <div className="invite-earn-banner" style={{ background: 'linear-gradient(135deg, #059669 0%, #0d9488 100%)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: '15px', fontWeight: 800 }}>Accept Native USDC with Zero Gas</div>
-                  <div style={{ fontSize: '11.5px', opacity: 0.9, marginTop: '2px' }}>
-                    Connect your store or AI agent to the NairaTag protocol on Arc Osaka.
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className="invite-action-btn"
-                  style={{ width: 'auto', padding: '8px 16px', color: '#047857' }}
-                  onClick={() => setMainTab('claim')}
-                >
-                  Claim ₦Tag
-                </button>
-              </div>
-            </div>
-
-            {/* 12 Verified Market Vendors Grid */}
-            <div className="tasks-stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', marginTop: '16px' }}>
-              {[
-                { tag: 'chowdeck', name: 'Chowdeck Express', cat: '🍔 Food & Dining', vol: '₦145,000', rep: '99%', desc: 'Food delivery and instant checkout' },
-                { tag: 'jumia_pay', name: 'Jumia Arc Pay', cat: '🛍️ E-Commerce', vol: '₦420,000', rep: '98%', desc: 'Online consumer electronics checkout' },
-                { tag: 'alaba_tech', name: 'Alaba Tech Mart', cat: '💻 Electronics', vol: '₦980,000', rep: '99%', desc: 'Hardware components & computer wholesale' },
-                { tag: 'lagos_ride', name: 'Lagos Mobility', cat: '🚖 Transport', vol: '₦310,000', rep: '97%', desc: 'Peer-to-peer ride hailing fares' },
-                { tag: 'fuel_station', name: 'CleanFuel Arc', cat: '⛽ Energy', vol: '₦550,000', rep: '98%', desc: 'Automated fuel pump micropayments' },
-                { tag: 'spar_market', name: 'SPAR Checkout', cat: '🛒 Groceries', vol: '₦640,000', rep: '99%', desc: 'In-store QR code USDC point of sale' },
-                { tag: 'ikeja_mall', name: 'Ikeja Fashion Outlet', cat: '👗 Retail', vol: '₦280,000', rep: '96%', desc: 'Apparel and accessories merchant node' },
-                { tag: 'ph_logistics', name: 'PH Freight Haulage', cat: '📦 Logistics', vol: '₦190,000', rep: '98%', desc: 'Port Harcourt delivery & haulage node' },
-                { tag: 'abuja_suites', name: 'Abuja Grand Suites', cat: '🏨 Hospitality', vol: '₦750,000', rep: '99%', desc: 'Hotel reservations and conference rooms' },
-                { tag: 'kaduna_agri', name: 'Kaduna Grain Depot', cat: '🌾 Agriculture', vol: '₦410,000', rep: '97%', desc: 'Commodity grain trading and escrow' },
-                { tag: 'kano_textiles', name: 'Kano Wholesale Fabric', cat: '🧵 Textiles', vol: '₦330,000', rep: '98%', desc: 'Northern Nigeria fabric market node' },
-                { tag: 'ibadan_hub', name: 'Ibadan Creative Studio', cat: '🎨 Digital Hub', vol: '₦160,000', rep: '99%', desc: 'Freelance & digital services node' },
-              ].map((m, idx) => (
-                <div key={idx} className="tasks-stat-card" style={{ padding: '14px 16px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <span style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)', fontWeight: 700 }}>
-                        {m.cat}
-                      </span>
-                      <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--privy-color-foreground)', marginTop: '2px' }}>
-                        {m.name}
-                      </div>
-                    </div>
-                    <span className="card-net-pill" style={{ fontSize: '10px', color: '#047857', background: '#ecfdf5' }}>
-                      {m.rep} Trust
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', margin: '8px 0 4px' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#5B4FFF', fontFamily: 'var(--font-mono)' }}>
-                      ₦{m.tag}
-                    </span>
-                    <span style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>• Vol: {m.vol}</span>
-                  </div>
-
-                  <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', lineHeight: 1.3 }}>
-                    {m.desc}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '6px', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid var(--privy-color-border-subtle)' }}>
-                    <button
-                      type="button"
-                      className="btn-action-primary"
-                      style={{ flex: 1, padding: '6px 10px', fontSize: '11.5px', justifyContent: 'center' }}
-                      onClick={() => {
-                        setRecipientInput(`₦${m.tag}`);
-                        setMainTab('pay');
-                        showToast(`Pre-filled recipient: ₦${m.tag.toUpperCase()}`, 'info');
-                      }}
-                    >
-                      <Send size={11} />
-                      <span>Pay ₦Tag</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="quick-chip-btn"
-                      style={{ padding: '6px 10px', fontSize: '11.5px' }}
-                      onClick={() => triggerCopy(`copy_market_${m.tag}`, `₦${m.tag}`)}
-                    >
-                      <Copy size={11} />
-                      <span>{copiedKey === `copy_market_${m.tag}` ? 'Copied' : 'Copy'}</span>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </main>
 
       {/* ───────────────────────────────────────────────────────────────────
@@ -3391,31 +3050,30 @@ export default function App() {
           <span className="mobile-footer-label">Rewards</span>
         </button>
 
-        {/* 4. Prices */}
+        {/* 4. Claim ₦Tag */}
         <button
           type="button"
-          className={`mobile-footer-item ${mainTab === 'prices' ? 'active' : ''}`}
-          onClick={() => setMainTab('prices')}
-          aria-label="Prices"
+          className={`mobile-footer-item ${mainTab === 'claim' ? 'active' : ''}`}
+          onClick={() => setMainTab('claim')}
+          aria-label="Claim ₦Tag"
         >
           <div className="mobile-footer-icon-wrap">
-            <Tag size={22} strokeWidth={mainTab === 'prices' ? 2.4 : 1.8} />
+            <Sparkles size={22} strokeWidth={mainTab === 'claim' ? 2.4 : 1.8} />
           </div>
-          <span className="mobile-footer-label">Prices</span>
+          <span className="mobile-footer-label">Claim</span>
         </button>
 
-        {/* 5. Markets (with Forest Green Pill Badge "12") */}
+        {/* 5. FAQ */}
         <button
           type="button"
-          className={`mobile-footer-item ${mainTab === 'markets' || mainTab === 'claim' ? 'active' : ''}`}
-          onClick={() => setMainTab('markets')}
-          aria-label="Markets"
+          className={`mobile-footer-item ${mainTab === 'faq' ? 'active' : ''}`}
+          onClick={() => setMainTab('faq')}
+          aria-label="FAQ"
         >
           <div className="mobile-footer-icon-wrap">
-            <Store size={22} strokeWidth={mainTab === 'markets' || mainTab === 'claim' ? 2.4 : 1.8} />
-            <span className="mobile-footer-badge badge-green">12</span>
+            <HelpCircle size={22} strokeWidth={mainTab === 'faq' ? 2.4 : 1.8} />
           </div>
-          <span className="mobile-footer-label">Markets</span>
+          <span className="mobile-footer-label">FAQ</span>
         </button>
       </nav>
 

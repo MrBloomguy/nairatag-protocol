@@ -2592,7 +2592,7 @@ select,
 
 .agents-page-container {
   width: 100%;
-  max-width: 1040px;
+  max-width: 860px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -3823,7 +3823,7 @@ select,
 
 .tasks-page-container {
   width: 100%;
-  max-width: 1040px;
+  max-width: 860px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
