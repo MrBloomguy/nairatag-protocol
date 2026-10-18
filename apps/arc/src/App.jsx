@@ -406,6 +406,10 @@ export const FAQ_ITEMS = [
 export const DEFAULT_TASKS = [
   {
     id: 'b001',
+    rank: '#1',
+    rankTop: 'rank-top1',
+    badgeType: 'emerald',
+    badgeName: 'Testing',
     title: 'Test NairaTag Instant USDC Settlement on Arc Osaka',
     category: 'test',
     categoryLabel: '🧪 Testing',
@@ -419,9 +423,14 @@ export const DEFAULT_TASKS = [
     escrowStatus: '🔒 Funded in Escrow',
     description: 'Execute and test a deterministic sub-second USDC payment using the Arc testnet memo registry and verify receipt on ArcScan.',
     deliverable: 'ArcScan transaction hash showing finalized payment.',
+    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b001',
   },
   {
     id: 'b002',
+    rank: '#2',
+    rankTop: 'rank-top2',
+    badgeType: 'cyan',
+    badgeName: 'Engineering',
     title: 'Build Telegram Bot Adapter for ₦Tag Pay',
     category: 'dev',
     categoryLabel: '⚡ Engineering',
@@ -435,9 +444,14 @@ export const DEFAULT_TASKS = [
     escrowStatus: '🔒 Milestone 2/4 Funded',
     description: 'Implement a GramJS or aiogram bot template that resolves ₦Tags and returns Arc Osaka payment links with deep-linking.',
     deliverable: 'GitHub repository with clean README and Dockerfile.',
+    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b002',
   },
   {
     id: 'b003',
+    rank: '#3',
+    rankTop: 'rank-top3',
+    badgeType: 'magenta',
+    badgeName: 'Design',
     title: 'Design 5 Sovereign NairaTag Social Banners',
     category: 'design',
     categoryLabel: '🎨 Design',
@@ -451,9 +465,14 @@ export const DEFAULT_TASKS = [
     escrowStatus: '🔒 Funded in Escrow',
     description: 'Create 5 high-impact, sleek 1200x628px social banners highlighting sub-second Arc Osaka finality and zero-gas UX.',
     deliverable: 'Figma file + exported SVGs and PNG assets.',
+    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b003',
   },
   {
     id: 'b004',
+    rank: '#4',
+    rankTop: '',
+    badgeType: 'gold',
+    badgeName: 'Data & AI',
     title: 'Collect Jumia & Konga Product Price Feeds (7 Days)',
     category: 'data',
     categoryLabel: '📊 Data & AI',
@@ -467,9 +486,14 @@ export const DEFAULT_TASKS = [
     escrowStatus: '⏳ Pending Milestone Review',
     description: 'Scrape and format daily pricing data for 50 consumer electronics in Lagos to supply decentralized AI agent pricing oracles.',
     deliverable: 'Timestamped JSON/CSV dataset with normalized currency fields.',
+    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b004',
   },
   {
     id: 'b005',
+    rank: '#5',
+    rankTop: '',
+    badgeType: 'ruby',
+    badgeName: 'Content',
     title: 'Write Technical Developer Guide for Arc ERC-8004',
     category: 'content',
     categoryLabel: '✍️ Content',
@@ -483,9 +507,14 @@ export const DEFAULT_TASKS = [
     escrowStatus: '🔒 Funded in Escrow',
     description: 'Author a step-by-step markdown tutorial explaining how autonomous AI agents register their identity and receive fees on Arc.',
     deliverable: 'Markdown guide with executable code snippets.',
+    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b005',
   },
   {
     id: 'b006',
+    rank: '#6',
+    rankTop: '',
+    badgeType: 'bronze',
+    badgeName: 'Community QA',
     title: 'Verify Nigerian Phone-to-NairaTag Resolver Accuracy',
     category: 'community',
     categoryLabel: '📱 Community QA',
@@ -499,6 +528,7 @@ export const DEFAULT_TASKS = [
     escrowStatus: '🔒 Instant Reward',
     description: 'Test local MTN, Airtel, and Glo phone number resolution formats (080, 070, +234) into verified ₦Tags in the Arc terminal.',
     deliverable: 'Short feedback note and resolution log.',
+    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b006',
   },
 ];
 
@@ -638,6 +668,7 @@ export default function App() {
   // Tasks & Bounties State
   const [tasksFilter, setTasksFilter] = useState('all');
   const [tasksSearch, setTasksSearch] = useState('');
+  const [tasksViewMode, setTasksViewMode] = useState('grid'); // 'grid' | 'list'
   const [isPostTaskOpen, setIsPostTaskOpen] = useState(false);
   const [userPoints, setUserPoints] = useState(380);
   const [completedTaskIds, setCompletedTaskIds] = useState(['b001']);
@@ -2410,7 +2441,8 @@ export default function App() {
                       <div className="agent-circle-avatar-wrap">
                         <img
                           src={agent.avatar}
-                          alt={agent.name}
+                          alt=""
+                          aria-hidden="true"
                           className="agent-circle-avatar-img"
                         />
                       </div>
@@ -2431,6 +2463,13 @@ export default function App() {
                     </div>
 
                     <div className="agent-circle-right">
+                      <div style={{ textAlign: 'right' }}>
+                        <div className="agent-circle-metric-val" style={{ color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px' }}>
+                          <ShieldCheck size={13} color="#059669" />
+                          <span>{agent.sparks}%</span>
+                        </div>
+                        <div className="agent-circle-metric-lbl">Reputation</div>
+                      </div>
                       <div style={{ textAlign: 'right' }}>
                         <div className="agent-circle-metric-val" style={{ color: '#10B981' }}>{agent.earnings}</div>
                         <div className="agent-circle-metric-lbl">Earnings</div>
@@ -2510,345 +2549,259 @@ export default function App() {
         )}
 
         {/* ───────────────────────────────────────────────────────────────────
-            TAB: TASKS & BOUNTIES (ONCHAIN QUESTS & MILESTONE ESCROW)
+            TAB: TASKS & BOUNTIES (MATCHING AGENTS PAGE LAYOUT & DESIGN)
             ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'tasks' && (
-          <div className="tasks-page-container">
-            {/* Top Bar with Title & Post Bounty button */}
-            <div className="tasks-top-bar">
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '20px' }}>💼</span>
-                  <h1 className="tasks-header-title">Tasks & Bounties</h1>
-                  <span className="card-net-pill">Arc Escrow</span>
+          <div className="agents-page-container">
+            {/* Top Bar: Search and Grid/List View Toggle */}
+            <div className="agents-top-bar">
+              <div className="agents-top-controls" style={{ width: '100%', justifyContent: 'space-between' }}>
+                {/* Search Bar */}
+                <div className="agents-search-input-wrap" style={{ flex: 1, maxWidth: '420px' }}>
+                  <Search size={14} color="var(--privy-color-foreground-3)" />
+                  <input
+                    type="text"
+                    className="agents-search-input"
+                    placeholder="Search bounties, skills, or tags..."
+                    value={tasksSearch}
+                    onChange={(e) => setTasksSearch(e.target.value)}
+                  />
+                  {tasksSearch && (
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--privy-color-foreground-3)' }}
+                      onClick={() => setTasksSearch('')}
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
                 </div>
-                <p className="tasks-header-subtitle">
-                  Work on sovereign bounties, complete onchain quests, verify smart contract milestone escrows, and earn USDC + Protocol Points.
-                </p>
-              </div>
-              <button
-                type="button"
-                className="btn-action-primary"
-                style={{ padding: '8px 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                onClick={() => setIsPostTaskOpen(true)}
-              >
-                <Plus size={15} />
-                <span>Post Bounty</span>
-              </button>
-            </div>
 
-            {/* ─── 1. INVITE TO EARN BANNER (MATCHING REFERENCE SCREENSHOT) ─── */}
-            <div className="invite-earn-banner">
-              <div className="invite-milestones-row">
-                <span>1 User</span>
-                <span>3 Users</span>
-                <span>5 Users</span>
-              </div>
-              <button
-                type="button"
-                className="invite-action-btn"
-                onClick={handleInviteToEarn}
-              >
-                <Share2 size={16} />
-                <span>Invite to Earn</span>
-              </button>
-            </div>
-
-            {/* ─── 2. DAILY BONUS CARD (MATCHING REFERENCE SCREENSHOT) ─── */}
-            <div className="daily-bonus-card">
-              <div className="daily-bonus-header">
-                <span className="daily-bonus-title">Daily Bonus</span>
-                <div className="daily-bonus-timer" title="Time remaining until daily bonus reset">
-                  <Clock size={12} />
-                  <span>{dailyCountdown}</span>
-                </div>
-              </div>
-
-              <div className="daily-mission-list">
-                {/* Mission 1: Report Market Price */}
-                <div className="daily-mission-item">
-                  <div className="daily-mission-icon" style={{ background: '#f3e8ff', color: '#9333ea' }}>
-                    <ArrowDownUp size={18} />
-                  </div>
-                  <div className="daily-mission-info">
-                    <div className="daily-mission-title">Report Market Price</div>
-                    <div className="daily-mission-sub">
-                      {dailyMissionsDone.price ? 'Verified today (1/1)' : 'Submit 1 verified price report (0/1 per day)'}
-                    </div>
-                  </div>
+                {/* Grid / List Switcher */}
+                <div className="agents-view-toggle">
                   <button
                     type="button"
-                    className={`daily-mission-go-btn ${dailyMissionsDone.price ? 'completed' : ''}`}
-                    onClick={handleDailyPriceReport}
-                    disabled={dailyMissionsDone.price}
+                    className={`view-toggle-btn ${tasksViewMode === 'grid' ? 'active' : ''}`}
+                    onClick={() => setTasksViewMode('grid')}
+                    title="Grid View (Milestones)"
                   >
-                    {dailyMissionsDone.price ? 'Claimed' : 'Go'}
+                    <LayoutGrid size={13} />
+                    <span>Grid</span>
                   </button>
-                </div>
-
-                {/* Mission 2: Complete Agent Mission */}
-                <div className="daily-mission-item">
-                  <div className="daily-mission-icon" style={{ background: '#e0f2fe', color: '#0284c7' }}>
-                    <Bot size={18} />
-                  </div>
-                  <div className="daily-mission-info">
-                    <div className="daily-mission-title">Complete Agent Mission</div>
-                    <div className="daily-mission-sub">
-                      {dailyMissionsDone.agent ? 'Agent task completed (1/1)' : 'Claim high-gap market coverage (Once per day)'}
-                    </div>
-                  </div>
                   <button
                     type="button"
-                    className={`daily-mission-go-btn ${dailyMissionsDone.agent ? 'completed' : ''}`}
-                    onClick={handleDailyAgentMission}
-                    disabled={dailyMissionsDone.agent}
+                    className={`view-toggle-btn ${tasksViewMode === 'list' ? 'active' : ''}`}
+                    onClick={() => setTasksViewMode('list')}
+                    title="List View (Quests Circle)"
                   >
-                    {dailyMissionsDone.agent ? 'Claimed' : 'Go'}
-                  </button>
-                </div>
-
-                {/* Mission 3: Data & Commodity Alert */}
-                <div className="daily-mission-item">
-                  <div className="daily-mission-icon" style={{ background: '#dcfce7', color: '#16a34a' }}>
-                    <Smartphone size={18} />
-                  </div>
-                  <div className="daily-mission-info">
-                    <div className="daily-mission-title">Data & Commodity Alert</div>
-                    <div className="daily-mission-sub">
-                      {dailyMissionsDone.alert ? 'Alert active for today' : 'Set 1 price alert on any commodity'}
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className={`daily-mission-go-btn ${dailyMissionsDone.alert ? 'completed' : ''}`}
-                    onClick={handleDailyCommodityAlert}
-                    disabled={dailyMissionsDone.alert}
-                  >
-                    {dailyMissionsDone.alert ? 'Claimed' : 'Go'}
+                    <List size={13} />
+                    <span>List</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* ─── 3. MY COUPONS SECTION (MATCHING REFERENCE SCREENSHOT) ─── */}
-            <div className="coupons-card-wrap">
-              <div className="coupons-header-row">
-                <span className="coupons-header-title">My Coupons</span>
-                <HelpCircle size={15} color="var(--privy-color-foreground-3)" />
+            {/* Metrics Overview Row (Compact 4-in-a-row matching Agents stats grid) */}
+            <div className="agents-stats-grid">
+              <div className="agents-stat-card">
+                <span className="agents-stat-card-label">Active Quests</span>
+                <span className="agents-stat-card-value">{allTasks.length}</span>
               </div>
-
-              <div className="coupons-list-row">
-                <div className="coupon-ticket-pill">
-                  <div className="coupon-ticket-left">
-                    <Ticket size={16} color="#7c3aed" />
-                    <div>
-                      <div className="coupon-name">Zero Gas Pass</div>
-                      <div className="coupon-desc">100% Arc network fee rebate</div>
-                    </div>
-                  </div>
-                  <span className="coupon-status-tag">Active</span>
-                </div>
-
-                <div className="coupon-ticket-pill">
-                  <div className="coupon-ticket-left">
-                    <Sparkles size={16} color="#059669" />
-                    <div>
-                      <div className="coupon-name">10% Referral Boost</div>
-                      <div className="coupon-desc">+10% points on invited tag pays</div>
-                    </div>
-                  </div>
-                  <span className="coupon-status-tag">Active</span>
-                </div>
+              <div className="agents-stat-card">
+                <span className="agents-stat-card-label">Escrow Locked</span>
+                <span className="agents-stat-card-value">$14,250</span>
+              </div>
+              <div className="agents-stat-card">
+                <span className="agents-stat-card-label">Settlement Fee</span>
+                <span className="agents-stat-card-value">0.00 USDC</span>
+              </div>
+              <div className="agents-stat-card">
+                <span className="agents-stat-card-label">Your Points</span>
+                <span className="agents-stat-card-value" style={{ color: '#059669' }}>{userPoints} Pts</span>
               </div>
             </div>
 
-            {/* Protocol Stats Grid */}
-            <div className="tasks-stats-grid">
-              <div className="tasks-stat-card">
-                <div className="stat-label">
-                  <Coins size={13} />
-                  <span>Escrow Volume</span>
-                </div>
-                <div className="stat-value">$14,250 USDC</div>
-                <div className="stat-desc">≈ ₦21,161,250 NGN locked</div>
-              </div>
-              <div className="tasks-stat-card">
-                <div className="stat-label">
-                  <Briefcase size={13} />
-                  <span>Active Bounties</span>
-                </div>
-                <div className="stat-value">{allTasks.length} Quests Open</div>
-                <div className="stat-desc">Funded on Arc Osaka EVM</div>
-              </div>
-              <div className="tasks-stat-card">
-                <div className="stat-label">
-                  <Trophy size={13} />
-                  <span>Your Protocol Points</span>
-                </div>
-                <div className="stat-value" style={{ color: 'var(--privy-color-interactive)' }}>{userPoints} Pts</div>
-                <div className="stat-desc">Level 3 Contributor Status</div>
-              </div>
-              <div className="tasks-stat-card">
-                <div className="stat-label">
-                  <Zap size={13} />
-                  <span>Settlement Speed</span>
-                </div>
-                <div className="stat-value" style={{ color: 'var(--privy-color-success-dark)' }}>&lt; 1s Finality</div>
-                <div className="stat-desc">Deterministic Arc execution</div>
-              </div>
+            {/* Category Filter Pills Row */}
+            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
+              {[
+                { id: 'all', label: 'All Quests' },
+                { id: 'dev', label: '⚡ Engineering' },
+                { id: 'design', label: '🎨 Design' },
+                { id: 'data', label: '📊 Data & AI' },
+                { id: 'content', label: '✍️ Content' },
+                { id: 'test', label: '🧪 Testing' },
+                { id: 'community', label: '📱 Community' },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`task-cat-pill ${tasksFilter === cat.id ? 'active' : ''}`}
+                  onClick={() => setTasksFilter(cat.id)}
+                >
+                  {cat.label}
+                </button>
+              ))}
             </div>
 
-            {/* Smart Contract Milestone Escrow Stepper Widget */}
-            <div className="task-pipeline-card">
-              <div className="pipeline-stepper-header">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <ShieldCheck size={16} color="var(--privy-color-interactive)" />
-                  <span style={{ fontSize: '13px', fontWeight: 800 }}>Smart Contract Milestone Escrow Pipeline</span>
-                </div>
-                <span className="card-net-pill">Automated Verification</span>
-              </div>
-              <div className="pipeline-stepper-steps">
-                {[
-                  { step: 1, title: '1. Fund Escrow', desc: '100% USDC locked in Arc contract' },
-                  { step: 2, title: '2. Submit Work', desc: 'Deliverable hash committed' },
-                  { step: 3, title: '3. Verify Milestone', desc: 'DAO & bounty owner inspection' },
-                  { step: 4, title: '4. Release Payment', desc: 'Instant transfer to ₦Tag' },
-                ].map((s) => (
-                  <div
-                    key={s.step}
-                    className={`pipeline-step ${activeEscrowStep >= s.step ? 'active' : ''} ${activeEscrowStep === s.step ? 'current' : ''}`}
-                    onClick={() => setActiveEscrowStep(s.step)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="step-num-pill">
-                      {activeEscrowStep > s.step ? <Check size={12} /> : s.step}
+            {/* ─── 1. GRID VIEW (Milestones Design matching Agents) ─── */}
+            {tasksViewMode === 'grid' && (
+              <div className="agents-milestones-grid">
+                {filteredTasks.length === 0 ? (
+                  <div style={{ gridColumn: '1 / -1', padding: '36px 16px', textAlign: 'center', background: 'var(--surface1, #ffffff)', borderRadius: 'var(--radius-card, 24px)', border: '1px dashed var(--border-color, rgba(0,0,0,0.12))' }}>
+                    <Briefcase size={28} color="var(--privy-color-foreground-2)" style={{ margin: '0 auto 8px' }} />
+                    <div style={{ fontSize: '14px', fontWeight: 700 }}>No bounties match your filter</div>
+                    <div style={{ fontSize: '12px', color: 'var(--privy-color-foreground-2)', marginTop: '4px' }}>
+                      Try searching for different keywords or post the first bounty in this category!
                     </div>
-                    <div className="step-title">{s.title}</div>
-                    <div className="step-desc">{s.desc}</div>
                   </div>
-                ))}
-              </div>
-              <div className="pipeline-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--privy-color-border-subtle)' }}>
-                <span style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
-                  Interactive Arc Milestone Demo: Step {activeEscrowStep} of 4
-                </span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    type="button"
-                    className="quick-chip-btn"
-                    onClick={() => setActiveEscrowStep((prev) => (prev % 4) + 1)}
-                  >
-                    <span>Advance Pipeline Step →</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="quick-chip-btn"
-                    onClick={() => setActiveEscrowStep(1)}
-                  >
-                    <span>Reset</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+                ) : (
+                  filteredTasks.map((task, idx) => {
+                    const isDone = completedTaskIds.includes(task.id);
+                    const rankLabel = task.rank || `#${idx + 1}`;
+                    return (
+                      <div
+                        key={task.id}
+                        className="agent-milestone-card"
+                        onClick={() => handleApplyOrCompleteTask(task)}
+                        style={{ cursor: isDone ? 'default' : 'pointer' }}
+                      >
+                        <span className="card-rank-tag">{rankLabel}</span>
 
-            {/* Search & Filter Row */}
-            <div className="tasks-search-filter-row">
-              <div className="tasks-search-input-wrap">
-                <Search size={14} className="tasks-search-icon" />
-                <input
-                  type="text"
-                  className="tasks-search-input"
-                  placeholder="Search bounties, skills, or tags..."
-                  value={tasksSearch}
-                  onChange={(e) => setTasksSearch(e.target.value)}
-                />
-                {tasksSearch && (
-                  <button
-                    type="button"
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--privy-color-foreground-2)' }}
-                    onClick={() => setTasksSearch('')}
-                  >
-                    <X size={13} />
-                  </button>
+                        <div className="milestone-badge-stage">
+                          <AgentMedallion type={task.badgeType || (idx % 2 === 0 ? 'emerald' : 'cyan')} size={46} />
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                          <h3 className="milestone-card-title" style={{ margin: 0 }}>₦{task.creatorTag.replace(/^₦/, '').toUpperCase()}</h3>
+                          <img
+                            src="/verified-badge.png"
+                            alt=""
+                            aria-hidden="true"
+                            style={{ width: '16px', height: '16px', objectFit: 'contain', flexShrink: 0 }}
+                            title="Arc Escrow Verified"
+                          />
+                        </div>
+                        <div className="milestone-card-role" title={task.title}>{task.title}</div>
+
+                        <div className="milestone-task-status">
+                          <span>{task.categoryLabel} • {task.deadline}</span>
+                        </div>
+
+                        <div className="milestone-progress-bar-wrap">
+                          <div
+                            className="milestone-progress-bar-fill"
+                            style={{
+                              width: isDone ? '100%' : '75%',
+                              background: isDone ? '#10B981' : 'var(--primary, #0052FF)'
+                            }}
+                          />
+                        </div>
+
+                        <div className="milestone-earnings-row">
+                          <span className="milestone-earnings-label">Reward</span>
+                          <span className="milestone-earnings-value" style={{ color: isDone ? '#10B981' : 'var(--primary, #0052FF)' }}>
+                            {isDone ? 'Claimed' : `$${task.rewardUSDC} USDC`}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
-              <div className="tasks-cat-pills">
-                {[
-                  { id: 'all', label: 'All Quests' },
-                  { id: 'dev', label: '⚡ Engineering' },
-                  { id: 'design', label: '🎨 Design' },
-                  { id: 'data', label: '📊 Data & AI' },
-                  { id: 'content', label: '✍️ Content' },
-                  { id: 'test', label: '🧪 Testing' },
-                ].map((cat) => (
-                  <button
-                    key={cat.id}
-                    type="button"
-                    className={`task-cat-pill ${tasksFilter === cat.id ? 'active' : ''}`}
-                    onClick={() => setTasksFilter(cat.id)}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+            )}
 
-            {/* Tasks Grid */}
-            <div className="tasks-grid">
-              {filteredTasks.length === 0 ? (
-                <div style={{ gridColumn: '1 / -1', padding: '36px 16px', textAlign: 'center', background: 'var(--privy-color-background-surface)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--privy-color-border-subtle)' }}>
-                  <Briefcase size={28} color="var(--privy-color-foreground-2)" style={{ margin: '0 auto 8px' }} />
-                  <div style={{ fontSize: '14px', fontWeight: 700 }}>No bounties match your filter</div>
-                  <div style={{ fontSize: '12px', color: 'var(--privy-color-foreground-2)', marginTop: '4px' }}>
-                    Try searching for different keywords or post the first bounty in this category!
+            {/* ─── 2. LIST VIEW (Matching Agents Circle List) ─── */}
+            {tasksViewMode === 'list' && (
+              <div className="agents-circle-list">
+                {filteredTasks.length === 0 ? (
+                  <div style={{ padding: '36px 16px', textAlign: 'center', background: 'var(--surface1, #ffffff)', borderRadius: 'var(--radius-card, 24px)', border: '1px dashed var(--border-color, rgba(0,0,0,0.12))' }}>
+                    <Briefcase size={28} color="var(--privy-color-foreground-2)" style={{ margin: '0 auto 8px' }} />
+                    <div style={{ fontSize: '14px', fontWeight: 700 }}>No bounties match your filter</div>
                   </div>
-                </div>
-              ) : (
-                filteredTasks.map((task) => {
-                  const isDone = completedTaskIds.includes(task.id);
-                  return (
-                    <div key={task.id} className="task-card">
-                      <div className="task-card-header">
-                        <span className="task-cat-badge">{task.categoryLabel}</span>
-                        <span className="task-escrow-pill">{task.escrowStatus}</span>
-                      </div>
-                      <h3 className="task-card-title">{task.title}</h3>
-                      <p className="task-card-body">{task.description}</p>
-                      <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', margin: '6px 0 10px', background: 'rgba(0,0,0,0.03)', padding: '6px 8px', borderRadius: '4px', borderLeft: '3px solid var(--privy-color-interactive)' }}>
-                        <strong>Deliverable:</strong> {task.deliverable}
-                      </div>
-                      <div className="task-card-footer">
-                        <div>
-                          <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--privy-color-interactive)' }}>
-                            {task.rewardUSDC} USDC
+                ) : (
+                  filteredTasks.map((task, idx) => {
+                    const isDone = completedTaskIds.includes(task.id);
+                    const rankLabel = task.rank || `#${idx + 1}`;
+                    const rankTopClass = idx === 0 ? 'rank-top1' : idx === 1 ? 'rank-top2' : idx === 2 ? 'rank-top3' : '';
+                    return (
+                      <div
+                        key={task.id}
+                        className="agent-circle-row"
+                        onClick={() => handleApplyOrCompleteTask(task)}
+                        style={{ cursor: isDone ? 'default' : 'pointer' }}
+                      >
+                        <div className="agent-circle-left">
+                          <div className={`agent-circle-rank ${rankTopClass}`}>
+                            {rankLabel}
                           </div>
-                          <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>
-                            {task.rewardNGN} • +{task.points} Pts
+
+                          <div className="agent-circle-avatar-wrap">
+                            <img
+                              src={task.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${task.id}`}
+                              alt=""
+                              aria-hidden="true"
+                              className="agent-circle-avatar-img"
+                            />
+                          </div>
+
+                          <div className="agent-circle-meta">
+                            <div className="agent-circle-name">
+                              <span>{task.title}</span>
+                              <span className="agent-circle-tag-pill">₦{task.creatorTag.replace(/^₦/, '')}</span>
+                              <img
+                                src="/verified-badge.png"
+                                alt=""
+                                aria-hidden="true"
+                                style={{ width: '14px', height: '14px', objectFit: 'contain', flexShrink: 0 }}
+                                title="Arc Escrow Verified"
+                              />
+                            </div>
+                            <div className="agent-circle-tagline">{task.deliverable}</div>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          className={isDone ? 'quick-chip-btn' : 'btn-action-primary'}
-                          style={{ padding: '6px 14px', fontSize: '12px' }}
-                          onClick={() => handleApplyOrCompleteTask(task)}
-                        >
-                          {isDone ? (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--privy-color-success-dark)', fontWeight: 700 }}>
-                              <CheckCircle2 size={13} /> Completed
-                            </span>
-                          ) : (
-                            <span>Claim Quest →</span>
-                          )}
-                        </button>
+
+                        <div className="agent-circle-right">
+                          <div style={{ textAlign: 'right' }}>
+                            <div className="agent-circle-metric-val" style={{ color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px' }}>
+                              <Sparkles size={12} color="#059669" />
+                              <span>+{task.points} Pts</span>
+                            </div>
+                            <div className="agent-circle-metric-lbl">Points</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div className="agent-circle-metric-val" style={{ color: isDone ? '#10B981' : 'var(--primary, #0052FF)' }}>
+                              {isDone ? 'Claimed' : `$${task.rewardUSDC} USDC`}
+                            </div>
+                            <div className="agent-circle-metric-lbl">Reward</div>
+                          </div>
+                          <ChevronRight size={16} color="var(--privy-color-foreground-3)" />
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid var(--privy-color-border-subtle)', fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>
-                        <span>Posted by <strong>{task.creatorTag}</strong></span>
-                        <span>{task.deadline}</span>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {/* Post / Create Escrow Bounty Bottom Card (Matching "Deploy Your Autonomous Agent" on Agents page) */}
+            <div className="agents-top-bar" style={{ marginTop: '8px' }}>
+              <div className="agents-top-left">
+                <div style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--privy-color-foreground)' }}>
+                  Post a Sovereign Escrow Bounty
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
+                  Lock USDC on Arc Osaka EVM with automated milestone payouts to verified ₦Tags.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-agent-primary"
+                style={{ flex: 'none', padding: '8px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onClick={() => setIsPostTaskOpen(true)}
+              >
+                <Plus size={14} />
+                <span>+ Post Bounty</span>
+              </button>
             </div>
           </div>
         )}

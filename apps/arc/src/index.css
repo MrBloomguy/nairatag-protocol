@@ -3193,6 +3193,85 @@ select,
   text-transform: uppercase;
 }
 
+@media (max-width: 640px) {
+  .agent-circle-row {
+    padding: 12px 14px;
+    gap: 8px;
+  }
+  .agent-circle-left {
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+  }
+  .agent-circle-avatar-wrap,
+  .agent-circle-avatar-img {
+    width: 36px;
+    height: 36px;
+  }
+  .agent-circle-name {
+    font-size: 13.5px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .agent-circle-tagline {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 130px;
+  }
+  .agent-circle-right {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .agent-circle-metric-val {
+    font-size: 13.5px;
+  }
+  .agent-circle-metric-lbl {
+    font-size: 9px;
+  }
+}
+
+/* Category Filter Pills (Tasks & Quests) */
+.task-cat-pill {
+  padding: 6px 13px;
+  border-radius: var(--radius-pill, 9999px);
+  font-family: var(--font-maru), sans-serif;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: var(--surface1, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  color: var(--privy-color-foreground-2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  box-shadow: none !important;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .task-cat-pill {
+  background: #17181D;
+  border-color: #24252B;
+  color: #9CA3AF;
+}
+
+.task-cat-pill:hover {
+  border-color: var(--primary, #0052FF);
+  color: var(--privy-color-foreground);
+}
+
+.task-cat-pill.active {
+  background: var(--primary, #0052FF);
+  border-color: var(--primary, #0052FF);
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .task-cat-pill.active {
+  background: #3880FF;
+  border-color: #3880FF;
+  color: #FFFFFF;
+}
+
 /* ─── AGENT PROFILE CARD POPUP (MODAL) ─── */
 .agent-modal-backdrop {
   position: fixed;
