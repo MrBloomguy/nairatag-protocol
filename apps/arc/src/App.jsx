@@ -47,6 +47,7 @@ import {
   CheckSquare,
   Coins,
   MessageSquare,
+  AtSign,
   Zap,
   Briefcase,
   Phone,
@@ -557,8 +558,8 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Navigation: 'pay' (Home) | 'claim' | 'tasks' (Rewards) | 'agents' | 'faq'
-  const VALID_TABS = ['pay', 'claim', 'tasks', 'agents', 'faq'];
+  // Navigation: 'pay' (Home) | 'claim' | 'tasks' (Rewards) | 'agents' | 'chat' | 'faq'
+  const VALID_TABS = ['pay', 'claim', 'tasks', 'agents', 'chat', 'faq'];
   const [mainTab, setMainTabState] = useState(() => {
     try {
       const hash = window.location.hash.replace('#', '').toLowerCase();
@@ -588,6 +589,220 @@ export default function App() {
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
   }, []);
+
+  // Sovereign Agent Chat State (Tag2Tag Agent-to-Agent Messaging & Task Execution)
+  const [chatMessages, setChatMessages] = useState([
+    {
+      id: 'm1',
+      sender: 'agent',
+      agentTag: 'ArcAgent',
+      agentName: 'Arc Sovereign Agent',
+      avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent',
+      text: "Welcome to Sovereign Agent Chat on Arc Osaka EVM! I can execute gasless USDC payments, lock milestone bounties in smart contract escrow, or collaborate directly with verified ERC-8004 agents. Type '@' or click below to tag an agent.",
+      time: 'Just now',
+      widget: null,
+    },
+    {
+      id: 'm2',
+      sender: 'agent',
+      agentTag: 'dev',
+      agentName: 'Arc Contract Auditor',
+      avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=dev',
+      text: "⚡ Tag me with @₦dev to audit contracts, verify bytecode, or establish automated multi-party escrow contracts on Arc Osaka.",
+      time: 'Just now',
+      widget: {
+        type: 'contract_audit',
+        title: 'Solidity & Bytecode Verifier',
+        badge: 'Osaka Guard',
+        body: 'Verified 5 smart contracts this week. Gas optimization: 99.8%. Ready for milestone deployment on Arc Osaka.',
+        actionText: 'Request Contract Audit',
+        actionPrompt: '@₦dev Audit my Arc milestone escrow contract',
+      }
+    }
+  ]);
+  const [chatInputText, setChatInputText] = useState('');
+  const [chatIsTyping, setChatIsTyping] = useState(false);
+  const [currentTaggedAgent, setCurrentTaggedAgent] = useState(null);
+  const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
+
+  const handleSelectAgentTag = (agent) => {
+    setCurrentTaggedAgent(agent);
+    setIsTagPopoverOpen(false);
+    setChatInputText((prev) => {
+      const clean = prev.trim();
+      if (!clean.toLowerCase().includes(`@₦${agent.tag.toLowerCase()}`)) {
+        return `@₦${agent.tag} ${clean}`.trim();
+      }
+      return prev;
+    });
+  };
+
+  const handleClearTaggedAgent = () => {
+    setCurrentTaggedAgent(null);
+  };
+
+  const handleSendChatPrompt = (customPrompt = null) => {
+    const textToSend = (customPrompt !== null ? customPrompt : chatInputText).trim();
+    if (!textToSend) return;
+
+    const userMsgId = 'usr-' + Date.now();
+    const newMsg = {
+      id: userMsgId,
+      sender: 'user',
+      text: textToSend,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      widget: null,
+    };
+
+    setChatMessages((prev) => [...prev, newMsg]);
+    if (customPrompt === null) {
+      setChatInputText('');
+    }
+    setChatIsTyping(true);
+
+    setTimeout(() => {
+      const lower = textToSend.toLowerCase();
+      let replyText = '';
+      let replyAgentTag = currentTaggedAgent ? currentTaggedAgent.tag : 'ArcAgent';
+      let replyAgentName = currentTaggedAgent ? currentTaggedAgent.name : 'Arc Sovereign Agent';
+      let replyAvatar = currentTaggedAgent
+        ? currentTaggedAgent.avatar
+        : 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
+      let widget = null;
+
+      const foundAgent = VERIFIED_AGENTS.find(
+        (a) =>
+          lower.includes(`@₦${a.tag}`) ||
+          lower.includes(`@${a.tag}`) ||
+          (lower.includes(`₦${a.tag}`) && !lower.includes('₦tag'))
+      );
+      if (foundAgent) {
+        replyAgentTag = foundAgent.tag;
+        replyAgentName = foundAgent.name;
+        replyAvatar = foundAgent.avatar;
+      }
+
+      if (replyAgentTag === 'chowdeck' || lower.includes('food') || lower.includes('chowdeck') || lower.includes('jollof') || lower.includes('order')) {
+        replyAgentTag = 'chowdeck';
+        replyAgentName = 'Chowdeck Food Bot';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=chowdeck';
+        replyText = "🍗 Chowdeck Agent connected on Arc Osaka EVM! Food order route dispatched. Settlement verified with zero gas fee.";
+        widget = {
+          type: 'food_order',
+          title: 'Chowdeck Express Delivery #882',
+          badge: 'Zero Gas Settlement',
+          body: 'Item: Jollof Feast Box + Peppered Chicken · Price: 4.5 USDC (₦6,750) · Est. Delivery: 24 mins',
+          actionText: 'Execute USDC Settlement',
+          targetTag: 'chowdeck',
+          amount: '4.5',
+        };
+      } else if (replyAgentTag === 'dev' || lower.includes('audit') || lower.includes('contract') || lower.includes('solidity') || lower.includes('bytecode')) {
+        replyAgentTag = 'dev';
+        replyAgentName = 'Arc Contract Auditor';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=dev';
+        replyText = "⚡ Contract Auditor engaged on Arc Osaka (Chain 5042002). Bytecode verification complete. 0 critical vulnerabilities found.";
+        widget = {
+          type: 'contract_audit',
+          title: 'Milestone Escrow Audit Report',
+          badge: 'Passed Audit (100/100)',
+          body: 'Target: MilestoneEscrow.sol · Formal verification: Passed · Non-reentrant & ERC-4337 Sponsored',
+          actionText: 'Deploy Verified Escrow',
+          targetTag: 'dev',
+          amount: '2.0',
+        };
+      } else if (replyAgentTag === 'designer' || lower.includes('design') || lower.includes('logo') || lower.includes('banner') || lower.includes('ui')) {
+        replyAgentTag = 'designer';
+        replyAgentName = 'MuseSpark Creative';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=designer';
+        replyText = "🎨 MuseSpark generative pipeline triggered. High-resolution vector assets and UI components generated.";
+        widget = {
+          type: 'design_task',
+          title: 'Cyber-Naira Vector Assets Pack',
+          badge: 'Milestone In Escrow',
+          body: 'Specs: 4 SVG Logo Marks + 3 Social Banners · Reward: 25 USDC (₦37,500) locked in contract',
+          actionText: 'Approve & Release Payment',
+          targetTag: 'designer',
+          amount: '25.0',
+        };
+      } else if (replyAgentTag === 'ride' || lower.includes('ride') || lower.includes('transit') || lower.includes('dispatch')) {
+        replyAgentTag = 'ride';
+        replyAgentName = 'Arc Transit Router';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=ride';
+        replyText = "🚖 Arc Transit Router online. Autonomous logistics, routing, and ride settlement initialized.";
+        widget = {
+          type: 'transit_dispatch',
+          title: 'Autonomous Ride Dispatch #TR-502',
+          badge: 'Driver En Route',
+          body: 'Pickup: Lagos Mainland · Destination: Victoria Island · Fare: 3.2 USDC (₦4,800)',
+          actionText: 'Pay Fare with USDC',
+          targetTag: 'ride',
+          amount: '3.2',
+        };
+      } else if (replyAgentTag === 'escrow' || lower.includes('escrow') || lower.includes('lock') || lower.includes('milestone')) {
+        replyAgentTag = 'escrow';
+        replyAgentName = 'Arc P2P Arbiter';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=escrow';
+        replyText = "🔒 Arc Non-Custodial Escrow Vault opened. Funds are securely locked in smart contract until delivery hash is validated.";
+        widget = {
+          type: 'escrow_lock',
+          title: 'Smart Contract Escrow Lock',
+          badge: '100% USDC Protected',
+          body: 'Contract: 0x7FA938...b3e1496 · Conditional release upon proof-of-work receipt on Arc Osaka.',
+          actionText: 'Lock 10 USDC in Escrow',
+          targetTag: 'escrow',
+          amount: '10.0',
+        };
+      } else if (lower.includes('send') || lower.includes('pay') || lower.includes('usdc')) {
+        replyText = "💸 I can prepare that instant zero-gas USDC transfer for you right now on Arc Osaka EVM.";
+        const matchAmt = lower.match(/\b(\d+(?:\.\d+)?)\s*(?:usdc|dollars?|\$)?/i);
+        const parsedAmt = matchAmt ? matchAmt[1] : '5.0';
+        widget = {
+          type: 'quick_pay',
+          title: `Instant USDC Transfer`,
+          badge: 'Zero Gas Fee',
+          body: `Amount: ${parsedAmt} USDC · Instant settlement to verified ₦Tag on Arc Osaka.`,
+          actionText: `Send ${parsedAmt} USDC`,
+          targetTag: replyAgentTag !== 'ArcAgent' ? replyAgentTag : 'dev',
+          amount: parsedAmt,
+        };
+      } else {
+        replyText = `Understood! I've logged your request: "${textToSend}". You can tag any verified agent with @₦tag to collaborate or delegate onchain tasks.`;
+        widget = {
+          type: 'agent_info',
+          title: `${replyAgentName} Profile`,
+          badge: 'ERC-8004 Registered',
+          body: 'Autonomous AI agent verified on Arc Osaka. Ready to accept micro-payments and bounties.',
+          actionText: `Dispatch Task to ₦${replyAgentTag}`,
+          actionPrompt: `@₦${replyAgentTag} Execute task on Arc Osaka`,
+        };
+      }
+
+      const botReply = {
+        id: 'bot-' + Date.now(),
+        sender: 'agent',
+        agentTag: replyAgentTag,
+        agentName: replyAgentName,
+        avatar: replyAvatar,
+        text: replyText,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        widget: widget,
+      };
+
+      setChatMessages((prev) => [...prev, botReply]);
+      setChatIsTyping(false);
+    }, 700);
+  };
+
+  const handleWidgetAction = (widget) => {
+    if (widget.actionPrompt) {
+      handleSendChatPrompt(widget.actionPrompt);
+    } else if (widget.targetTag) {
+      setRecipientInput(widget.targetTag);
+      if (widget.amount) setAmountInput(widget.amount);
+      setIsSendReviewModalOpen(true);
+    }
+  };
 
   // Notifications Popover State (Bell icon)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -1442,6 +1657,14 @@ export default function App() {
           </button>
           <button
             type="button"
+            className={`nav-tab-btn ${mainTab === 'chat' ? 'active' : ''}`}
+            onClick={() => setMainTab('chat')}
+          >
+            <MessageSquare size={14} />
+            <span>Chat</span>
+          </button>
+          <button
+            type="button"
             className={`nav-tab-btn ${mainTab === 'faq' ? 'active' : ''}`}
             onClick={() => setMainTab('faq')}
           >
@@ -1731,7 +1954,23 @@ export default function App() {
                 {mainTab === 'agents' && <span className="mobile-nav-active-pill">Active</span>}
               </button>
 
-
+              <button
+                type="button"
+                className={`mobile-nav-link ${mainTab === 'chat' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainTab('chat');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon-box">
+                  <MessageSquare size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <span className="mobile-nav-title">Agent Chat</span>
+                  <span className="mobile-nav-desc">Chat with sovereign agent & call tagged bots</span>
+                </div>
+                {mainTab === 'chat' && <span className="mobile-nav-active-pill">Active</span>}
+              </button>
 
               <button
                 type="button"
@@ -2807,7 +3046,377 @@ export default function App() {
         )}
 
         {/* ───────────────────────────────────────────────────────────────────
-            TAB 4: FAQ (PROTOCOL KNOWLEDGE BASE & ACCORDION)
+            TAB 4: SOVEREIGN AGENT CHAT (TAG2TAG LAYER & TASK DISPATCH)
+            ─────────────────────────────────────────────────────────────────── */}
+        {mainTab === 'chat' && (
+          <div className="chat-page-container">
+            {/* Header Card */}
+            <div className="chat-header-card">
+              <div className="chat-header-left">
+                <div className="chat-agent-avatar-wrap">
+                  <Bot size={22} color="#FFFFFF" />
+                  <span className="chat-online-dot" />
+                </div>
+                <div>
+                  <div className="chat-header-title">
+                    <span>Sovereign Agent Hub</span>
+                    <span className="card-net-pill" style={{ fontSize: '10px', background: 'rgba(16, 185, 129, 0.12)', color: '#059669' }}>
+                      Arc Osaka EVM
+                    </span>
+                  </div>
+                  <div className="chat-header-sub">
+                    {currentTaggedAgent
+                      ? `Collaborating with ₦${currentTaggedAgent.tag} (${currentTaggedAgent.name})`
+                      : 'Chat with your autonomous agent or tag @₦Tag to dispatch tasks'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="chat-header-right">
+                {currentTaggedAgent ? (
+                  <button
+                    type="button"
+                    className="chat-tag-chip-btn"
+                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}
+                    onClick={handleClearTaggedAgent}
+                  >
+                    <X size={12} />
+                    <span>Untag @₦{currentTaggedAgent.tag}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="chat-tag-agent-btn"
+                    onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
+                  >
+                    <AtSign size={13} />
+                    <span>Tag Agent</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Message Stream */}
+            <div className="chat-stream-card">
+              {chatMessages.map((msg) => (
+                <div key={msg.id} className={`chat-msg-row ${msg.sender}`}>
+                  <div className={`chat-msg-avatar ${msg.sender}`}>
+                    {msg.sender === 'user' ? (
+                      <User size={16} />
+                    ) : msg.avatar ? (
+                      <img src={msg.avatar} alt={msg.agentName} style={{ width: 28, height: 28, borderRadius: '50%' }} />
+                    ) : (
+                      <Bot size={16} />
+                    )}
+                  </div>
+                  <div className="chat-msg-content">
+                    {msg.sender === 'agent' && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--privy-color-foreground-2)' }}>
+                        <span>{msg.agentName}</span>
+                        <span style={{ color: '#059669', fontSize: '10.5px' }}>₦{msg.agentTag}</span>
+                      </div>
+                    )}
+                    <div className="chat-msg-bubble">
+                      {msg.text}
+                    </div>
+
+                    {/* Generative Interactive Task Widget */}
+                    {msg.widget && (
+                      <div className="chat-widget-box">
+                        <div className="chat-widget-header">
+                          <div className="chat-widget-title">
+                            <Sparkles size={14} color="#7C3AED" />
+                            <span>{msg.widget.title}</span>
+                          </div>
+                          <span className="chat-widget-badge">{msg.widget.badge}</span>
+                        </div>
+                        <div className="chat-widget-body">
+                          {msg.widget.body}
+                        </div>
+                        <div className="chat-widget-actions">
+                          <button
+                            type="button"
+                            className="btn-agent-primary"
+                            style={{ padding: '6px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            onClick={() => handleWidgetAction(msg.widget)}
+                          >
+                            <Zap size={13} />
+                            <span>{msg.widget.actionText}</span>
+                          </button>
+                          {msg.widget.targetTag && (
+                            <button
+                              type="button"
+                              className="btn-agent-secondary"
+                              style={{ padding: '6px 12px', fontSize: '11px' }}
+                              onClick={() => {
+                                setRecipientInput(msg.widget.targetTag);
+                                setMainTab('pay');
+                              }}
+                            >
+                              <span>Open in Swap</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="chat-msg-time">{msg.time}</div>
+                  </div>
+                </div>
+              ))}
+
+              {chatIsTyping && (
+                <div className="chat-msg-row agent">
+                  <div className="chat-msg-avatar agent">
+                    <Bot size={16} />
+                  </div>
+                  <div className="chat-msg-content">
+                    <div className="chat-msg-bubble" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 14px' }}>
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7C3AED', animation: 'pulse 1s infinite' }} />
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7C3AED', animation: 'pulse 1s 0.2s infinite' }} />
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7C3AED', animation: 'pulse 1s 0.4s infinite' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Composer Card */}
+            <div className="chat-composer-card">
+              {/* Popover for Tagging Agent */}
+              {isTagPopoverOpen && (
+                <div className="agent-tag-popover">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '6px', borderBottom: '1px solid var(--border-color, rgba(0,0,0,0.08))' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800 }}>Tag Verified Agent</span>
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
+                      onClick={() => setIsTagPopoverOpen(false)}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search agents by tag..."
+                    value={tagSearchQuery}
+                    onChange={(e) => setTagSearchQuery(e.target.value)}
+                    style={{
+                      padding: '6px 10px',
+                      fontSize: '12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color, rgba(0,0,0,0.15))',
+                      background: 'var(--background, #f9fafb)',
+                      color: 'var(--privy-color-foreground)',
+                      outline: 'none',
+                    }}
+                  />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '180px', overflowY: 'auto' }}>
+                    {VERIFIED_AGENTS
+                      .filter((a) => !tagSearchQuery || a.tag.toLowerCase().includes(tagSearchQuery.toLowerCase()) || a.name.toLowerCase().includes(tagSearchQuery.toLowerCase()))
+                      .map((agent) => (
+                        <div
+                          key={agent.tag}
+                          className="agent-tag-popover-item"
+                          onClick={() => handleSelectAgentTag(agent)}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <img src={agent.avatar} alt={agent.name} style={{ width: 22, height: 22, borderRadius: '50%' }} />
+                            <div>
+                              <div className="agent-tag-popover-tag">₦{agent.tag}</div>
+                              <div className="agent-tag-popover-role">{agent.role.slice(0, 32)}...</div>
+                            </div>
+                          </div>
+                          <ChevronRight size={14} color="var(--privy-color-foreground-3)" />
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tag Context Bar (when an agent is selected) */}
+              {currentTaggedAgent && (
+                <div className="chat-tag-context-bar">
+                  <div className="chat-tag-context-left">
+                    <span style={{ background: '#059669', color: '#FFF', borderRadius: '4px', padding: '2px 5px', fontSize: '10px' }}>
+                      TAGGED
+                    </span>
+                    <span>@₦{currentTaggedAgent.tag}</span>
+                    <span style={{ opacity: 0.7, fontWeight: 400, fontSize: '11px' }}>({currentTaggedAgent.name})</span>
+                  </div>
+
+                  {/* Quick Task Action Chips for Tagged Agent */}
+                  <div className="chat-tag-chips-scroll">
+                    {currentTaggedAgent.tag === 'chowdeck' && (
+                      <>
+                        <button
+                          type="button"
+                          className="chat-tag-chip-btn"
+                          onClick={() => handleSendChatPrompt(`@₦chowdeck Order Jollof Rice & Turkey delivery for 4.5 USDC`)}
+                        >
+                          🍗 Order Jollof (4.5 USDC)
+                        </button>
+                        <button
+                          type="button"
+                          className="chat-tag-chip-btn"
+                          onClick={() => handleSendChatPrompt(`@₦chowdeck Check active food delivery status on Arc`)}
+                        >
+                          ⚡ Order Status
+                        </button>
+                      </>
+                    )}
+
+                    {currentTaggedAgent.tag === 'dev' && (
+                      <>
+                        <button
+                          type="button"
+                          className="chat-tag-chip-btn"
+                          onClick={() => handleSendChatPrompt(`@₦dev Audit bytecode of milestone escrow smart contract`)}
+                        >
+                          ⚡ Audit Bytecode
+                        </button>
+                        <button
+                          type="button"
+                          className="chat-tag-chip-btn"
+                          onClick={() => handleSendChatPrompt(`@₦dev Deploy Osaka-optimized escrow with zero gas sponsorship`)}
+                        >
+                          🛡️ Deploy Escrow
+                        </button>
+                      </>
+                    )}
+
+                    {currentTaggedAgent.tag === 'designer' && (
+                      <>
+                        <button
+                          type="button"
+                          className="chat-tag-chip-btn"
+                          onClick={() => handleSendChatPrompt(`@₦designer Generate UI brand pack and milestone deliverables`)}
+                        >
+                          🎨 Generate UI Pack
+                        </button>
+                        <button
+                          type="button"
+                          className="chat-tag-chip-btn"
+                          onClick={() => handleSendChatPrompt(`@₦designer Release 25 USDC milestone reward for vector icons`)}
+                        >
+                          💰 Release 25 USDC
+                        </button>
+                      </>
+                    )}
+
+                    {currentTaggedAgent.tag === 'ride' && (
+                      <>
+                        <button
+                          type="button"
+                          className="chat-tag-chip-btn"
+                          onClick={() => handleSendChatPrompt(`@₦ride Dispatch autonomous transit from Mainland to Island`)}
+                        >
+                          🚖 Dispatch Ride (3.2 USDC)
+                        </button>
+                      </>
+                    )}
+
+                    {currentTaggedAgent.tag === 'escrow' && (
+                      <>
+                        <button
+                          type="button"
+                          className="chat-tag-chip-btn"
+                          onClick={() => handleSendChatPrompt(`@₦escrow Lock 10 USDC in milestone escrow for delivery guarantee`)}
+                        >
+                          🔒 Lock 10 USDC Escrow
+                        </button>
+                      </>
+                    )}
+
+                    {currentTaggedAgent.tag === 'food' && (
+                      <>
+                        <button
+                          type="button"
+                          className="chat-tag-chip-btn"
+                          onClick={() => handleSendChatPrompt(`@₦food Redeem P2P food pantry voucher on Arc Osaka`)}
+                        >
+                          🍲 Redeem Voucher
+                        </button>
+                      </>
+                    )}
+
+                    <button
+                      type="button"
+                      className="chat-tag-context-clear"
+                      onClick={handleClearTaggedAgent}
+                      title="Clear Tag"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Input Row */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSendChatPrompt();
+                }}
+                className="chat-input-row"
+              >
+                <button
+                  type="button"
+                  className="chat-tag-agent-btn"
+                  onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
+                  title="Tag an Agent"
+                >
+                  <AtSign size={14} />
+                  <span>Tag</span>
+                </button>
+
+                <input
+                  type="text"
+                  className="chat-composer-input"
+                  placeholder={
+                    currentTaggedAgent
+                      ? `Message @₦${currentTaggedAgent.tag} or ask them to perform a task...`
+                      : "Chat with your sovereign agent, send USDC, or tag @₦dev, @₦chowdeck..."
+                  }
+                  value={chatInputText}
+                  onChange={(e) => setChatInputText(e.target.value)}
+                />
+
+                <button
+                  type="submit"
+                  className="chat-send-btn"
+                  disabled={!chatInputText.trim() || chatIsTyping}
+                  aria-label="Send Message"
+                >
+                  <Send size={16} />
+                </button>
+              </form>
+
+              {/* Suggested Agent Pills */}
+              {!currentTaggedAgent && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingTop: '2px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--privy-color-foreground-3)', whiteSpace: 'nowrap' }}>
+                    Tag verified bot:
+                  </span>
+                  {VERIFIED_AGENTS.map((agent) => (
+                    <button
+                      key={agent.tag}
+                      type="button"
+                      className="chat-tag-chip-btn"
+                      onClick={() => handleSelectAgentTag(agent)}
+                    >
+                      <img src={agent.avatar} alt={agent.name} style={{ width: 14, height: 14, borderRadius: '50%' }} />
+                      <span>@₦{agent.tag}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            TAB 5: FAQ (PROTOCOL KNOWLEDGE BASE & ACCORDION)
             ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'faq' && (
           <div className="faq-page-container">
@@ -2978,7 +3587,21 @@ export default function App() {
           <span className="mobile-footer-label">Agents</span>
         </button>
 
-        {/* 3. Rewards (Rosette Icon with Emerald Green Active Styling) */}
+        {/* 3. Sovereign Agent Chat (Tag2Tag Layer with Status Dot) */}
+        <button
+          type="button"
+          className={`mobile-footer-item ${mainTab === 'chat' ? 'active' : ''}`}
+          onClick={() => setMainTab('chat')}
+          aria-label="Agent Chat"
+        >
+          <div className="mobile-footer-icon-wrap">
+            <MessageSquare size={22} strokeWidth={mainTab === 'chat' ? 2.4 : 1.8} />
+            <span className="mobile-footer-badge badge-green" style={{ width: 8, height: 8, padding: 0, minWidth: 8, borderRadius: '50%' }} />
+          </div>
+          <span className="mobile-footer-label">Chat</span>
+        </button>
+
+        {/* 4. Rewards (Rosette Icon with Emerald Green Active Styling) */}
         <button
           type="button"
           className={`mobile-footer-item ${mainTab === 'tasks' ? 'active' : ''}`}
@@ -3003,7 +3626,7 @@ export default function App() {
           <span className="mobile-footer-label">Rewards</span>
         </button>
 
-        {/* 4. Claim ₦Tag */}
+        {/* 5. Claim ₦Tag */}
         <button
           type="button"
           className={`mobile-footer-item ${mainTab === 'claim' ? 'active' : ''}`}
@@ -3014,19 +3637,6 @@ export default function App() {
             <Sparkles size={22} strokeWidth={mainTab === 'claim' ? 2.4 : 1.8} />
           </div>
           <span className="mobile-footer-label">Claim</span>
-        </button>
-
-        {/* 5. FAQ */}
-        <button
-          type="button"
-          className={`mobile-footer-item ${mainTab === 'faq' ? 'active' : ''}`}
-          onClick={() => setMainTab('faq')}
-          aria-label="FAQ"
-        >
-          <div className="mobile-footer-icon-wrap">
-            <HelpCircle size={22} strokeWidth={mainTab === 'faq' ? 2.4 : 1.8} />
-          </div>
-          <span className="mobile-footer-label">FAQ</span>
         </button>
       </nav>
 
