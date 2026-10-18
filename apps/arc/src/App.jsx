@@ -103,6 +103,14 @@ import {
 } from './services/arcAppKit.js';
 import { resolveTagProfile } from './services/tagAvatar.js';
 import confetti from 'canvas-confetti';
+import RewardsPage, { GoldenVoucherModal, LuckyWheelModal, ReferralModal } from './RewardsPage.jsx';
+import NotificationLayer from './components/NotificationLayer.jsx';
+import {
+  registerServiceWorker,
+  playMicroSound,
+  triggerHaptic,
+  sendNotificationAlert,
+} from './services/pushNotification.js';
 
 /**
  * Metallic & luminous badge emblems matching Reference 1 (Milestones).
@@ -558,8 +566,8 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Navigation: 'pay' (Home) | 'claim' | 'tasks' (Rewards) | 'agents' | 'chat' | 'faq'
-  const VALID_TABS = ['pay', 'claim', 'tasks', 'agents', 'chat', 'faq'];
+  // Navigation: 'pay' (Home) | 'claim' | 'tasks' | 'agents' | 'chat' | 'faq' | 'rewards'
+  const VALID_TABS = ['pay', 'claim', 'tasks', 'agents', 'chat', 'faq', 'rewards'];
   const [mainTab, setMainTabState] = useState(() => {
     try {
       const hash = window.location.hash.replace('#', '').toLowerCase();
@@ -588,6 +596,11 @@ export default function App() {
     };
     window.addEventListener('hashchange', handleHash);
     return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
+
+  // Initialize Web Push Service Worker with VAPID
+  useEffect(() => {
+    registerServiceWorker();
   }, []);
 
   // Sovereign Agent Chat State (Tag2Tag Agent-to-Agent Messaging & Task Execution)
@@ -804,8 +817,11 @@ export default function App() {
     }
   };
 
-  // Notifications Popover State (Bell icon)
+  // Notifications Popover State (Bell icon) & Global Rewards Modals
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isGoldenVoucherOpen, setIsGoldenVoucherOpen] = useState(false);
+  const [isLuckyWheelOpen, setIsLuckyWheelOpen] = useState(false);
+  const [isReferralOpen, setIsReferralOpen] = useState(false);
 
   // Daily Bonus Live Countdown Timer (hh : mm : ss matching screenshot)
   const [dailyCountdown, setDailyCountdown] = useState('09 : 35 : 17');
@@ -870,6 +886,7 @@ export default function App() {
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
   const [myTag, setMyTag] = useState(null);
+  const userTag = myTag?.tag || 'nairatag';
 
   // Modals
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
@@ -1397,6 +1414,16 @@ export default function App() {
       });
       setIsCelebrationOpen(true);
       showToast(`Payment sent: ${amountInput} USDC`, 'success', 3500);
+
+      // Web Push & In-App notification with tactile coin chime
+      sendNotificationAlert({
+        title: '⚡ Payment Finalized on Arc!',
+        body: `Sent ${amountInput} USDC to ${targetTag ? `₦${targetTag.replace(/^[$₦]/, '').toUpperCase()}` : shorten(result.recipientAddress)} in ${result.executionTimeMs || '<1'}s. +1 Lucky Spin earned!`,
+        type: 'cash',
+        actionLabel: 'Spin Wheel 🎡',
+        url: '/#rewards',
+      });
+
       refreshBalance(walletAddress);
       setAmountInput('');
       setMemoInput('');
@@ -1624,6 +1651,15 @@ export default function App() {
         <nav className="app-nav-tabs desktop-only">
           <button
             type="button"
+            className={`nav-tab-btn ${mainTab === 'rewards' ? 'active' : ''}`}
+            onClick={() => setMainTab('rewards')}
+          >
+            <Gift size={14} />
+            <span>Rewards</span>
+            <span className="nav-badge-pill" style={{ background: '#ef4444' }}>HOT</span>
+          </button>
+          <button
+            type="button"
             className={`nav-tab-btn ${mainTab === 'tasks' ? 'active' : ''}`}
             onClick={() => setMainTab('tasks')}
           >
@@ -1763,12 +1799,15 @@ export default function App() {
           <div className="header-bell-wrapper">
             <button
               type="button"
-              className="header-bell-btn"
-              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              className={`header-bell-btn ${isNotificationOpen ? 'active' : ''}`}
+              onClick={() => {
+                playMicroSound('pop');
+                setIsNotificationOpen(!isNotificationOpen);
+              }}
               aria-label="3 new notifications"
               title="Notifications"
             >
-              <Bell size={18} />
+              <Bell size={18} className={isNotificationOpen ? 'bell-ringing-active' : ''} />
               <span className="header-bell-badge">3</span>
             </button>
 
@@ -1788,14 +1827,14 @@ export default function App() {
                     <div
                       className="notification-item unread"
                       onClick={() => {
-                        setMainTab('tasks');
                         setIsNotificationOpen(false);
+                        setIsGoldenVoucherOpen(true);
                       }}
                     >
                       <div className="notif-dot" />
                       <div className="notif-content">
-                        <div className="notif-title">🎁 Daily Bonus Quests Ready</div>
-                        <div className="notif-sub">Claim up to +250 protocol points & rewards today</div>
+                        <div className="notif-title">🎁 Golden Voucher Pack Available!</div>
+                        <div className="notif-sub">Claim up to 50% transaction discounts & airtime bonus</div>
                       </div>
                     </div>
 
@@ -1826,6 +1865,42 @@ export default function App() {
                         <div className="notif-sub">Arc Osaka smart escrow locked $120 USDC</div>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Web Push & In-App Alert Quick Test Action */}
+                  <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border-color, rgba(0,0,0,0.08))', background: 'rgba(0,0,0,0.02)' }}>
+                    <button
+                      type="button"
+                      className="shimmer-sweep"
+                      style={{
+                        width: '100%',
+                        padding: '8px 12px',
+                        fontSize: '11.5px',
+                        fontWeight: 800,
+                        background: '#2563eb',
+                        color: '#ffffff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                      onClick={() => {
+                        sendNotificationAlert({
+                          title: '⚡ Web Push & In-App Alert Live!',
+                          body: 'VAPID push subscription active. Instant transaction and reward updates ready.',
+                          type: 'reward',
+                          actionLabel: 'Claim Voucher 🎁',
+                          url: '/#rewards',
+                        });
+                        setIsNotificationOpen(false);
+                      }}
+                    >
+                      <span>🔔</span>
+                      <span>Test Push &amp; In-App Alert</span>
+                    </button>
                   </div>
                 </div>
               </>
@@ -1882,6 +1957,24 @@ export default function App() {
             </div>
 
             <div className="mobile-drawer-links">
+              <button
+                type="button"
+                className={`mobile-nav-link ${mainTab === 'rewards' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainTab('rewards');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon-box" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                  <Gift size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <span className="mobile-nav-title">Rewards &amp; Vouchers</span>
+                  <span className="mobile-nav-desc">Lucky Wheel, cashback, airtime vouchers &amp; referral</span>
+                </div>
+                <span className="nav-badge-pill" style={{ background: '#ef4444' }}>HOT</span>
+              </button>
+
               <button
                 type="button"
                 className={`mobile-nav-link ${mainTab === 'tasks' ? 'active' : ''}`}
@@ -3547,6 +3640,16 @@ export default function App() {
           </div>
         )}
 
+        {/* ───────────────────────────────────────────────────────────────────
+            TAB 6: REWARDS & VOUCHERS CENTER (GROUNDED IN USER REFERENCES)
+            ─────────────────────────────────────────────────────────────────── */}
+        {mainTab === 'rewards' && (
+          <RewardsPage
+            userTag={userTag}
+            onNavigateHome={() => setMainTab('pay')}
+          />
+        )}
+
       </main>
 
       {/* ───────────────────────────────────────────────────────────────────
@@ -3555,6 +3658,20 @@ export default function App() {
           ─────────────────────────────────────────────────────────────────── */}
       {mainTab !== 'chat' && (
         <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
+          {/* 0. Rewards (with Coral-Red Notification Badge) */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'rewards' ? 'active' : ''}`}
+            onClick={() => setMainTab('rewards')}
+            aria-label="Rewards"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <Gift size={22} strokeWidth={mainTab === 'rewards' ? 2.4 : 1.8} />
+              <span className="mobile-footer-badge badge-red">HOT</span>
+            </div>
+            <span className="mobile-footer-label">Rewards</span>
+          </button>
+
           {/* 1. Tasks */}
           <button
             type="button"
@@ -4531,6 +4648,43 @@ export default function App() {
           </div>
         ))}
       </div>
+
+      {/* ───────────────────────────────────────────────────────────────────
+          GLOBAL GAMIFIED REWARDS MODALS (ACCESSIBLE FROM HEADER & NOTIFICATIONS)
+          ─────────────────────────────────────────────────────────────────── */}
+      <GoldenVoucherModal
+        isOpen={isGoldenVoucherOpen}
+        onClose={() => setIsGoldenVoucherOpen(false)}
+        onClaimSuccess={() => {
+          showToast('Golden Voucher Pack Claimed! +2 vouchers added.', 'success');
+        }}
+      />
+
+      <LuckyWheelModal
+        isOpen={isLuckyWheelOpen}
+        onClose={() => setIsLuckyWheelOpen(false)}
+        availableSpins={2}
+        onWinPrize={(prize) => {
+          showToast(`Won ${prize.label}! Credited to your account.`, 'success');
+        }}
+      />
+
+      <ReferralModal
+        isOpen={isReferralOpen}
+        onClose={() => setIsReferralOpen(false)}
+        userTag={userTag}
+      />
+
+      {/* ───────────────────────────────────────────────────────────────────
+          WEB PUSH & IN-APP NOTIFICATION LAYER (VAPID INTEGRATION)
+          ─────────────────────────────────────────────────────────────────── */}
+      <NotificationLayer
+        onNavigateTab={setMainTab}
+        onOpenRewards={() => {
+          setMainTab('rewards');
+          setIsGoldenVoucherOpen(true);
+        }}
+      />
     </>
   );
 }
