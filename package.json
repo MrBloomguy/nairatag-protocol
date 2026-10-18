@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "test": "node --max-old-space-size=4096 --test packages/celotags-protocol/test/*.test.js && node test/nairatag-celo-registry.test.cjs && node test/celo-testnet-smoke.test.cjs",
