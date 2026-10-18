@@ -1624,22 +1624,6 @@ export default function App() {
         <nav className="app-nav-tabs desktop-only">
           <button
             type="button"
-            className={`nav-tab-btn ${mainTab === 'pay' ? 'active' : ''}`}
-            onClick={() => setMainTab('pay')}
-          >
-            <ArrowDownUp size={14} />
-            <span>Swap</span>
-          </button>
-          <button
-            type="button"
-            className={`nav-tab-btn ${mainTab === 'claim' ? 'active' : ''}`}
-            onClick={() => setMainTab('claim')}
-          >
-            <Sparkles size={14} />
-            <span>Claim ₦Tag</span>
-          </button>
-          <button
-            type="button"
             className={`nav-tab-btn ${mainTab === 'tasks' ? 'active' : ''}`}
             onClick={() => setMainTab('tasks')}
           >
@@ -1654,6 +1638,22 @@ export default function App() {
             <Bot size={14} />
             <span>Agents</span>
             <span className="nav-badge-pill" style={{ background: '#7c3aed' }}>8</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-tab-btn ${mainTab === 'claim' ? 'active' : ''}`}
+            onClick={() => setMainTab('claim')}
+          >
+            <Sparkles size={14} />
+            <span>Claim ₦Tag</span>
+          </button>
+          <button
+            type="button"
+            className={`nav-tab-btn ${mainTab === 'pay' ? 'active' : ''}`}
+            onClick={() => setMainTab('pay')}
+          >
+            <ArrowDownUp size={14} />
+            <span>Swap</span>
           </button>
           <button
             type="button"
@@ -1884,42 +1884,6 @@ export default function App() {
             <div className="mobile-drawer-links">
               <button
                 type="button"
-                className={`mobile-nav-link ${mainTab === 'pay' ? 'active' : ''}`}
-                onClick={() => {
-                  setMainTab('pay');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <div className="mobile-nav-icon-box">
-                  <ArrowDownUp size={18} />
-                </div>
-                <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Swap & Pay</span>
-                  <span className="mobile-nav-desc">Instant USDC transfer with zero gas fees</span>
-                </div>
-                {mainTab === 'pay' && <span className="mobile-nav-active-pill">Active</span>}
-              </button>
-
-              <button
-                type="button"
-                className={`mobile-nav-link ${mainTab === 'claim' ? 'active' : ''}`}
-                onClick={() => {
-                  setMainTab('claim');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <div className="mobile-nav-icon-box">
-                  <Sparkles size={18} />
-                </div>
-                <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Claim ₦Tag</span>
-                  <span className="mobile-nav-desc">Mint sovereign onchain identity handle</span>
-                </div>
-                {mainTab === 'claim' && <span className="mobile-nav-active-pill">Active</span>}
-              </button>
-
-              <button
-                type="button"
                 className={`mobile-nav-link ${mainTab === 'tasks' ? 'active' : ''}`}
                 onClick={() => {
                   setMainTab('tasks');
@@ -1952,6 +1916,42 @@ export default function App() {
                   <span className="mobile-nav-desc">Autonomous ERC-8004 reputation directory</span>
                 </div>
                 {mainTab === 'agents' && <span className="mobile-nav-active-pill">Active</span>}
+              </button>
+
+              <button
+                type="button"
+                className={`mobile-nav-link ${mainTab === 'claim' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainTab('claim');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon-box">
+                  <Sparkles size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <span className="mobile-nav-title">Claim ₦Tag</span>
+                  <span className="mobile-nav-desc">Mint sovereign onchain identity handle</span>
+                </div>
+                {mainTab === 'claim' && <span className="mobile-nav-active-pill">Active</span>}
+              </button>
+
+              <button
+                type="button"
+                className={`mobile-nav-link ${mainTab === 'pay' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainTab('pay');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon-box">
+                  <ArrowDownUp size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <span className="mobile-nav-title">Swap & Pay</span>
+                  <span className="mobile-nav-desc">Instant USDC transfer with zero gas fees</span>
+                </div>
+                {mainTab === 'pay' && <span className="mobile-nav-active-pill">Active</span>}
               </button>
 
               <button
@@ -3555,53 +3555,12 @@ export default function App() {
           ─────────────────────────────────────────────────────────────────── */}
       {mainTab !== 'chat' && (
         <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
-          {/* 1. Home */}
-          <button
-            type="button"
-            className={`mobile-footer-item ${mainTab === 'pay' ? 'active' : ''}`}
-            onClick={() => setMainTab('pay')}
-            aria-label="Home"
-          >
-            <div className="mobile-footer-icon-wrap">
-              <Home size={22} strokeWidth={mainTab === 'pay' ? 2.4 : 1.8} />
-            </div>
-            <span className="mobile-footer-label">Home</span>
-          </button>
-
-          {/* 2. Agents (with Purple Pill Badge "8") */}
-          <button
-            type="button"
-            className={`mobile-footer-item ${mainTab === 'agents' ? 'active' : ''}`}
-            onClick={() => setMainTab('agents')}
-            aria-label="Agents"
-          >
-            <div className="mobile-footer-icon-wrap">
-              <Users size={22} strokeWidth={mainTab === 'agents' ? 2.4 : 1.8} />
-              <span className="mobile-footer-badge badge-purple">8</span>
-            </div>
-            <span className="mobile-footer-label">Agents</span>
-          </button>
-
-          {/* 3. Sovereign Agent Chat (Tag2Tag Layer with Status Dot) */}
-          <button
-            type="button"
-            className={`mobile-footer-item ${mainTab === 'chat' ? 'active' : ''}`}
-            onClick={() => setMainTab('chat')}
-            aria-label="Agent Chat"
-          >
-            <div className="mobile-footer-icon-wrap">
-              <MessageSquare size={22} strokeWidth={mainTab === 'chat' ? 2.4 : 1.8} />
-              <span className="mobile-footer-badge badge-green" style={{ width: 8, height: 8, padding: 0, minWidth: 8, borderRadius: '50%' }} />
-            </div>
-            <span className="mobile-footer-label">Chat</span>
-          </button>
-
-          {/* 4. Rewards (Rosette Icon with Emerald Green Active Styling) */}
+          {/* 1. Tasks */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'tasks' ? 'active' : ''}`}
             onClick={() => setMainTab('tasks')}
-            aria-label="Rewards"
+            aria-label="Tasks"
           >
             <div className="mobile-footer-icon-wrap">
               <svg
@@ -3618,20 +3577,61 @@ export default function App() {
                 <path d="M12 2.5a2 2 0 0 1 2 2v.5a2 2 0 0 0 1.4 1.9l.47.16a2 2 0 0 1 1.25 2.5l-.17.47a2 2 0 0 0 .6 2.3l.36.26a2 2 0 0 1 0 2.8l-.36.26a2 2 0 0 0-.6 2.3l.17.47a2 2 0 0 1-1.25 2.5l-.47.16A2 2 0 0 0 14 21.5v.5a2 2 0 0 1-4 0v-.5a2 2 0 0 0-1.4-1.9l-.47-.16a2 2 0 0 1-1.25-2.5l.17-.47a2 2 0 0 0-.6-2.3l-.36-.26a2 2 0 0 1 0-2.8l.36-.26a2 2 0 0 0 .6-2.3l-.17-.47a2 2 0 0 1 1.25-2.5l.47-.16A2 2 0 0 0 10 5v-.5a2 2 0 0 1 2-2z" />
               </svg>
             </div>
-            <span className="mobile-footer-label">Rewards</span>
+            <span className="mobile-footer-label">Tasks</span>
           </button>
 
-          {/* 5. Claim ₦Tag */}
+          {/* 2. Agents (with Purple Pill Badge "8") */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'agents' ? 'active' : ''}`}
+            onClick={() => setMainTab('agents')}
+            aria-label="Agents"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <Users size={22} strokeWidth={mainTab === 'agents' ? 2.4 : 1.8} />
+              <span className="mobile-footer-badge badge-purple">8</span>
+            </div>
+            <span className="mobile-footer-label">Agents</span>
+          </button>
+
+          {/* 3. Claim */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'claim' ? 'active' : ''}`}
             onClick={() => setMainTab('claim')}
-            aria-label="Claim ₦Tag"
+            aria-label="Claim"
           >
             <div className="mobile-footer-icon-wrap">
               <Sparkles size={22} strokeWidth={mainTab === 'claim' ? 2.4 : 1.8} />
             </div>
             <span className="mobile-footer-label">Claim</span>
+          </button>
+
+          {/* 4. Swap */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'pay' ? 'active' : ''}`}
+            onClick={() => setMainTab('pay')}
+            aria-label="Swap"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <ArrowDownUp size={22} strokeWidth={mainTab === 'pay' ? 2.4 : 1.8} />
+            </div>
+            <span className="mobile-footer-label">Swap</span>
+          </button>
+
+          {/* 5. Chat */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'chat' ? 'active' : ''}`}
+            onClick={() => setMainTab('chat')}
+            aria-label="Chat"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <MessageSquare size={22} strokeWidth={mainTab === 'chat' ? 2.4 : 1.8} />
+              <span className="mobile-footer-badge badge-green" style={{ width: 8, height: 8, padding: 0, minWidth: 8, borderRadius: '50%' }} />
+            </div>
+            <span className="mobile-footer-label">Chat</span>
           </button>
         </nav>
       )}
