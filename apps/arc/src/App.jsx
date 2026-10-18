@@ -2579,19 +2579,19 @@ export default function App() {
                     type="button"
                     className={`view-toggle-btn ${agentsViewMode === 'grid' ? 'active' : ''}`}
                     onClick={() => setAgentsViewMode('grid')}
-                    title="Grid View (Milestones)"
+                    title="Grid View"
+                    aria-label="Grid View"
                   >
-                    <LayoutGrid size={13} />
-                    <span>Grid</span>
+                    <LayoutGrid size={15} />
                   </button>
                   <button
                     type="button"
                     className={`view-toggle-btn ${agentsViewMode === 'list' ? 'active' : ''}`}
                     onClick={() => setAgentsViewMode('list')}
-                    title="List View (Your Circle)"
+                    title="List View"
+                    aria-label="List View"
                   >
-                    <List size={13} />
-                    <span>List</span>
+                    <List size={15} />
                   </button>
                 </div>
               </div>
@@ -2673,10 +2673,6 @@ export default function App() {
                     onClick={() => handleOpenAgentProfile(agent)}
                   >
                     <div className="agent-circle-left">
-                      <div className={`agent-circle-rank ${agent.rankTop || ''}`}>
-                        {agent.rank}
-                      </div>
-
                       <div className="agent-circle-avatar-wrap">
                         <img
                           src={agent.avatar}
@@ -2684,6 +2680,9 @@ export default function App() {
                           aria-hidden="true"
                           className="agent-circle-avatar-img"
                         />
+                        <div className={`agent-circle-rank ${agent.rankTop || ''}`}>
+                          {agent.rank}
+                        </div>
                       </div>
 
                       <div className="agent-circle-meta">
@@ -2816,25 +2815,37 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Grid / List Switcher */}
-                <div className="agents-view-toggle">
+                {/* Grid / List Switcher + Create Task Button */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div className="agents-view-toggle">
+                    <button
+                      type="button"
+                      className={`view-toggle-btn ${tasksViewMode === 'grid' ? 'active' : ''}`}
+                      onClick={() => setTasksViewMode('grid')}
+                      title="Grid View"
+                      aria-label="Grid View"
+                    >
+                      <LayoutGrid size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      className={`view-toggle-btn ${tasksViewMode === 'list' ? 'active' : ''}`}
+                      onClick={() => setTasksViewMode('list')}
+                      title="List View"
+                      aria-label="List View"
+                    >
+                      <List size={15} />
+                    </button>
+                  </div>
+
                   <button
                     type="button"
-                    className={`view-toggle-btn ${tasksViewMode === 'grid' ? 'active' : ''}`}
-                    onClick={() => setTasksViewMode('grid')}
-                    title="Grid View (Milestones)"
+                    className="btn-agent-primary"
+                    style={{ padding: '6px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                    onClick={() => setIsPostTaskOpen(true)}
                   >
-                    <LayoutGrid size={13} />
-                    <span>Grid</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`view-toggle-btn ${tasksViewMode === 'list' ? 'active' : ''}`}
-                    onClick={() => setTasksViewMode('list')}
-                    title="List View (Quests Circle)"
-                  >
-                    <List size={13} />
-                    <span>List</span>
+                    <Plus size={14} />
+                    <span>Create Task</span>
                   </button>
                 </div>
               </div>
@@ -2970,10 +2981,6 @@ export default function App() {
                         style={{ cursor: isDone ? 'default' : 'pointer' }}
                       >
                         <div className="agent-circle-left">
-                          <div className={`agent-circle-rank ${rankTopClass}`}>
-                            {rankLabel}
-                          </div>
-
                           <div className="agent-circle-avatar-wrap">
                             <img
                               src={task.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${task.id}`}
@@ -2981,6 +2988,9 @@ export default function App() {
                               aria-hidden="true"
                               className="agent-circle-avatar-img"
                             />
+                            <div className={`agent-circle-rank ${rankTopClass}`}>
+                              {rankLabel}
+                            </div>
                           </div>
 
                           <div className="agent-circle-meta">
@@ -3050,50 +3060,33 @@ export default function App() {
             ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'chat' && (
           <div className="chat-page-container">
-            {/* Header Card */}
-            <div className="chat-header-card">
-              <div className="chat-header-left">
-                <div className="chat-agent-avatar-wrap">
-                  <Bot size={22} color="#FFFFFF" />
-                  <span className="chat-online-dot" />
-                </div>
-                <div>
-                  <div className="chat-header-title">
-                    <span>Sovereign Agent Hub</span>
-                    <span className="card-net-pill" style={{ fontSize: '10px', background: 'rgba(16, 185, 129, 0.12)', color: '#059669' }}>
-                      Arc Osaka EVM
-                    </span>
-                  </div>
-                  <div className="chat-header-sub">
-                    {currentTaggedAgent
-                      ? `Collaborating with ₦${currentTaggedAgent.tag} (${currentTaggedAgent.name})`
-                      : 'Chat with your autonomous agent or tag @₦Tag to dispatch tasks'}
-                  </div>
-                </div>
+            {/* Minimal Chat Top Navigation Bar */}
+            <div className="chat-top-nav-bar">
+              <button
+                type="button"
+                className="chat-back-btn"
+                onClick={() => setMainTab('pay')}
+                aria-label="Back to Home"
+              >
+                <ArrowLeft size={16} />
+                <span>Home</span>
+              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+                <span style={{ fontSize: '12.5px', fontWeight: 800, color: 'var(--privy-color-foreground)' }}>
+                  {currentTaggedAgent ? `₦${currentTaggedAgent.tag}` : 'Sovereign Agent'}
+                </span>
+                <span className="card-net-pill" style={{ fontSize: '9px', padding: '1px 6px' }}>Arc Osaka</span>
               </div>
-
-              <div className="chat-header-right">
-                {currentTaggedAgent ? (
-                  <button
-                    type="button"
-                    className="chat-tag-chip-btn"
-                    style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#EF4444', borderColor: 'rgba(239, 68, 68, 0.2)' }}
-                    onClick={handleClearTaggedAgent}
-                  >
-                    <X size={12} />
-                    <span>Untag @₦{currentTaggedAgent.tag}</span>
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="chat-tag-agent-btn"
-                    onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
-                  >
-                    <AtSign size={13} />
-                    <span>Tag Agent</span>
-                  </button>
-                )}
-              </div>
+              <button
+                type="button"
+                className="chat-top-tag-btn"
+                onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
+                title="Tag Agent"
+              >
+                <AtSign size={13} />
+                <span>Tag</span>
+              </button>
             </div>
 
             {/* Message Stream */}
@@ -3558,87 +3551,90 @@ export default function App() {
 
       {/* ───────────────────────────────────────────────────────────────────
           MOBILE FIXED FOOTER MENU (MATCHING EXACT USER SCREENSHOT STYLE)
+          (Hidden on Chat page per user specification)
           ─────────────────────────────────────────────────────────────────── */}
-      <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
-        {/* 1. Home */}
-        <button
-          type="button"
-          className={`mobile-footer-item ${mainTab === 'pay' ? 'active' : ''}`}
-          onClick={() => setMainTab('pay')}
-          aria-label="Home"
-        >
-          <div className="mobile-footer-icon-wrap">
-            <Home size={22} strokeWidth={mainTab === 'pay' ? 2.4 : 1.8} />
-          </div>
-          <span className="mobile-footer-label">Home</span>
-        </button>
+      {mainTab !== 'chat' && (
+        <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
+          {/* 1. Home */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'pay' ? 'active' : ''}`}
+            onClick={() => setMainTab('pay')}
+            aria-label="Home"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <Home size={22} strokeWidth={mainTab === 'pay' ? 2.4 : 1.8} />
+            </div>
+            <span className="mobile-footer-label">Home</span>
+          </button>
 
-        {/* 2. Agents (with Purple Pill Badge "8") */}
-        <button
-          type="button"
-          className={`mobile-footer-item ${mainTab === 'agents' ? 'active' : ''}`}
-          onClick={() => setMainTab('agents')}
-          aria-label="Agents"
-        >
-          <div className="mobile-footer-icon-wrap">
-            <Users size={22} strokeWidth={mainTab === 'agents' ? 2.4 : 1.8} />
-            <span className="mobile-footer-badge badge-purple">8</span>
-          </div>
-          <span className="mobile-footer-label">Agents</span>
-        </button>
+          {/* 2. Agents (with Purple Pill Badge "8") */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'agents' ? 'active' : ''}`}
+            onClick={() => setMainTab('agents')}
+            aria-label="Agents"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <Users size={22} strokeWidth={mainTab === 'agents' ? 2.4 : 1.8} />
+              <span className="mobile-footer-badge badge-purple">8</span>
+            </div>
+            <span className="mobile-footer-label">Agents</span>
+          </button>
 
-        {/* 3. Sovereign Agent Chat (Tag2Tag Layer with Status Dot) */}
-        <button
-          type="button"
-          className={`mobile-footer-item ${mainTab === 'chat' ? 'active' : ''}`}
-          onClick={() => setMainTab('chat')}
-          aria-label="Agent Chat"
-        >
-          <div className="mobile-footer-icon-wrap">
-            <MessageSquare size={22} strokeWidth={mainTab === 'chat' ? 2.4 : 1.8} />
-            <span className="mobile-footer-badge badge-green" style={{ width: 8, height: 8, padding: 0, minWidth: 8, borderRadius: '50%' }} />
-          </div>
-          <span className="mobile-footer-label">Chat</span>
-        </button>
+          {/* 3. Sovereign Agent Chat (Tag2Tag Layer with Status Dot) */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'chat' ? 'active' : ''}`}
+            onClick={() => setMainTab('chat')}
+            aria-label="Agent Chat"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <MessageSquare size={22} strokeWidth={mainTab === 'chat' ? 2.4 : 1.8} />
+              <span className="mobile-footer-badge badge-green" style={{ width: 8, height: 8, padding: 0, minWidth: 8, borderRadius: '50%' }} />
+            </div>
+            <span className="mobile-footer-label">Chat</span>
+          </button>
 
-        {/* 4. Rewards (Rosette Icon with Emerald Green Active Styling) */}
-        <button
-          type="button"
-          className={`mobile-footer-item ${mainTab === 'tasks' ? 'active' : ''}`}
-          onClick={() => setMainTab('tasks')}
-          aria-label="Rewards"
-        >
-          <div className="mobile-footer-icon-wrap">
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={mainTab === 'tasks' ? '2.4' : '1.8'}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="3.5" />
-              <path d="M12 2.5a2 2 0 0 1 2 2v.5a2 2 0 0 0 1.4 1.9l.47.16a2 2 0 0 1 1.25 2.5l-.17.47a2 2 0 0 0 .6 2.3l.36.26a2 2 0 0 1 0 2.8l-.36.26a2 2 0 0 0-.6 2.3l.17.47a2 2 0 0 1-1.25 2.5l-.47.16A2 2 0 0 0 14 21.5v.5a2 2 0 0 1-4 0v-.5a2 2 0 0 0-1.4-1.9l-.47-.16a2 2 0 0 1-1.25-2.5l.17-.47a2 2 0 0 0-.6-2.3l-.36-.26a2 2 0 0 1 0-2.8l.36-.26a2 2 0 0 0 .6-2.3l-.17-.47a2 2 0 0 1 1.25-2.5l.47-.16A2 2 0 0 0 10 5v-.5a2 2 0 0 1 2-2z" />
-            </svg>
-          </div>
-          <span className="mobile-footer-label">Rewards</span>
-        </button>
+          {/* 4. Rewards (Rosette Icon with Emerald Green Active Styling) */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'tasks' ? 'active' : ''}`}
+            onClick={() => setMainTab('tasks')}
+            aria-label="Rewards"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={mainTab === 'tasks' ? '2.4' : '1.8'}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <circle cx="12" cy="12" r="3.5" />
+                <path d="M12 2.5a2 2 0 0 1 2 2v.5a2 2 0 0 0 1.4 1.9l.47.16a2 2 0 0 1 1.25 2.5l-.17.47a2 2 0 0 0 .6 2.3l.36.26a2 2 0 0 1 0 2.8l-.36.26a2 2 0 0 0-.6 2.3l.17.47a2 2 0 0 1-1.25 2.5l-.47.16A2 2 0 0 0 14 21.5v.5a2 2 0 0 1-4 0v-.5a2 2 0 0 0-1.4-1.9l-.47-.16a2 2 0 0 1-1.25-2.5l.17-.47a2 2 0 0 0-.6-2.3l-.36-.26a2 2 0 0 1 0-2.8l.36-.26a2 2 0 0 0 .6-2.3l-.17-.47a2 2 0 0 1 1.25-2.5l.47-.16A2 2 0 0 0 10 5v-.5a2 2 0 0 1 2-2z" />
+              </svg>
+            </div>
+            <span className="mobile-footer-label">Rewards</span>
+          </button>
 
-        {/* 5. Claim ₦Tag */}
-        <button
-          type="button"
-          className={`mobile-footer-item ${mainTab === 'claim' ? 'active' : ''}`}
-          onClick={() => setMainTab('claim')}
-          aria-label="Claim ₦Tag"
-        >
-          <div className="mobile-footer-icon-wrap">
-            <Sparkles size={22} strokeWidth={mainTab === 'claim' ? 2.4 : 1.8} />
-          </div>
-          <span className="mobile-footer-label">Claim</span>
-        </button>
-      </nav>
+          {/* 5. Claim ₦Tag */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'claim' ? 'active' : ''}`}
+            onClick={() => setMainTab('claim')}
+            aria-label="Claim ₦Tag"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <Sparkles size={22} strokeWidth={mainTab === 'claim' ? 2.4 : 1.8} />
+            </div>
+            <span className="mobile-footer-label">Claim</span>
+          </button>
+        </nav>
+      )}
 
       {/* ───────────────────────────────────────────────────────────────────
           MODAL 0: TRANSACTION REVIEW STATE MODAL
