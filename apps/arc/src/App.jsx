@@ -1276,7 +1276,9 @@ export default function App() {
         {/* Left Side: Brand Logo Badge + Mobile Hamburger Menu */}
         <div className="app-header-left">
           <div className="app-brand" onClick={() => setMainTab('pay')}>
-            <div className="brand-badge" title="NairaTag on Arc">₦</div>
+            <div className="brand-badge" title="NairaTag on Arc">
+              <img src="/nairatag-logo.png" alt="NairaTag" className="brand-logo-img" />
+            </div>
             <div className="brand-title-wrap desktop-only">
               <span className="brand-title">NairaTag</span>
               <span className="brand-subtitle">Send USDC on Arc to a name</span>
@@ -1456,7 +1458,9 @@ export default function App() {
           <div className="mobile-drawer-panel" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-drawer-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div className="brand-badge" style={{ width: 28, height: 28, fontSize: 15 }}>₦</div>
+                <div className="brand-badge" style={{ width: 28, height: 28 }}>
+                  <img src="/nairatag-logo.png" alt="NairaTag" className="brand-logo-img" />
+                </div>
                 <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--privy-color-foreground)' }}>NairaTag</span>
                 <span className="card-net-pill" style={{ fontSize: 10 }}>Arc Testnet</span>
               </div>

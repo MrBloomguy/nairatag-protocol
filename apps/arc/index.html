@@ -7,11 +7,105 @@
   <title>NairaTag • Send USDC on Arc</title>
   <meta name="description"
     content="Send USDC on Arc to a human-readable NairaTag identity instead of a wallet address." />
-  <link rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%2310b981'/><text x='50' y='68' font-size='56' font-family='sans-serif' font-weight='800' fill='white' text-anchor='middle'>₦</text></svg>" />
+  
+  <!-- Favicon & Icons -->
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/splash-logo.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  
+  <!-- Open Graph / Meta -->
+  <meta property="og:title" content="NairaTag • Send USDC on Arc" />
+  <meta property="og:description" content="Send USDC on Arc to a name, not an address." />
+  <meta property="og:image" content="/nairatag-logo.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="/nairatag-logo.png" />
+  
+  <style>
+    #app-splash {
+      position: fixed;
+      inset: 0;
+      background: #0A0B0E;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999999;
+      transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s ease;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .splash-card {
+      width: 110px;
+      height: 110px;
+      border-radius: 26px;
+      overflow: hidden;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 35px rgba(187, 242, 70, 0.25);
+      animation: splashPulse 2.2s infinite ease-in-out;
+      border: 1.5px solid rgba(255, 255, 255, 0.12);
+    }
+    .splash-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .splash-brand {
+      margin-top: 22px;
+      font-weight: 800;
+      font-size: 20px;
+      color: #FFFFFF;
+      letter-spacing: -0.4px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .splash-arc-pill {
+      color: #BBF246;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 9px;
+      border-radius: 999px;
+      background: rgba(187, 242, 70, 0.14);
+      border: 1px solid rgba(187, 242, 70, 0.3);
+    }
+    .splash-sub {
+      margin-top: 8px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 500;
+    }
+    .splash-spinner {
+      margin-top: 28px;
+      width: 24px;
+      height: 24px;
+      border: 2.5px solid rgba(255, 255, 255, 0.12);
+      border-top-color: #BBF246;
+      border-radius: 50%;
+      animation: splashSpin 0.75s linear infinite;
+    }
+    @keyframes splashPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    @keyframes splashSpin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 
 <body>
+  <!-- Native Splash Screen with New Brand Identity -->
+  <div id="app-splash">
+    <div class="splash-card">
+      <img src="/splash-logo.png" alt="NairaTag Logo" />
+    </div>
+    <div class="splash-brand">
+      <span>NairaTag</span>
+      <span class="splash-arc-pill">Arc</span>
+    </div>
+    <div class="splash-sub">Send USDC to a name, not an address</div>
+    <div class="splash-spinner"></div>
+  </div>
+
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>
