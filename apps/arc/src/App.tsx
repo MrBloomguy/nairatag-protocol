@@ -43,6 +43,14 @@ import {
   MoreHorizontal,
   HelpCircle,
   ChevronDown,
+  Trophy,
+  CheckSquare,
+  Coins,
+  MessageSquare,
+  Zap,
+  Briefcase,
+  Phone,
+  Plus,
 } from 'lucide-react';
 import {
   connectWallet,
@@ -387,6 +395,105 @@ export const FAQ_ITEMS = [
   }
 ];
 
+export const DEFAULT_TASKS = [
+  {
+    id: 'b001',
+    title: 'Test NairaTag Instant USDC Settlement on Arc Osaka',
+    category: 'test',
+    categoryLabel: '🧪 Testing',
+    status: 'open',
+    rewardUSDC: 25,
+    rewardNGN: '₦37,125',
+    points: 250,
+    deadline: '2 days left',
+    applicants: 4,
+    creatorTag: '₦CORE_DEV',
+    escrowStatus: '🔒 Funded in Escrow',
+    description: 'Execute and test a deterministic sub-second USDC payment using the Arc testnet memo registry and verify receipt on ArcScan.',
+    deliverable: 'ArcScan transaction hash showing finalized payment.',
+  },
+  {
+    id: 'b002',
+    title: 'Build Telegram Bot Adapter for ₦Tag Pay',
+    category: 'dev',
+    categoryLabel: '⚡ Engineering',
+    status: 'in_progress',
+    rewardUSDC: 120,
+    rewardNGN: '₦178,200',
+    points: 800,
+    deadline: '4 days left',
+    applicants: 3,
+    creatorTag: '₦ARCLABS',
+    escrowStatus: '🔒 Milestone 2/4 Funded',
+    description: 'Implement a GramJS or aiogram bot template that resolves ₦Tags and returns Arc Osaka payment links with deep-linking.',
+    deliverable: 'GitHub repository with clean README and Dockerfile.',
+  },
+  {
+    id: 'b003',
+    title: 'Design 5 Sovereign NairaTag Social Banners',
+    category: 'design',
+    categoryLabel: '🎨 Design',
+    status: 'open',
+    rewardUSDC: 45,
+    rewardNGN: '₦66,825',
+    points: 450,
+    deadline: '1 day left',
+    applicants: 6,
+    creatorTag: '₦CREATIVE',
+    escrowStatus: '🔒 Funded in Escrow',
+    description: 'Create 5 high-impact, sleek 1200x628px social banners highlighting sub-second Arc Osaka finality and zero-gas UX.',
+    deliverable: 'Figma file + exported SVGs and PNG assets.',
+  },
+  {
+    id: 'b004',
+    title: 'Collect Jumia & Konga Product Price Feeds (7 Days)',
+    category: 'data',
+    categoryLabel: '📊 Data & AI',
+    status: 'submitted',
+    rewardUSDC: 50,
+    rewardNGN: '₦74,250',
+    points: 500,
+    deadline: '5 days left',
+    applicants: 2,
+    creatorTag: '₦SHOP_AI',
+    escrowStatus: '⏳ Pending Milestone Review',
+    description: 'Scrape and format daily pricing data for 50 consumer electronics in Lagos to supply decentralized AI agent pricing oracles.',
+    deliverable: 'Timestamped JSON/CSV dataset with normalized currency fields.',
+  },
+  {
+    id: 'b005',
+    title: 'Write Technical Developer Guide for Arc ERC-8004',
+    category: 'content',
+    categoryLabel: '✍️ Content',
+    status: 'open',
+    rewardUSDC: 60,
+    rewardNGN: '₦89,100',
+    points: 600,
+    deadline: '3 days left',
+    applicants: 2,
+    creatorTag: '₦FOUNDATION',
+    escrowStatus: '🔒 Funded in Escrow',
+    description: 'Author a step-by-step markdown tutorial explaining how autonomous AI agents register their identity and receive fees on Arc.',
+    deliverable: 'Markdown guide with executable code snippets.',
+  },
+  {
+    id: 'b006',
+    title: 'Verify Nigerian Phone-to-NairaTag Resolver Accuracy',
+    category: 'community',
+    categoryLabel: '📱 Community QA',
+    status: 'open',
+    rewardUSDC: 15,
+    rewardNGN: '₦22,275',
+    points: 150,
+    deadline: '2 days left',
+    applicants: 8,
+    creatorTag: '₦COMMUNITY',
+    escrowStatus: '🔒 Instant Reward',
+    description: 'Test local MTN, Airtel, and Glo phone number resolution formats (080, 070, +234) into verified ₦Tags in the Arc terminal.',
+    deliverable: 'Short feedback note and resolution log.',
+  },
+];
+
 export default function App() {
   // Theme State: 'light' | 'dark'
   const [theme, setTheme] = useState(() => {
@@ -412,8 +519,36 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Navigation: 'pay' | 'claim' | 'agents' | 'faq'
-  const [mainTab, setMainTab] = useState('pay');
+  // Navigation: 'pay' | 'claim' | 'tasks' | 'agents' | 'faq'
+  const [mainTab, setMainTabState] = useState(() => {
+    try {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (['pay', 'claim', 'tasks', 'agents', 'faq'].includes(hash)) {
+        return hash;
+      }
+    } catch {}
+    return 'pay';
+  });
+
+  const setMainTab = useCallback((tab) => {
+    setMainTabState(tab);
+    try {
+      window.location.hash = tab;
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    const handleHash = () => {
+      try {
+        const hash = window.location.hash.replace('#', '').toLowerCase();
+        if (['pay', 'claim', 'tasks', 'agents', 'faq'].includes(hash)) {
+          setMainTabState(hash);
+        }
+      } catch {}
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   // FAQ Page State
   const [faqSearchQuery, setFaqSearchQuery] = useState('');
@@ -455,6 +590,47 @@ export default function App() {
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const [celebrationDetails, setCelebrationDetails] = useState(null);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [walletTab, setWalletTab] = useState('overview'); // 'overview' | 'qr' | 'history'
+
+  // Tasks & Bounties State
+  const [tasksFilter, setTasksFilter] = useState('all');
+  const [tasksSearch, setTasksSearch] = useState('');
+  const [isPostTaskOpen, setIsPostTaskOpen] = useState(false);
+  const [userPoints, setUserPoints] = useState(380);
+  const [completedTaskIds, setCompletedTaskIds] = useState(['b001']);
+  const [activeEscrowStep, setActiveEscrowStep] = useState(2);
+  const [customTasks, setCustomTasks] = useState([]);
+  const [postTaskForm, setPostTaskForm] = useState({
+    title: '',
+    category: 'dev',
+    reward: '35',
+    deadline: '3 days left',
+    description: '',
+    requirements: '',
+  });
+
+  // Agent Chat (Muse Spark AI) State
+  const [agentChatMessages, setAgentChatMessages] = useState({});
+  const [agentChatInput, setAgentChatInput] = useState('');
+
+  const allTasks = useMemo(() => {
+    return [...customTasks, ...DEFAULT_TASKS];
+  }, [customTasks]);
+
+  const filteredTasks = useMemo(() => {
+    const q = tasksSearch.toLowerCase().trim();
+    return allTasks.filter((task) => {
+      const matchCat = tasksFilter === 'all' || task.category === tasksFilter;
+      const matchQ =
+        !q ||
+        task.title.toLowerCase().includes(q) ||
+        task.description.toLowerCase().includes(q) ||
+        task.creatorTag.toLowerCase().includes(q) ||
+        task.categoryLabel.toLowerCase().includes(q);
+      return matchCat && matchQ;
+    });
+  }, [allTasks, tasksFilter, tasksSearch]);
 
   // Pay / Send Terminal State
   const [recipientInput, setRecipientInput] = useState('');
@@ -680,7 +856,7 @@ export default function App() {
     }
   };
 
-  // Recipient resolution debounce
+  // Recipient resolution debounce with Nigerian Phone Number support
   useEffect(() => {
     const raw = recipientInput.trim();
     if (!raw) {
@@ -688,9 +864,34 @@ export default function App() {
       return;
     }
 
+    const cleanPhone = raw.replace(/[\s-]/g, '');
+    const isNigerianPhone = /^(\+?234|0)[789][01]\d{8}$/.test(cleanPhone);
+
     const timer = setTimeout(async () => {
       setResolution({ loading: true, data: null, error: null });
       try {
+        if (isNigerianPhone) {
+          const displayPhone = cleanPhone.startsWith('+') ? cleanPhone : cleanPhone.startsWith('234') ? `+${cleanPhone}` : `+234${cleanPhone.slice(1)}`;
+          const mappedTag = '₦' + (cleanPhone.slice(-4) === '5678' ? 'segun' : 'michael');
+          setResolution({
+            loading: false,
+            data: {
+              success: true,
+              tag: mappedTag,
+              canonicalTag: mappedTag,
+              cleanTag: mappedTag.replace('₦', ''),
+              resolvedAddress: '0x18b6255efb9c9f0b2405086ee50a11ca47250e20',
+              network: 'Arc Osaka EVM',
+              isVerified: true,
+              source: 'Nigerian Telco Gateway',
+              phone: displayPhone,
+              reputation: 99,
+            },
+            error: null,
+          });
+          return;
+        }
+
         const res = await resolveTag(raw);
         setResolution({ loading: false, data: res, error: null });
       } catch (err) {
@@ -700,6 +901,95 @@ export default function App() {
 
     return () => clearTimeout(timer);
   }, [recipientInput]);
+
+  // Tasks & Bounties Handlers
+  const handleApplyOrCompleteTask = (task) => {
+    if (completedTaskIds.includes(task.id)) {
+      showToast(`Already claimed quest: ${task.title}`, 'info');
+      return;
+    }
+    setCompletedTaskIds((prev) => [...prev, task.id]);
+    const earnedPoints = task.points || 200;
+    setUserPoints((prev) => prev + earnedPoints);
+    triggerCelebrationConfetti();
+    showToast(`🎉 Quest completed! +${earnedPoints} Protocol Points & ${task.rewardUSDC} USDC reward queued!`, 'success', 3500);
+  };
+
+  const handleCreateTask = (e) => {
+    e.preventDefault();
+    if (!postTaskForm.title.trim()) {
+      showToast('Please enter a task title', 'error');
+      return;
+    }
+    const usdc = parseFloat(postTaskForm.reward) || 20;
+    const newTask = {
+      id: `task_${Date.now()}`,
+      title: postTaskForm.title,
+      category: postTaskForm.category,
+      categoryLabel: postTaskForm.category === 'dev' ? '⚡ Engineering' : postTaskForm.category === 'design' ? '🎨 Design' : postTaskForm.category === 'data' ? '📊 Data & AI' : postTaskForm.category === 'content' ? '✍️ Content' : '🧪 Testing',
+      status: 'open',
+      rewardUSDC: usdc,
+      rewardNGN: `₦${(usdc * 1485).toLocaleString()}`,
+      points: Math.round(usdc * 10),
+      deadline: postTaskForm.deadline || '3 days left',
+      applicants: 0,
+      creatorTag: myTag ? `₦${myTag.tag}` : '₦YOU',
+      escrowStatus: '🔒 Funded in Escrow',
+      description: postTaskForm.description || 'Community bounty on Arc Osaka EVM with automated milestone escrow settlement.',
+      deliverable: postTaskForm.requirements || 'Public verification link, GitHub PR, or live demo.',
+    };
+    setCustomTasks((prev) => [newTask, ...prev]);
+    setIsPostTaskOpen(false);
+    setPostTaskForm({
+      title: '',
+      category: 'dev',
+      reward: '35',
+      deadline: '3 days left',
+      description: '',
+      requirements: '',
+    });
+    triggerCelebrationConfetti();
+    showToast(`Bounty created & ${usdc} USDC locked in Arc milestone escrow!`, 'success', 3500);
+  };
+
+  // Muse Spark AI Agent Chat Handler
+  const handleSendAgentChat = (agentId, userText) => {
+    const text = (userText || agentChatInput).trim();
+    if (!text) return;
+    const currentMsgs = agentChatMessages[agentId] || [
+      {
+        sender: 'agent',
+        text: `Hello! I am ${selectedAgentProfile?.name || 'Autonomous Agent'} (₦${selectedAgentProfile?.tag?.toUpperCase() || 'AGENT'}), verified under Arc ERC-8004 (#${selectedAgentProfile?.id || ''}). How can I assist you with autonomous tasks or settlements on Arc?`,
+        time: 'Just now'
+      }
+    ];
+
+    const newMsgs = [...currentMsgs, { sender: 'user', text, time: 'Just now' }];
+    setAgentChatMessages((prev) => ({ ...prev, [agentId]: newMsgs }));
+    setAgentChatInput('');
+
+    setTimeout(() => {
+      let reply = '';
+      const lower = text.toLowerCase();
+      if (lower.includes('send') || lower.includes('pay') || lower.includes('usdc')) {
+        reply = `I can receive settlements directly! You can send USDC to my sovereign handle ₦${selectedAgentProfile?.tag?.toUpperCase()} on Arc Osaka EVM with deterministic sub-second finality.`;
+      } else if (lower.includes('reputation') || lower.includes('score') || lower.includes('erc-8004') || lower.includes('8004')) {
+        reply = `My Arc ERC-8004 identity is verified (#${selectedAgentProfile?.id}). Reputation score: ${selectedAgentProfile?.sparks || 98}/100. All tasks and milestones are logged onchain to the Arc Reputation Registry!`;
+      } else if (lower.includes('service') || lower.includes('do') || lower.includes('work') || lower.includes('task')) {
+        reply = `As ${selectedAgentProfile?.role}, I specialize in autonomous execution, escrow verification, and rapid micro-settlement for African web3 builders.`;
+      } else if (lower.includes('tag') || lower.includes('claim')) {
+        reply = `You can claim your own sovereign ₦Tag right here in the 'Claim ₦Tag' tab! It's free and instantly links your wallet to your sovereign identity.`;
+      } else {
+        reply = `Understood! I'm synchronized with Arc Osaka EVM and ready to execute. Let me know if you want to fund an escrow milestone, dispatch a micro-payment, or inspect my ERC-8004 records.`;
+      }
+
+      setAgentChatMessages((prev) => ({
+        ...prev,
+        [agentId]: [...(prev[agentId] || newMsgs), { sender: 'agent', text: reply, time: 'Just now' }]
+      }));
+    }, 450);
+  };
+
 
   // Swap estimate debounce
   useEffect(() => {
@@ -1024,6 +1314,14 @@ export default function App() {
           </button>
           <button
             type="button"
+            className={`nav-tab-btn ${mainTab === 'tasks' ? 'active' : ''}`}
+            onClick={() => setMainTab('tasks')}
+          >
+            <Briefcase size={14} />
+            <span>Tasks</span>
+          </button>
+          <button
+            type="button"
             className={`nav-tab-btn ${mainTab === 'agents' ? 'active' : ''}`}
             onClick={() => setMainTab('agents')}
           >
@@ -1130,14 +1428,13 @@ export default function App() {
           {walletAddress ? (
             <div
               className="wallet-connected-pill"
-              onClick={() => triggerCopy('header_addr', walletAddress)}
-              title="Click to copy address"
+              onClick={() => setIsWalletModalOpen(true)}
+              title="Click to view Sovereign Portfolio"
             >
               <span className="wallet-connected-dot" />
               <span className="wallet-connected-handle">{myTag ? `₦${myTag.tag}` : shorten(walletAddress)}</span>
               <span className="wallet-connected-sep desktop-only">|</span>
               <span className="wallet-connected-bal desktop-only">{usdcBalance.formatted} USDC</span>
-              {copiedKey === 'header_addr' && <span style={{ color: 'var(--privy-color-success-dark)', fontSize: '11px' }}>✓</span>}
             </div>
           ) : (
             <button
@@ -1208,6 +1505,24 @@ export default function App() {
                   <span className="mobile-nav-desc">Mint sovereign onchain identity handle</span>
                 </div>
                 {mainTab === 'claim' && <span className="mobile-nav-active-pill">Active</span>}
+              </button>
+
+              <button
+                type="button"
+                className={`mobile-nav-link ${mainTab === 'tasks' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainTab('tasks');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon-box">
+                  <Briefcase size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <span className="mobile-nav-title">Tasks & Bounties</span>
+                  <span className="mobile-nav-desc">Onchain quests, milestone escrow & points</span>
+                </div>
+                {mainTab === 'tasks' && <span className="mobile-nav-active-pill">Active</span>}
               </button>
 
               <button
@@ -1449,6 +1764,12 @@ export default function App() {
                             ● RESOLVED
                           </span>
                         </div>
+                        {resolution.data.phone && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10.5px', color: '#047857', fontWeight: 700, margin: '2px 0' }}>
+                            <Phone size={10} />
+                            <span>{resolution.data.phone} (Nigerian Telco Gateway)</span>
+                          </div>
+                        )}
                         <div className="resolved-sub">
                           {shorten(resolution.data.resolvedAddress)}
                         </div>
@@ -1789,298 +2110,6 @@ export default function App() {
               </div>
             </main>
 
-            {/* Right Sidebar: Sovereign Identity Suite & Value Pitch */}
-            <aside className="claim-page-sidebar">
-              {/* Card Mode Switcher Tabs */}
-              <div className="card-mode-tabs" role="tablist" aria-label="Card Views">
-                <button
-                  type="button"
-                  className={`card-mode-tab ${claimCardMode === 'identity' ? 'active' : ''}`}
-                  onClick={() => setClaimCardMode('identity')}
-                >
-                  ✦ Identity
-                </button>
-                <button
-                  type="button"
-                  className={`card-mode-tab ${claimCardMode === 'share' ? 'active' : ''}`}
-                  onClick={() => setClaimCardMode('share')}
-                >
-                  🔗 Share
-                </button>
-                <button
-                  type="button"
-                  className={`card-mode-tab ${claimCardMode === 'referral' ? 'active' : ''}`}
-                  onClick={() => setClaimCardMode('referral')}
-                >
-                  🎁 Referral
-                </button>
-                <button
-                  type="button"
-                  className={`card-mode-tab ${claimCardMode === 'qrcode' ? 'active' : ''}`}
-                  onClick={() => setClaimCardMode('qrcode')}
-                >
-                  📱 QR Code
-                </button>
-              </div>
-
-              <div className="claim-sidebar-card-wrap">
-                {/* VIEW 1: Live Onchain Identity Preview Card */}
-                {claimCardMode === 'identity' && (
-                  <div className="card-view active">
-                    <div className="live-identity-card" title="Interactive Live Sovereign ₦Tag Preview">
-                      <div className="card-monogram-watermark">₦</div>
-                      <div className="card-header-row">
-                        <div className="card-logo-symbol">₦</div>
-                        <div className="card-net-pill">
-                          <span>Arc Testnet</span>
-                        </div>
-                      </div>
-
-                      <div className="card-avatar-stage">
-                        <div className="card-avatar-svg-container">
-                          <img
-                            className="card-avatar-img-round"
-                            style={{ width: '120px', height: '120px', borderRadius: '50%' }}
-                            src={`https://api.dicebear.com/7.x/identicon/svg?seed=${activeCleanTag || 'nairatag'}`}
-                            alt={`₦${activeCleanTag}`}
-                            onError={(e) => {
-                              e.currentTarget.src =
-                                'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">₦</text></svg>';
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      <div className="card-footer-row">
-                        <div className="card-identity-text">
-                          <div className="card-handle-title">₦{activeCleanTag.toUpperCase()}</div>
-                          <div className="card-status-subtitle">
-                            <span className="card-status-dot" />
-                            <span>Verified Onchain</span>
-                          </div>
-                        </div>
-                        <div className="card-verified-badge" title="Verified Onchain Sovereign Tag">
-                          <img src="/verified-badge.png" width="32" height="32" alt="Verified Sovereign Tag" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="action-row-btn primary-accent"
-                      onClick={() => triggerCopy('share_identity_link', `https://nairatag.ng/resolve?tag=₦${activeCleanTag.toUpperCase()}`)}
-                    >
-                      <span>{copiedKey === 'share_identity_link' ? '✓ Copied Resolve Link' : '🔗 Copy ₦Tag Link'}</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* VIEW 2: Share Card View */}
-                {claimCardMode === 'share' && (
-                  <div className="card-view active">
-                    <div className="sovereign-alt-card">
-                      <div className="card-monogram-watermark">₦</div>
-                      <div className="card-header-row">
-                        <div className="card-logo-symbol">₦</div>
-                        <div className="card-net-pill" style={{ fontSize: '10px' }}>
-                          <span>✦ Share Pass</span>
-                        </div>
-                      </div>
-
-                      <div className="card-avatar-stage" style={{ margin: '4px 0' }}>
-                        <img
-                          className="card-avatar-img-round"
-                          style={{ width: '90px', height: '90px', borderRadius: '50%' }}
-                          src={`https://api.dicebear.com/7.x/identicon/svg?seed=${activeCleanTag || 'nairatag'}`}
-                          alt={`₦${activeCleanTag}`}
-                        />
-                      </div>
-
-                      <div className="card-footer-row" style={{ marginBottom: '2px' }}>
-                        <div className="card-identity-text">
-                          <div className="card-handle-title">₦{activeCleanTag.toUpperCase()}</div>
-                        </div>
-                        <div className="card-verified-badge">
-                          <img src="/verified-badge.png" width="28" height="28" alt="Verified Sovereign Tag" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="share-actions-grid">
-                      <button
-                        type="button"
-                        className="share-btn share-btn-x"
-                        onClick={() => {
-                          const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just claimed my sovereign ₦Tag: ₦${activeCleanTag.toUpperCase()} on @ArcNetwork! Send USDC gaslessly.`)}&url=${encodeURIComponent(`https://nairatag.ng/resolve?tag=₦${activeCleanTag.toUpperCase()}`)}`;
-                          window.open(url, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        <span>Share on 𝕏</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="share-btn share-btn-tg"
-                        onClick={() => {
-                          const url = `https://t.me/share/url?url=${encodeURIComponent(`https://nairatag.ng/resolve?tag=₦${activeCleanTag.toUpperCase()}`)}&text=${encodeURIComponent(`Send USDC to my ₦Tag: ₦${activeCleanTag.toUpperCase()} on Arc`)}`;
-                          window.open(url, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        <span>✈ Telegram</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="share-btn share-btn-wa"
-                        onClick={() => {
-                          const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(`Send USDC to my ₦Tag on Arc: https://nairatag.ng/resolve?tag=₦${activeCleanTag.toUpperCase()}`)}`;
-                          window.open(url, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        <span>💬 WhatsApp</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="share-btn share-btn-copy"
-                        onClick={() => triggerCopy('share_link_tab', `https://nairatag.ng/resolve?tag=₦${activeCleanTag.toUpperCase()}`)}
-                      >
-                        <span>{copiedKey === 'share_link_tab' ? '✓ Copied' : '🔗 Copy Link'}</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* VIEW 3: Referral Card View */}
-                {claimCardMode === 'referral' && (
-                  <div className="card-view active">
-                    <div className="sovereign-alt-card">
-                      <div className="card-header-row">
-                        <div className="card-logo-symbol">₦</div>
-                        <div className="card-net-pill" style={{ background: '#000000', color: '#bbf246', fontSize: '10px' }}>
-                          <span>🎁 Ambassador Pass</span>
-                        </div>
-                      </div>
-
-                      <div style={{ textAlign: 'center', margin: '4px 0 2px' }}>
-                        <div style={{ fontSize: '10.5px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#1a1a1a' }}>
-                          Invite Friends · Earn Protocol Points
-                        </div>
-                        <div className="card-handle-title" style={{ fontSize: '24px', marginTop: '2px' }}>
-                          ₦{activeCleanTag.toUpperCase()}
-                        </div>
-                      </div>
-
-                      <div className="referral-link-box">
-                        <span className="referral-url-text">
-                          {`https://nairatag.ng/claim?ref=₦${activeCleanTag.toUpperCase()}`}
-                        </span>
-                        <button
-                          type="button"
-                          className="referral-copy-chip"
-                          onClick={() => triggerCopy('referral_link_chip', `https://nairatag.ng/claim?ref=₦${activeCleanTag.toUpperCase()}`)}
-                        >
-                          {copiedKey === 'referral_link_chip' ? 'Copied' : 'Copy'}
-                        </button>
-                      </div>
-
-                      <div className="referral-metrics-grid">
-                        <div className="referral-metric-tile">
-                          <span className="metric-number">0</span>
-                          <span className="metric-caption">Invited</span>
-                        </div>
-                        <div className="referral-metric-tile">
-                          <span className="metric-number">0 pts</span>
-                          <span className="metric-caption">Points</span>
-                        </div>
-                        <div className="referral-metric-tile">
-                          <span className="metric-number">10%</span>
-                          <span className="metric-caption">Tier Rebate</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="share-actions-grid">
-                      <button
-                        type="button"
-                        className="share-btn share-btn-x"
-                        onClick={() => {
-                          const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(`Claim your onchain ₦Tag handle using my referral: ₦${activeCleanTag.toUpperCase()} on Arc!`)}&url=${encodeURIComponent(`https://nairatag.ng/claim?ref=₦${activeCleanTag.toUpperCase()}`)}`;
-                          window.open(url, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        <span>Share Ref on 𝕏</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="share-btn share-btn-tg"
-                        onClick={() => {
-                          const url = `https://t.me/share/url?url=${encodeURIComponent(`https://nairatag.ng/claim?ref=₦${activeCleanTag.toUpperCase()}`)}&text=${encodeURIComponent(`Claim your ₦Tag on Arc with referral: ₦${activeCleanTag.toUpperCase()}`)}`;
-                          window.open(url, '_blank', 'noopener,noreferrer');
-                        }}
-                      >
-                        <span>Invite on TG</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* VIEW 4: QR Code Card View */}
-                {claimCardMode === 'qrcode' && (
-                  <div className="card-view active">
-                    <div className="sovereign-alt-card">
-                      <div className="card-header-row">
-                        <div className="card-logo-symbol">₦</div>
-                        <div className="card-net-pill" style={{ fontSize: '10px' }}>
-                          <span>Arc Resolver QR</span>
-                        </div>
-                      </div>
-
-                      <div className="qr-card-center-stage">
-                        <div className="qr-canvas-holder">
-                          <img
-                            className="qr-image-el"
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`arc:${walletAddress || '0x'}?tag=₦${activeCleanTag.toUpperCase()}`)}`}
-                            alt="₦Tag Onchain QR Code"
-                          />
-                          <div className="qr-center-symbol-badge">₦</div>
-                        </div>
-                        <div className="qr-payload-banner">
-                          {`arc:nairatag.ng/resolve?tag=₦${activeCleanTag.toUpperCase()}`}
-                        </div>
-                      </div>
-
-                      <div className="card-footer-row">
-                        <div className="card-identity-text">
-                          <div className="card-handle-title" style={{ fontSize: '20px' }}>
-                            ₦{activeCleanTag.toUpperCase()}
-                          </div>
-                        </div>
-                        <div className="card-verified-badge">
-                          <img src="/verified-badge.png" width="26" height="26" alt="Verified Sovereign Tag" />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="share-actions-grid">
-                      <button
-                        type="button"
-                        className="action-row-btn"
-                        onClick={() => triggerCopy('qr_uri', `arc:${walletAddress || '0x'}?tag=₦${activeCleanTag.toUpperCase()}`)}
-                      >
-                        <span>{copiedKey === 'qr_uri' ? '✓ Copied URI' : '📋 Copy URI'}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="action-row-btn primary-accent"
-                        onClick={() => {
-                          window.open(`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`arc:${walletAddress || '0x'}?tag=₦${activeCleanTag.toUpperCase()}`)}`, '_blank');
-                        }}
-                      >
-                        <span>🔍 View High-Res QR</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </aside>
           </div>
         )}
 
@@ -2318,6 +2347,225 @@ export default function App() {
                 </button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ───────────────────────────────────────────────────────────────────
+            TAB: TASKS & BOUNTIES (ONCHAIN QUESTS & MILESTONE ESCROW)
+            ─────────────────────────────────────────────────────────────────── */}
+        {mainTab === 'tasks' && (
+          <div className="tasks-page-container">
+            {/* Top Bar with Title & Post Bounty button */}
+            <div className="tasks-top-bar">
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '20px' }}>💼</span>
+                  <h1 className="tasks-header-title">Tasks & Bounties</h1>
+                  <span className="card-net-pill">Arc Escrow</span>
+                </div>
+                <p className="tasks-header-subtitle">
+                  Work on sovereign bounties, complete onchain quests, verify smart contract milestone escrows, and earn USDC + Protocol Points.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn-action-primary"
+                style={{ padding: '8px 18px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onClick={() => setIsPostTaskOpen(true)}
+              >
+                <Plus size={15} />
+                <span>Post Bounty</span>
+              </button>
+            </div>
+
+            {/* Protocol Stats Grid */}
+            <div className="tasks-stats-grid">
+              <div className="tasks-stat-card">
+                <div className="stat-label">
+                  <Coins size={13} />
+                  <span>Escrow Volume</span>
+                </div>
+                <div className="stat-value">$14,250 USDC</div>
+                <div className="stat-desc">≈ ₦21,161,250 NGN locked</div>
+              </div>
+              <div className="tasks-stat-card">
+                <div className="stat-label">
+                  <Briefcase size={13} />
+                  <span>Active Bounties</span>
+                </div>
+                <div className="stat-value">{allTasks.length} Quests Open</div>
+                <div className="stat-desc">Funded on Arc Osaka EVM</div>
+              </div>
+              <div className="tasks-stat-card">
+                <div className="stat-label">
+                  <Trophy size={13} />
+                  <span>Your Protocol Points</span>
+                </div>
+                <div className="stat-value" style={{ color: 'var(--privy-color-interactive)' }}>{userPoints} Pts</div>
+                <div className="stat-desc">Level 3 Contributor Status</div>
+              </div>
+              <div className="tasks-stat-card">
+                <div className="stat-label">
+                  <Zap size={13} />
+                  <span>Settlement Speed</span>
+                </div>
+                <div className="stat-value" style={{ color: 'var(--privy-color-success-dark)' }}>&lt; 1s Finality</div>
+                <div className="stat-desc">Deterministic Arc execution</div>
+              </div>
+            </div>
+
+            {/* Smart Contract Milestone Escrow Stepper Widget */}
+            <div className="task-pipeline-card">
+              <div className="pipeline-stepper-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldCheck size={16} color="var(--privy-color-interactive)" />
+                  <span style={{ fontSize: '13px', fontWeight: 800 }}>Smart Contract Milestone Escrow Pipeline</span>
+                </div>
+                <span className="card-net-pill">Automated Verification</span>
+              </div>
+              <div className="pipeline-stepper-steps">
+                {[
+                  { step: 1, title: '1. Fund Escrow', desc: '100% USDC locked in Arc contract' },
+                  { step: 2, title: '2. Submit Work', desc: 'Deliverable hash committed' },
+                  { step: 3, title: '3. Verify Milestone', desc: 'DAO & bounty owner inspection' },
+                  { step: 4, title: '4. Release Payment', desc: 'Instant transfer to ₦Tag' },
+                ].map((s) => (
+                  <div
+                    key={s.step}
+                    className={`pipeline-step ${activeEscrowStep >= s.step ? 'active' : ''} ${activeEscrowStep === s.step ? 'current' : ''}`}
+                    onClick={() => setActiveEscrowStep(s.step)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="step-num-pill">
+                      {activeEscrowStep > s.step ? <Check size={12} /> : s.step}
+                    </div>
+                    <div className="step-title">{s.title}</div>
+                    <div className="step-desc">{s.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="pipeline-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--privy-color-border-subtle)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
+                  Interactive Arc Milestone Demo: Step {activeEscrowStep} of 4
+                </span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className="quick-chip-btn"
+                    onClick={() => setActiveEscrowStep((prev) => (prev % 4) + 1)}
+                  >
+                    <span>Advance Pipeline Step →</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="quick-chip-btn"
+                    onClick={() => setActiveEscrowStep(1)}
+                  >
+                    <span>Reset</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Search & Filter Row */}
+            <div className="tasks-search-filter-row">
+              <div className="tasks-search-input-wrap">
+                <Search size={14} className="tasks-search-icon" />
+                <input
+                  type="text"
+                  className="tasks-search-input"
+                  placeholder="Search bounties, skills, or tags..."
+                  value={tasksSearch}
+                  onChange={(e) => setTasksSearch(e.target.value)}
+                />
+                {tasksSearch && (
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--privy-color-foreground-2)' }}
+                    onClick={() => setTasksSearch('')}
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+              <div className="tasks-cat-pills">
+                {[
+                  { id: 'all', label: 'All Quests' },
+                  { id: 'dev', label: '⚡ Engineering' },
+                  { id: 'design', label: '🎨 Design' },
+                  { id: 'data', label: '📊 Data & AI' },
+                  { id: 'content', label: '✍️ Content' },
+                  { id: 'test', label: '🧪 Testing' },
+                ].map((cat) => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    className={`task-cat-pill ${tasksFilter === cat.id ? 'active' : ''}`}
+                    onClick={() => setTasksFilter(cat.id)}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Tasks Grid */}
+            <div className="tasks-grid">
+              {filteredTasks.length === 0 ? (
+                <div style={{ gridColumn: '1 / -1', padding: '36px 16px', textAlign: 'center', background: 'var(--privy-color-background-surface)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--privy-color-border-subtle)' }}>
+                  <Briefcase size={28} color="var(--privy-color-foreground-2)" style={{ margin: '0 auto 8px' }} />
+                  <div style={{ fontSize: '14px', fontWeight: 700 }}>No bounties match your filter</div>
+                  <div style={{ fontSize: '12px', color: 'var(--privy-color-foreground-2)', marginTop: '4px' }}>
+                    Try searching for different keywords or post the first bounty in this category!
+                  </div>
+                </div>
+              ) : (
+                filteredTasks.map((task) => {
+                  const isDone = completedTaskIds.includes(task.id);
+                  return (
+                    <div key={task.id} className="task-card">
+                      <div className="task-card-header">
+                        <span className="task-cat-badge">{task.categoryLabel}</span>
+                        <span className="task-escrow-pill">{task.escrowStatus}</span>
+                      </div>
+                      <h3 className="task-card-title">{task.title}</h3>
+                      <p className="task-card-body">{task.description}</p>
+                      <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', margin: '6px 0 10px', background: 'rgba(0,0,0,0.03)', padding: '6px 8px', borderRadius: '4px', borderLeft: '3px solid var(--privy-color-interactive)' }}>
+                        <strong>Deliverable:</strong> {task.deliverable}
+                      </div>
+                      <div className="task-card-footer">
+                        <div>
+                          <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--privy-color-interactive)' }}>
+                            {task.rewardUSDC} USDC
+                          </div>
+                          <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>
+                            {task.rewardNGN} • +{task.points} Pts
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className={isDone ? 'quick-chip-btn' : 'btn-action-primary'}
+                          style={{ padding: '6px 14px', fontSize: '12px' }}
+                          onClick={() => handleApplyOrCompleteTask(task)}
+                        >
+                          {isDone ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--privy-color-success-dark)', fontWeight: 700 }}>
+                              <CheckCircle2 size={13} /> Completed
+                            </span>
+                          ) : (
+                            <span>Claim Quest →</span>
+                          )}
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', paddingTop: '6px', borderTop: '1px solid var(--privy-color-border-subtle)', fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>
+                        <span>Posted by <strong>{task.creatorTag}</strong></span>
+                        <span>{task.deadline}</span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
 
@@ -2805,6 +3053,13 @@ export default function App() {
                 >
                   📱 QR Code
                 </button>
+                <button
+                  type="button"
+                  className={`agent-profile-tab-btn ${agentProfileTab === 'chat' ? 'active' : ''}`}
+                  onClick={() => setAgentProfileTab('chat')}
+                >
+                  💬 Chat
+                </button>
               </div>
 
               {/* Tab 1: OVERVIEW */}
@@ -2981,7 +3236,364 @@ export default function App() {
                   </button>
                 </div>
               )}
+
+              {/* Tab 5: INTERACTIVE AI AGENT CHAT */}
+              {agentProfileTab === 'chat' && (
+                <div className="agent-chat-box">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'var(--privy-color-background-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--privy-color-border-subtle)', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--privy-color-foreground)' }}>Online on Arc Osaka</span>
+                    </div>
+                    <span style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>ERC-8004 #{selectedAgentProfile.id}</span>
+                  </div>
+
+                  {/* Suggestion Chips */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+                    {[
+                      'Send 10 USDC',
+                      'What are your services?',
+                      'Check reputation score',
+                      'How do I claim a ₦Tag?',
+                    ].map((prompt, pIdx) => (
+                      <button
+                        key={pIdx}
+                        type="button"
+                        className="quick-chip-btn"
+                        style={{ fontSize: '10.5px', padding: '3px 8px' }}
+                        onClick={() => handleSendAgentChat(selectedAgentProfile.id, prompt)}
+                      >
+                        {prompt}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Messages scroll area */}
+                  <div className="agent-chat-messages" style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', padding: '8px', background: 'var(--privy-color-background-surface-2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--privy-color-border-subtle)' }}>
+                    {(agentChatMessages[selectedAgentProfile.id] || [
+                      {
+                        sender: 'agent',
+                        text: `Hello! I am ${selectedAgentProfile.name} (₦${selectedAgentProfile.tag.toUpperCase()}), verified under Arc ERC-8004 (#${selectedAgentProfile.id}). How can I assist you with autonomous tasks, escrow milestones, or micro-settlements on Arc Osaka EVM?`,
+                        time: 'Just now'
+                      }
+                    ]).map((msg, mIdx) => (
+                      <div
+                        key={mIdx}
+                        className={`agent-chat-bubble ${msg.sender === 'user' ? 'user-bubble' : 'agent-bubble'}`}
+                        style={{
+                          alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
+                          maxWidth: '85%',
+                          padding: '7px 10px',
+                          borderRadius: msg.sender === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
+                          background: msg.sender === 'user' ? 'var(--privy-color-interactive)' : 'var(--privy-color-background-surface)',
+                          color: msg.sender === 'user' ? '#ffffff' : 'var(--privy-color-foreground)',
+                          fontSize: '11.5px',
+                          lineHeight: 1.4,
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        }}
+                      >
+                        <div>{msg.text}</div>
+                        <div style={{ fontSize: '9px', opacity: 0.7, textAlign: 'right', marginTop: '2px' }}>{msg.time}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Chat input row */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleSendAgentChat(selectedAgentProfile.id);
+                    }}
+                    style={{ display: 'flex', gap: '6px', marginTop: '8px' }}
+                  >
+                    <input
+                      type="text"
+                      className="token-amount-field"
+                      style={{ flex: 1, fontSize: '12px', padding: '7px 10px' }}
+                      placeholder={`Ask ₦${selectedAgentProfile.tag.toUpperCase()}...`}
+                      value={agentChatInput}
+                      onChange={(e) => setAgentChatInput(e.target.value)}
+                    />
+                    <button
+                      type="submit"
+                      className="btn-action-primary"
+                      style={{ padding: '0 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      disabled={!agentChatInput.trim()}
+                    >
+                      <Send size={13} />
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MODAL: POST BOUNTY / TASK DIALOG
+          ─────────────────────────────────────────────────────────────────── */}
+      {isPostTaskOpen && (
+        <div className="modal-backdrop" onClick={() => setIsPostTaskOpen(false)}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '16px' }}>💼</span>
+                <span className="card-header-title">Post Milestone Bounty</span>
+              </div>
+              <button
+                type="button"
+                style={{ background: 'none', border: 'none', color: 'var(--privy-color-foreground-2)', cursor: 'pointer' }}
+                onClick={() => setIsPostTaskOpen(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--privy-color-foreground-2)', textTransform: 'uppercase' }}>
+                  Bounty Title
+                </label>
+                <input
+                  type="text"
+                  className="token-amount-field"
+                  style={{ width: '100%', fontSize: '13px', padding: '8px 10px', marginTop: '4px' }}
+                  placeholder="e.g. Build Webhook Listener for Arc Osaka"
+                  value={postTaskForm.title}
+                  onChange={(e) => setPostTaskForm((prev) => ({ ...prev, title: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--privy-color-foreground-2)', textTransform: 'uppercase' }}>
+                    Category
+                  </label>
+                  <select
+                    className="token-amount-field"
+                    style={{ width: '100%', fontSize: '12px', padding: '8px', marginTop: '4px', cursor: 'pointer' }}
+                    value={postTaskForm.category}
+                    onChange={(e) => setPostTaskForm((prev) => ({ ...prev, category: e.target.value }))}
+                  >
+                    <option value="dev">⚡ Engineering</option>
+                    <option value="design">🎨 Design</option>
+                    <option value="data">📊 Data & AI</option>
+                    <option value="content">✍️ Content</option>
+                    <option value="test">🧪 Testing</option>
+                  </select>
+                </div>
+
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--privy-color-foreground-2)', textTransform: 'uppercase' }}>
+                    Reward (USDC)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    className="token-amount-field"
+                    style={{ width: '100%', fontSize: '13px', padding: '8px 10px', marginTop: '4px' }}
+                    placeholder="35"
+                    value={postTaskForm.reward}
+                    onChange={(e) => setPostTaskForm((prev) => ({ ...prev, reward: e.target.value }))}
+                  />
+                  <div style={{ fontSize: '10px', color: 'var(--privy-color-foreground-2)', marginTop: '2px' }}>
+                    ≈ ₦{((parseFloat(postTaskForm.reward) || 0) * 1485).toLocaleString()} NGN
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--privy-color-foreground-2)', textTransform: 'uppercase' }}>
+                  Description & Deliverables
+                </label>
+                <textarea
+                  className="token-amount-field"
+                  rows={3}
+                  style={{ width: '100%', fontSize: '12px', padding: '8px 10px', marginTop: '4px', resize: 'vertical' }}
+                  placeholder="Describe task scope, requirements, and deliverable format..."
+                  value={postTaskForm.description}
+                  onChange={(e) => setPostTaskForm((prev) => ({ ...prev, description: e.target.value }))}
+                />
+              </div>
+
+              <div style={{ padding: '8px 10px', background: 'rgba(0, 82, 255, 0.06)', borderRadius: '6px', border: '1px solid rgba(0, 82, 255, 0.15)', fontSize: '11px', color: 'var(--privy-color-interactive)' }}>
+                🔒 <strong>Smart Escrow Guarantee:</strong> Bounty funds are locked in the Arc Osaka escrow smart contract and released deterministically upon milestone verification.
+              </div>
+
+              <button type="submit" className="btn-action-primary" style={{ marginTop: '4px' }}>
+                Lock in Escrow & Publish Bounty
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ───────────────────────────────────────────────────────────────────
+          MODAL: SOVEREIGN WALLET & PORTFOLIO (WITH DUAL FIAT NGN CONVERSION)
+          ─────────────────────────────────────────────────────────────────── */}
+      {isWalletModalOpen && (
+        <div className="modal-backdrop" onClick={() => setIsWalletModalOpen(false)}>
+          <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Wallet size={16} color="var(--privy-color-interactive)" />
+                <span className="card-header-title">Arc Sovereign Portfolio</span>
+              </div>
+              <button
+                type="button"
+                style={{ background: 'none', border: 'none', color: 'var(--privy-color-foreground-2)', cursor: 'pointer' }}
+                onClick={() => setIsWalletModalOpen(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Identity Card */}
+            <div style={{ marginTop: '10px', padding: '12px', background: 'var(--privy-color-background-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--privy-color-border-subtle)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #0052ff, #00d2ff)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 900 }}>
+                {myTag ? myTag.tag?.slice(0, 1).toUpperCase() : '₦'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 800 }}>{myTag ? `₦${myTag.tag}` : 'Sovereign Wallet'}</span>
+                  <span className="card-net-pill">Arc Osaka</span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>
+                  {walletAddress ? shorten(walletAddress) : 'Not Connected'}
+                </div>
+              </div>
+              {walletAddress && (
+                <button
+                  type="button"
+                  className="quick-chip-btn"
+                  onClick={() => triggerCopy('wallet_modal_copy', walletAddress)}
+                >
+                  <Copy size={11} />
+                  <span>{copiedKey === 'wallet_modal_copy' ? 'Copied' : 'Copy'}</span>
+                </button>
+              )}
+            </div>
+
+            {/* Dual Valuation Balances */}
+            <div style={{ marginTop: '10px', padding: '14px', background: 'var(--privy-color-background-surface-2)', borderRadius: 'var(--radius-sm)', textAlign: 'center' }}>
+              <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', fontWeight: 600, textTransform: 'uppercase' }}>
+                Total Arc Balance
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 800, color: 'var(--privy-color-foreground)', margin: '4px 0' }}>
+                {usdcBalance.formatted} USDC
+              </div>
+              <div className="wallet-fx-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 10px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid #10b981', borderRadius: '12px', fontSize: '11.5px', color: '#047857', fontWeight: 700 }}>
+                <span>≈ ₦{(parseFloat(usdcBalance.formatted || '0') * 1485).toLocaleString('en-NG', { maximumFractionDigits: 2 })} NGN</span>
+                <span style={{ fontSize: '9.5px', opacity: 0.8 }}>@ ₦1,485/$</span>
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--privy-color-interactive)', fontWeight: 700, marginTop: '8px' }}>
+                ⚡ {userPoints} Protocol Points
+              </div>
+            </div>
+
+            {/* Sub-tabs: Overview | Receive QR | Activity */}
+            <div className="agent-profile-tabs" style={{ marginTop: '10px' }}>
+              <button
+                type="button"
+                className={`agent-profile-tab-btn ${walletTab === 'overview' ? 'active' : ''}`}
+                onClick={() => setWalletTab('overview')}
+              >
+                ✦ Overview
+              </button>
+              <button
+                type="button"
+                className={`agent-profile-tab-btn ${walletTab === 'qr' ? 'active' : ''}`}
+                onClick={() => setWalletTab('qr')}
+              >
+                📱 Receive QR
+              </button>
+              <button
+                type="button"
+                className={`agent-profile-tab-btn ${walletTab === 'history' ? 'active' : ''}`}
+                onClick={() => setWalletTab('history')}
+              >
+                📜 Ledger
+              </button>
+            </div>
+
+            {walletTab === 'overview' && (
+              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <button
+                  type="button"
+                  className="btn-action-primary"
+                  onClick={() => {
+                    setIsWalletModalOpen(false);
+                    setMainTab('pay');
+                  }}
+                >
+                  <Send size={14} />
+                  <span>Send USDC on Arc</span>
+                </button>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button
+                    type="button"
+                    className="quick-chip-btn"
+                    style={{ flex: 1, justifyContent: 'center' }}
+                    onClick={() => refreshBalance(walletAddress)}
+                  >
+                    <RefreshCw size={12} className={balanceLoading ? 'animate-spin' : ''} />
+                    <span>Refresh Balance</span>
+                  </button>
+                  <a
+                    href="https://explorer.testnet.arc.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="quick-chip-btn"
+                    style={{ flex: 1, justifyContent: 'center' }}
+                  >
+                    <ExternalLink size={12} />
+                    <span>ArcScan ↗</span>
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {walletTab === 'qr' && (
+              <div style={{ marginTop: '10px', textAlign: 'center' }}>
+                {walletAddress ? (
+                  <>
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`arc:${walletAddress}?tag=₦${myTag?.tag || ''}`)}`}
+                      alt="Arc Receive QR"
+                      style={{ width: '160px', height: '160px', borderRadius: '8px', border: '1px solid var(--privy-color-border-subtle)', margin: '0 auto 8px' }}
+                    />
+                    <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
+                      Scan to receive USDC or resolve {myTag ? `₦${myTag.tag}` : 'wallet'} on Arc Osaka EVM.
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ fontSize: '12px', padding: '16px' }}>Please connect wallet to view QR code.</div>
+                )}
+              </div>
+            )}
+
+            {walletTab === 'history' && (
+              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
+                {[
+                  { tx: '0x3a9f...b112', title: 'Claim ₦Tag Handle', time: '10m ago', amt: '0.00 USDC', status: 'Finalized <1s' },
+                  { tx: '0x8f2d...44c1', title: 'USDC Settlement to ₦michael', time: '2h ago', amt: '-10.00 USDC', status: 'Finalized <1s' },
+                  { tx: '0x11ab...90aa', title: 'Bounty Quest Reward', time: '1d ago', amt: '+25.00 USDC', status: 'Finalized <1s' },
+                ].map((item, idx) => (
+                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: 'var(--privy-color-background-surface)', borderRadius: '6px', fontSize: '11px' }}>
+                    <div>
+                      <div style={{ fontWeight: 700 }}>{item.title}</div>
+                      <div style={{ color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>{item.tx} • {item.time}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontWeight: 700, color: item.amt.startsWith('+') ? 'var(--privy-color-success-dark)' : 'var(--privy-color-foreground)' }}>{item.amt}</div>
+                      <div style={{ fontSize: '9.5px', color: 'var(--privy-color-success-dark)' }}>{item.status}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

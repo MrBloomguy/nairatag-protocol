@@ -559,20 +559,21 @@
       align-items: center;
     }
 
-    /* 2-Column Responsive Layout */
+    /* Centered Claim Console Layout */
     .claim-page-layout {
       width: 100%;
-      max-width: 860px;
+      max-width: 480px;
       display: flex;
-      align-items: flex-start;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      gap: 24px;
       margin: 0 auto;
     }
 
-    /* Left Main Column: 480px Uniswap Standard */
+    /* Main Column: 480px Uniswap Standard */
     .claim-page-main {
-      width: 480px;
+      width: 100%;
+      max-width: 480px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
@@ -2803,20 +2804,13 @@
         align-items: center;
       }
 
-      .claim-page-sidebar {
-        width: 100%;
-        max-width: 480px;
-        order: 2;
-      }
-
       .claim-page-main {
         width: 100%;
         max-width: 480px;
-        order: 1;
       }
     }
 
-    /* Mobile Viewport: Claim Section Full Screen (Scroll up to view preview card) */
+    /* Mobile Viewport: Claim Section Full Screen */
     @media (max-width: 640px) {
       .page-content-scroll {
         padding: 0 0 40px 0 !important;
@@ -2902,15 +2896,6 @@
         margin-bottom: 24px !important;
       }
 
-      /* Sovereign Identity Card & Value Pitch below */
-      .claim-page-sidebar {
-        width: 100% !important;
-        max-width: 100% !important;
-        padding: 24px 16px 40px !important;
-        border-top: 1px solid var(--line) !important;
-        background: var(--bg-card) !important;
-        box-sizing: border-box !important;
-      }
     }
   </style>
 </head>
@@ -3231,256 +3216,6 @@
             </div>
           </main>
 
-          <!-- Right Sidebar on the Page: Sovereign Identity Card & Value Pitch (RIGHT) -->
-          <aside class="claim-page-sidebar">
-
-            <!-- Card Mode Switcher Tabs -->
-            <div class="card-mode-tabs" role="tablist" aria-label="Card Views">
-              <button type="button" class="card-mode-tab active" id="tab-identity" onclick="setCardMode('identity')">✦
-                Identity</button>
-              <button type="button" class="card-mode-tab" id="tab-share" onclick="setCardMode('share')">🔗
-                Share</button>
-              <button type="button" class="card-mode-tab" id="tab-referral" onclick="setCardMode('referral')">🎁
-                Referral</button>
-              <button type="button" class="card-mode-tab" id="tab-qrcode" onclick="setCardMode('qrcode')">📱 QR
-                Code</button>
-              <button type="button" class="card-mode-tab" id="tab-metatags" onclick="setCardMode('metatags')">🏷️
-                Meta</button>
-            </div>
-
-
-            <div class="claim-sidebar-card-wrap" id="claim-sidebar-card-wrap">
-              <!-- VIEW 1: Live Onchain Identity Preview Card Component -->
-              <div class="card-view active" id="view-identity">
-                <div class="live-identity-card" id="live-identity-card" title="Interactive Live Sovereign ₦Tag Preview">
-                  <!-- Giant Monogram Watermark behind avatar -->
-                  <div class="card-monogram-watermark" id="card-monogram-watermark">₦</div>
-
-                  <!-- Top Row -->
-                  <div class="card-header-row">
-                    <div class="card-logo-symbol" id="card-logo-symbol">₦</div>
-                  </div>
-
-                  <!-- Center Character Avatar Stage -->
-                  <div class="card-avatar-stage">
-                    <div id="card-avatar-svg-container" class="card-avatar-svg-container"></div>
-                    <div id="card-avatar-loading" class="card-avatar-loader" style="display:none;">
-                      <div class="card-avatar-spinner"></div>
-                      <span class="card-avatar-loading-text">Generating...</span>
-                    </div>
-                  </div>
-
-                  <!-- Bottom Identity Info -->
-                  <div class="card-footer-row">
-                    <div class="card-identity-text">
-                      <div class="card-handle-title" id="card-handle-title">₦TAG</div>
-                    </div>
-                    <div class="card-verified-badge" id="card-verified-badge" title="Verified Onchain Sovereign Tag">
-                      <img src="/hub/verified-badge.png" width="32" height="32" alt="Verified Sovereign Tag"
-                        style="display:block; object-fit:contain;">
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-
-              <!-- VIEW 2: Share Card Component -->
-              <div class="card-view" id="view-share">
-                <div class="sovereign-alt-card" id="share-sovereign-card">
-                  <!-- Giant Monogram Watermark behind avatar -->
-                  <div class="card-monogram-watermark" id="share-card-monogram-watermark">₦</div>
-
-                  <div class="card-header-row">
-                    <div class="card-logo-symbol" id="share-card-logo-symbol">₦</div>
-                    <div class="card-net-pill" id="share-card-net-pill" style="font-size:10px;">
-                      <span>✦ Share Pass</span>
-                    </div>
-                  </div>
-
-                  <div class="card-avatar-stage" style="margin: 4px 0;">
-                    <div id="share-card-avatar-svg-container" class="card-avatar-svg-container"></div>
-                    <div id="share-card-avatar-loading" class="card-avatar-loader" style="display:none;">
-                      <div class="card-avatar-spinner"></div>
-                    </div>
-                  </div>
-
-                  <div class="card-footer-row" style="margin-bottom: 2px;">
-                    <div class="card-identity-text">
-                      <div class="card-handle-title" id="share-handle-title">₦TAG</div>
-                    </div>
-                    <div class="card-verified-badge" id="share-card-verified-badge"
-                      style="width:32px; height:32px; background:transparent;">
-                      <img src="/hub/verified-badge.png" width="28" height="28" alt="Verified Sovereign Tag"
-                        style="display:block; object-fit:contain;">
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Share Actions -->
-                <div class="share-actions-grid">
-                  <button type="button" class="share-btn share-btn-x" onclick="shareToTwitter()"
-                    title="Share on X / Twitter">
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
-                      <path
-                        d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                    <span>Share on 𝕏</span>
-                  </button>
-                  <button type="button" class="share-btn share-btn-tg" onclick="shareToTelegram()"
-                    title="Share on Telegram">
-                    <span>✈ Telegram</span>
-                  </button>
-                  <button type="button" class="share-btn share-btn-wa" onclick="shareToWhatsApp()"
-                    title="Share on WhatsApp">
-                    <span>💬 WhatsApp</span>
-                  </button>
-                  <button type="button" class="share-btn share-btn-copy" id="btn-copy-share" onclick="copyShareLink()"
-                    title="Copy Share URL">
-                    <span>🔗 Copy Link</span>
-                  </button>
-                </div>
-
-                <button type="button" class="action-row-btn primary-accent" onclick="downloadCardImage()"
-                  title="Download High-Res PNG Card">
-                  <span>💾 Download Card Image (PNG)</span>
-                </button>
-                <button type="button" class="action-row-btn" onclick="copyMarkdownBadge()"
-                  title="Copy Markdown Badge for GitHub/Sites">
-                  <span>📋 Copy Markdown Badge</span>
-                </button>
-              </div>
-
-              <!-- VIEW 3: Referral Card Component -->
-              <div class="card-view" id="view-referral">
-                <div class="sovereign-alt-card">
-                  <div class="card-header-row">
-                    <div class="card-logo-symbol">₦</div>
-                    <div class="card-net-pill" style="background:#000000; color:#ffd700; font-size:10px;">
-                      <span>🎁 Ambassador Pass</span>
-                    </div>
-                  </div>
-
-                  <div style="text-align: center; margin: 4px 0 2px;">
-                    <div
-                      style="font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #1a1a1a;">
-                      Invite Friends · Earn 10% Gas Rebates</div>
-                    <div class="card-handle-title" id="ref-card-handle-title" style="font-size: 24px; margin-top: 2px;">₦TAG</div>
-                  </div>
-
-                  <!-- Referral Link Input -->
-                  <div class="referral-link-box">
-                    <span class="referral-url-text"
-                      id="referral-url-display">https://nairatag.ng/claim</span>
-                    <button type="button" class="referral-copy-chip" id="btn-copy-ref"
-                      onclick="copyReferralLink()">Copy</button>
-                  </div>
-
-                  <!-- Metrics Grid (Hydrated live from onchain ledger) -->
-                  <div class="referral-metrics-grid">
-                    <div class="referral-metric-tile">
-                      <span class="metric-number" id="metric-invites">0</span>
-                      <span class="metric-caption">Invited</span>
-                    </div>
-                    <div class="referral-metric-tile">
-                      <span class="metric-number" id="metric-rebates">₦0</span>
-                      <span class="metric-caption">cNGN Rebates</span>
-                    </div>
-                    <div class="referral-metric-tile">
-                      <span class="metric-number" id="metric-tier">10%</span>
-                      <span class="metric-caption">Tier Rebate</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="share-actions-grid">
-                  <button type="button" class="share-btn share-btn-x" onclick="shareReferralTwitter()">
-                    <span>Share Ref on 𝕏</span>
-                  </button>
-                  <button type="button" class="share-btn share-btn-tg" onclick="shareReferralTelegram()">
-                    <span>Invite on TG</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- VIEW 4: QR Code Card Component -->
-              <div class="card-view" id="view-qrcode">
-                <div class="sovereign-alt-card">
-                  <div class="card-header-row">
-                    <div class="card-logo-symbol">₦</div>
-                  </div>
-
-                  <div class="qr-card-center-stage">
-                    <div class="qr-canvas-holder">
-                      <img class="qr-image-el" id="qr-code-img"
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=ethereum%3A0xb34518cC33314ee63841120bDd3Baa3BD1baf9e0%3Ftag%3D%E2%82%A6michael"
-                        alt="₦Tag Onchain QR Code" />
-                      <div class="qr-center-symbol-badge">₦</div>
-                    </div>
-                    <div class="qr-payload-banner" id="qr-payload-text">celo:nairatag.ng/claim</div>
-                  </div>
-
-                  <div class="card-footer-row">
-                    <div class="card-identity-text">
-                      <div class="card-handle-title" id="qr-handle-title" style="font-size: 20px;">₦TAG</div>
-                    </div>
-                    <div class="card-verified-badge" style="width:30px; height:30px; background:transparent;">
-                      <img src="/hub/verified-badge.png" width="26" height="26" alt="Verified Sovereign Tag"
-                        style="display:block; object-fit:contain;">
-                    </div>
-                  </div>
-                </div>
-
-                <div class="share-actions-grid">
-                  <button type="button" class="action-row-btn" id="btn-copy-uri" onclick="copyPaymentUri()">
-                    <span>📋 Copy URI</span>
-                  </button>
-                  <button type="button" class="action-row-btn primary-accent" onclick="downloadQrImage()">
-                    <span>💾 Download QR (PNG)</span>
-                  </button>
-                </div>
-              </div>
-
-              <!-- VIEW 5: Meta Tag System Card Component -->
-              <div class="card-view" id="view-metatags">
-                <div class="metatag-subtabs">
-                  <button type="button" class="metatag-subtab active" id="subtab-x" onclick="setMetaPreview('x')">𝕏
-                    Twitter Card</button>
-                  <button type="button" class="metatag-subtab" id="subtab-tg"
-                    onclick="setMetaPreview('tg')">Telegram</button>
-                  <button type="button" class="metatag-subtab" id="subtab-wa"
-                    onclick="setMetaPreview('wa')">WhatsApp</button>
-                </div>
-
-                <!-- Social Simulator Preview Frame -->
-                <div class="social-preview-simulator" id="social-sim-box">
-                  <div class="sim-img-wrap">
-                    <img src="banner-card.jpg" alt="Meta Card Preview" id="sim-card-img">
-                  </div>
-                  <div class="sim-content-box">
-                    <span class="sim-domain" id="sim-domain-label">nairatag.net · Sovereign Web3</span>
-                    <div class="sim-title" id="sim-card-title">₦TAG · Sovereign Onchain Identity on Celo</div>
-                    <div class="sim-desc" id="sim-card-desc">Say goodbye to 42-character hex addresses. NairaTag is a
-                      sovereign onchain handle for instant settlement on Celo Sepolia...</div>
-                  </div>
-                </div>
-
-                <!-- Live Meta Code Snippet Box -->
-                <div class="meta-snippet-deck">
-                  <pre class="meta-code-pre" id="meta-code-display">&lt;meta property="og:title" content="NairaTag · Sovereign Onchain Identity on Celo"&gt;
-&lt;meta property="og:description" content="Non-custodial sovereign identity on Celo Sepolia"&gt;
-&lt;meta property="og:image" content="https://nairatag.ng/cards/tag.svg?mode=og"&gt;
-&lt;meta name="twitter:card" content="summary_large_image"&gt;</pre>
-                </div>
-
-                <button type="button" class="action-row-btn primary-accent" id="btn-copy-meta"
-                  onclick="copyMetaSnippet()">
-                  <span>📋 Copy Meta Tags HTML</span>
-                </button>
-              </div>
-            </div>
-
-
-          </aside>
         </div>
       </div>
     </div>
