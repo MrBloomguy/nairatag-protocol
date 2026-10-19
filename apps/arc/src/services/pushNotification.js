@@ -5,11 +5,11 @@
  * Configured with VAPID Authentication, Web Audio Synthesizer & Micro-interactions
  * ============================================================================
  */
+import { addInboxNotification } from './notificationInbox.js';
 
 export const VAPID_CONFIG = {
   subject: 'mailto:bloombetgaming@gmail.com',
   publicKey: 'BO7PJjTvYu123UE593aiOoAHYNMchA0CX5yq7er9r2DebaP_RI6zUYOIGj35Vbt2GYEWRXzJTO8lIlr76K0uzr4',
-  privateKey: 'wjhxYWADdo7gspB_F7ML1fOtPdjWo1zS3kcKJmVXOPs',
 };
 
 /**
@@ -37,7 +37,6 @@ export function isPushSupported() {
   return (
     typeof window !== 'undefined' &&
     'serviceWorker' in navigator &&
-    'PushManager' in window &&
     'Notification' in window
   );
 }
@@ -81,43 +80,20 @@ export async function subscribeToPushNotifications() {
       return { success: false, reason: 'denied' };
     }
 
-    // 2. Ensure Service Worker is Active
-    let registration = await navigator.serviceWorker.ready;
-    if (!registration) {
-      registration = await registerServiceWorker();
-    }
+    // Background Web Push needs a trusted server. This app only requests
+    // browser notification permission and displays alerts while it is active.
+    localStorage.setItem('nairatag_browser_alerts', 'true');
 
-    if (!registration) {
-      return { success: false, reason: 'sw_failed' };
-    }
-
-    // 3. Check for existing subscription or create new
-    let subscription = await registration.pushManager.getSubscription();
-    if (!subscription) {
-      const convertedVapidKey = urlBase64ToUint8Array(VAPID_CONFIG.publicKey);
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: convertedVapidKey,
-      });
-    }
-
-    // 4. Save subscription locally
-    const subJson = subscription.toJSON();
-    localStorage.setItem('nairatag_push_subscribed', 'true');
-    localStorage.setItem('nairatag_push_subscription', JSON.stringify(subJson));
-
-    // Play tactile audio feedback & dispatch event
     playMicroSound('chime');
     triggerHaptic([30, 40, 30]);
 
-    // Dispatch global event for in-app UI update
     window.dispatchEvent(
       new CustomEvent('nairatag:push-status-changed', {
-        detail: { isSubscribed: true, subscription: subJson },
+        detail: { isSubscribed: true },
       })
     );
 
-    return { success: true, subscription: subJson };
+    return { success: true };
   } catch (error) {
     console.error('[PushNotification] Subscription failed:', error);
     return { success: false, error: error.message };
@@ -152,7 +128,7 @@ export async function unsubscribeFromPushNotifications() {
 }
 
 /**
- * Triggers both a System Web Push (if permitted) AND an In-App Toast Notification
+ * Saves an in-app inbox item and optionally shows a toast or browser notification.
  */
 export async function sendNotificationAlert({
   title,
@@ -162,20 +138,23 @@ export async function sendNotificationAlert({
   actionLabel = 'View',
   onAction = null,
   url = '/#rewards',
+  showToast = true,
+  showSystemNotification = true,
+  silent = false,
 }) {
-  // 1. Play tactile sound
-  if (type === 'reward' || type === 'claim') {
-    playMicroSound('chime');
-  } else if (type === 'cash' || type === 'success') {
-    playMicroSound('coin');
-  } else {
-    playMicroSound('pop');
+  if (!silent) {
+    if (type === 'reward' || type === 'claim') {
+      playMicroSound('chime');
+    } else if (type === 'cash' || type === 'success') {
+      playMicroSound('coin');
+    } else {
+      playMicroSound('pop');
+    }
+    triggerHaptic([20, 30]);
   }
-  triggerHaptic([20, 30]);
 
-  // 2. Dispatch in-app notification event (Always visible in UI)
   const inAppPayload = {
-    id: 'notif_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+    id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     title,
     body,
     type,
@@ -186,14 +165,14 @@ export async function sendNotificationAlert({
     timestamp: Date.now(),
   };
 
-  window.dispatchEvent(
-    new CustomEvent('nairatag:in-app-notification', {
-      detail: inAppPayload,
-    })
-  );
+  addInboxNotification(inAppPayload);
+  if (showToast && typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('nairatag:in-app-notification', { detail: inAppPayload }));
+  }
 
-  // 3. If browser permissions are granted, also trigger real system notification
-  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+  // Browser notifications are delivered while the app is running. Background
+  // Web Push requires a trusted server to send to the saved subscription.
+  if (showSystemNotification && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
     try {
       if ('serviceWorker' in navigator) {
         const reg = await navigator.serviceWorker.ready;

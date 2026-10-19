@@ -102,9 +102,21 @@ import {
   getEarnKitPools,
 } from './services/arcAppKit.js';
 import { resolveTagProfile } from './services/tagAvatar.js';
+import {
+  recordReferralSignup,
+  rememberReferralFromUrl,
+} from './services/referrals.js';
 import confetti from 'canvas-confetti';
 import RewardsPage, { GoldenVoucherModal, LuckyWheelModal, ReferralModal } from './RewardsPage.jsx';
 import NotificationLayer from './components/NotificationLayer.jsx';
+import { recordConfirmedPaymentSpin } from './services/wheelRewards.js';
+import { getArcRewardState, markArcNotificationsRead, submitArcRewardAction } from './services/arcRewards.js';
+import { listArcTasks, startArcTask, submitArcTask } from './services/arcTasks.js';
+import {
+  getNotificationInbox,
+  markInboxNotificationRead,
+  replaceNotificationInbox,
+} from './services/notificationInbox.js';
 import {
   registerServiceWorker,
   playMicroSound,
@@ -819,6 +831,19 @@ export default function App() {
 
   // Notifications Popover State (Bell icon) & Global Rewards Modals
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notificationInbox, setNotificationInbox] = useState(() => getNotificationInbox());
+
+  useEffect(() => {
+    const refreshInbox = () => setNotificationInbox(getNotificationInbox());
+    refreshInbox();
+    window.addEventListener('nairatag:notification-inbox-updated', refreshInbox);
+    window.addEventListener('storage', refreshInbox);
+    return () => {
+      window.removeEventListener('nairatag:notification-inbox-updated', refreshInbox);
+      window.removeEventListener('storage', refreshInbox);
+    };
+  }, []);
+
   const [isGoldenVoucherOpen, setIsGoldenVoucherOpen] = useState(false);
   const [isLuckyWheelOpen, setIsLuckyWheelOpen] = useState(false);
   const [isReferralOpen, setIsReferralOpen] = useState(false);
@@ -902,8 +927,15 @@ export default function App() {
   const [tasksSearch, setTasksSearch] = useState('');
   const [tasksViewMode, setTasksViewMode] = useState('grid'); // 'grid' | 'list'
   const [isPostTaskOpen, setIsPostTaskOpen] = useState(false);
-  const [userPoints, setUserPoints] = useState(380);
-  const [completedTaskIds, setCompletedTaskIds] = useState(['b001']);
+  const [selectedTaskId, setSelectedTaskId] = useState(null);
+  const [taskProgress, setTaskProgress] = useState({});
+  const [backendTasks, setBackendTasks] = useState([]);
+  const [tasksLoading, setTasksLoading] = useState(true);
+  const [tasksError, setTasksError] = useState('');
+  const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
+  const [taskSubmissionDraft, setTaskSubmissionDraft] = useState('');
+  const [userPoints, setUserPoints] = useState(0);
+  const [arcRewardsError, setArcRewardsError] = useState('');
   const [activeEscrowStep, setActiveEscrowStep] = useState(2);
   const [customTasks, setCustomTasks] = useState([]);
   const [postTaskForm, setPostTaskForm] = useState({
@@ -915,13 +947,55 @@ export default function App() {
     requirements: '',
   });
 
+  const applyArcRewardState = (state) => {
+    if (!state) return;
+    setUserPoints(Number(state.points) || 0);
+    replaceNotificationInbox(state.notifications || []);
+    setArcRewardsError('');
+  };
+
+  useEffect(() => {
+    let active = true;
+    if (!walletAddress) {
+      setUserPoints(0);
+      replaceNotificationInbox([]);
+      setArcRewardsError('');
+      return () => { active = false; };
+    }
+    const refresh = () => getArcRewardState(walletAddress)
+      .then((state) => { if (active) applyArcRewardState(state); })
+      .catch((error) => { if (active) setArcRewardsError(error.message || 'Arc rewards are unavailable.'); });
+    refresh();
+    const timer = setInterval(refresh, 60_000);
+    window.addEventListener('focus', refresh);
+    return () => { active = false; clearInterval(timer); window.removeEventListener('focus', refresh); };
+  }, [walletAddress]);
+
   // Agent Chat (Muse Spark AI) State
   const [agentChatMessages, setAgentChatMessages] = useState({});
   const [agentChatInput, setAgentChatInput] = useState('');
 
-  const allTasks = useMemo(() => {
-    return [...customTasks, ...DEFAULT_TASKS];
-  }, [customTasks]);
+  const allTasks = backendTasks;
+
+  useEffect(() => {
+    let active = true;
+    setTasksLoading(true);
+    setTasksError('');
+    listArcTasks(walletAddress || '')
+      .then(({ tasks, progress }) => {
+        if (!active) return;
+        setBackendTasks(tasks);
+        setTaskProgress(progress);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setBackendTasks([]);
+        setTaskProgress({});
+        setTasksError(error.message || 'Arc task service is unavailable.');
+      })
+      .finally(() => { if (active) setTasksLoading(false); });
+    return () => { active = false; };
+  }, [walletAddress, tasksRefreshKey]);
 
   const filteredTasks = useMemo(() => {
     const q = tasksSearch.toLowerCase().trim();
@@ -936,6 +1010,11 @@ export default function App() {
       return matchCat && matchQ;
     });
   }, [allTasks, tasksFilter, tasksSearch]);
+
+  const selectedTask = useMemo(
+    () => allTasks.find((task) => task.id === selectedTaskId) || null,
+    [allTasks, selectedTaskId]
+  );
 
   // Pay / Send Terminal State
   const [recipientInput, setRecipientInput] = useState('');
@@ -956,6 +1035,17 @@ export default function App() {
   const activeCleanTag = useMemo(() => {
     return claimInput.replace(/^[$₦]/, '').trim() || (myTag ? myTag.tag?.replace(/^[$₦]/, '') : 'TAG');
   }, [claimInput, myTag]);
+
+  const claimPreviewText = claimInput.replace(/^[$₦]/, '').toUpperCase() || 'Tag';
+  const claimPreviewBaseSize = typeof window === 'undefined'
+    ? 48
+    : Math.max(48, Math.min(0.11 * window.innerWidth, 76));
+  const claimPreviewFitSize = typeof window === 'undefined'
+    ? 48
+    : Math.min(424, window.innerWidth - 64) / ((claimPreviewText.length + 1) * 0.62);
+  const claimPreviewFontSize = claimPreviewText.length > 8
+    ? `${Math.max(22, Math.min(claimPreviewBaseSize, claimPreviewFitSize))}px`
+    : undefined;
 
   // Dynamic live mascot for claim input searchbar (updates in real-time as user types)
   const liveMascotProfile = useMemo(() => {
@@ -1207,17 +1297,40 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [recipientInput]);
 
-  // Tasks & Bounties Handlers
-  const handleApplyOrCompleteTask = (task) => {
-    if (completedTaskIds.includes(task.id)) {
-      showToast(`Already claimed quest: ${task.title}`, 'info');
+  const handleStartTask = async (task) => {
+    if (!walletAddress) {
+      showToast('Connect your wallet before starting a bounty.', 'info');
+      setIsConnectModalOpen(true);
       return;
     }
-    setCompletedTaskIds((prev) => [...prev, task.id]);
-    const earnedPoints = task.points || 200;
-    setUserPoints((prev) => prev + earnedPoints);
-    triggerCelebrationConfetti();
-    showToast(`🎉 Quest completed! +${earnedPoints} Protocol Points & ${task.rewardUSDC} USDC reward queued!`, 'success', 3500);
+    try {
+      const progress = await startArcTask({ taskId: task.id, walletAddress });
+      setTaskProgress((previous) => ({ ...previous, [task.id]: progress }));
+      showToast(`You started: ${task.title}`, 'success');
+    } catch (error) {
+      showToast(error.message || 'Could not start this task.', 'error', 4000);
+    }
+  };
+
+  const handleSubmitTask = async (task) => {
+    const submission = taskSubmissionDraft.trim();
+    if (submission.length < 8) {
+      showToast('Add a submission link or a short description of your work.', 'error');
+      return;
+    }
+    try {
+      const progress = await submitArcTask({ taskId: task.id, walletAddress, deliverable: submission });
+      setTaskProgress((previous) => ({ ...previous, [task.id]: progress }));
+      setTaskSubmissionDraft('');
+      showToast('Submission saved to the Arc task service for owner review.', 'success');
+    } catch (error) {
+      showToast(error.message || 'Could not submit this task.', 'error', 4000);
+    }
+  };
+
+  const handleTaskChat = (task) => {
+    setChatInputText(`Hi @₦${task.creatorTag.replace(/^₦/, '')}, I’m working on “${task.title}”. `);
+    setMainTab('chat');
   };
 
   // Daily Bonus Mission Actions (Matching Reference Screen)
@@ -1413,16 +1526,18 @@ export default function App() {
         executionTimeMs: result.executionTimeMs,
       });
       setIsCelebrationOpen(true);
-      showToast(`Payment sent: ${amountInput} USDC`, 'success', 3500);
 
-      // Web Push & In-App notification with tactile coin chime
-      sendNotificationAlert({
-        title: '⚡ Payment Finalized on Arc!',
-        body: `Sent ${amountInput} USDC to ${targetTag ? `₦${targetTag.replace(/^[$₦]/, '').toUpperCase()}` : shorten(result.recipientAddress)} in ${result.executionTimeMs || '<1'}s. +1 Lucky Spin earned!`,
-        type: 'cash',
-        actionLabel: 'Spin Wheel 🎡',
-        url: '/#rewards',
-      });
+      let rewardState = null;
+      let rewardSyncError = '';
+      try {
+        const rewardUpdate = await recordConfirmedPaymentSpin({ accountKey: walletAddress, txHash: result.txHash });
+        rewardState = rewardUpdate.state;
+        applyArcRewardState(rewardState);
+      } catch (rewardError) {
+        rewardSyncError = rewardError.message || 'Arc rewards could not be synchronized.';
+        setArcRewardsError(rewardSyncError);
+      }
+      if (rewardSyncError) setArcRewardsError(`Payment succeeded on Arc, but rewards sync is pending: ${rewardSyncError}`);
 
       refreshBalance(walletAddress);
       setAmountInput('');
@@ -1455,7 +1570,6 @@ export default function App() {
       });
 
       triggerCelebrationConfetti();
-      showToast(`Swap completed: ${swapAmountIn} ${swapTokenIn} ➔ ${swapEstimate?.amountOut || ''} ${swapTokenOut}`, 'success', 4000);
       setCelebrationDetails({
         type: 'swap',
         txHash: res.txHash,
@@ -1599,8 +1713,24 @@ export default function App() {
         tag: claimInput,
         ownerAddress: walletAddress,
       });
+      if (!res?.success) throw new Error(res?.error || 'NairaTag claim was not confirmed.');
+      let referralReward = null;
+      const hasReferralAttribution = Boolean(window.localStorage.getItem('nairatag_pending_referral_v1'));
+      try {
+        const claimNotice = await submitArcRewardAction({ action: 'tag_claimed', walletAddress, tag: res.cleanTag || claimInput });
+        applyArcRewardState(claimNotice.state);
+      } catch (rewardError) {
+        setArcRewardsError(rewardError.message || 'NairaTag claim notification could not be saved.');
+      }
+      if (hasReferralAttribution) {
+        try {
+          referralReward = await recordReferralSignup({ referredTag: res.cleanTag || claimInput, referredWallet: walletAddress });
+          if (referralReward?.state) applyArcRewardState(referralReward.state);
+        } catch (rewardError) {
+          setArcRewardsError(rewardError.message || 'Referral reward could not be recorded.');
+        }
+      }
       triggerCelebrationConfetti();
-      showToast(`₦${claimInput.replace(/^[$₦]/, '').toUpperCase()} claimed successfully on Arc!`, 'success', 4000);
       setCelebrationDetails({
         type: 'claim',
         txHash: res.txHash,
@@ -1621,13 +1751,14 @@ export default function App() {
 
   // Initial load
   useEffect(() => {
+    rememberReferralFromUrl();
     handleLookupAgent('1');
   }, []);
 
   return (
     <>
       {/* ─── Top Application Header (Reference-matched Layout) ─── */}
-      <header className="app-header">
+      <header className={`app-header ${mainTab === 'claim' ? 'claim-active' : ''}`}>
         {/* Left Side: Brand Logo Badge + Mobile Hamburger Menu */}
         <div className="app-header-left">
           <div className="app-brand" onClick={() => setMainTab('pay')}>
@@ -1636,28 +1767,31 @@ export default function App() {
             </div>
           </div>
 
-          <button
-            type="button"
-            className="mobile-hamburger-btn"
-            onClick={() => setIsMobileMenuOpen(true)}
-            aria-label="Open navigation menu"
-            title="Menu"
-          >
-            <Menu size={22} />
-          </button>
+          {mainTab === 'claim' ? (
+            <button
+              type="button"
+              className="claim-mobile-back"
+              onClick={() => setMainTab('pay')}
+              aria-label="Back to home"
+              title="Back"
+            >
+              <ArrowLeft size={22} />
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="mobile-hamburger-btn"
+              onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Open navigation menu"
+              title="Menu"
+            >
+              <Menu size={22} />
+            </button>
+          )}
         </div>
 
         {/* Center: Desktop Navigation Tabs (Hidden on mobile) */}
         <nav className="app-nav-tabs desktop-only">
-          <button
-            type="button"
-            className={`nav-tab-btn ${mainTab === 'rewards' ? 'active' : ''}`}
-            onClick={() => setMainTab('rewards')}
-          >
-            <Gift size={14} />
-            <span>Rewards</span>
-            <span className="nav-badge-pill" style={{ background: '#ef4444' }}>HOT</span>
-          </button>
           <button
             type="button"
             className={`nav-tab-btn ${mainTab === 'tasks' ? 'active' : ''}`}
@@ -1701,11 +1835,12 @@ export default function App() {
           </button>
           <button
             type="button"
-            className={`nav-tab-btn ${mainTab === 'faq' ? 'active' : ''}`}
-            onClick={() => setMainTab('faq')}
+            className={`nav-tab-btn ${mainTab === 'rewards' ? 'active' : ''}`}
+            onClick={() => setMainTab('rewards')}
           >
-            <HelpCircle size={14} />
-            <span>FAQ</span>
+            <Gift size={14} />
+            <span>Rewards</span>
+            <span className="nav-badge-pill" style={{ background: '#ef4444' }}>HOT</span>
           </button>
         </nav>
 
@@ -1749,6 +1884,18 @@ export default function App() {
                   >
                     {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
                     <span>{theme === 'dark' ? 'Light Theme' : 'Dark Theme'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="more-menu-item"
+                    onClick={() => {
+                      setMainTab('faq');
+                      setIsMoreMenuOpen(false);
+                    }}
+                  >
+                    <HelpCircle size={15} />
+                    <span>FAQ</span>
                   </button>
 
                   <a
@@ -1795,7 +1942,7 @@ export default function App() {
             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
           </button>
 
-          {/* Notification Bell with Badge 3 (Matching Reference Screenshot) */}
+          {/* Notification Bell */}
           <div className="header-bell-wrapper">
             <button
               type="button"
@@ -1804,11 +1951,15 @@ export default function App() {
                 playMicroSound('pop');
                 setIsNotificationOpen(!isNotificationOpen);
               }}
-              aria-label="3 new notifications"
+              aria-label={`${notificationInbox.filter((item) => !item.readAt).length} new notifications`}
               title="Notifications"
             >
               <Bell size={18} className={isNotificationOpen ? 'bell-ringing-active' : ''} />
-              <span className="header-bell-badge">3</span>
+              {notificationInbox.some((item) => !item.readAt) && (
+                <span className="header-bell-badge">
+                  {Math.min(notificationInbox.filter((item) => !item.readAt).length, 99)}
+                </span>
+              )}
             </button>
 
             {isNotificationOpen && (
@@ -1820,87 +1971,42 @@ export default function App() {
                       <Bell size={14} color="#5B4FFF" />
                       <span style={{ fontSize: '13px', fontWeight: 800 }}>Notifications</span>
                     </div>
-                    <span className="nav-badge-pill" style={{ background: '#ef4444' }}>3 New</span>
+                    <span className="nav-badge-pill" style={{ background: 'var(--primary, #5b4fff)' }}>
+                      {notificationInbox.filter((item) => !item.readAt).length
+                        ? `${notificationInbox.filter((item) => !item.readAt).length} New`
+                        : 'Up to date'}
+                    </span>
                   </div>
 
                   <div className="notifications-list">
-                    <div
-                      className="notification-item unread"
-                      onClick={() => {
-                        setIsNotificationOpen(false);
-                        setIsGoldenVoucherOpen(true);
-                      }}
-                    >
-                      <div className="notif-dot" />
-                      <div className="notif-content">
-                        <div className="notif-title">🎁 Golden Voucher Pack Available!</div>
-                        <div className="notif-sub">Claim up to 50% transaction discounts & airtime bonus</div>
+                    {notificationInbox.length ? notificationInbox.map((item) => (
+                      <button
+                        type="button"
+                        key={item.id}
+                        className={`notification-item ${item.readAt ? '' : 'unread'}`}
+                        onClick={() => {
+                          setNotificationInbox(markInboxNotificationRead(item.id));
+                          markArcNotificationsRead(walletAddress, [item.id]).then(applyArcRewardState).catch(() => {});
+                          const destination = String(item.url || '').split('#')[1]?.split('?')[0];
+                          setMainTab(['rewards', 'claim', 'pay', 'tasks', 'agents', 'chat', 'faq'].includes(destination) ? destination : 'rewards');
+                          setIsNotificationOpen(false);
+                        }}
+                      >
+                        {!item.readAt && <div className="notif-dot" />}
+                        <div className="notif-content">
+                          <div className="notif-title">{item.title}</div>
+                          <div className="notif-sub">{item.body}</div>
+                          <span className="notification-item-time">
+                            {new Date(item.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </button>
+                    )) : (
+                      <div className="notification-empty-state">
+                        <Bell size={18} />
+                        <span>You’re all caught up. Reward updates and daily reminders will appear here.</span>
                       </div>
-                    </div>
-
-                    <div
-                      className="notification-item unread"
-                      onClick={() => {
-                        setMainTab('agents');
-                        setIsNotificationOpen(false);
-                      }}
-                    >
-                      <div className="notif-dot" />
-                      <div className="notif-content">
-                        <div className="notif-title">🤖 ₦chowdeck Settled on Arc</div>
-                        <div className="notif-sub">Sub-second USDC micro-payment finality verified</div>
-                      </div>
-                    </div>
-
-                    <div
-                      className="notification-item unread"
-                      onClick={() => {
-                        setMainTab('tasks');
-                        setIsNotificationOpen(false);
-                      }}
-                    >
-                      <div className="notif-dot" />
-                      <div className="notif-content">
-                        <div className="notif-title">🔒 Escrow Milestone #b001 Verified</div>
-                        <div className="notif-sub">Arc Osaka smart escrow locked $120 USDC</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Web Push & In-App Alert Quick Test Action */}
-                  <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border-color, rgba(0,0,0,0.08))', background: 'rgba(0,0,0,0.02)' }}>
-                    <button
-                      type="button"
-                      className="shimmer-sweep"
-                      style={{
-                        width: '100%',
-                        padding: '8px 12px',
-                        fontSize: '11.5px',
-                        fontWeight: 800,
-                        background: '#2563eb',
-                        color: '#ffffff',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                      }}
-                      onClick={() => {
-                        sendNotificationAlert({
-                          title: '⚡ Web Push & In-App Alert Live!',
-                          body: 'VAPID push subscription active. Instant transaction and reward updates ready.',
-                          type: 'reward',
-                          actionLabel: 'Claim Voucher 🎁',
-                          url: '/#rewards',
-                        });
-                        setIsNotificationOpen(false);
-                      }}
-                    >
-                      <span>🔔</span>
-                      <span>Test Push &amp; In-App Alert</span>
-                    </button>
+                    )}
                   </div>
                 </div>
               </>
@@ -1957,24 +2063,6 @@ export default function App() {
             </div>
 
             <div className="mobile-drawer-links">
-              <button
-                type="button"
-                className={`mobile-nav-link ${mainTab === 'rewards' ? 'active' : ''}`}
-                onClick={() => {
-                  setMainTab('rewards');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <div className="mobile-nav-icon-box" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
-                  <Gift size={18} />
-                </div>
-                <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Rewards &amp; Vouchers</span>
-                  <span className="mobile-nav-desc">Lucky Wheel, cashback, airtime vouchers &amp; referral</span>
-                </div>
-                <span className="nav-badge-pill" style={{ background: '#ef4444' }}>HOT</span>
-              </button>
-
               <button
                 type="button"
                 className={`mobile-nav-link ${mainTab === 'tasks' ? 'active' : ''}`}
@@ -2067,20 +2155,20 @@ export default function App() {
 
               <button
                 type="button"
-                className={`mobile-nav-link ${mainTab === 'faq' ? 'active' : ''}`}
+                className={`mobile-nav-link ${mainTab === 'rewards' ? 'active' : ''}`}
                 onClick={() => {
-                  setMainTab('faq');
+                  setMainTab('rewards');
                   setIsMobileMenuOpen(false);
                 }}
               >
-                <div className="mobile-nav-icon-box">
-                  <HelpCircle size={18} />
+                <div className="mobile-nav-icon-box" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}>
+                  <Gift size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">FAQ</span>
-                  <span className="mobile-nav-desc">Protocol knowledge base & quick answers</span>
+                  <span className="mobile-nav-title">Rewards &amp; Vouchers</span>
+                  <span className="mobile-nav-desc">Daily Points, USDC balance, cNGN updates &amp; referrals</span>
                 </div>
-                {mainTab === 'faq' && <span className="mobile-nav-active-pill">Active</span>}
+                <span className="nav-badge-pill" style={{ background: '#ef4444' }}>HOT</span>
               </button>
             </div>
 
@@ -2212,7 +2300,7 @@ export default function App() {
       )}
 
       {/* ─── Main Application Body ─── */}
-      <main className="main-content-wrapper">
+      <main className={`main-content-wrapper ${mainTab === 'claim' ? 'claim-active' : ''}`}>
         {/* ───────────────────────────────────────────────────────────────────
             TAB 1: PAY & RESOLVE TERMINAL
             ─────────────────────────────────────────────────────────────────── */}
@@ -2428,6 +2516,11 @@ export default function App() {
                   <div className="claim-stage-subtitle">Claim your NairaTag</div>
                   <div
                     className={`claim-live-tag-display ${claimInput.trim() ? 'has-value' : ''}`}
+                    style={claimPreviewFontSize ? {
+                      fontSize: claimPreviewFontSize,
+                      fontWeight: claimPreviewText.length > 16 ? 700 : 800,
+                      letterSpacing: '-0.055em',
+                    } : undefined}
                     onClick={() => {
                       const input = document.getElementById('claim-tag-input-field');
                       if (input) input.focus();
@@ -2435,7 +2528,7 @@ export default function App() {
                     title="Click to search / edit tag"
                   >
                     <span className="live-tag-prefix">₦</span>
-                    <span>{claimInput.replace(/^[$₦]/, '').toUpperCase() || 'Tag'}</span>
+                    <span>{claimPreviewText}</span>
                   </div>
                 </div>
 
@@ -2535,9 +2628,9 @@ export default function App() {
                   {/* Slide 1 */}
                   <div className="reg-slide">
                     {[
-                      { tag: 'segun', net: 'Arc' },
-                      { tag: 'dev', net: 'Arc' },
-                      { tag: 'mama', net: 'Arc' },
+                      { tag: 'segun' },
+                      { tag: 'dev' },
+                      { tag: 'mama' },
                     ].map((item) => (
                       <div
                         key={item.tag}
@@ -2555,7 +2648,6 @@ export default function App() {
                           }}
                         />
                         <span className="reg-handle-tag">₦{item.tag}</span>
-                        <span className="reg-net-mini">{item.net}</span>
                       </div>
                     ))}
                   </div>
@@ -2563,9 +2655,9 @@ export default function App() {
                   {/* Slide 2 */}
                   <div className="reg-slide">
                     {[
-                      { tag: 'chowdeck', net: 'Arc' },
-                      { tag: 'shop', net: 'Arc' },
-                      { tag: 'travel', net: 'Arc' },
+                      { tag: 'chowdeck' },
+                      { tag: 'shop' },
+                      { tag: 'travel' },
                     ].map((item) => (
                       <div
                         key={item.tag}
@@ -2583,7 +2675,6 @@ export default function App() {
                           }}
                         />
                         <span className="reg-handle-tag">₦{item.tag}</span>
-                        <span className="reg-net-mini">{item.net}</span>
                       </div>
                     ))}
                   </div>
@@ -2591,9 +2682,9 @@ export default function App() {
                   {/* Slide 3 */}
                   <div className="reg-slide">
                     {[
-                      { tag: 'designer', net: 'Arc' },
-                      { tag: 'researcher', net: 'Arc' },
-                      { tag: 'bayo', net: 'Arc' },
+                      { tag: 'designer' },
+                      { tag: 'researcher' },
+                      { tag: 'bayo' },
                     ].map((item) => (
                       <div
                         key={item.tag}
@@ -2611,24 +2702,11 @@ export default function App() {
                           }}
                         />
                         <span className="reg-handle-tag">₦{item.tag}</span>
-                        <span className="reg-net-mini">{item.net}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Slide Pagination Dots */}
-                <div className="reg-dots-nav">
-                  {[0, 1, 2].map((idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      className={`reg-dot-btn ${claimRegSlide === idx ? 'active' : ''}`}
-                      onClick={() => setClaimRegSlide(idx)}
-                      title={`Slide ${idx + 1}`}
-                    />
-                  ))}
-                </div>
               </div>
             </main>
 
@@ -2884,6 +2962,109 @@ export default function App() {
             ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'tasks' && (
           <div className="agents-page-container">
+            {selectedTask ? (
+              <section className="task-detail-page">
+                <button type="button" className="btn-agent-secondary task-detail-back" onClick={() => setSelectedTaskId(null)}>
+                  <ArrowLeft size={15} /> Back to tasks
+                </button>
+
+                <div className="task-detail-heading">
+                  <div className="milestone-badge-stage">
+                    <AgentMedallion type={selectedTask.badgeType || 'emerald'} size={46} />
+                  </div>
+                  <div className="task-detail-heading-copy">
+                    <span className="task-cat-pill active">{selectedTask.categoryLabel}</span>
+                    <h1>{selectedTask.title}</h1>
+                    <p>Posted by ₦{selectedTask.creatorTag.replace(/^₦/, '').toUpperCase()} · {selectedTask.deadline}</p>
+                  </div>
+                </div>
+
+                <div className="task-detail-grid">
+                  <div className="task-detail-main">
+                    <article className="task-detail-panel">
+                      <h2>Task details</h2>
+                      <p>{selectedTask.description}</p>
+                      <div className="task-detail-deliverable">
+                        <strong>What to submit</strong>
+                        <span>{selectedTask.deliverable}</span>
+                      </div>
+                      {selectedTask.requirements && (
+                        <div className="task-detail-deliverable">
+                          <strong>Requirements</strong>
+                          <span>{selectedTask.requirements}</span>
+                        </div>
+                      )}
+                    </article>
+
+                    <article className="task-detail-panel task-submit-panel">
+                      <div className="task-detail-panel-heading">
+                        <div>
+                          <h2>Work & submission</h2>
+                          <p>{taskProgress[selectedTask.id]?.status === 'submitted' ? 'Your work has been submitted for review.' : 'Start the task, then submit a link or describe your completed work.'}</p>
+                        </div>
+                        <span className={`task-progress-badge ${taskProgress[selectedTask.id]?.status || 'not-started'}`}>
+                          {taskProgress[selectedTask.id]?.status === 'submitted' ? 'In review' : taskProgress[selectedTask.id]?.status === 'in_progress' ? 'In progress' : 'Not started'}
+                        </span>
+                      </div>
+                      {taskProgress[selectedTask.id]?.status === 'submitted' ? (
+                        <div className="task-submission-saved">
+                          <CheckCircle2 size={17} />
+                          <div><strong>Submission saved</strong><span>Sent to the Arc task service for bounty owner review.</span></div>
+                        </div>
+                      ) : (
+                        <>
+                          {taskProgress[selectedTask.id]?.status !== 'in_progress' && (
+                            <button type="button" className="btn-agent-primary" onClick={() => handleStartTask(selectedTask)}>
+                              Start this task <ChevronRight size={15} />
+                            </button>
+                          )}
+                          <textarea
+                            className="token-amount-field task-submission-input"
+                            rows={4}
+                            placeholder="Paste your deliverable link or describe the work you completed..."
+                            value={taskSubmissionDraft}
+                            onChange={(event) => setTaskSubmissionDraft(event.target.value)}
+                            disabled={taskProgress[selectedTask.id]?.status !== 'in_progress'}
+                          />
+                          <button
+                            type="button"
+                            className="btn-agent-primary"
+                            onClick={() => handleSubmitTask(selectedTask)}
+                            disabled={taskProgress[selectedTask.id]?.status !== 'in_progress'}
+                          >
+                            <Send size={14} /> Submit work for review
+                          </button>
+                        </>
+                      )}
+                      <div className="task-detail-local-note">Task progress and submissions are stored in the shared Arc task service. Escrow payouts remain unavailable until an Arc escrow contract is deployed and connected.</div>
+                    </article>
+                  </div>
+
+                  <aside className="task-detail-sidebar">
+                    <article className="task-detail-panel task-reward-panel">
+                      <span className="task-detail-eyebrow">BOUNTY REWARD</span>
+                      <strong>${selectedTask.rewardUSDC} <small>USDC</small></strong>
+                      <span>+{selectedTask.points} Protocol Points after approval</span>
+                      <button type="button" className="btn-agent-secondary" disabled title="The bounty escrow contract is not connected yet.">
+                        <Coins size={14} /> Claim reward
+                      </button>
+                      <small className="task-detail-local-note">Reward claims activate after escrow contract and owner approval integration.</small>
+                    </article>
+
+                    <article className="task-detail-panel">
+                      <h2><ShieldCheck size={16} /> Escrow status</h2>
+                      <div className="task-escrow-status">{selectedTask.escrowStatus}</div>
+                      <p>Arc task progress is stored remotely. This bounty is not yet backed by an Arc escrow contract.</p>
+                    </article>
+
+                    <button type="button" className="btn-agent-secondary task-chat-button" onClick={() => handleTaskChat(selectedTask)}>
+                      <MessageSquare size={15} /> Chat with task owner
+                    </button>
+                  </aside>
+                </div>
+              </section>
+            ) : (
+              <>
             {/* Top Bar: Search and Grid/List View Toggle */}
             <div className="agents-top-bar">
               <div className="agents-top-controls" style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -2951,8 +3132,8 @@ export default function App() {
                 <span className="agents-stat-card-value">{allTasks.length}</span>
               </div>
               <div className="agents-stat-card">
-                <span className="agents-stat-card-label">Escrow Locked</span>
-                <span className="agents-stat-card-value">$14,250</span>
+                <span className="agents-stat-card-label">Arc Escrow Locked</span>
+                <span className="agents-stat-card-value">$0</span>
               </div>
               <div className="agents-stat-card">
                 <span className="agents-stat-card-label">Settlement Fee</span>
@@ -2992,21 +3173,25 @@ export default function App() {
                 {filteredTasks.length === 0 ? (
                   <div style={{ gridColumn: '1 / -1', padding: '36px 16px', textAlign: 'center', background: 'var(--surface1, #ffffff)', borderRadius: 'var(--radius-card, 24px)', border: '1px dashed var(--border-color, rgba(0,0,0,0.12))' }}>
                     <Briefcase size={28} color="var(--privy-color-foreground-2)" style={{ margin: '0 auto 8px' }} />
-                    <div style={{ fontSize: '14px', fontWeight: 700 }}>No bounties match your filter</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700 }}>{tasksLoading ? 'Loading Arc tasks…' : tasksError ? 'Arc task service unavailable' : 'No tasks match your filter'}</div>
                     <div style={{ fontSize: '12px', color: 'var(--privy-color-foreground-2)', marginTop: '4px' }}>
-                      Try searching for different keywords or post the first bounty in this category!
+                      {tasksError || (tasksLoading ? 'Fetching task data from the shared task service.' : 'Try searching for different keywords.')}
                     </div>
+                    {tasksError && <button type="button" className="btn-agent-secondary" style={{ marginTop: '10px' }} onClick={() => setTasksRefreshKey((key) => key + 1)}>Retry connection</button>}
                   </div>
                 ) : (
                   filteredTasks.map((task, idx) => {
-                    const isDone = completedTaskIds.includes(task.id);
+                    const isDone = taskProgress[task.id]?.status === 'paid';
                     const rankLabel = task.rank || `#${idx + 1}`;
                     return (
                       <div
                         key={task.id}
                         className="agent-milestone-card"
-                        onClick={() => handleApplyOrCompleteTask(task)}
-                        style={{ cursor: isDone ? 'default' : 'pointer' }}
+                        onClick={() => setSelectedTaskId(task.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedTaskId(task.id); }}
+                        style={{ cursor: 'pointer' }}
                       >
                         <span className="card-rank-tag">{rankLabel}</span>
 
@@ -3043,7 +3228,7 @@ export default function App() {
                         <div className="milestone-earnings-row">
                           <span className="milestone-earnings-label">Reward</span>
                           <span className="milestone-earnings-value" style={{ color: isDone ? '#10B981' : 'var(--primary, #0052FF)' }}>
-                            {isDone ? 'Claimed' : `$${task.rewardUSDC} USDC`}
+                            {isDone ? 'Paid' : `$${task.rewardUSDC} USDC`}
                           </span>
                         </div>
                       </div>
@@ -3059,19 +3244,23 @@ export default function App() {
                 {filteredTasks.length === 0 ? (
                   <div style={{ padding: '36px 16px', textAlign: 'center', background: 'var(--surface1, #ffffff)', borderRadius: 'var(--radius-card, 24px)', border: '1px dashed var(--border-color, rgba(0,0,0,0.12))' }}>
                     <Briefcase size={28} color="var(--privy-color-foreground-2)" style={{ margin: '0 auto 8px' }} />
-                    <div style={{ fontSize: '14px', fontWeight: 700 }}>No bounties match your filter</div>
+                    <div style={{ fontSize: '14px', fontWeight: 700 }}>{tasksLoading ? 'Loading Arc tasks…' : tasksError ? 'Arc task service unavailable' : 'No tasks match your filter'}</div>
+                    {tasksError && <button type="button" className="btn-agent-secondary" style={{ marginTop: '10px' }} onClick={() => setTasksRefreshKey((key) => key + 1)}>Retry connection</button>}
                   </div>
                 ) : (
                   filteredTasks.map((task, idx) => {
-                    const isDone = completedTaskIds.includes(task.id);
+                    const isDone = taskProgress[task.id]?.status === 'paid';
                     const rankLabel = task.rank || `#${idx + 1}`;
                     const rankTopClass = idx === 0 ? 'rank-top1' : idx === 1 ? 'rank-top2' : idx === 2 ? 'rank-top3' : '';
                     return (
                       <div
                         key={task.id}
                         className="agent-circle-row"
-                        onClick={() => handleApplyOrCompleteTask(task)}
-                        style={{ cursor: isDone ? 'default' : 'pointer' }}
+                        onClick={() => setSelectedTaskId(task.id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedTaskId(task.id); }}
+                        style={{ cursor: 'pointer' }}
                       >
                         <div className="agent-circle-left">
                           <div className="agent-circle-avatar-wrap">
@@ -3112,7 +3301,7 @@ export default function App() {
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div className="agent-circle-metric-val" style={{ color: isDone ? '#10B981' : 'var(--primary, #0052FF)' }}>
-                              {isDone ? 'Claimed' : `$${task.rewardUSDC} USDC`}
+                              {isDone ? 'Paid' : `$${task.rewardUSDC} USDC`}
                             </div>
                             <div className="agent-circle-metric-lbl">Reward</div>
                           </div>
@@ -3125,26 +3314,8 @@ export default function App() {
               </div>
             )}
 
-            {/* Post / Create Escrow Bounty Bottom Card (Matching "Deploy Your Autonomous Agent" on Agents page) */}
-            <div className="agents-top-bar" style={{ marginTop: '8px' }}>
-              <div className="agents-top-left">
-                <div style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--privy-color-foreground)' }}>
-                  Post a Sovereign Escrow Bounty
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
-                  Lock USDC on Arc Osaka EVM with automated milestone payouts to verified ₦Tags.
-                </div>
-              </div>
-              <button
-                type="button"
-                className="btn-agent-primary"
-                style={{ flex: 'none', padding: '8px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                onClick={() => setIsPostTaskOpen(true)}
-              >
-                <Plus size={14} />
-                <span>+ Post Bounty</span>
-              </button>
-            </div>
+              </>
+            )}
           </div>
         )}
 
@@ -3645,7 +3816,13 @@ export default function App() {
             ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'rewards' && (
           <RewardsPage
-            userTag={userTag}
+            userTag={myTag?.tag || ''}
+            accountKey={walletAddress || ''}
+            pointsBalance={userPoints}
+            serviceError={arcRewardsError}
+            usdcBalance={usdcBalance}
+            onRewardState={applyArcRewardState}
+            onRequestConnect={() => setIsConnectModalOpen(true)}
             onNavigateHome={() => setMainTab('pay')}
           />
         )}
@@ -3656,23 +3833,9 @@ export default function App() {
           MOBILE FIXED FOOTER MENU (MATCHING EXACT USER SCREENSHOT STYLE)
           (Hidden on Chat page per user specification)
           ─────────────────────────────────────────────────────────────────── */}
-      {mainTab !== 'chat' && (
+      {mainTab !== 'chat' && mainTab !== 'claim' && (
         <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
-          {/* 0. Rewards (with Coral-Red Notification Badge) */}
-          <button
-            type="button"
-            className={`mobile-footer-item ${mainTab === 'rewards' ? 'active' : ''}`}
-            onClick={() => setMainTab('rewards')}
-            aria-label="Rewards"
-          >
-            <div className="mobile-footer-icon-wrap">
-              <Gift size={22} strokeWidth={mainTab === 'rewards' ? 2.4 : 1.8} />
-              <span className="mobile-footer-badge badge-red">HOT</span>
-            </div>
-            <span className="mobile-footer-label">Rewards</span>
-          </button>
-
-          {/* 1. Tasks */}
+          {/* 0. Tasks */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'tasks' ? 'active' : ''}`}
@@ -3697,7 +3860,7 @@ export default function App() {
             <span className="mobile-footer-label">Tasks</span>
           </button>
 
-          {/* 2. Agents (with Purple Pill Badge "8") */}
+          {/* 1. Agents (with Purple Pill Badge "8") */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'agents' ? 'active' : ''}`}
@@ -3711,7 +3874,7 @@ export default function App() {
             <span className="mobile-footer-label">Agents</span>
           </button>
 
-          {/* 3. Claim */}
+          {/* 2. Claim */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'claim' ? 'active' : ''}`}
@@ -3724,7 +3887,7 @@ export default function App() {
             <span className="mobile-footer-label">Claim</span>
           </button>
 
-          {/* 4. Swap */}
+          {/* 3. Swap */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'pay' ? 'active' : ''}`}
@@ -3737,7 +3900,7 @@ export default function App() {
             <span className="mobile-footer-label">Swap</span>
           </button>
 
-          {/* 5. Chat */}
+          {/* 4. Chat */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'chat' ? 'active' : ''}`}
@@ -3749,6 +3912,20 @@ export default function App() {
               <span className="mobile-footer-badge badge-green" style={{ width: 8, height: 8, padding: 0, minWidth: 8, borderRadius: '50%' }} />
             </div>
             <span className="mobile-footer-label">Chat</span>
+          </button>
+
+          {/* Rewards is the last destination in the mobile navigation. */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'rewards' ? 'active' : ''}`}
+            onClick={() => setMainTab('rewards')}
+            aria-label="Rewards"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <Gift size={22} strokeWidth={mainTab === 'rewards' ? 2.4 : 1.8} />
+              <span className="mobile-footer-badge badge-red">HOT</span>
+            </div>
+            <span className="mobile-footer-label">Rewards</span>
           </button>
         </nav>
       )}
@@ -4655,24 +4832,23 @@ export default function App() {
       <GoldenVoucherModal
         isOpen={isGoldenVoucherOpen}
         onClose={() => setIsGoldenVoucherOpen(false)}
-        onClaimSuccess={() => {
-          showToast('Golden Voucher Pack Claimed! +2 vouchers added.', 'success');
-        }}
       />
 
       <LuckyWheelModal
         isOpen={isLuckyWheelOpen}
         onClose={() => setIsLuckyWheelOpen(false)}
-        availableSpins={2}
-        onWinPrize={(prize) => {
-          showToast(`Won ${prize.label}! Credited to your account.`, 'success');
+        accountKey={walletAddress || ''}
+        onRequestConnect={() => setIsConnectModalOpen(true)}
+        onWinPrize={(prize, state) => {
+          if (state) applyArcRewardState(state);
         }}
       />
 
       <ReferralModal
         isOpen={isReferralOpen}
         onClose={() => setIsReferralOpen(false)}
-        userTag={userTag}
+        userTag={myTag?.tag || ''}
+        accountKey={walletAddress || ''}
       />
 
       {/* ───────────────────────────────────────────────────────────────────
@@ -4682,8 +4858,13 @@ export default function App() {
         onNavigateTab={setMainTab}
         onOpenRewards={() => {
           setMainTab('rewards');
-          setIsGoldenVoucherOpen(true);
         }}
+        accountKey={walletAddress || ''}
+        userTag={myTag?.tag || ''}
+        hasBlockingModal={Boolean(
+          isCelebrationOpen || isLuckyWheelOpen || isReferralOpen || isGoldenVoucherOpen ||
+          isClaimModalOpen || isWalletModalOpen || isConnectModalOpen || isSendReviewModalOpen
+        )}
       />
     </>
   );

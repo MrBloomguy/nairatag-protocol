@@ -19,7 +19,12 @@ import {
   playMicroSound,
   triggerHaptic,
 } from '../services/pushNotification.js';
+import { getArcRewardState } from '../services/arcRewards.js';
 import '../notifications.css';
+
+function localDayKey(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
 
 /**
  * Individual In-App Floating Notification Card
@@ -122,7 +127,7 @@ function InAppNotificationCard({ item, onDismiss, onAction }) {
  * MAIN NOTIFICATION LAYER (IN-APP STACK + PUSH PERMISSION PROMPT)
  * ─────────────────────────────────────────────────────────────────────────────
  */
-export default function NotificationLayer({ onNavigateTab, onOpenRewards }) {
+export default function NotificationLayer({ onNavigateTab, onOpenRewards, accountKey = '', userTag = '', hasBlockingModal = false }) {
   const [notifications, setNotifications] = useState([]);
   const [showPushBanner, setShowPushBanner] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -132,7 +137,7 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards }) {
     if (!isPushSupported()) return;
 
     const isDismissed = localStorage.getItem('nairatag_push_banner_dismissed');
-    const isSubscribed = localStorage.getItem('nairatag_push_subscribed');
+    const isSubscribed = localStorage.getItem('nairatag_browser_alerts');
     const permission = getNotificationPermission();
 
     if (permission === 'default' && !isDismissed && !isSubscribed) {
@@ -142,6 +147,54 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards }) {
       return () => clearTimeout(timer);
     }
   }, []);
+
+  // Once per day, remind signed-in users about unclaimed rewards before the
+  // local reset. The inbox keeps the reminder if the floating card is missed.
+  useEffect(() => {
+    const walletKey = String(accountKey || '').trim().toLowerCase();
+    if (!walletKey || hasBlockingModal) return;
+    let active = true;
+    getArcRewardState(walletKey).then((state) => {
+      if (!active) return;
+      const today = localDayKey();
+      const reminderKey = `nairatag_reward_nudge:${walletKey}:${today}`;
+      try { if (localStorage.getItem(reminderKey)) return; } catch {}
+      const streakAvailable = !state.streak.claimedToday;
+      if (state.spins.available <= 0 && !streakAvailable) return;
+      try { localStorage.setItem(reminderKey, '1'); } catch {}
+      const reminders = [];
+      if (streakAvailable) reminders.push('Claim today’s streak points');
+      if (state.spins.available > 0) reminders.push('use your free spin');
+      sendNotificationAlert({
+        title: 'Your daily Arc rewards are waiting',
+        body: `${reminders.join(' and ')} before midnight. One confirmed Arc USDC payment can unlock a second spin today.`,
+        type: 'reward', actionLabel: 'Open Rewards', url: '/#rewards', showToast: true, showSystemNotification: true,
+      });
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [accountKey, hasBlockingModal]);
+
+  // Referral milestones are sent to the inviter's active browser profile.
+  useEffect(() => {
+    const tag = String(userTag || '').replace(/^[$₦@#]/, '').trim().toLowerCase();
+    if (!tag) return undefined;
+    const handleReferralCredit = (event) => {
+      const detail = event.detail || {};
+      if (detail.referrerTag !== tag || !detail.points) return;
+      sendNotificationAlert({
+        title: detail.milestone === 'first_payment' ? 'Your referral made their first payment' : 'A friend joined with your NairaTag',
+        body: `You earned ${detail.points} Protocol Points. Invite another friend to keep your referral rewards growing.`,
+        type: 'reward',
+        actionLabel: 'View referral rewards',
+        url: '/#rewards',
+        showToast: !hasBlockingModal,
+        showSystemNotification: !hasBlockingModal,
+        silent: hasBlockingModal,
+      });
+    };
+    window.addEventListener('nairatag:referrals-updated', handleReferralCredit);
+    return () => window.removeEventListener('nairatag:referrals-updated', handleReferralCredit);
+  }, [userTag, hasBlockingModal]);
 
   // Listen to in-app notification events
   useEffect(() => {
@@ -183,8 +236,8 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards }) {
     if (res.success) {
       setShowPushBanner(false);
       sendNotificationAlert({
-        title: '🔔 Push Notifications Enabled!',
-        body: 'You will receive instant alerts for Arc payments, cashback, and voucher drops.',
+        title: '🔔 Browser alerts enabled',
+        body: 'You’ll get browser alerts for reward updates while NairaTag is open, plus a saved in-app notification history.',
         type: 'success',
         actionLabel: 'Explore Rewards',
         url: '/#rewards',
@@ -223,8 +276,8 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards }) {
               <Bell size={16} />
             </div>
             <div>
-              <div className="push-pill-title">Enable Arc Instant Alerts</div>
-              <div className="push-pill-sub">Receive cashback, voucher &amp; payment notifications</div>
+          <div className="push-pill-title">Stay in the rewards loop</div>
+              <div className="push-pill-sub">Get browser alerts for spins, streaks, referrals and Arc payments</div>
             </div>
           </div>
 
@@ -235,7 +288,7 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards }) {
               onClick={handleEnablePush}
               disabled={isSubscribing}
             >
-              {isSubscribing ? 'Enabling...' : 'Enable Push'}
+              {isSubscribing ? 'Enabling...' : 'Enable alerts'}
             </button>
             <button
               type="button"

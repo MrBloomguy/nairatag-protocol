@@ -1,10 +1,9 @@
 // @ts-nocheck
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Sparkles,
-  Gift,
-  Trophy,
   ArrowLeft,
+  Sparkles,
+  Trophy,
   ChevronRight,
   Clock,
   Copy,
@@ -17,7 +16,6 @@ import {
   Smartphone,
   Flame,
   CheckCircle2,
-  MoreHorizontal,
   ExternalLink,
   ShieldCheck,
 } from 'lucide-react';
@@ -27,6 +25,13 @@ import {
   triggerHaptic,
   sendNotificationAlert,
 } from './services/pushNotification.js';
+import {
+  createReferralLink,
+  REFERRAL_FIRST_PAYMENT_POINTS,
+  REFERRAL_SIGNUP_POINTS,
+} from './services/referrals.js';
+import { consumeDailySpin, getDailySpinStats } from './services/wheelRewards.js';
+import { getArcRewardState, submitArcRewardAction } from './services/arcRewards.js';
 import './rewards.css';
 
 /**
@@ -34,14 +39,14 @@ import './rewards.css';
  * (Matching user reference Screenshot 3)
  */
 export const WHEEL_PRIZES = [
-  { id: 'p0', label: '₦100 Cashback', type: 'cashback', value: 100, color: '#ffffff', textColor: '#0f172a', icon: 'coin' },
-  { id: 'p1', label: '₦30 Cashback', type: 'cashback', value: 30, color: '#38b2ac', textColor: '#ffffff', icon: 'coin' },
-  { id: 'p2', label: '₦50 Off Airtime', type: 'airtime', value: 50, color: '#ffffff', textColor: '#0f172a', icon: 'voucher' },
-  { id: 'p3', label: '₦20 Off Airtime', type: 'airtime', value: 20, color: '#38b2ac', textColor: '#ffffff', icon: 'voucher' },
-  { id: 'p4', label: '₦10 Off Airtime', type: 'airtime', value: 10, color: '#ffffff', textColor: '#0f172a', icon: 'voucher' },
-  { id: 'p5', label: '₦10 Cashback', type: 'cashback', value: 10, color: '#38b2ac', textColor: '#ffffff', icon: 'coin' },
-  { id: 'p6', label: '32" Smart TV', type: 'jackpot', value: 50000, color: '#ffffff', textColor: '#b45309', icon: 'tv' },
-  { id: 'p7', label: '₦5,000 Cashback', type: 'cashback', value: 5000, color: '#38b2ac', textColor: '#ffffff', icon: 'coin' },
+  { id: 'p0', label: '50 Points', type: 'points', value: 50, color: 'var(--wheel-segment-a)', textColor: 'var(--wheel-label-a)', icon: 'points' },
+  { id: 'p1', label: '25 Points', type: 'points', value: 25, color: 'var(--wheel-segment-b)', textColor: 'var(--wheel-label-b)', icon: 'points' },
+  { id: 'p2', label: '100 Points', type: 'points', value: 100, color: 'var(--wheel-segment-c)', textColor: 'var(--wheel-label-c)', icon: 'points' },
+  { id: 'p3', label: '20 Points', type: 'points', value: 20, color: 'var(--wheel-segment-d)', textColor: 'var(--wheel-label-d)', icon: 'points' },
+  { id: 'p4', label: '10 Points', type: 'points', value: 10, color: 'var(--wheel-segment-a)', textColor: 'var(--wheel-label-a)', icon: 'points' },
+  { id: 'p5', label: '75 Points', type: 'points', value: 75, color: 'var(--wheel-segment-b)', textColor: 'var(--wheel-label-b)', icon: 'points' },
+  { id: 'p6', label: '250 Points', type: 'points', value: 250, color: 'var(--wheel-segment-c)', textColor: 'var(--wheel-label-c)', icon: 'points' },
+  { id: 'p7', label: '150 Points', type: 'points', value: 150, color: 'var(--wheel-segment-d)', textColor: 'var(--wheel-label-d)', icon: 'points' },
 ];
 
 /**
@@ -68,14 +73,6 @@ export function GoldenVoucherModal({ isOpen, onClose, onClaimSuccess }) {
     } catch {}
 
     setClaimed(true);
-
-    sendNotificationAlert({
-      title: '🎁 Voucher Pack Claimed!',
-      body: '5% & 3% Arc fee discount vouchers added to your wallet.',
-      type: 'reward',
-      actionLabel: 'View Vouchers',
-      url: '/#rewards',
-    });
 
     setTimeout(() => {
       if (onClaimSuccess) onClaimSuccess();
@@ -184,19 +181,30 @@ export function GoldenVoucherModal({ isOpen, onClose, onClaimSuccess }) {
  * 2. AMAZING AWARDS LUCKY WHEEL MODAL (Matching User Screenshot 3)
  * ─────────────────────────────────────────────────────────────────────────────
  */
-export function LuckyWheelModal({ isOpen, onClose, onWinPrize, availableSpins = 1, setAvailableSpins }) {
+export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', onRequestConnect, presentation = 'modal' }) {
   const [isSpinning, setIsSpinning] = useState(false);
+  const [isSpinPending, setIsSpinPending] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [wonPrize, setWonPrize] = useState(null);
   const [isCongratsOpen, setIsCongratsOpen] = useState(false);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
+  const [spinStats, setSpinStats] = useState({ earned: 1, spent: 0, available: 0, paymentSpins: 0 });
+  const [spinMessage, setSpinMessage] = useState('');
 
   // Live countdown to midnight (matching screenshot countdown)
-  const [timeLeft, setTimeLeft] = useState('07h:00m:05s');
+  const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
+    let active = true;
+    getDailySpinStats(accountKey).then((stats) => { if (active) setSpinStats(stats); }).catch((error) => { if (active) setSpinMessage(error.message); });
+    let activeDay = getLocalDateKey();
     const updateCountdown = () => {
       const now = new Date();
+      const currentDay = getLocalDateKey(now);
+      if (currentDay !== activeDay) {
+        activeDay = currentDay;
+        getDailySpinStats(accountKey).then((stats) => { if (active) setSpinStats(stats); }).catch(() => {});
+      }
       const midnight = new Date();
       midnight.setHours(24, 0, 0, 0);
       const diff = Math.max(0, midnight - now);
@@ -208,19 +216,55 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, availableSpins = 
 
     updateCountdown();
     const timer = setInterval(updateCountdown, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    return () => { active = false; clearInterval(timer); };
+  }, [accountKey]);
+
+  useEffect(() => {
+    const refreshStats = (event) => {
+      const eventAccount = event?.detail?.accountKey;
+      if (eventAccount && eventAccount !== String(accountKey || '').trim().toLowerCase()) return;
+      getDailySpinStats(accountKey).then(setSpinStats).catch((error) => setSpinMessage(error.message));
+    };
+    refreshStats();
+    window.addEventListener('storage', refreshStats);
+    window.addEventListener('nairatag:wheel-state-updated', refreshStats);
+    window.addEventListener('focus', refreshStats);
+    return () => {
+      window.removeEventListener('storage', refreshStats);
+      window.removeEventListener('nairatag:wheel-state-updated', refreshStats);
+      window.removeEventListener('focus', refreshStats);
+    };
+  }, [accountKey]);
 
   if (!isOpen) return null;
 
-  const spinTheWheel = () => {
-    if (isSpinning) return;
-    if (availableSpins <= 0) {
-      playMicroSound('pop');
-      alert("You have 0 spins left today! Complete an Arc Osaka payment to earn 1 free spin.");
+  const spinTheWheel = async () => {
+    if (isSpinning || isSpinPending || isCongratsOpen) return;
+    if (!accountKey) {
+      setSpinMessage('Connect your wallet to save spins and Protocol Points.');
+      onRequestConnect?.();
       return;
     }
-
+    if (typeof onWinPrize !== 'function') {
+      setSpinMessage('Points rewards are unavailable right now. Please reload and try again.');
+      return;
+    }
+    setSpinMessage('Connecting securely to Arc rewards…');
+    setIsSpinPending(true);
+    let consumed;
+    try {
+      consumed = await consumeDailySpin(accountKey);
+      setSpinStats(consumed.stats);
+      const selectedIndex = WHEEL_PRIZES.findIndex((prize) => prize.id === consumed.prize?.id);
+      if (!consumed.ok || selectedIndex < 0) throw new Error('The Arc rewards service did not return a valid spin result.');
+      onWinPrize({ ...WHEEL_PRIZES[selectedIndex], value: consumed.prize.points }, consumed.state);
+    } catch (error) {
+      setSpinMessage(error.message || 'Could not save this spin. Please try again.');
+      setIsSpinPending(false);
+      return;
+    }
+    setIsSpinPending(false);
+    setSpinMessage('');
     playMicroSound('pop');
     triggerHaptic([30]);
     setIsSpinning(true);
@@ -230,8 +274,8 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, availableSpins = 
       playMicroSound('spin');
     }, 240);
 
-    // Pick prize (weighted: mostly ₦100, ₦30, ₦50, ₦20, ₦10)
-    const prizeIndex = Math.floor(Math.random() * WHEEL_PRIZES.length);
+    // The server selected and credited the prize before the wheel animates.
+    const prizeIndex = WHEEL_PRIZES.findIndex((prize) => prize.id === consumed.prize.id);
     const selectedPrize = WHEEL_PRIZES[prizeIndex];
 
     // Compute target angle: each segment is 45deg (360/8)
@@ -253,20 +297,6 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, availableSpins = 
       playMicroSound('coin');
       triggerHaptic([50, 40, 60]);
 
-      sendNotificationAlert({
-        title: `🎡 Won ${selectedPrize.label}!`,
-        body: `Congratulations! ${selectedPrize.label} has been credited to your Arc rewards wallet.`,
-        type: 'cash',
-        actionLabel: 'View Wallet',
-        url: '/#rewards',
-      });
-
-      if (setAvailableSpins) {
-        setAvailableSpins((prev) => Math.max(0, prev - 1));
-      }
-      if (onWinPrize) {
-        onWinPrize(selectedPrize);
-      }
       try {
         confetti({
           particleCount: 110,
@@ -277,65 +307,35 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, availableSpins = 
     }, 4600);
   };
 
+  const isPage = presentation === 'page';
+
   return (
-    <div className="wheel-modal-overlay" onClick={onClose}>
-      <div className="wheel-modal-view" onClick={(e) => e.stopPropagation()}>
+    <div className={isPage ? 'rewards-subpage-content' : 'wheel-modal-overlay'} onClick={isPage || isSpinning || isSpinPending ? undefined : onClose}>
+      <div className={`wheel-modal-view${isPage ? ' rewards-subpage-card' : ''}`} onClick={isPage ? undefined : (e) => e.stopPropagation()}>
         {/* Navigation Bar */}
         <div className="wheel-view-nav">
-          <button type="button" className="wheel-back-btn" onClick={onClose} aria-label="Go Back">
-            <ArrowLeft size={22} />
+          <button type="button" className="wheel-back-btn" onClick={onClose} disabled={isSpinning || isSpinPending} aria-label={isPage ? 'Back to Rewards' : 'Close'}>
+            {isPage ? <ArrowLeft size={18} /> : <X size={18} />}
           </button>
-          <button type="button" className="wheel-rules-btn" onClick={() => setIsRulesOpen(true)}>
+          <button type="button" className="wheel-rules-btn" onClick={() => setIsRulesOpen(true)} disabled={isSpinning || isSpinPending}>
             Rules
           </button>
         </div>
 
-        {/* Title */}
-        <h1 className="wheel-main-title">AMAZING AWARDS</h1>
-
-        {/* Hero Banner: Pay or get paid with NairaTag / Arc */}
-        <div className="wheel-hero-banner">
-          <div className="wheel-hero-badge">
-            <span>Pay</span>
-            <span className="wheel-hero-badge-tag">or</span>
-            <span>get paid with Arc</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '11px', color: '#fde047', fontWeight: 800 }}>₦5,000 Pool</span>
-          </div>
+        <div className="wheel-heading">
+          <span className="wheel-heading-eyebrow">AMAZING AWARDS · ARC TESTNET</span>
+          <h1 className="wheel-main-title">Spin &amp; Win</h1>
+          <p>Every spin wins Protocol Points. No entry fee.</p>
         </div>
 
-        {/* Spin Condition Pill */}
         <div className="wheel-spin-condition-pill">
-          ⚡ 1 Payment = 1 FREE Spin!
+          <Sparkles size={14} />
+          <span>One free spin daily · A confirmed Arc USDC payment earns one more</span>
         </div>
 
         {/* Wheel Stage */}
         <div className="wheel-stage-container">
-          {/* Outer Stand */}
-          <div className="wheel-stand" />
-
-          {/* Golden Outer Ring */}
-          <div className="wheel-outer-ring">
-            {/* Glowing bulbs placed around 360 degrees */}
-            {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg, idx) => {
-              const rad = (deg * Math.PI) / 180;
-              const radius = 138;
-              const x = 145 + radius * Math.cos(rad);
-              const y = 145 + radius * Math.sin(rad);
-              return (
-                <div
-                  key={idx}
-                  className="wheel-bulb"
-                  style={{
-                    left: `${x}px`,
-                    top: `${y}px`,
-                    animationDelay: `${(idx % 4) * 0.3}s`,
-                  }}
-                />
-              );
-            })}
-          </div>
+          <div className="wheel-outer-ring" aria-hidden="true" />
 
           {/* Rotating Disc with SVG Segments */}
           <div
@@ -385,7 +385,7 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, availableSpins = 
                         >
                           {prize.label}
                         </text>
-                        {prize.icon === 'coin' && (
+                {(prize.icon === 'coin' || prize.icon === 'points') && (
                           <circle cx="0" cy="14" r="6" fill="#f59e0b" />
                         )}
                         {prize.icon === 'voucher' && (
@@ -402,10 +402,10 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, availableSpins = 
             </svg>
           </div>
 
-          {/* Center Golden SPIN Button & Pointer */}
-          <div className="wheel-center-hub" onClick={spinTheWheel}>
+          {/* Center hub and fixed pointer */}
+          <div className="wheel-center-hub" aria-hidden="true">
             <div className="wheel-pointer-needle" />
-            <span className="wheel-hub-text">SPIN</span>
+            <span className="wheel-hub-text">ARC</span>
           </div>
         </div>
 
@@ -414,39 +414,39 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, availableSpins = 
           type="button"
           className="wheel-spin-btn"
           onClick={spinTheWheel}
-          disabled={isSpinning || availableSpins <= 0}
+          disabled={isSpinning || isSpinPending || isCongratsOpen || (Boolean(accountKey) && spinStats.available <= 0)}
         >
-          {isSpinning ? 'Spinning...' : `Spin Now (x${availableSpins})`}
+          {isSpinPending ? 'Securing spin…' : isSpinning ? 'Spinning…' : !accountKey ? 'Connect wallet to spin' : spinStats.available > 0 ? `Spin now · ${spinStats.available} available` : 'No spins left today'}
         </button>
+        <p className="wheel-spin-feedback" aria-live="polite">{spinMessage}</p>
 
         {/* Stats Card Below */}
         <div className="wheel-stats-card">
           <div className="wheel-countdown-row">
             <Clock size={13} />
-            <span>Ends in: {timeLeft}</span>
+          <span>Daily reset in: {timeLeft || '…'}</span>
           </div>
 
           <div className="wheel-metrics-grid">
             <div>
               <div className="wheel-metric-label">Spins Earned Today</div>
               <div className="wheel-metric-val">
-                <span>🎡</span>
-                <span>{availableSpins > 0 ? 1 : 0}</span>
-                <ChevronRight size={14} color="#9ca3af" />
+                <Ticket size={15} aria-hidden="true" />
+                <span>{accountKey ? spinStats.earned : '—'}</span>
               </div>
             </div>
             <div>
               <div className="wheel-metric-label">Available Spins</div>
               <div className="wheel-metric-val">
-                <span>🎡</span>
-                <span>{availableSpins}</span>
+                <Ticket size={15} aria-hidden="true" />
+                <span>{accountKey ? spinStats.available : '—'}</span>
               </div>
             </div>
           </div>
 
           <div className="wheel-info-note">
             <Info size={12} />
-            <span>Earn up to 2 spins per day. Resets at midnight.</span>
+            <span>One free spin daily · one confirmed Arc payment unlocks one bonus · two spins max</span>
           </div>
         </div>
 
@@ -455,11 +455,10 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, availableSpins = 
           <div className="congrats-modal-overlay" onClick={() => setIsRulesOpen(false)}>
             <div className="congrats-modal-dialog" onClick={(e) => e.stopPropagation()}>
               <h3 className="congrats-title">Spin & Win Rules</h3>
-              <p className="congrats-subtitle" style={{ textAlign: 'left', lineHeight: '1.5', marginTop: '12px' }}>
-                1. Every confirmed USDC or cNGN payment on Arc Osaka awards 1 FREE spin.<br /><br />
-                2. Maximum of 2 earned spins per wallet address every 24 hours.<br /><br />
-                3. Cashback rewards are instantly credited to your Nairatag balance.<br /><br />
-                4. Vouchers remain valid for 7 days in your Rewards Center.
+              <p className="congrats-subtitle" style={{ textAlign: 'left', lineHeight: '1.6', marginTop: '12px' }}>
+                • You receive one free spin each day.<br /><br />
+                • One successful Arc USDC payment confirmed on-chain unlocks one extra spin, up to two spins total each day.<br /><br />
+                • Each of the eight Protocol Points prizes has an equal chance. The selected reward is credited immediately, and a started spin cannot be replayed.
               </p>
               <button
                 type="button"
@@ -505,32 +504,16 @@ export function CongratulationsModal({ isOpen, onClose, prize }) {
           <div className="congrats-item-card">
             <div className="congrats-item-left">
               <div className="congrats-item-icon">
-                {prize?.type === 'cashback' ? <Coins size={18} /> : <Ticket size={18} />}
-              </div>
-              <div style={{ textAlign: 'left' }}>
-                <div className="congrats-item-title">{prize?.label || 'Arc Rewards Bonus'}</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>Credited to Nairatag Balance</div>
-              </div>
-            </div>
-            <div className="congrats-item-reward">
-              <span style={{ fontSize: '12px' }}>🪙</span>
-              <span>+{prize?.value || 30}</span>
-            </div>
-          </div>
-
-          <div className="congrats-item-card">
-            <div className="congrats-item-left">
-              <div className="congrats-item-icon" style={{ background: '#3b82f6' }}>
                 <Sparkles size={18} />
               </div>
               <div style={{ textAlign: 'left' }}>
-                <div className="congrats-item-title">Arc Osaka Gas Subsidy</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>Free transaction voucher</div>
+                <div className="congrats-item-title">{prize?.label || 'Arc Rewards Bonus'}</div>
+                <div style={{ fontSize: '11px', color: '#6b7280' }}>Added to your Protocol Points balance</div>
               </div>
             </div>
             <div className="congrats-item-reward">
               <span style={{ fontSize: '12px' }}>🪙</span>
-              <span>+1</span>
+              <span>+{prize?.value || 30} Pts</span>
             </div>
           </div>
         </div>
@@ -548,45 +531,79 @@ export function CongratulationsModal({ isOpen, onClose, prize }) {
  * 4. REFERRAL FRIENDS VIEW MODAL (Matching User Screenshot 4)
  * ─────────────────────────────────────────────────────────────────────────────
  */
-export function ReferralModal({ isOpen, onClose, userTag = 'nairatag' }) {
+export function ReferralModal({ isOpen, onClose, userTag = '', accountKey = '', presentation = 'modal' }) {
   const [copied, setCopied] = useState(false);
-  const inviteCode = useMemo(() => {
-    return 'ARC-' + (userTag ? userTag.slice(0, 6).toUpperCase() : '88PV');
-  }, [userTag]);
+  const [referralError, setReferralError] = useState('');
+  const cleanTag = String(userTag || '').replace(/^[$₦@#]/, '').trim().toLowerCase();
+  const inviteCode = cleanTag ? `₦${cleanTag}` : '';
+  const [referralStats, setReferralStats] = useState({ points: 0, joinedCount: 0, completedCount: 0, referrals: [] });
+
+  useEffect(() => {
+    let active = true;
+    const refresh = () => getArcRewardState(accountKey).then((state) => { if (active) { setReferralStats(state.referrals); setReferralError(''); } }).catch((error) => { if (active) setReferralError(error.message || 'Referral rewards are unavailable.'); });
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', refresh);
+    };
+  }, [cleanTag, accountKey]);
 
   if (!isOpen) return null;
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
+    if (!inviteCode) {
+      sendNotificationAlert({
+        title: 'Claim your NairaTag first',
+        body: 'Connect your wallet and claim a NairaTag to create your personal referral link.',
+        type: 'info',
+        actionLabel: 'Got it',
+      });
+      return;
+    }
     playMicroSound('pop');
     triggerHaptic([20]);
     try {
-      navigator.clipboard.writeText(`https://arc.nairatag.xyz/?ref=${inviteCode}`);
+      await navigator.clipboard.writeText(createReferralLink(cleanTag));
       setCopied(true);
       sendNotificationAlert({
-        title: '📋 Referral Link Copied!',
-        body: 'Share with friends to earn up to ₦7,200 cash on Arc Osaka.',
-        type: 'info',
-        actionLabel: 'Got It',
+        title: 'Invite link ready to share',
+        body: `Your friend can earn ${REFERRAL_SIGNUP_POINTS} Protocol Points after claiming a NairaTag, then ${REFERRAL_FIRST_PAYMENT_POINTS} more after their first confirmed Arc payment.`,
+        type: 'reward',
+        actionLabel: 'View referral rewards',
+        url: '/#rewards',
+        showToast: false,
+        showSystemNotification: false,
+        silent: true,
       });
       setTimeout(() => setCopied(false), 2000);
-    } catch {}
+    } catch {
+      sendNotificationAlert({
+        title: 'Could not copy referral link',
+        body: 'Check browser clipboard permissions and try again.',
+        type: 'info',
+        actionLabel: 'Got it',
+      });
+    }
   };
 
+  const isPage = presentation === 'page';
+
   return (
-    <div className="wheel-modal-overlay" onClick={onClose}>
-      <div className="referral-modal-view" onClick={(e) => e.stopPropagation()}>
+    <div className={isPage ? 'rewards-subpage-content' : 'wheel-modal-overlay'} onClick={isPage ? undefined : onClose}>
+      <div className={`referral-modal-view${isPage ? ' rewards-subpage-card' : ''}`} onClick={isPage ? undefined : (e) => e.stopPropagation()}>
         {/* Navigation Bar */}
         <div className="wheel-view-nav">
-          <button type="button" className="wheel-back-btn" onClick={onClose} aria-label="Go Back">
-            <ArrowLeft size={22} />
+          <button type="button" className="wheel-back-btn" onClick={onClose} aria-label={isPage ? 'Back to Rewards' : 'Close'}>
+            {isPage ? <ArrowLeft size={18} /> : <X size={18} />}
           </button>
-          <span style={{ fontSize: '13px', fontWeight: 800 }}>Rules</span>
+          <span className="referral-nav-title">Refer Friends</span>
         </div>
 
         {/* Title */}
         <h2 className="referral-title">
-          Get your friends in and win<br />
-          up to <span className="referral-highlight-amount">₦7,200</span> cash!
+          Invite with your NairaTag<br />
+          and earn <span className="referral-highlight-amount">Protocol Points</span>
         </h2>
 
         {/* Group illustration / badge */}
@@ -599,39 +616,32 @@ export function ReferralModal({ isOpen, onClose, userTag = 'nairatag' }) {
 
         {/* Main White Card */}
         <div className="referral-white-card">
-          <div className="referral-expiry-badge">
-            <Clock size={12} />
-            <span>6 days 23:59:50 expired</span>
-          </div>
-
           <div className="referral-cash-row">
             <div>
-              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: 2 }}>My Cash:</div>
-              <div className="referral-cash-amount">₦750 &gt;</div>
+              <div style={{ fontSize: '12px', color: 'var(--privy-color-foreground-2)', marginBottom: 2 }}>Referral Points earned</div>
+              <div className="referral-cash-amount">{referralStats.points.toLocaleString()} Pts</div>
             </div>
-            <button
-              type="button"
-              className="referral-withdraw-btn"
-              onClick={() => alert("Withdraw threshold is ₦800. Invite 1 more friend to withdraw to your Arc wallet or bank account!")}
-            >
-              Withdraw
-            </button>
+            <div className="referral-count-summary">
+              <strong>{referralStats.joinedCount}</strong>
+              <span>friends joined</span>
+            </div>
           </div>
 
-          {/* Progress Bar towards ₦800 */}
           <div className="referral-progress-wrap">
-            <div className="referral-progress-pill" style={{ left: '92%' }}>
-              ₦50 Left
+            <div className="referral-progress-caption">
+              <span>{referralStats.completedCount} completed first payment</span>
+              <span>{referralStats.joinedCount} total</span>
             </div>
             <div className="referral-progress-track">
-              <div className="referral-progress-fill" style={{ width: '92%' }} />
+              <div className="referral-progress-fill" style={{ width: `${referralStats.joinedCount ? Math.round((referralStats.completedCount / referralStats.joinedCount) * 100) : 0}%` }} />
             </div>
           </div>
 
           <div className="referral-terms-note">
             <ShieldCheck size={13} color="#00c988" />
-            <span>Withdrawable at every ₦800, Maximum is ₦7,200</span>
+            <span>Points are credited to both accounts after each eligible milestone.</span>
           </div>
+          <p className="referral-ledger-note">{referralError || 'Referral milestones are verified on Arc and saved to your rewards account.'}</p>
 
           {/* Share CTA */}
           <button
@@ -639,15 +649,15 @@ export function ReferralModal({ isOpen, onClose, userTag = 'nairatag' }) {
             className="referral-share-cta-btn"
             onClick={handleCopy}
           >
-            {copied ? 'Link Copied to Clipboard!' : 'Share Link to friends'}
+            {copied ? 'Link copied' : 'Share your NairaTag invite'}
           </button>
 
           {/* Invitation Code Box */}
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: 6 }}>Share Invitation Code</div>
+            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: 6 }}>Your referral code</div>
             <div className="referral-invite-code-box">
-              <span className="referral-code-pill">{inviteCode}</span>
-              <button type="button" className="referral-copy-btn" onClick={handleCopy}>
+              <span className="referral-code-pill">{inviteCode || 'Claim a NairaTag to activate'}</span>
+              <button type="button" className="referral-copy-btn" onClick={handleCopy} disabled={!inviteCode}>
                 {copied ? <Check size={14} /> : <Copy size={14} />}
                 <span>{copied ? 'Copied' : 'Copy'}</span>
               </button>
@@ -663,13 +673,13 @@ export function ReferralModal({ isOpen, onClose, userTag = 'nairatag' }) {
                 <Smartphone size={18} />
               </div>
               <div>
-                <div className="referral-task-title">Friend registers their ₦Tag</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>(Max 10 friends)</div>
+                <div className="referral-task-title">Friend claims a NairaTag</div>
+                <div style={{ fontSize: '11px', color: '#6b7280' }}>Both accounts are rewarded</div>
               </div>
             </div>
             <div className="referral-task-reward">
-              <span>🪙</span>
-              <span>+₦2</span>
+              <span>✨</span>
+              <span>+{REFERRAL_SIGNUP_POINTS} Pts each</span>
             </div>
           </div>
 
@@ -679,13 +689,13 @@ export function ReferralModal({ isOpen, onClose, userTag = 'nairatag' }) {
                 <Coins size={18} />
               </div>
               <div>
-                <div className="referral-task-title">Friend makes first transfer</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>Tag2Tag or Bank Account</div>
+                <div className="referral-task-title">Friend completes first USDC payment</div>
+                <div style={{ fontSize: '11px', color: '#6b7280' }}>After the Arc transaction confirms</div>
               </div>
             </div>
             <div className="referral-task-reward">
-              <span>🪙</span>
-              <span>+₦10</span>
+              <span>✨</span>
+              <span>+{REFERRAL_FIRST_PAYMENT_POINTS} Pts each</span>
             </div>
           </div>
 
@@ -695,16 +705,147 @@ export function ReferralModal({ isOpen, onClose, userTag = 'nairatag' }) {
                 <Trophy size={18} />
               </div>
               <div>
-                <div className="referral-task-title">Friend transacts ₦1,000+</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>On Arc Osaka EVM</div>
+                <div className="referral-task-title">USDC &amp; cNGN reward options</div>
+                <div style={{ fontSize: '11px', color: '#6b7280' }}>Stablecoin payouts activate with a funded payout service</div>
               </div>
             </div>
             <div className="referral-task-reward">
-              <span>🪙</span>
-              <span>+₦800</span>
+              <span>◈</span>
+              <span>Points ledger</span>
             </div>
           </div>
         </div>
+
+        <div className="referral-activity-list" aria-live="polite">
+          <div className="referral-activity-heading">Recent invites</div>
+          {referralStats.referrals.length ? referralStats.referrals.slice(0, 5).map((referral) => (
+            <div className="referral-activity-row" key={referral.referredWallet}>
+              <span>₦{referral.referredTag}</span>
+              <span>{referral.firstPaymentHash ? 'First payment complete' : 'Tag claimed'}</span>
+              <strong>+{referral.signupPoints + referral.paymentPoints} Pts</strong>
+            </div>
+          )) : (
+            <p className="referral-empty-state">
+              {inviteCode ? 'No friends have joined from your link yet. Share your NairaTag invite to get started.' : 'Claim a NairaTag to activate your referral link.'}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const DAILY_STREAK_REWARDS = [10, 15, 20, 25, 30, 40, 50];
+
+function getLocalDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getDailyStreakStatus(streak, todayKey) {
+  const yesterday = new Date(`${todayKey}T00:00:00`);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = getLocalDateKey(yesterday);
+  const claimedToday = streak.lastClaimDate === todayKey;
+  const activeStreak = claimedToday || streak.lastClaimDate === yesterdayKey
+    ? streak.streakCount
+    : 0;
+  const displayDay = claimedToday
+    ? ((activeStreak - 1) % DAILY_STREAK_REWARDS.length) + 1
+    : (activeStreak % DAILY_STREAK_REWARDS.length) + 1;
+
+  return {
+    claimedToday,
+    activeStreak,
+    displayDay,
+    reward: DAILY_STREAK_REWARDS[displayDay - 1],
+  };
+}
+
+function DailyStreakModal({ isOpen, onClose, status, onClaim, presentation = 'modal' }) {
+  const [claimedAmount, setClaimedAmount] = useState(null);
+  const [claiming, setClaiming] = useState(false);
+  const [claimError, setClaimError] = useState('');
+  useEffect(() => {
+    if (!isOpen) setClaimedAmount(null);
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleClaim = async () => {
+    setClaiming(true);
+    setClaimError('');
+    try {
+      const reward = await onClaim();
+      if (reward) setClaimedAmount(reward);
+    } catch (error) {
+      setClaimError(error.message || 'Daily streak claim failed.');
+    } finally { setClaiming(false); }
+  };
+
+  const daysClaimed = status.claimedToday ? status.displayDay : status.displayDay - 1;
+
+  const isPage = presentation === 'page';
+
+  return (
+    <div className={isPage ? 'rewards-subpage-content' : 'streak-modal-overlay'} onClick={isPage ? undefined : onClose}>
+      <div className={`streak-modal${isPage ? ' rewards-subpage-card' : ''}`} onClick={isPage ? undefined : (event) => event.stopPropagation()}>
+        <button type="button" className="streak-close-btn" onClick={onClose} aria-label={isPage ? 'Back to Rewards' : 'Close daily streaks'}>
+          {isPage ? <ArrowLeft size={18} /> : <X size={18} />}
+        </button>
+
+        <div className="streak-icon-wrap"><Flame size={30} /></div>
+        <span className="streak-eyebrow">DAILY REWARDS</span>
+        <h2 className="streak-title">
+          {status.activeStreak > 0 ? `${status.activeStreak} Day Streak` : 'Start Your Daily Streak'}
+        </h2>
+        <p className="streak-subtitle">
+          {status.claimedToday
+            ? 'Your reward is claimed. Come back tomorrow to keep your streak going.'
+            : 'Claim once a day to keep your streak alive and earn a bigger reward.'}
+        </p>
+
+        <div className="streak-days" aria-label="Seven day streak rewards">
+          {DAILY_STREAK_REWARDS.map((reward, index) => {
+            const day = index + 1;
+            const isClaimed = day <= daysClaimed;
+            const isCurrent = day === status.displayDay;
+            return (
+              <div
+                key={day}
+                className={`streak-day ${isClaimed ? 'claimed' : ''} ${isCurrent ? 'current' : ''}`}
+                aria-current={isCurrent ? 'step' : undefined}
+              >
+                <span className="streak-day-label">Day {day}</span>
+                <span className="streak-day-icon">
+                  {isClaimed ? <CheckCircle2 size={17} /> : <Flame size={16} />}
+                </span>
+                <span className="streak-day-reward">{reward} Pts</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="streak-reward-note">
+          <span>Today's reward</span>
+          <strong>{status.reward} Protocol Points</strong>
+        </div>
+
+        <button
+          type="button"
+          className="streak-claim-btn"
+          onClick={handleClaim}
+          disabled={status.claimedToday || claiming}
+        >
+          {status.claimedToday ? 'Claimed Today' : claiming ? 'Claiming…' : `Claim ${status.reward} Points`}
+        </button>
+        <p className="streak-claim-feedback" aria-live="polite">
+          {claimedAmount
+            ? `${claimedAmount} Protocol Points were added to your rewards balance.`
+            : claimError || 'Claim once per day to grow your Protocol Points balance.'}
+        </p>
       </div>
     </div>
   );
@@ -716,56 +857,65 @@ export function ReferralModal({ isOpen, onClose, userTag = 'nairatag' }) {
  * ─────────────────────────────────────────────────────────────────────────────
  */
 export default function RewardsPage({
-  userTag = 'nairatag',
-  cashbackBalance = 3.50,
-  voucherCount = 12,
+  userTag = '',
+  accountKey = userTag,
+  pointsBalance = 0,
+  usdcBalance = null,
+  onRewardState,
+  serviceError = '',
   onNavigateHome,
+  onRequestConnect,
 }) {
   // Modals
-  const [isGoldenModalOpen, setIsGoldenModalOpen] = useState(false);
-  const [isWheelModalOpen, setIsWheelModalOpen] = useState(false);
-  const [isReferralModalOpen, setIsReferralModalOpen] = useState(false);
+  const [activeRewardPage, setActiveRewardPage] = useState(null);
+  const referralTag = String(userTag || '').replace(/^[$₦@#]/, '').trim().toLowerCase();
+  const [myReferralStats, setMyReferralStats] = useState({ points: 0, joinedCount: 0, completedCount: 0, referrals: [] });
+  const [dailyStreak, setDailyStreak] = useState({ streakCount: 0, lastClaimDate: null });
+  const [todayKey, setTodayKey] = useState(() => getLocalDateKey());
   const [activeCategory, setActiveCategory] = useState('Airtime');
-  const [spinsAvailable, setSpinsAvailable] = useState(2);
-  const [localCashback, setLocalCashback] = useState(() => {
-    try {
-      const saved = localStorage.getItem('nairatag_cashback');
-      return saved ? parseFloat(saved) : cashbackBalance;
-    } catch {
-      return cashbackBalance;
-    }
-  });
-  const [localVouchers, setLocalVouchers] = useState(() => {
-    try {
-      const saved = localStorage.getItem('nairatag_vouchers');
-      return saved ? parseInt(saved, 10) : voucherCount;
-    } catch {
-      return voucherCount;
-    }
-  });
+  useEffect(() => {
+    let active = true;
+    const refresh = () => getArcRewardState(accountKey).then((state) => {
+      if (!active) return;
+      setMyReferralStats(state.referrals);
+      setDailyStreak({ streakCount: state.streak.streakCount, lastClaimDate: state.streak.lastClaimDay });
+    }).catch(() => {});
+    refresh();
+    window.addEventListener('focus', refresh);
+    return () => { active = false; window.removeEventListener('focus', refresh); };
+  }, [accountKey, referralTag]);
 
-  const handleClaimSuccess = () => {
-    setLocalVouchers((prev) => {
-      const updated = prev + 2;
-      try { localStorage.setItem('nairatag_vouchers', String(updated)); } catch {}
-      return updated;
-    });
+  const totalPoints = Number(pointsBalance) || 0;
+  const serviceNotice = serviceError ? <div className="referral-ledger-note" role="status">Arc rewards are not syncing: {serviceError}</div> : null;
+
+  useEffect(() => {
+    const dateRefresh = setInterval(() => setTodayKey(getLocalDateKey()), 60_000);
+    return () => clearInterval(dateRefresh);
+  }, []);
+
+  const dailyStreakStatus = getDailyStreakStatus(dailyStreak, todayKey);
+
+  const handleDailyStreakClaim = async () => {
+    if (!accountKey || !/^0x[a-f\d]{40}$/i.test(accountKey)) {
+      onRequestConnect?.();
+      throw new Error('Connect your Arc wallet before claiming your daily streak.');
+    }
+    const { result, state } = await submitArcRewardAction({ action: 'daily_claim', walletAddress: accountKey });
+    const reward = Number(result.points);
+    setMyReferralStats(state.referrals);
+    setDailyStreak({ streakCount: state.streak.streakCount, lastClaimDate: state.streak.lastClaimDay });
+    onRewardState?.(state);
+
+    playMicroSound('coin');
+    triggerHaptic([35, 30, 45]);
+    try {
+      confetti({ particleCount: 55, spread: 65, origin: { y: 0.65 }, colors: ['#5b4fff', '#06b6d4', '#10b981'] });
+    } catch {}
+    return reward;
   };
 
-  const handleWheelWin = (prize) => {
-    if (prize.type === 'cashback') {
-      setLocalCashback((prev) => {
-        const updated = parseFloat((prev + prize.value).toFixed(2));
-        try { localStorage.setItem('nairatag_cashback', String(updated)); } catch {}
-        return updated;
-      });
-    } else {
-      setLocalVouchers((prev) => {
-        const updated = prev + 1;
-        try { localStorage.setItem('nairatag_vouchers', String(updated)); } catch {}
-        return updated;
-      });
-    }
+  const handleWheelWin = (prize, state) => {
+    if (state) onRewardState?.(state);
   };
 
   const handleUseVoucher = (voucherName) => {
@@ -780,88 +930,145 @@ export default function RewardsPage({
     });
   };
 
+  if (activeRewardPage === 'streak') {
+    return (
+      <div className="rewards-page-wrap rewards-subpage">
+        {serviceNotice}
+          <DailyStreakModal
+          isOpen
+          onClose={() => setActiveRewardPage(null)}
+          status={dailyStreakStatus}
+          onClaim={handleDailyStreakClaim}
+          presentation="page"
+        />
+      </div>
+    );
+  }
+
+  if (activeRewardPage === 'referral') {
+    return (
+      <div className="rewards-page-wrap rewards-subpage">
+        {serviceNotice}
+        <ReferralModal isOpen onClose={() => setActiveRewardPage(null)} userTag={userTag} accountKey={accountKey} presentation="page" />
+      </div>
+    );
+  }
+
+  if (activeRewardPage === 'spin') {
+    return (
+      <div className="rewards-page-wrap rewards-subpage">
+        {serviceNotice}
+        <LuckyWheelModal
+          isOpen
+          onClose={() => setActiveRewardPage(null)}
+          onWinPrize={handleWheelWin}
+          accountKey={accountKey}
+          onRequestConnect={onRequestConnect}
+          presentation="page"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="rewards-page-wrap">
-      {/* Top Header */}
-      <div className="rewards-top-header">
-        <h1 className="rewards-page-title">Rewards</h1>
-        <button
-          type="button"
-          className="rewards-more-btn"
-          onClick={() => setIsGoldenModalOpen(true)}
-          title="Rewards Options"
-          aria-label="Rewards Options"
-        >
-          <MoreHorizontal size={20} />
-        </button>
-      </div>
-
-      {/* Mint Hero Card: Cashback & Voucher Stats (Matching Screenshot 4) */}
+      {serviceNotice}
+      {/* Points and onchain balance summary */}
       <div className="rewards-mint-hero">
         <div className="rewards-counters-row">
-          {/* Cashback Counter */}
-          <div className="rewards-counter-col" onClick={() => setIsWheelModalOpen(true)}>
+          <div className="rewards-counter-col">
             <div className="rewards-counter-label-wrap">
-              <span>Cashback</span>
+              <span>Protocol Points</span>
+              <Sparkles size={13} color="var(--privy-color-interactive)" />
+            </div>
+            <div className="rewards-counter-value-row">
+              <div className="rewards-coin-icon">✦</div>
+              <span className="rewards-amount-bold">
+                {totalPoints.toLocaleString()} Pts
+              </span>
+            </div>
+          </div>
+
+          <div className="rewards-counter-col">
+            <div className="rewards-counter-label-wrap">
+              <span>USDC on Arc</span>
               <Info size={13} color="#6b7280" />
             </div>
             <div className="rewards-counter-value-row">
-              <div className="rewards-coin-icon">₦</div>
+              <div className="rewards-coin-icon">$</div>
               <span className="rewards-amount-bold">
-                ₦{localCashback.toFixed(2)}
-                <ChevronRight size={18} className="rewards-chevron" />
-              </span>
-            </div>
-          </div>
-
-          {/* Voucher Counter with Red Notification Dot */}
-          <div className="rewards-counter-col" onClick={() => setIsGoldenModalOpen(true)}>
-            <div className="rewards-counter-label-wrap">
-              <span>Voucher</span>
-              <span className="rewards-counter-badge">₦880</span>
-            </div>
-            <div className="rewards-counter-value-row">
-              <div className="rewards-voucher-icon-wrap">
-                <Ticket size={24} />
-                <div className="rewards-icon-dot" />
-              </div>
-              <span className="rewards-amount-bold">
-                {localVouchers}
-                <ChevronRight size={18} className="rewards-chevron" />
+                {usdcBalance?.formatted || '0.00'}
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3 Feature Quick Cards: Friday Bonus, Refer Friends, Lucky Spin */}
+      {/* 3 Feature Quick Cards: Daily Streaks, Refer Friends, Lucky Spin */}
       <div className="rewards-features-row">
-        <div className="rewards-feature-card" onClick={() => setIsGoldenModalOpen(true)}>
-          <span className="rewards-feature-badge-top">HOT</span>
+        <button type="button" className="rewards-feature-card" onClick={() => setActiveRewardPage('streak')}>
+          <span className="rewards-feature-badge-top">DAILY</span>
           <div className="rewards-feature-icon-box feature-box-bonus">
-            <Gift size={24} />
+            <Flame size={24} />
           </div>
-          <span className="rewards-feature-title">Friday Bonus</span>
-        </div>
+          <span className="rewards-feature-title">Daily Streaks</span>
+          <span className="streak-feature-status">
+            {dailyStreakStatus.claimedToday ? 'Claimed today' : `Claim ${dailyStreakStatus.reward} Pts`}
+          </span>
+        </button>
 
-        <div className="rewards-feature-card" onClick={() => setIsReferralModalOpen(true)}>
+        <button type="button" className="rewards-feature-card" onClick={() => setActiveRewardPage('referral')}>
           <div className="rewards-feature-icon-box feature-box-refer">
             <Share2 size={24} />
           </div>
           <span className="rewards-feature-title">Refer Friends</span>
-        </div>
+        </button>
 
-        <div className="rewards-feature-card" onClick={() => setIsWheelModalOpen(true)}>
+        <button type="button" className="rewards-feature-card" onClick={() => setActiveRewardPage('spin')}>
           <span className="rewards-feature-badge-top">SPIN</span>
           <div className="rewards-feature-icon-box feature-box-spin">
-            <Trophy size={24} />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 4V2" />
+              <path d="M12 22v-2" />
+              <path d="m4.93 4.93 1.42 1.42" />
+              <path d="m17.65 17.65 1.42 1.42" />
+              <path d="M2 12h2" />
+              <path d="M20 12h2" />
+              <path d="m4.93 19.07 1.42-1.42" />
+              <path d="m17.65 6.35 1.42-1.42" />
+              <circle cx="12" cy="12" r="7" />
+              <circle cx="12" cy="12" r="1.5" />
+              <path d="m12 12 3-3" />
+            </svg>
           </div>
           <span className="rewards-feature-title">Play &amp; Win</span>
-        </div>
+        </button>
       </div>
 
-      {/* Hot Vouchers Section */}
-      <div className="rewards-section">
+      <div className="rewards-section rewards-asset-section">
+        <div className="rewards-section-header">
+          <span className="rewards-section-title">Reward assets</span>
+          <span className="rewards-pill-tag">Arc</span>
+        </div>
+        <div className="rewards-assets-grid">
+          <article className="rewards-asset-card rewards-asset-points">
+            <span className="rewards-asset-symbol">✦</span>
+            <div><strong>Protocol Points</strong><span>{totalPoints.toLocaleString()} Pts available</span></div>
+          </article>
+          <article className="rewards-asset-card rewards-asset-usdc">
+            <span className="rewards-asset-symbol">$</span>
+            <div><strong>USDC</strong><span>{usdcBalance?.formatted || '0.00'} on Arc Testnet</span></div>
+          </article>
+          <article className="rewards-asset-card rewards-asset-cngn">
+            <span className="rewards-asset-symbol">₦</span>
+            <div><strong>cNGN rewards</strong><span>Reward payout integration not enabled yet</span></div>
+          </article>
+        </div>
+        <p className="rewards-assets-note">Referral and daily streak rewards are paid in Points. USDC and cNGN payouts require a funded rewards distributor.</p>
+      </div>
+
+      {/* Legacy voucher catalog is retained in code while the rewards program focuses on points and tokens. */}
+      <div className="rewards-section rewards-legacy-vouchers">
         <div className="rewards-section-header">
           <span className="rewards-section-title">Hot Vouchers</span>
           <span className="rewards-pill-tag">₦</span>
@@ -941,7 +1148,7 @@ export default function RewardsPage({
       </div>
 
       {/* Daily Bonus Section */}
-      <div className="rewards-section">
+      <div className="rewards-section rewards-legacy-vouchers">
         <div className="rewards-section-header">
           <span className="rewards-section-title">Daily Bonus</span>
         </div>
@@ -1024,47 +1231,13 @@ export default function RewardsPage({
         <button
           type="button"
           className="rewards-view-all-btn"
-          onClick={() => setIsWheelModalOpen(true)}
+          onClick={() => setActiveRewardPage('spin')}
         >
           <span>View All Arc Incentives</span>
           <ChevronRight size={14} />
         </button>
       </div>
 
-      {/* Floating Gift Box Button to trigger the Golden Voucher Pack at any time */}
-      <button
-        type="button"
-        className="floating-rewards-gift-btn"
-        onClick={() => setIsGoldenModalOpen(true)}
-        title="Claim Golden Voucher Pack"
-        aria-label="Claim Golden Voucher Pack"
-      >
-        <Gift size={24} />
-        <span className="floating-rewards-badge">HOT</span>
-      </button>
-
-      {/* Golden Voucher Pack Modal */}
-      <GoldenVoucherModal
-        isOpen={isGoldenModalOpen}
-        onClose={() => setIsGoldenModalOpen(false)}
-        onClaimSuccess={handleClaimSuccess}
-      />
-
-      {/* AMAZING AWARDS Lucky Wheel Modal */}
-      <LuckyWheelModal
-        isOpen={isWheelModalOpen}
-        onClose={() => setIsWheelModalOpen(false)}
-        onWinPrize={handleWheelWin}
-        availableSpins={spinsAvailable}
-        setAvailableSpins={setSpinsAvailable}
-      />
-
-      {/* Referral Friends Modal */}
-      <ReferralModal
-        isOpen={isReferralModalOpen}
-        onClose={() => setIsReferralModalOpen(false)}
-        userTag={userTag}
-      />
     </div>
   );
 }
