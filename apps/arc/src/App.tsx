@@ -1340,16 +1340,18 @@ export default function App() {
 
         {/* Right Side: Search Icon + More (···) + Connect Pill */}
         <div className="app-header-actions">
-          {/* Search Button */}
-          <button
-            type="button"
-            className="header-icon-btn search-trigger-btn"
-            onClick={() => setIsMobileSearchOpen(true)}
-            aria-label="Search tags or agents"
-            title="Search"
-          >
-            <Search size={20} />
-          </button>
+          {/* Search Button (Hidden on Claim page) */}
+          {mainTab !== 'claim' && (
+            <button
+              type="button"
+              className="header-icon-btn search-trigger-btn"
+              onClick={() => setIsMobileSearchOpen(true)}
+              aria-label="Search tags or agents"
+              title="Search"
+            >
+              <Search size={20} />
+            </button>
+          )}
 
           {/* More Button (···) */}
           <div className="header-more-wrapper">
@@ -1923,10 +1925,10 @@ export default function App() {
                     id="claim-tag-input-field"
                     type="text"
                     className="claim-pill-input"
-                    placeholder="Enter your NairaTag"
+                    placeholder="Enter your username"
                     autoComplete="off"
                     spellCheck="false"
-                    aria-label="Enter your NairaTag"
+                    aria-label="Enter your username"
                     value={claimInput.replace(/^[$₦]/, '')}
                     onChange={(e) => handleCheckClaim(e.target.value)}
                   />
@@ -1999,7 +2001,7 @@ export default function App() {
                       <span>Claiming on Arc...</span>
                     </>
                   ) : (
-                    <span>Claim ₦{claimInput.replace(/^[$₦]/, '').toUpperCase() || 'TAG'}</span>
+                    <span>Claim</span>
                   )}
                 </button>
               </div>

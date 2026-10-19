@@ -1853,7 +1853,7 @@ html[data-theme="dark"] body {
 }
 
 .claim-stage-subtitle {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--privy-color-foreground-2);
   margin-bottom: 2px;
@@ -1862,7 +1862,7 @@ html[data-theme="dark"] body {
 
 .claim-live-tag-display {
   font-family: var(--font-maru), sans-serif;
-  font-size: clamp(48px, 11vw, 76px);
+  font-size: clamp(52px, 12vw, 82px);
   font-weight: 800;
   line-height: 1.05;
   letter-spacing: -0.04em;
@@ -1900,7 +1900,7 @@ html[data-theme="dark"] body {
   background: var(--surface-input);
   border: 1px solid rgba(91, 79, 255, 0.16);
   border-radius: var(--radius-pill);
-  height: 52px;
+  height: 56px;
   padding: 0 8px 0 20px;
   transition: border-color 0.18s ease;
   margin-bottom: 12px;
@@ -1920,7 +1920,7 @@ html[data-theme="dark"] body {
   border: none;
   outline: none;
   font-family: var(--font-maru), sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--privy-color-foreground);
   min-width: 0;
@@ -1939,9 +1939,9 @@ html[data-theme="dark"] body {
 }
 
 .claim-live-mascot-pill {
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -1963,9 +1963,9 @@ html[data-theme="dark"] body {
 .tag-status-indicator {
   display: flex;
   align-items: center;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: var(--radius-pill);
   white-space: nowrap;
   gap: 4px;
@@ -1991,13 +1991,13 @@ html[data-theme="dark"] body {
 
 .claim-pill-button {
   width: 100%;
-  height: 50px;
+  height: 54px;
   border-radius: var(--radius-pill);
   border: 1px solid transparent;
   background: var(--primary-gradient);
   color: #ffffff;
   font-family: var(--font-maru), sans-serif;
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -4702,6 +4702,29 @@ body:has(.agent-modal-backdrop) {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     box-sizing: border-box;
+    overflow-y: auto;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  /* Remove scrollbars from mobile Claim page */
+  .main-content-wrapper.claim-active::-webkit-scrollbar,
+  .main-content-wrapper.claim-active *::-webkit-scrollbar,
+  .claim-page-layout::-webkit-scrollbar,
+  .claim-page-main::-webkit-scrollbar,
+  .claim-console-card::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  .main-content-wrapper.claim-active,
+  .main-content-wrapper.claim-active *,
+  .claim-page-layout,
+  .claim-page-main,
+  .claim-console-card {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
   }
 
   .claim-page-layout {
@@ -4734,6 +4757,10 @@ body:has(.agent-modal-backdrop) {
 
   .app-header.claim-active .app-brand {
     display: none;
+  }
+
+  .app-header.claim-active .search-trigger-btn {
+    display: none !important;
   }
 
   .app-header.claim-active .claim-mobile-back {
