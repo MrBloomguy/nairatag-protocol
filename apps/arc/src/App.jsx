@@ -64,6 +64,12 @@ import {
   Mic,
   RotateCcw,
   ArrowUp,
+  Paperclip,
+  Image as ImageIcon,
+  Play,
+  Pause,
+  Square,
+  Trash2,
 } from 'lucide-react';
 import {
   connectWallet,
@@ -633,6 +639,43 @@ export default function App() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [tagSearchQuery, setTagSearchQuery] = useState('');
 
+  // File Attachment & Voice Note State
+  const [attachedFile, setAttachedFile] = useState(null);
+  const fileInputRef = React.useRef(null);
+  const [isVoiceRecording, setIsVoiceRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = React.useRef(null);
+  const audioChunksRef = React.useRef([]);
+  const recordingTimerRef = React.useRef(null);
+  const [isSpeechListening, setIsSpeechListening] = useState(false);
+  const speechRecognitionRef = React.useRef(null);
+  const [playingAudioId, setPlayingAudioId] = useState(null);
+  const activeAudioPlayerRef = React.useRef(null);
+  const chatMessagesEndRef = React.useRef(null);
+
+  // Auto-scroll chat stream smoothly on new messages or typing
+  useEffect(() => {
+    if (chatMessagesEndRef.current) {
+      chatMessagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [chatMessages, chatIsTyping]);
+
+  // Clean up media streams and audio players on unmount
+  useEffect(() => {
+    return () => {
+      if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        try { mediaRecorderRef.current.stop(); } catch {}
+      }
+      if (speechRecognitionRef.current) {
+        try { speechRecognitionRef.current.stop(); } catch {}
+      }
+      if (activeAudioPlayerRef.current) {
+        try { activeAudioPlayerRef.current.pause(); } catch {}
+      }
+    };
+  }, []);
+
   const handleSelectAgentTag = (agent) => {
     setCurrentTaggedAgent(agent);
     setIsTagPopoverOpen(false);
@@ -649,15 +692,248 @@ export default function App() {
     setCurrentTaggedAgent(null);
   };
 
+  // ─── File Attachment Handlers ───
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const isImg = file.type.startsWith('image/');
+    const ext = file.name.split('.').pop().toLowerCase();
+    const sizeStr = file.size > 1024 * 1024
+      ? (file.size / (1024 * 1024)).toFixed(1) + ' MB'
+      : Math.round(file.size / 1024) + ' KB';
+    const previewUrl = isImg ? URL.createObjectURL(file) : null;
+    setAttachedFile({
+      file,
+      name: file.name,
+      size: sizeStr,
+      type: file.type,
+      previewUrl,
+      isImage: isImg,
+      extension: ext,
+    });
+    e.target.value = '';
+  };
+
+  const handleRemoveAttachedFile = () => {
+    if (attachedFile?.previewUrl) {
+      try { URL.revokeObjectURL(attachedFile.previewUrl); } catch {}
+    }
+    setAttachedFile(null);
+  };
+
+  // ─── Microphone Speech-to-Text Recognition ───
+  const toggleSpeechRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      // Fallback directly to audio note recorder if browser doesn't have Web Speech API
+      startVoiceRecording();
+      return;
+    }
+
+    if (isSpeechListening) {
+      if (speechRecognitionRef.current) {
+        try { speechRecognitionRef.current.stop(); } catch {}
+      }
+      setIsSpeechListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsSpeechListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map((res) => res[0].transcript)
+          .join('');
+        setChatInputText(transcript);
+      };
+
+      recognition.onerror = (e) => {
+        console.warn('Speech recognition error:', e);
+        setIsSpeechListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsSpeechListening(false);
+      };
+
+      speechRecognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.error('Speech recognition exception:', err);
+      setIsSpeechListening(false);
+      startVoiceRecording();
+    }
+  };
+
+  // ─── Voice Note Recording (MediaRecorder) ───
+  const startVoiceRecording = async () => {
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: 'sys-' + Date.now(),
+            sender: 'agent',
+            agentName: 'Arc Sovereign Agent',
+            text: '⚠️ Microphone recording is not supported in this browser environment.',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          }
+        ]);
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      audioChunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      recorder.start(100);
+      setIsVoiceRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds((sec) => sec + 1);
+      }, 1000);
+    } catch (err) {
+      console.error('Mic access error:', err);
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          id: 'sys-' + Date.now(),
+          sender: 'agent',
+          agentName: 'Arc Sovereign Agent',
+          text: '⚠️ Microphone permission is required to record voice directives. Please enable microphone permissions in your browser settings.',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        }
+      ]);
+    }
+  };
+
+  const cancelVoiceRecording = () => {
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stream?.getTracks().forEach((t) => t.stop());
+        mediaRecorderRef.current.stop();
+      } catch {}
+    }
+    audioChunksRef.current = [];
+    setIsVoiceRecording(false);
+    setRecordingSeconds(0);
+  };
+
+  const stopAndSendVoiceRecording = () => {
+    if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
+    const recorder = mediaRecorderRef.current;
+    const duration = recordingSeconds;
+    if (!recorder) return;
+
+    recorder.onstop = () => {
+      try {
+        recorder.stream?.getTracks().forEach((t) => t.stop());
+      } catch {}
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const userMsgId = 'usr-voice-' + Date.now();
+      const formatDuration = `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}`;
+
+      const newVoiceMsg = {
+        id: userMsgId,
+        sender: 'user',
+        text: `Voice directive (${formatDuration})`,
+        audioUrl,
+        audioDuration: formatDuration,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+
+      setChatMessages((prev) => [...prev, newVoiceMsg]);
+      setIsVoiceRecording(false);
+      setRecordingSeconds(0);
+      setChatIsTyping(true);
+
+      // Sovereign Agent voice directive processing
+      setTimeout(() => {
+        const replyAgentTag = currentTaggedAgent ? currentTaggedAgent.tag : 'ArcAgent';
+        const replyAgentName = currentTaggedAgent ? currentTaggedAgent.name : 'Arc Sovereign Agent';
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: 'bot-' + Date.now(),
+            sender: 'agent',
+            agentTag: replyAgentTag,
+            agentName: replyAgentName,
+            text: `🎙️ Sovereign Agent processed your voice directive (${formatDuration}) on Arc Osaka EVM! Voice intent analyzed: Ready to dispatch autonomous transaction or tag verified bot.`,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            widget: {
+              type: 'voice_action',
+              title: 'Voice Instruction Decoded',
+              badge: 'Audio AI Verified',
+              body: `Length: ${formatDuration} · Zero Gas settlement route configured for ₦${activeCleanTag || 'tag'}`,
+              actionText: 'Confirm & Dispatch',
+              targetTag: replyAgentTag !== 'ArcAgent' ? replyAgentTag : 'dev',
+              amount: '1.0',
+            }
+          }
+        ]);
+        setChatIsTyping(false);
+      }, 900);
+    };
+
+    if (recorder.state !== 'inactive') {
+      recorder.stop();
+    }
+  };
+
+  // ─── Voice Note Audio Player Play/Pause ───
+  const handleTogglePlayAudio = (msgId, audioUrl) => {
+    if (playingAudioId === msgId) {
+      if (activeAudioPlayerRef.current) {
+        activeAudioPlayerRef.current.pause();
+      }
+      setPlayingAudioId(null);
+      return;
+    }
+    if (activeAudioPlayerRef.current) {
+      activeAudioPlayerRef.current.pause();
+    }
+    const audio = new Audio(audioUrl);
+    activeAudioPlayerRef.current = audio;
+    setPlayingAudioId(msgId);
+    audio.onended = () => {
+      setPlayingAudioId(null);
+    };
+    audio.onerror = () => {
+      setPlayingAudioId(null);
+    };
+    audio.play().catch(() => setPlayingAudioId(null));
+  };
+
   const handleSendChatPrompt = (customPrompt = null) => {
     const textToSend = (customPrompt !== null ? customPrompt : chatInputText).trim();
-    if (!textToSend) return;
+    const fileToSend = attachedFile;
+
+    // Must have either text or an attached file
+    if (!textToSend && !fileToSend) return;
 
     const userMsgId = 'usr-' + Date.now();
     const newMsg = {
       id: userMsgId,
       sender: 'user',
       text: textToSend,
+      file: fileToSend ? { ...fileToSend } : null,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       widget: null,
     };
@@ -665,6 +941,9 @@ export default function App() {
     setChatMessages((prev) => [...prev, newMsg]);
     if (customPrompt === null) {
       setChatInputText('');
+    }
+    if (fileToSend) {
+      setAttachedFile(null);
     }
     setChatIsTyping(true);
 
@@ -690,7 +969,51 @@ export default function App() {
         replyAvatar = foundAgent.avatar;
       }
 
-      if (replyAgentTag === 'chowdeck' || lower.includes('food') || lower.includes('chowdeck') || lower.includes('jollof') || lower.includes('order')) {
+      // If an attached file was sent, prioritize smart file analysis
+      if (fileToSend) {
+        if (fileToSend.extension === 'sol' || fileToSend.name.endsWith('.sol') || lower.includes('contract') || lower.includes('audit')) {
+          replyAgentTag = 'dev';
+          replyAgentName = 'Arc Contract Auditor';
+          replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=dev';
+          replyText = `⚡ Smart Contract Received: "${fileToSend.name}" (${fileToSend.size})! Bytecode analyzed on Arc Osaka EVM (5042002). 0 critical vulnerabilities found. Formal verification: Passed.`;
+          widget = {
+            type: 'contract_audit',
+            title: `Audit Passed: ${fileToSend.name}`,
+            badge: '100/100 Security Score',
+            body: `File: ${fileToSend.name} · Gas optimization: 99.8% · Arc Osaka EVM Compatible. Ready for milestone escrow deployment.`,
+            actionText: 'Deploy Verified Contract',
+            targetTag: 'dev',
+            amount: '2.0',
+          };
+        } else if (fileToSend.isImage) {
+          replyAgentTag = 'designer';
+          replyAgentName = 'MuseSpark Creative';
+          replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=designer';
+          replyText = `🖼️ Deliverable / Asset Received: "${fileToSend.name}" (${fileToSend.size})! Visual artifact verified against Arc milestone quest criteria.`;
+          widget = {
+            type: 'design_task',
+            title: `Verified: ${fileToSend.name}`,
+            badge: 'Milestone In Escrow',
+            body: `Deliverable: ${fileToSend.name} · Resolution & metadata verified. Funds locked in milestone escrow ready for release.`,
+            actionText: 'Approve & Release Payment',
+            targetTag: 'designer',
+            amount: '15.0',
+          };
+        } else {
+          replyAgentTag = 'dev';
+          replyAgentName = 'Arc Sovereign Agent';
+          replyText = `📑 File Received: "${fileToSend.name}" (${fileToSend.size})! Payload parsed in Arc Osaka sovereign agent environment. Ready to execute requested actions.`;
+          widget = {
+            type: 'file_processed',
+            title: `Processed: ${fileToSend.name}`,
+            badge: 'Payload Validated',
+            body: `Size: ${fileToSend.size} · Checksum verified on Arc Osaka. Ready to trigger pipeline.`,
+            actionText: 'Confirm Execution',
+            targetTag: 'dev',
+            amount: '1.0',
+          };
+        }
+      } else if (replyAgentTag === 'chowdeck' || lower.includes('food') || lower.includes('chowdeck') || lower.includes('jollof') || lower.includes('order')) {
         replyAgentTag = 'chowdeck';
         replyAgentName = 'Chowdeck Food Bot';
         replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=chowdeck';
@@ -2537,7 +2860,7 @@ export default function App() {
       )}
 
       {/* ─── Main Application Body ─── */}
-      <main className={`main-content-wrapper ${mainTab === 'claim' ? 'claim-active' : ''}`}>
+      <main className={`main-content-wrapper ${mainTab === 'claim' ? 'claim-active' : ''} ${mainTab === 'chat' ? 'chat-mode' : ''}`}>
         {/* ───────────────────────────────────────────────────────────────────
             TAB 1: PAY & RESOLVE TERMINAL
             ─────────────────────────────────────────────────────────────────── */}
@@ -3784,9 +4107,62 @@ export default function App() {
                 {chatMessages.map((msg) => (
                   <div key={msg.id} className={`walley-msg-row ${msg.sender}`}>
                     <div className="walley-msg-bubble-wrap">
-                      <div className={`walley-msg-bubble ${msg.sender}`}>
-                        {msg.text}
-                      </div>
+                      {/* Attached File Preview inside Message */}
+                      {msg.file && (
+                        <div className="walley-msg-file-container">
+                          {msg.file.isImage ? (
+                            <img
+                              src={msg.file.previewUrl}
+                              alt={msg.file.name}
+                              className="walley-msg-img-bubble"
+                              onClick={() => window.open(msg.file.previewUrl, '_blank')}
+                              title="Click to view full image"
+                            />
+                          ) : (
+                            <div className="walley-file-pill-card">
+                              <div className="file-pill-icon-box">
+                                <FileText size={18} color="var(--primary, #0052FF)" />
+                              </div>
+                              <div className="file-pill-meta">
+                                <span className="file-pill-title">{msg.file.name}</span>
+                                <span className="file-pill-sub">{msg.file.size} · {msg.file.extension?.toUpperCase() || 'FILE'}</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Playable Voice Note Audio Bubble */}
+                      {msg.audioUrl && (
+                        <div className="walley-audio-player">
+                          <button
+                            type="button"
+                            className="walley-audio-play-btn"
+                            onClick={() => handleTogglePlayAudio(msg.id, msg.audioUrl)}
+                            aria-label={playingAudioId === msg.id ? "Pause voice directive" : "Play voice directive"}
+                          >
+                            {playingAudioId === msg.id ? <Pause size={14} /> : <Play size={14} style={{ marginLeft: 2 }} />}
+                          </button>
+                          <div className="walley-audio-waveform-bars">
+                            <span className={playingAudioId === msg.id ? 'active' : ''} />
+                            <span className={playingAudioId === msg.id ? 'active' : ''} />
+                            <span className={playingAudioId === msg.id ? 'active' : ''} />
+                            <span className={playingAudioId === msg.id ? 'active' : ''} />
+                            <span className={playingAudioId === msg.id ? 'active' : ''} />
+                            <span className={playingAudioId === msg.id ? 'active' : ''} />
+                            <span className={playingAudioId === msg.id ? 'active' : ''} />
+                            <span className={playingAudioId === msg.id ? 'active' : ''} />
+                          </div>
+                          <span className="walley-audio-duration">{msg.audioDuration || '0:05'}</span>
+                        </div>
+                      )}
+
+                      {/* Text Message Bubble (if text exists) */}
+                      {msg.text && (
+                        <div className={`walley-msg-bubble ${msg.sender}`}>
+                          {msg.text}
+                        </div>
+                      )}
 
                       {/* Generative Interactive Task Widget */}
                       {msg.widget && (
@@ -3818,10 +4194,13 @@ export default function App() {
                     <span className="walley-processing-text">Processing ...</span>
                   </div>
                 )}
+
+                {/* Smooth auto-scroll anchor */}
+                <div ref={chatMessagesEndRef} />
               </div>
             )}
 
-            {/* Bottom Capsule Pill Input Bar (Floating) */}
+            {/* Bottom Capsule Pill Input Bar (Floating & Pinned) */}
             <div className="walley-bottom-bar">
               {/* Optional Agent Tag Popover when '+' is clicked */}
               {isTagPopoverOpen && (
@@ -3850,69 +4229,153 @@ export default function App() {
                 </div>
               )}
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendChatPrompt();
-                }}
-                className="walley-capsule-composer"
-              >
-                <button
-                  type="button"
-                  className="walley-capsule-plus-btn"
-                  onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
-                  title="Tag an Agent"
-                  aria-label="Actions"
-                >
-                  <Plus size={16} />
-                </button>
+              {/* Staged File Attachment Preview Pill */}
+              {attachedFile && (
+                <div className="walley-staged-attachment">
+                  {attachedFile.isImage ? (
+                    <img src={attachedFile.previewUrl} alt="Preview" className="staged-file-img" />
+                  ) : (
+                    <div className="staged-file-icon">
+                      <FileText size={16} color="var(--primary, #0052FF)" />
+                    </div>
+                  )}
+                  <div className="staged-file-info">
+                    <span className="staged-file-name">{attachedFile.name}</span>
+                    <span className="staged-file-size">{attachedFile.size}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="staged-file-remove-btn"
+                    onClick={handleRemoveAttachedFile}
+                    title="Remove attachment"
+                    aria-label="Remove attachment"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              )}
 
-                <input
-                  type="text"
-                  className="walley-capsule-input"
-                  placeholder="What can i help you with?"
-                  value={chatInputText}
-                  onChange={(e) => setChatInputText(e.target.value)}
-                />
+              {/* Hidden File Picker Input */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept="image/*,.pdf,.doc,.docx,.sol,.json,.txt,.csv"
+                onChange={handleFileSelect}
+              />
 
-                <div className="walley-capsule-actions">
-                  {chatInputText.trim() ? (
+              {/* Composer: Voice Recording Mode vs Standard Input */}
+              {isVoiceRecording ? (
+                <div className="walley-capsule-composer walley-recording-composer">
+                  <div className="recording-status-box">
+                    <span className="recording-dot-blink" />
+                    <span className="recording-timer-text">
+                      {Math.floor(recordingSeconds / 60)}:{String(recordingSeconds % 60).padStart(2, '0')}
+                    </span>
+                    <span className="recording-hint">Recording voice directive...</span>
+                  </div>
+
+                  <div className="recording-waveform-anim">
+                    <span /><span /><span /><span /><span /><span /><span />
+                  </div>
+
+                  <div className="recording-actions-group">
                     <button
-                      type="submit"
-                      className="walley-capsule-send-btn"
-                      disabled={chatIsTyping}
-                      aria-label="Send"
+                      type="button"
+                      className="recording-btn-cancel"
+                      onClick={cancelVoiceRecording}
+                      title="Cancel Recording"
+                      aria-label="Cancel"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      className="recording-btn-send"
+                      onClick={stopAndSendVoiceRecording}
+                      title="Send Voice Directive"
+                      aria-label="Send Voice Directive"
                     >
                       <ArrowUp size={16} />
                     </button>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        className="walley-capsule-icon-btn"
-                        onClick={() => handleSendChatPrompt('I want to buy 500 airtime for someone')}
-                        title="Voice Input"
-                        aria-label="Voice Input"
-                      >
-                        <Mic size={16} />
-                      </button>
-                      <button
-                        type="button"
-                        className="walley-capsule-icon-btn"
-                        onClick={() => handleSendChatPrompt('Make a transfer')}
-                        title="Audio waveform"
-                        aria-label="Soundwave"
-                      >
-                        <span className="walley-soundwave">
-                          <span />
-                          <span />
-                          <span />
-                        </span>
-                      </button>
-                    </>
-                  )}
+                  </div>
                 </div>
-              </form>
+              ) : (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleSendChatPrompt();
+                  }}
+                  className="walley-capsule-composer"
+                >
+                  <button
+                    type="button"
+                    className="walley-capsule-plus-btn"
+                    onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
+                    title="Tag an Agent"
+                    aria-label="Actions"
+                  >
+                    <Plus size={16} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="walley-capsule-attach-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Attach File or Smart Contract (.sol, .pdf, image)"
+                    aria-label="Attach File"
+                  >
+                    <Paperclip size={15} />
+                  </button>
+
+                  <input
+                    type="text"
+                    className="walley-capsule-input"
+                    placeholder={attachedFile ? `Sending ${attachedFile.name}...` : (isSpeechListening ? "Listening to your voice..." : "What can i help you with?")}
+                    value={chatInputText}
+                    onChange={(e) => setChatInputText(e.target.value)}
+                  />
+
+                  <div className="walley-capsule-actions">
+                    {chatInputText.trim() || attachedFile ? (
+                      <button
+                        type="submit"
+                        className="walley-capsule-send-btn"
+                        disabled={chatIsTyping}
+                        aria-label="Send"
+                        title="Send"
+                      >
+                        <ArrowUp size={16} />
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className={`walley-capsule-icon-btn ${isSpeechListening ? 'listening-active' : ''}`}
+                          onClick={toggleSpeechRecognition}
+                          title={isSpeechListening ? "Stop listening" : "Speak to AI (Speech-to-Text)"}
+                          aria-label={isSpeechListening ? "Stop listening" : "Speak to AI"}
+                        >
+                          <Mic size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          className="walley-capsule-icon-btn"
+                          onClick={startVoiceRecording}
+                          title="Record Voice Note to Sovereign Agent"
+                          aria-label="Record Voice Note"
+                        >
+                          <span className="walley-soundwave">
+                            <span />
+                            <span />
+                            <span />
+                          </span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </form>
+              )}
             </div>
 
             {/* History Sheet / Modal */}

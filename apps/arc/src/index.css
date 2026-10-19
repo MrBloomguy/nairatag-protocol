@@ -5419,25 +5419,46 @@ body:has(.agent-modal-backdrop) {
 /* ─────────────────────────────────────────────────────────────────────────────
    WALLEY-AI MINIMAL CHAT INTERFACE (MATCHING REFERENCE UI)
    ───────────────────────────────────────────────────────────────────────────── */
+/* Container when in chat mode: full viewport height minus header, strictly no outer page scroll */
+.main-content-wrapper.chat-mode {
+  padding: 0 !important;
+  height: calc(100dvh - 65px) !important;
+  max-height: calc(100dvh - 65px) !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+@media (max-width: 768px) {
+  .main-content-wrapper.chat-mode {
+    height: calc(100dvh - 58px) !important;
+    max-height: calc(100dvh - 58px) !important;
+  }
+}
+
 .walley-chat-screen {
   width: 100%;
-  max-width: 440px;
+  max-width: 460px;
   margin: 0 auto;
-  min-height: calc(100vh - 120px);
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
-  padding: 8px 16px 24px 16px;
+  padding: 6px 14px 10px 14px;
+  box-sizing: border-box;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
+  overflow: hidden;
 }
 
 @media (max-width: 768px) {
   .walley-chat-screen {
-    min-height: calc(100vh - 80px);
-    padding: 4px 12px 18px 12px;
+    padding: 4px 12px 8px 12px;
   }
 }
 
@@ -5561,9 +5582,18 @@ body:has(.agent-modal-backdrop) {
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding: 24px 0 36px 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 0 24px 0;
   text-align: center;
   animation: fadeIn 0.25s ease forwards;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.walley-hero-container::-webkit-scrollbar {
+  display: none;
 }
 
 /* Glowing 3D Radial Gradient Orb matching reference */
@@ -5668,11 +5698,15 @@ body:has(.agent-modal-backdrop) {
 /* SCREEN 2: Active Chat Stream */
 .walley-chat-stream {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 8px 0 20px 0;
+  gap: 14px;
+  padding: 6px 2px 14px 2px;
   overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -5808,24 +5842,26 @@ body:has(.agent-modal-backdrop) {
   opacity: 0.92;
 }
 
-/* Bottom Floating Capsule Composer */
+/* Bottom Floating Capsule Composer (Pinned & Never Scrolls with page) */
 .walley-bottom-bar {
   width: 100%;
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  bottom: auto;
   z-index: 40;
   padding-top: 6px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
   background: transparent !important;
+  flex-shrink: 0;
 }
 
 .walley-capsule-composer {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: var(--surface1, #ffffff);
   border: 1px solid var(--border-color, rgba(0, 0, 0, 0.09));
   border-radius: 9999px;
-  padding: 6px 12px;
+  padding: 6px 10px;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
 }
 
@@ -5835,9 +5871,10 @@ body:has(.agent-modal-backdrop) {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
-.walley-capsule-plus-btn {
-  width: 26px;
-  height: 26px;
+.walley-capsule-plus-btn,
+.walley-capsule-attach-btn {
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: transparent;
   border: none;
@@ -5851,13 +5888,15 @@ body:has(.agent-modal-backdrop) {
   transition: all 0.15s ease;
 }
 
-.walley-capsule-plus-btn:hover {
+.walley-capsule-plus-btn:hover,
+.walley-capsule-attach-btn:hover {
   color: var(--primary, #0052FF);
   background: rgba(0, 82, 255, 0.08);
 }
 
 .walley-capsule-input {
   flex: 1;
+  min-width: 0;
   background: transparent;
   border: none;
   outline: none;
@@ -5875,7 +5914,7 @@ body:has(.agent-modal-backdrop) {
 .walley-capsule-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
@@ -5887,13 +5926,25 @@ body:has(.agent-modal-backdrop) {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 4px;
+  padding: 6px;
   border-radius: 50%;
   transition: all 0.15s ease;
 }
 
 .walley-capsule-icon-btn:hover {
   color: var(--privy-color-foreground, #111827);
+}
+
+.walley-capsule-icon-btn.listening-active {
+  color: #EF4444 !important;
+  background: rgba(239, 68, 68, 0.15) !important;
+  animation: micPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes micPulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { transform: scale(1.12); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
 
 .walley-capsule-send-btn {
@@ -5932,6 +5983,341 @@ body:has(.agent-modal-backdrop) {
 .walley-soundwave span:nth-child(1) { height: 8px; }
 .walley-soundwave span:nth-child(2) { height: 14px; }
 .walley-soundwave span:nth-child(3) { height: 10px; }
+
+/* ─── Staged File Attachment Pill ─── */
+.walley-staged-attachment {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: 6px;
+  background: var(--surface1, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  animation: slideUp 0.15s ease;
+}
+
+[data-theme="dark"] .walley-staged-attachment {
+  background: #17181D;
+  border-color: #24252B;
+}
+
+.staged-file-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.staged-file-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: rgba(0, 82, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.staged-file-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.staged-file-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--privy-color-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.staged-file-size {
+  font-size: 10px;
+  color: var(--privy-color-foreground-2);
+}
+
+.staged-file-remove-btn {
+  background: transparent;
+  border: none;
+  color: var(--privy-color-foreground-2);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.staged-file-remove-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #EF4444;
+}
+
+/* ─── Active Voice Recording Composer Bar ─── */
+.walley-recording-composer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FEF2F2 !important;
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  padding: 6px 14px !important;
+}
+
+[data-theme="dark"] .walley-recording-composer {
+  background: #25181A !important;
+  border-color: rgba(239, 68, 68, 0.4) !important;
+}
+
+.recording-status-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recording-dot-blink {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #EF4444;
+  animation: pulseDot 1s infinite;
+}
+
+.recording-timer-text {
+  font-family: var(--font-mono, monospace);
+  font-size: 13px;
+  font-weight: 800;
+  color: #EF4444;
+}
+
+.recording-hint {
+  font-size: 11.5px;
+  color: var(--privy-color-foreground-2);
+  display: inline;
+}
+
+@media (max-width: 480px) {
+  .recording-hint {
+    display: none;
+  }
+}
+
+.recording-waveform-anim {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+}
+
+.recording-waveform-anim span {
+  width: 2px;
+  background: #EF4444;
+  border-radius: 2px;
+  animation: waveBar 0.8s ease-in-out infinite alternate;
+}
+
+.recording-waveform-anim span:nth-child(1) { height: 6px; animation-delay: 0.1s; }
+.recording-waveform-anim span:nth-child(2) { height: 12px; animation-delay: 0.25s; }
+.recording-waveform-anim span:nth-child(3) { height: 18px; animation-delay: 0.4s; }
+.recording-waveform-anim span:nth-child(4) { height: 10px; animation-delay: 0.15s; }
+.recording-waveform-anim span:nth-child(5) { height: 16px; animation-delay: 0.35s; }
+.recording-waveform-anim span:nth-child(6) { height: 8px; animation-delay: 0.2s; }
+.recording-waveform-anim span:nth-child(7) { height: 14px; animation-delay: 0.3s; }
+
+@keyframes waveBar {
+  0% { transform: scaleY(0.4); opacity: 0.6; }
+  100% { transform: scaleY(1); opacity: 1; }
+}
+
+.recording-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recording-btn-cancel {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: #EF4444;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recording-btn-cancel:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.recording-btn-send {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #EF4444;
+  border: none;
+  color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.recording-btn-send:hover {
+  transform: scale(1.05);
+}
+
+/* ─── In-Chat Playable Voice Note Audio Player ─── */
+.walley-audio-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface1, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  border-radius: 18px;
+  max-width: 260px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .walley-audio-player {
+  background: #1C1D24;
+  border-color: #282A34;
+}
+
+.walley-audio-play-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary, #0052FF);
+  border: none;
+  color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.walley-audio-play-btn:hover {
+  transform: scale(1.05);
+}
+
+.walley-audio-waveform-bars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  height: 16px;
+}
+
+.walley-audio-waveform-bars span {
+  width: 2px;
+  background: #9CA3AF;
+  border-radius: 1px;
+}
+
+.walley-audio-waveform-bars span:nth-child(1) { height: 6px; }
+.walley-audio-waveform-bars span:nth-child(2) { height: 12px; }
+.walley-audio-waveform-bars span:nth-child(3) { height: 8px; }
+.walley-audio-waveform-bars span:nth-child(4) { height: 15px; }
+.walley-audio-waveform-bars span:nth-child(5) { height: 10px; }
+.walley-audio-waveform-bars span:nth-child(6) { height: 14px; }
+.walley-audio-waveform-bars span:nth-child(7) { height: 9px; }
+.walley-audio-waveform-bars span:nth-child(8) { height: 5px; }
+
+.walley-audio-waveform-bars span.active {
+  background: var(--primary, #0052FF);
+  animation: waveBar 0.6s ease-in-out infinite alternate;
+}
+
+.walley-audio-waveform-bars span.active:nth-child(even) {
+  animation-delay: 0.2s;
+}
+
+.walley-audio-duration {
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: var(--privy-color-foreground-2);
+  flex-shrink: 0;
+}
+
+/* ─── In-Chat File Previews ─── */
+.walley-msg-file-container {
+  margin-bottom: 4px;
+}
+
+.walley-msg-img-bubble {
+  max-width: 240px;
+  max-height: 200px;
+  border-radius: 14px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  transition: transform 0.15s ease;
+}
+
+.walley-msg-img-bubble:hover {
+  transform: scale(1.02);
+}
+
+.walley-file-pill-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface1, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  border-radius: 14px;
+  max-width: 260px;
+}
+
+[data-theme="dark"] .walley-file-pill-card {
+  background: #1C1D24;
+  border-color: #282A34;
+}
+
+.file-pill-icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(0, 82, 255, 0.09);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.file-pill-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.file-pill-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--privy-color-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-pill-sub {
+  font-size: 10px;
+  color: var(--privy-color-foreground-2);
+}
 
 /* Tag Agent Popover */
 .walley-agent-popover {
