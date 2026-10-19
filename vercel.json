@@ -4,6 +4,18 @@
   "outputDirectory": ".",
   "routes": [
     {
+      "src": "/api/arc-rewards(.*)",
+      "dest": "/api/arc-rewards"
+    },
+    {
+      "src": "/api/arc-tasks(.*)",
+      "dest": "/api/arc-tasks"
+    },
+    {
+      "src": "/api/arc-follows(.*)",
+      "dest": "/api/arc-follows"
+    },
+    {
       "src": "/api/celotags(.*)",
       "dest": "/api/celotags"
     },

@@ -72,13 +72,14 @@ import {
 } from './services/arcPayment.js';
 import {
   resolveTag,
-  checkTagAvailability,
-  getTagForWallet,
-  normalizeTag,
-  claimTag,
 } from './services/nairatagResolver.js';
+import { checkArcTagAvailability, claimArcNairaTag, getArcTagForWallet } from './services/arcNairaTag.js';
 import {
   registerAiAgent,
+  buildNairaTagAgentMetadataUri,
+  findArcAgentForTag,
+  registerNairaTagAgent,
+  updateArcAgentRegistrationUri,
   getAgentDetails,
   getAgentReputationLogs,
   recordAgentFeedback,
@@ -89,6 +90,8 @@ import {
   ARC_ERC8004_REPUTATION_REGISTRY,
   ARC_ERC8004_VALIDATION_REGISTRY,
   ARC_MEMO_ADDRESS,
+  ARC_NAIRATAG_REGISTRY_ADDRESS,
+  ARC_NAIRATAG_RESOLVER_ADDRESS,
   ARC_TESTNET_CONFIG,
   ARC_USDC_ADDRESS,
 } from './config/arc.js';
@@ -102,6 +105,8 @@ import {
   getEarnKitPools,
 } from './services/arcAppKit.js';
 import { resolveTagProfile } from './services/tagAvatar.js';
+import { getRecentArcTagActivity } from './services/arcRecentTagActivity.js';
+import { getArcAgentFollowState, setArcAgentFollow } from './services/arcAgentFollows.js';
 import {
   recordReferralSignup,
   rememberReferralFromUrl,
@@ -111,7 +116,7 @@ import RewardsPage, { GoldenVoucherModal, LuckyWheelModal, ReferralModal } from 
 import NotificationLayer from './components/NotificationLayer.jsx';
 import { recordConfirmedPaymentSpin } from './services/wheelRewards.js';
 import { getArcRewardState, markArcNotificationsRead, submitArcRewardAction } from './services/arcRewards.js';
-import { listArcTasks, startArcTask, submitArcTask } from './services/arcTasks.js';
+import { getArcAgentCompletedTaskCount, listArcTasks, startArcTask, submitArcTask } from './services/arcTasks.js';
 import {
   getNotificationInbox,
   markInboxNotificationRead,
@@ -1030,6 +1035,16 @@ export default function App() {
   const [claimStatus, setClaimStatus] = useState(null);
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimRegSlide, setClaimRegSlide] = useState(0);
+  const [recentArcTags, setRecentArcTags] = useState([]);
+  const [arcTagAgentLinks, setArcTagAgentLinks] = useState(() => {
+    try { return JSON.parse(window.localStorage.getItem('nairatag_arc_agent_links_v1') || '{}'); }
+    catch { return {}; }
+  });
+  const [pendingArcAgentLink, setPendingArcAgentLink] = useState(() => {
+    try { return JSON.parse(window.localStorage.getItem('nairatag_pending_arc_agent_link_v1') || 'null'); }
+    catch { return null; }
+  });
+  const [isRetryingArcAgentLink, setIsRetryingArcAgentLink] = useState(false);
   const [claimCardMode, setClaimCardMode] = useState('identity'); // 'identity' | 'share' | 'referral' | 'qrcode'
 
   const activeCleanTag = useMemo(() => {
@@ -1053,14 +1068,35 @@ export default function App() {
     return resolveTagProfile(clean || 'nairatag', { avatarSize: 34 });
   }, [claimInput]);
 
-  // Carousel auto-advance for Recent Registrations
+  // Refresh the Arc activity carousel from confirmed registry/payment events.
   useEffect(() => {
     if (mainTab !== 'claim') return;
-    const interval = setInterval(() => {
-      setClaimRegSlide((prev) => (prev + 1) % 3);
+    let active = true;
+    const refresh = async () => {
+      try {
+        const activities = await getRecentArcTagActivity(18);
+        if (active) {
+          setRecentArcTags(activities);
+          setClaimRegSlide((index) => Math.min(index, Math.max(0, Math.ceil(activities.length / 3) - 1)));
+        }
+      } catch (error) {
+        console.warn('[Recent Arc tag activity]', error.message);
+      }
+    };
+    refresh();
+    const refreshInterval = setInterval(refresh, 45000);
+    const slideInterval = setInterval(() => {
+      setClaimRegSlide((index) => {
+        const pageCount = Math.ceil(recentArcTags.length / 3);
+        return pageCount > 1 ? (index + 1) % pageCount : 0;
+      });
     }, 4500);
-    return () => clearInterval(interval);
-  }, [mainTab]);
+    return () => {
+      active = false;
+      clearInterval(refreshInterval);
+      clearInterval(slideInterval);
+    };
+  }, [mainTab, recentArcTags.length]);
 
   // App Kit Swap State
   const [swapTokenIn, setSwapTokenIn] = useState('USDC');
@@ -1088,9 +1124,27 @@ export default function App() {
   const [agentsViewMode, setAgentsViewMode] = useState('grid'); // 'grid' | 'list'
   const [agentsSearchQuery, setAgentsSearchQuery] = useState('');
   const [selectedAgentProfile, setSelectedAgentProfile] = useState(null);
-  const [agentProfileTab, setAgentProfileTab] = useState('overview'); // 'overview' | 'share' | 'refer' | 'qr'
   const [agentProfileLiveLoading, setAgentProfileLiveLoading] = useState(false);
   const [agentProfileLiveData, setAgentProfileLiveData] = useState(null);
+  const [agentFollowState, setAgentFollowState] = useState({ agentId: null, followerCount: 0, following: false, loading: false, updating: false, error: null });
+
+  useEffect(() => {
+    if (!selectedAgentProfile || selectedAgentProfile.profileType === 'claimed-tag') {
+      setAgentFollowState({ agentId: null, followerCount: 0, following: false, loading: false, updating: false, error: null });
+      return undefined;
+    }
+    let active = true;
+    const agentId = String(selectedAgentProfile.id);
+    setAgentFollowState((current) => ({ ...current, agentId, loading: true, error: null }));
+    getArcAgentFollowState(agentId, walletAddress || '')
+      .then((state) => {
+        if (active) setAgentFollowState({ agentId, ...state, loading: false, updating: false, error: null });
+      })
+      .catch((error) => {
+        if (active) setAgentFollowState((current) => ({ ...current, agentId, loading: false, error: error.message }));
+      });
+    return () => { active = false; };
+  }, [selectedAgentProfile?.id, selectedAgentProfile?.profileType, walletAddress]);
 
   // Filtered agents
   const filteredAgents = useMemo(() => {
@@ -1127,7 +1181,7 @@ export default function App() {
       const matchedAgent = VERIFIED_AGENTS.find(
         (a) => a.tag.toLowerCase() === clean.toLowerCase() || String(a.id) === clean
       );
-      const avail = await checkTagAvailability(clean);
+      const avail = await checkArcTagAvailability(clean);
       setMobileSearchResult({
         tag: clean.toUpperCase(),
         agent: matchedAgent || null,
@@ -1210,7 +1264,7 @@ export default function App() {
     try {
       const bal = await getUsdcBalance(address);
       setUsdcBalance(bal);
-      const tag = await getTagForWallet(address);
+      const tag = await getArcTagForWallet(address);
       setMyTag(tag);
     } catch (e) {
       console.warn('Balance refresh failed:', e);
@@ -1656,23 +1710,193 @@ export default function App() {
   // Open Agent Profile Modal & Fetch live onchain details from Arc ERC-8004
   const handleOpenAgentProfile = async (agent) => {
     setSelectedAgentProfile(agent);
-    setAgentProfileTab('overview');
     setAgentProfileLiveLoading(true);
     setAgentProfileLiveData(null);
     try {
       const details = await getAgentDetails(agent.id);
       let logs = [];
+      let completedTaskCount = null;
       try {
         logs = await getAgentReputationLogs(agent.id);
       } catch (logErr) {
         console.warn('Reputation logs note:', logErr);
       }
-      setAgentProfileLiveData({ details, logs });
+      if (details.owner) {
+        try {
+          completedTaskCount = await getArcAgentCompletedTaskCount(details.owner);
+        } catch (taskStatsError) {
+          console.warn('Agent task stats note:', taskStatsError.message);
+        }
+      }
+      setAgentProfileLiveData({ details, logs, completedTaskCount });
     } catch (e) {
       console.warn('Live agent query note:', e.message);
       setAgentProfileLiveData(null);
     } finally {
       setAgentProfileLiveLoading(false);
+    }
+  };
+
+  const persistArcAgentLink = (tag, owner, registration) => {
+    const cleanTag = String(tag).replace(/^[₦$@#]/, '').toLowerCase();
+    const linkedAgent = {
+      id: String(registration.agentId),
+      tag: cleanTag,
+      name: `₦${cleanTag.toUpperCase()}`,
+      role: `NairaTag agent on Arc · ERC-8004 #${registration.agentId}`,
+      category: 'NairaTag',
+      owner,
+      avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(cleanTag)}`,
+      metadataUri: registration.finalMetadataURI || registration.metadataURI,
+      registrationTxHash: registration.txHash,
+      linkTxHash: registration.linkTxHash || null,
+      status: 'Verified',
+    };
+    setArcTagAgentLinks((current) => {
+      const next = { ...current, [cleanTag]: linkedAgent };
+      window.localStorage.setItem('nairatag_arc_agent_links_v1', JSON.stringify(next));
+      return next;
+    });
+    window.localStorage.removeItem('nairatag_pending_arc_agent_link_v1');
+    setPendingArcAgentLink(null);
+    return linkedAgent;
+  };
+
+  const completeArcAgentLink = async (tag, owner, retryLink = null) => {
+    const cleanTag = String(tag).replace(/^[₦$@#]/, '').toLowerCase();
+    const pending = { tag: cleanTag, owner, ...(retryLink || {}) };
+    setPendingArcAgentLink(pending);
+    window.localStorage.setItem('nairatag_pending_arc_agent_link_v1', JSON.stringify(pending));
+    let registration;
+    if (pending.agentId && pending.metadataURI) {
+      const linked = await updateArcAgentRegistrationUri({ fromAddress: owner, agentId: pending.agentId, metadataURI: pending.metadataURI });
+      registration = {
+        agentId: pending.agentId,
+        metadataURI: pending.metadataURI,
+        finalMetadataURI: pending.metadataURI,
+        txHash: pending.registrationTxHash || null,
+        linkTxHash: linked.txHash,
+      };
+    } else {
+      registration = await registerNairaTagAgent({ fromAddress: owner, tag: cleanTag });
+    }
+    if (!registration.agentId) throw new Error('Arc did not return an ERC-8004 agent ID. The NairaTag is claimed; retry the agent link.');
+    return persistArcAgentLink(cleanTag, owner, registration);
+  };
+
+  const handleRetryArcAgentLink = async () => {
+    if (!pendingArcAgentLink) return;
+    setIsRetryingArcAgentLink(true);
+    try {
+      const linkedAgent = await completeArcAgentLink(pendingArcAgentLink.tag, pendingArcAgentLink.owner, pendingArcAgentLink);
+      setCelebrationDetails((current) => ({ ...current, erc8004Id: linkedAgent.id, erc8004TxHash: null, erc8004LinkError: null }));
+      showToast(`₦${linkedAgent.tag.toUpperCase()} linked to ERC-8004 #${linkedAgent.id}.`, 'success', 3500);
+    } catch (error) {
+      if (error.partialRegistration) {
+        const pending = { ...pendingArcAgentLink, ...error.partialRegistration };
+        setPendingArcAgentLink(pending);
+        window.localStorage.setItem('nairatag_pending_arc_agent_link_v1', JSON.stringify(pending));
+      }
+      setCelebrationDetails((current) => ({ ...current, erc8004LinkError: error.message }));
+    } finally {
+      setIsRetryingArcAgentLink(false);
+    }
+  };
+
+  const handleToggleAgentFollow = async () => {
+    const agent = selectedAgentProfile;
+    if (!agent || agent.profileType === 'claimed-tag') return;
+    if (!walletAddress) {
+      setIsConnectModalOpen(true);
+      return;
+    }
+    const agentOwner = agentProfileLiveData?.details?.owner || agent.owner || '';
+    if (String(agentOwner).toLowerCase() === walletAddress.toLowerCase()) return;
+
+    const action = agentFollowState.following ? 'unfollow' : 'follow';
+    setAgentFollowState((current) => ({ ...current, updating: true, error: null }));
+    try {
+      const state = await setArcAgentFollow({
+        action,
+        agentId: agent.id,
+        tag: agent.tag,
+        walletAddress,
+      });
+      setAgentFollowState({ agentId: String(agent.id), ...state, loading: false, updating: false, error: null });
+    } catch (error) {
+      setAgentFollowState((current) => ({ ...current, updating: false, error: error.message }));
+      showToast(error.message || 'Could not update agent follow.', 'error', 4000);
+    }
+  };
+
+  // Every recent NairaTag opens the same profile card. ERC-8004 details are
+  // added only when that exact tag has a verified agent record.
+  const handleOpenRecentClaimProfile = async (activity) => {
+    const rawTag = typeof activity === 'string' ? activity : activity?.tag;
+    const tag = String(rawTag || '').replace(/^[₦$@#]/, '').trim().toLowerCase();
+    if (!tag) return;
+
+    const locallyLinkedAgent = arcTagAgentLinks[tag];
+    if (locallyLinkedAgent) {
+      handleOpenAgentProfile(locallyLinkedAgent);
+      return;
+    }
+
+    const agent = VERIFIED_AGENTS.find((item) => item.tag.toLowerCase() === tag);
+    if (agent) {
+      handleOpenAgentProfile(agent);
+      return;
+    }
+
+    const knownOwner = typeof activity === 'object' ? activity.owner : null;
+    if (knownOwner) {
+      try {
+        const indexedAgent = await findArcAgentForTag(tag, knownOwner);
+        if (indexedAgent) {
+          handleOpenAgentProfile(indexedAgent);
+          return;
+        }
+      } catch (error) {
+        console.warn('[ERC-8004 NairaTag lookup]', error.message);
+      }
+    }
+
+    setAgentProfileLiveData(null);
+    setSelectedAgentProfile({
+      profileType: 'claimed-tag',
+      id: null,
+      tag,
+      name: `₦${tag}`,
+      role: 'NairaTag',
+      avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
+      owner: typeof activity === 'object' ? activity.owner || null : null,
+      activity: typeof activity === 'object' ? activity.activity : null,
+      profileLoading: true,
+      profileError: null,
+      completedTaskCount: null,
+    });
+
+    const result = typeof activity === 'object' && activity.owner
+      ? { success: true, resolvedAddress: activity.owner }
+      : await resolveTag(tag);
+    setSelectedAgentProfile((current) => {
+      if (current?.profileType !== 'claimed-tag' || current.tag !== tag) return current;
+      return {
+        ...current,
+        owner: result.success ? result.resolvedAddress : null,
+        profileLoading: false,
+        profileError: result.success ? null : result.error || 'This NairaTag could not be resolved right now.',
+      };
+    });
+    if (result.success && result.resolvedAddress) {
+      try {
+        const completedTaskCount = await getArcAgentCompletedTaskCount(result.resolvedAddress);
+        setSelectedAgentProfile((current) => current?.profileType === 'claimed-tag' && current.tag === tag
+          ? { ...current, completedTaskCount }
+          : current);
+      } catch (taskStatsError) {
+        console.warn('NairaTag task stats note:', taskStatsError.message);
+      }
     }
   };
 
@@ -1694,7 +1918,7 @@ export default function App() {
     }
     setClaimStatus({ loading: true });
     try {
-      const res = await checkTagAvailability(clean);
+      const res = await checkArcTagAvailability(clean, walletAddress);
       setClaimStatus(res);
     } catch (e) {
       setClaimStatus({ available: false, reason: e.message });
@@ -1709,22 +1933,28 @@ export default function App() {
     }
     setIsClaiming(true);
     try {
-      const res = await claimTag({
-        tag: claimInput,
-        ownerAddress: walletAddress,
-      });
-      if (!res?.success) throw new Error(res?.error || 'NairaTag claim was not confirmed.');
+      const res = await claimArcNairaTag({ rawTag: claimInput, walletAddress });
+      let agentRegistration = null;
+      let agentLinkError = null;
+      try {
+        agentRegistration = await completeArcAgentLink(res.cleanTag, walletAddress);
+      } catch (error) {
+        agentLinkError = error.message || 'ERC-8004 linking did not complete.';
+        const pendingLink = { tag: res.cleanTag, owner: walletAddress, ...(error.partialRegistration || {}) };
+        setPendingArcAgentLink(pendingLink);
+        window.localStorage.setItem('nairatag_pending_arc_agent_link_v1', JSON.stringify(pendingLink));
+      }
       let referralReward = null;
       const hasReferralAttribution = Boolean(window.localStorage.getItem('nairatag_pending_referral_v1'));
       try {
-        const claimNotice = await submitArcRewardAction({ action: 'tag_claimed', walletAddress, tag: res.cleanTag || claimInput });
+        const claimNotice = await submitArcRewardAction({ action: 'tag_claimed', walletAddress, tag: res.cleanTag });
         applyArcRewardState(claimNotice.state);
       } catch (rewardError) {
         setArcRewardsError(rewardError.message || 'NairaTag claim notification could not be saved.');
       }
       if (hasReferralAttribution) {
         try {
-          referralReward = await recordReferralSignup({ referredTag: res.cleanTag || claimInput, referredWallet: walletAddress });
+          referralReward = await recordReferralSignup({ referredTag: res.cleanTag, referredWallet: walletAddress });
           if (referralReward?.state) applyArcRewardState(referralReward.state);
         } catch (rewardError) {
           setArcRewardsError(rewardError.message || 'Referral reward could not be recorded.');
@@ -1734,16 +1964,17 @@ export default function App() {
       setCelebrationDetails({
         type: 'claim',
         txHash: res.txHash,
-        amount: `₦${claimInput.replace(/^[$₦]/, '').toUpperCase()}`,
+        amount: `₦${res.cleanTag.toUpperCase()}`,
         recipient: 'Sovereign Onchain Tag',
-        explorerUrl: `${ARC_TESTNET_CONFIG.explorerUrl}/tx/${res.txHash}`,
+        explorerUrl: res.explorerUrl,
+        erc8004Id: agentRegistration?.id || null,
+        erc8004LinkError: agentLinkError,
       });
       setIsCelebrationOpen(true);
       setIsClaimModalOpen(false);
       await refreshBalance(walletAddress);
     } catch (e) {
       showToast(`Claim failed: ${e.message}`, 'error', 4000);
-      alert(`Claim failed: ${e.message}`);
     } finally {
       setIsClaiming(false);
     }
@@ -1899,25 +2130,36 @@ export default function App() {
                   </button>
 
                   <a
-                    href="https://explorer.testnet.arc.io"
+                    href={`https://explorer.testnet.arc.io/address/${ARC_NAIRATAG_REGISTRY_ADDRESS}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="more-menu-item"
+                    onClick={() => setIsMoreMenuOpen(false)}
+                  >
+                    <Tag size={15} />
+                    <span>NairaTag Registry ↗</span>
+                  </a>
+
+                  <a
+                    href={`https://explorer.testnet.arc.io/address/${ARC_NAIRATAG_RESOLVER_ADDRESS}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="more-menu-item"
                     onClick={() => setIsMoreMenuOpen(false)}
                   >
                     <ExternalLink size={15} />
-                    <span>ArcScan Explorer ↗</span>
+                    <span>NairaTag Resolver ↗</span>
                   </a>
 
                   <a
-                    href="https://8004scan.io"
+                    href="https://erc-8004.quicknode.com/agents?network=arc-testnet"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="more-menu-item"
                     onClick={() => setIsMoreMenuOpen(false)}
                   >
                     <Bot size={15} />
-                    <span>8004scan (AI Agents) ↗</span>
+                    <span>8004scan (Arc Testnet AI Agents) ↗</span>
                   </a>
 
                   <div className="more-menu-divider" />
@@ -2611,7 +2853,7 @@ export default function App() {
                   {isClaiming ? (
                     <>
                       <RefreshCw size={16} className="animate-spin" />
-                      <span>Claiming on Arc...</span>
+                      <span>Claiming & linking ERC-8004…</span>
                     </>
                   ) : (
                     <span>Claim ₦{claimInput.replace(/^[$₦]/, '').toUpperCase() || 'TAG'}</span>
@@ -2619,95 +2861,52 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Recent Registrations Animated Carousel (3 pills per slide) */}
-              <div className="reg-carousel-container">
-                <div
-                  className="reg-carousel-track"
-                  style={{ transform: `translateX(-${claimRegSlide * 100}%)` }}
+              {pendingArcAgentLink && pendingArcAgentLink.owner?.toLowerCase() === walletAddress?.toLowerCase() && (
+                <button
+                  type="button"
+                  className="quick-chip-btn"
+                  style={{ alignSelf: 'center', marginTop: '8px' }}
+                  disabled={isRetryingArcAgentLink}
+                  onClick={handleRetryArcAgentLink}
                 >
-                  {/* Slide 1 */}
-                  <div className="reg-slide">
-                    {[
-                      { tag: 'segun' },
-                      { tag: 'dev' },
-                      { tag: 'mama' },
-                    ].map((item) => (
-                      <div
-                        key={item.tag}
-                        className="reg-pill-item"
-                        onClick={() => handleCheckClaim(item.tag)}
-                        title={`₦${item.tag} · Arc Testnet`}
-                      >
-                        <img
-                          className="reg-dicebear-avatar"
-                          src={`https://api.dicebear.com/7.x/identicon/svg?seed=${item.tag}`}
-                          alt={`₦${item.tag}`}
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">₦</text></svg>';
-                          }}
-                        />
-                        <span className="reg-handle-tag">₦{item.tag}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {isRetryingArcAgentLink ? 'Linking to ERC-8004…' : `Complete ERC-8004 link for ₦${pendingArcAgentLink.tag.toUpperCase()}`}
+                </button>
+              )}
 
-                  {/* Slide 2 */}
-                  <div className="reg-slide">
-                    {[
-                      { tag: 'chowdeck' },
-                      { tag: 'shop' },
-                      { tag: 'travel' },
-                    ].map((item) => (
-                      <div
-                        key={item.tag}
-                        className="reg-pill-item"
-                        onClick={() => handleCheckClaim(item.tag)}
-                        title={`₦${item.tag} · Arc Testnet`}
-                      >
-                        <img
-                          className="reg-dicebear-avatar"
-                          src={`https://api.dicebear.com/7.x/identicon/svg?seed=${item.tag}`}
-                          alt={`₦${item.tag}`}
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">₦</text></svg>';
-                          }}
-                        />
-                        <span className="reg-handle-tag">₦{item.tag}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Slide 3 */}
-                  <div className="reg-slide">
-                    {[
-                      { tag: 'designer' },
-                      { tag: 'researcher' },
-                      { tag: 'bayo' },
-                    ].map((item) => (
-                      <div
-                        key={item.tag}
-                        className="reg-pill-item"
-                        onClick={() => handleCheckClaim(item.tag)}
-                        title={`₦${item.tag} · Arc Testnet`}
-                      >
-                        <img
-                          className="reg-dicebear-avatar"
-                          src={`https://api.dicebear.com/7.x/identicon/svg?seed=${item.tag}`}
-                          alt={`₦${item.tag}`}
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">₦</text></svg>';
-                          }}
-                        />
-                        <span className="reg-handle-tag">₦{item.tag}</span>
+              {/* Recent tag activity appears when Arc has tags to show. */}
+              {recentArcTags.length > 0 && (
+                <div className="reg-carousel-container">
+                  <div
+                    className="reg-carousel-track"
+                    style={{ transform: `translateX(-${claimRegSlide * 100}%)` }}
+                  >
+                    {Array.from({ length: Math.ceil(recentArcTags.length / 3) }, (_, page) => (
+                      <div className="reg-slide" key={`activity-page-${page}`}>
+                        {recentArcTags.slice(page * 3, page * 3 + 3).map((item) => (
+                          <button
+                            key={`${item.tag}-${item.transactionHash || item.blockNumber}`}
+                            type="button"
+                            className="reg-pill-item"
+                            onClick={() => handleOpenRecentClaimProfile(item)}
+                            title={`Open ₦${item.tag} profile`}
+                          >
+                            <img
+                              className="reg-dicebear-avatar"
+                              src={`https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(item.tag)}`}
+                              alt=""
+                              onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
+                            />
+                            <span className="reg-pill-copy">
+                              <span className="reg-handle-tag">₦{item.tag}</span>
+                              <span className="reg-activity-kind">{item.activity === 'used' ? 'Used recently' : 'Just claimed'}</span>
+                            </span>
+                          </button>
+                        ))}
                       </div>
                     ))}
                   </div>
                 </div>
-
-              </div>
+              )}
             </main>
 
           </div>
@@ -4077,7 +4276,9 @@ export default function App() {
               {celebrationDetails.type === 'payment' && `USDC Payment Sent to ${celebrationDetails.recipient}`}
               {celebrationDetails.type === 'swap' && `Swapped: ${celebrationDetails.amount}`}
               {celebrationDetails.type === 'agent' && `Agent Minted: ${celebrationDetails.amount}`}
-              {celebrationDetails.type === 'claim' && `Sovereign Tag Claimed: ${celebrationDetails.amount}`}
+          {celebrationDetails.type === 'claim' && (celebrationDetails.erc8004LinkError
+            ? `Tag claimed. ERC-8004 link needs approval: ${celebrationDetails.amount}`
+            : `Tag claimed${celebrationDetails.erc8004Id ? ` and linked as ERC-8004 #${celebrationDetails.erc8004Id}` : ''}: ${celebrationDetails.amount}`)}
             </div>
 
             {/* Ticket receipt */}
@@ -4108,6 +4309,25 @@ export default function App() {
               >
                 View on ArcScan ↗
               </a>
+              {celebrationDetails.erc8004Id && (
+                <a
+                  href={`https://erc-8004.quicknode.com/agents/arc-testnet/${celebrationDetails.erc8004Id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="quick-chip-btn"
+                  style={{ textAlign: 'center', justifyContent: 'center', padding: '6px', marginTop: '6px' }}
+                >
+                  View ERC-8004 agent #{celebrationDetails.erc8004Id} ↗
+                </a>
+              )}
+              {celebrationDetails.erc8004LinkError && (
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ color: 'var(--privy-color-foreground-2)', fontSize: '11px', marginBottom: '6px' }}>{celebrationDetails.erc8004LinkError}</div>
+                  <button type="button" className="btn-action-primary" disabled={isRetryingArcAgentLink} onClick={handleRetryArcAgentLink}>
+                    {isRetryingArcAgentLink ? 'Linking to ERC-8004…' : 'Complete ERC-8004 link'}
+                  </button>
+                </div>
+              )}
             </div>
 
             <button
@@ -4161,7 +4381,7 @@ export default function App() {
               disabled={!claimStatus?.available || isClaiming}
               onClick={handleExecuteClaim}
             >
-              {isClaiming ? 'Claiming on Arc...' : 'Confirm & Claim ₦Tag'}
+              {isClaiming ? 'Claiming & linking ERC-8004…' : 'Claim & link ERC-8004'}
             </button>
           </div>
         </div>
@@ -4172,372 +4392,98 @@ export default function App() {
           ─────────────────────────────────────────────────────────────────── */}
       {selectedAgentProfile && (
         <div className="agent-modal-backdrop" onClick={() => setSelectedAgentProfile(null)}>
-          <div className="agent-modal-dialog" onClick={(e) => e.stopPropagation()}>
-            {/* Header */}
-            <div className="agent-modal-header">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px' }}>🤖</span>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--privy-color-foreground)' }}>
-                    {selectedAgentProfile.name}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>
-                    Arc ERC-8004 Token #{selectedAgentProfile.id}
-                  </div>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="agent-modal-close-btn"
-                onClick={() => setSelectedAgentProfile(null)}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="agent-modal-body">
-              {/* Sovereign Passport Preview Banner */}
-              <div className="agent-passport-stage">
-                <div className="agent-passport-watermark">₦</div>
-                <div className="agent-passport-top">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '22px', fontWeight: 900 }}>₦</span>
-                    <span className="card-net-pill">Arc Osaka EVM</span>
-                  </div>
-                  <img
-                    src="/verified-badge.png"
-                    alt="Verified"
-                    style={{ width: '20px', height: '20px' }}
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '8px 0' }}>
-                  <img
-                    src={selectedAgentProfile.avatar}
-                    alt={selectedAgentProfile.name}
-                    style={{
-                      width: '46px',
-                      height: '46px',
-                      borderRadius: '50%',
-                      background: '#ffffff',
-                      border: '2px solid rgba(0,0,0,0.15)',
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div>
-                    <div className="agent-passport-handle">₦{selectedAgentProfile.tag.toUpperCase()}</div>
-                    <div className="agent-passport-role">{selectedAgentProfile.role}</div>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(0,0,0,0.1)' }}>
-                  <span style={{ fontSize: '11px', fontWeight: 800 }}>Earnings: {selectedAgentProfile.earnings}</span>
-                  <span style={{ fontSize: '11px', fontWeight: 700, opacity: 0.8 }}>Owner: {shorten(selectedAgentProfile.owner)}</span>
-                </div>
-              </div>
-
-              {/* Mode Tabs: ✦ Overview, 🔗 Share, 🎁 Referral, 📱 QR Code */}
-              <div className="agent-profile-tabs">
+          <div className="agent-modal-dialog" onClick={(event) => event.stopPropagation()}>
+            <div className="agent-profile-content">
+              <div className="agent-profile-title-row">
                 <button
                   type="button"
-                  className={`agent-profile-tab-btn ${agentProfileTab === 'overview' ? 'active' : ''}`}
-                  onClick={() => setAgentProfileTab('overview')}
+                  className="agent-modal-close-btn"
+                  onClick={() => setSelectedAgentProfile(null)}
+                  aria-label="Close profile"
                 >
-                  ✦ Overview
-                </button>
-                <button
-                  type="button"
-                  className={`agent-profile-tab-btn ${agentProfileTab === 'share' ? 'active' : ''}`}
-                  onClick={() => setAgentProfileTab('share')}
-                >
-                  🔗 Share
-                </button>
-                <button
-                  type="button"
-                  className={`agent-profile-tab-btn ${agentProfileTab === 'refer' ? 'active' : ''}`}
-                  onClick={() => setAgentProfileTab('refer')}
-                >
-                  🎁 Referral
-                </button>
-                <button
-                  type="button"
-                  className={`agent-profile-tab-btn ${agentProfileTab === 'qr' ? 'active' : ''}`}
-                  onClick={() => setAgentProfileTab('qr')}
-                >
-                  📱 QR Code
-                </button>
-                <button
-                  type="button"
-                  className={`agent-profile-tab-btn ${agentProfileTab === 'chat' ? 'active' : ''}`}
-                  onClick={() => setAgentProfileTab('chat')}
-                >
-                  💬 Chat
+                  <X size={16} />
                 </button>
               </div>
 
-              {/* Tab 1: OVERVIEW */}
-              {agentProfileTab === 'overview' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div className="agent-specs-table">
-                    <div className="agent-spec-row">
-                      <span className="agent-spec-label">Canonical Tag</span>
-                      <span className="agent-spec-value">₦{selectedAgentProfile.tag.toUpperCase()}</span>
-                    </div>
-                    <div className="agent-spec-row">
-                      <span className="agent-spec-label">Token ID</span>
-                      <span className="agent-spec-value">#{selectedAgentProfile.id}</span>
-                    </div>
-                    <div className="agent-spec-row">
-                      <span className="agent-spec-label">Category</span>
-                      <span className="agent-spec-value" style={{ fontFamily: 'var(--font-maru)' }}>
-                        {selectedAgentProfile.category}
-                      </span>
-                    </div>
-                    <div className="agent-spec-row">
-                      <span className="agent-spec-label">Owner Wallet</span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span className="agent-spec-value">{shorten(selectedAgentProfile.owner)}</span>
-                        <button
-                          type="button"
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-                          onClick={() => triggerCopy(`agent_owner_${selectedAgentProfile.id}`, selectedAgentProfile.owner)}
-                          title="Copy Owner Address"
-                        >
-                          <Copy size={12} color="var(--privy-color-foreground-2)" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="agent-spec-row">
-                      <span className="agent-spec-label">Metadata URI</span>
-                      <span className="agent-spec-value" style={{ fontSize: '10.5px', color: 'var(--primary, #0052FF)' }}>
-                        {shorten(selectedAgentProfile.metadataUri)}
-                      </span>
-                    </div>
-                    <div className="agent-spec-row">
-                      <span className="agent-spec-label">Attested Reputation</span>
-                      <span className="agent-spec-value" style={{ color: '#10B981' }}>
-                        {agentProfileLiveData?.logs ? `${agentProfileLiveData.logs.length} Onchain Logs` : 'Attested on Arc'}
-                      </span>
-                    </div>
+              <div className="agent-profile-main-row">
+                <img className="agent-profile-avatar" src={selectedAgentProfile.avatar} alt="" />
+                <div className="agent-profile-heading-copy">
+                  <div className="agent-profile-name-line">
+                    <h2>₦{selectedAgentProfile.tag.toUpperCase()}</h2>
+                    {selectedAgentProfile.profileType !== 'claimed-tag' && (
+                      <img
+                        className="agent-profile-verified-badge"
+                        src="/verified-badge.png"
+                        alt="Verified"
+                        title="Verified agent"
+                      />
+                    )}
                   </div>
-
-                  <div className="agent-profile-actions">
-                    <button
-                      type="button"
-                      className="btn-agent-primary"
-                      onClick={() => handlePayAgentFromProfile(selectedAgentProfile)}
-                    >
-                      <Send size={14} />
-                      <span>Pay ₦{selectedAgentProfile.tag.toUpperCase()}</span>
-                    </button>
-                    <a
-                      href={`https://8004scan.io/agent/${selectedAgentProfile.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-agent-secondary"
-                    >
-                      <ExternalLink size={14} />
-                      <span>8004scan ↗</span>
-                    </a>
+                  <div className="agent-profile-subtitle">
+                    {selectedAgentProfile.profileType === 'claimed-tag' ? 'NairaTag on Arc' : selectedAgentProfile.name}
                   </div>
                 </div>
-              )}
-
-              {/* Tab 2: SHARE */}
-              {agentProfileTab === 'share' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--privy-color-foreground-2)' }}>
-                    Share this verified autonomous agent with your community:
-                  </div>
-
-                  <div className="share-actions-grid">
-                    <button
-                      type="button"
-                      className="share-btn"
-                      onClick={() => {
-                        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                          `Check out ₦${selectedAgentProfile.tag} on @NairaTag Arc Network! ERC-8004 Verified Agent #${selectedAgentProfile.id} 🤖 https://nairatag.ng/agent/${selectedAgentProfile.id}`
-                        )}`;
-                        window.open(url, '_blank', 'noopener,noreferrer');
-                      }}
-                    >
-                      <span>𝕏 Share on X</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="share-btn"
-                      onClick={() => {
-                        const url = `https://t.me/share/url?url=${encodeURIComponent(`https://nairatag.ng/agent/${selectedAgentProfile.id}`)}&text=${encodeURIComponent(`Check out ₦${selectedAgentProfile.tag} - ERC-8004 Agent on Arc`)}`;
-                        window.open(url, '_blank', 'noopener,noreferrer');
-                      }}
-                    >
-                      <span>✈️ Telegram</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="share-btn"
-                      onClick={() => {
-                        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ₦${selectedAgentProfile.tag} on NairaTag Arc: https://nairatag.ng/agent/${selectedAgentProfile.id}`)}`;
-                        window.open(url, '_blank', 'noopener,noreferrer');
-                      }}
-                    >
-                      <span>💬 WhatsApp</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="share-btn"
-                      onClick={() => triggerCopy(`share_agent_${selectedAgentProfile.id}`, `https://nairatag.ng/agent/${selectedAgentProfile.id}`)}
-                    >
-                      <span>{copiedKey === `share_agent_${selectedAgentProfile.id}` ? '✓ Copied Link' : '🔗 Copy Direct Link'}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 3: REFER & PAY */}
-              {agentProfileTab === 'refer' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ fontSize: '12px', color: 'var(--privy-color-foreground-2)', lineHeight: 1.4 }}>
-                    Invite users to interact with ₦{selectedAgentProfile.tag.toUpperCase()}. Earn onchain protocol referral points on every Arc settlement!
-                  </div>
-
-                  <div className="referral-link-box">
-                    <span className="referral-link-text">
-                      {`https://nairatag.ng/claim?ref=₦${selectedAgentProfile.tag}`}
-                    </span>
-                    <button
-                      type="button"
-                      className="referral-copy-btn"
-                      onClick={() => triggerCopy(`refer_agent_${selectedAgentProfile.id}`, `https://nairatag.ng/claim?ref=₦${selectedAgentProfile.tag}`)}
-                    >
-                      {copiedKey === `refer_agent_${selectedAgentProfile.id}` ? '✓ Copied' : 'Copy'}
-                    </button>
-                  </div>
-
+                {selectedAgentProfile.profileType !== 'claimed-tag' && (
                   <button
                     type="button"
-                    className="btn-agent-primary"
-                    style={{ width: '100%', marginTop: '4px' }}
-                    onClick={() => handlePayAgentFromProfile(selectedAgentProfile)}
+                    className={`agent-follow-button agent-follow-button-inline ${agentFollowState.following ? 'following' : ''}`}
+                    onClick={handleToggleAgentFollow}
+                    disabled={agentFollowState.loading || agentFollowState.updating || String(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner || '').toLowerCase() === String(walletAddress || '').toLowerCase()}
+                    aria-pressed={agentFollowState.following}
                   >
-                    <Send size={14} />
-                    <span>Send Payment to ₦{selectedAgentProfile.tag.toUpperCase()}</span>
+                    {agentFollowState.loading ? '…' : agentFollowState.updating ? 'Saving…' : String(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner || '').toLowerCase() === String(walletAddress || '').toLowerCase() ? 'Your agent' : agentFollowState.following ? 'Following' : 'Follow'}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
 
-              {/* Tab 4: QR CODE */}
-              {agentProfileTab === 'qr' && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ background: '#FFFFFF', padding: '12px', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.1)' }}>
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`arc:${selectedAgentProfile.owner}?tag=₦${selectedAgentProfile.tag.toUpperCase()}`)}`}
-                      alt="Agent QR Code"
-                      style={{ width: '160px', height: '160px', display: 'block' }}
-                    />
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', textAlign: 'center' }}>
-                    Scan with any EVM or Arc camera to resolve ₦{selectedAgentProfile.tag.toUpperCase()} instantly.
-                  </div>
-                  <button
-                    type="button"
-                    className="share-btn"
-                    style={{ width: '100%' }}
-                    onClick={() => triggerCopy(`agent_qr_uri_${selectedAgentProfile.id}`, `arc:${selectedAgentProfile.owner}?tag=₦${selectedAgentProfile.tag.toUpperCase()}`)}
-                  >
-                    <span>{copiedKey === `agent_qr_uri_${selectedAgentProfile.id}` ? '✓ Copied URI' : '📋 Copy Resolver URI'}</span>
-                  </button>
-                </div>
-              )}
+              <p className="agent-profile-description">
+                {selectedAgentProfile.profileType === 'claimed-tag' ? 'NairaTag holder' : selectedAgentProfile.role}
+              </p>
 
-              {/* Tab 5: INTERACTIVE AI AGENT CHAT */}
-              {agentProfileTab === 'chat' && (
-                <div className="agent-chat-box">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 10px', background: 'var(--privy-color-background-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--privy-color-border-subtle)', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--privy-color-foreground)' }}>Online on Arc Osaka</span>
-                    </div>
-                    <span style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>ERC-8004 #{selectedAgentProfile.id}</span>
-                  </div>
+              <div className="agent-profile-stats">
+                <div><strong>{selectedAgentProfile.profileType === 'claimed-tag' ? '—' : agentFollowState.loading ? '…' : agentFollowState.error ? '—' : agentFollowState.followerCount}</strong><span>Followers</span></div>
+                <div><strong>{selectedAgentProfile.earnings || '—'}</strong><span>Earned</span></div>
+                <div><strong>{selectedAgentProfile.id ? `#${selectedAgentProfile.id}` : '—'}</strong><span>Agent ID</span></div>
+                <div><strong>{selectedAgentProfile.profileType === 'claimed-tag'
+                  ? selectedAgentProfile.profileLoading ? '…' : selectedAgentProfile.completedTaskCount ?? '—'
+                  : agentProfileLiveLoading ? '…' : agentProfileLiveData?.completedTaskCount ?? '—'}</strong><span>Tasks done</span></div>
+              </div>
 
-                  {/* Suggestion Chips */}
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
-                    {[
-                      'Send 10 USDC',
-                      'What are your services?',
-                      'Check reputation score',
-                      'How do I claim a ₦Tag?',
-                    ].map((prompt, pIdx) => (
-                      <button
-                        key={pIdx}
-                        type="button"
-                        className="quick-chip-btn"
-                        style={{ fontSize: '10.5px', padding: '3px 8px' }}
-                        onClick={() => handleSendAgentChat(selectedAgentProfile.id, prompt)}
-                      >
-                        {prompt}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Messages scroll area */}
-                  <div className="agent-chat-messages" style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', padding: '8px', background: 'var(--privy-color-background-surface-2)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--privy-color-border-subtle)' }}>
-                    {(agentChatMessages[selectedAgentProfile.id] || [
-                      {
-                        sender: 'agent',
-                        text: `Hello! I am ${selectedAgentProfile.name} (₦${selectedAgentProfile.tag.toUpperCase()}), verified under Arc ERC-8004 (#${selectedAgentProfile.id}). How can I assist you with autonomous tasks, escrow milestones, or micro-settlements on Arc Osaka EVM?`,
-                        time: 'Just now'
-                      }
-                    ]).map((msg, mIdx) => (
-                      <div
-                        key={mIdx}
-                        className={`agent-chat-bubble ${msg.sender === 'user' ? 'user-bubble' : 'agent-bubble'}`}
-                        style={{
-                          alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
-                          maxWidth: '85%',
-                          padding: '7px 10px',
-                          borderRadius: msg.sender === 'user' ? '12px 12px 2px 12px' : '12px 12px 12px 2px',
-                          background: msg.sender === 'user' ? 'var(--privy-color-interactive)' : 'var(--privy-color-background-surface)',
-                          color: msg.sender === 'user' ? '#ffffff' : 'var(--privy-color-foreground)',
-                          fontSize: '11.5px',
-                          lineHeight: 1.4,
-                          boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                        }}
-                      >
-                        <div>{msg.text}</div>
-                        <div style={{ fontSize: '9px', opacity: 0.7, textAlign: 'right', marginTop: '2px' }}>{msg.time}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Chat input row */}
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSendAgentChat(selectedAgentProfile.id);
-                    }}
-                    style={{ display: 'flex', gap: '6px', marginTop: '8px' }}
-                  >
-                    <input
-                      type="text"
-                      className="token-amount-field"
-                      style={{ flex: 1, fontSize: '12px', padding: '7px 10px' }}
-                      placeholder={`Ask ₦${selectedAgentProfile.tag.toUpperCase()}...`}
-                      value={agentChatInput}
-                      onChange={(e) => setAgentChatInput(e.target.value)}
-                    />
+              <div className="agent-profile-detail-row">
+                <div className="agent-profile-category">{selectedAgentProfile.category || 'NairaTag'}</div>
+                <div className="agent-profile-owner">
+                  <span>Owner</span>
+                  <strong>{selectedAgentProfile.profileType === 'claimed-tag' && selectedAgentProfile.profileLoading
+                    ? 'Loading…'
+                    : (agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)
+                      ? shorten(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)
+                      : 'Unavailable'}</strong>
+                  {(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner) && (
                     <button
-                      type="submit"
-                      className="btn-action-primary"
-                      style={{ padding: '0 12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      disabled={!agentChatInput.trim()}
-                    >
-                      <Send size={13} />
-                    </button>
-                  </form>
+                      type="button"
+                      onClick={() => triggerCopy(`agent_owner_${selectedAgentProfile.id || selectedAgentProfile.tag}`, agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)}
+                      aria-label="Copy owner address"
+                    ><Copy size={14} /></button>
+                  )}
                 </div>
+              </div>
+
+              <div className="agent-profile-card-actions">
+                <button
+                  type="button"
+                  className="agent-profile-pay-button agent-profile-pay-full"
+                  disabled={selectedAgentProfile.profileType === 'claimed-tag' && (!selectedAgentProfile.owner || selectedAgentProfile.profileLoading)}
+                  onClick={() => handlePayAgentFromProfile(selectedAgentProfile)}
+                ><Send size={15} /> Pay ₦{selectedAgentProfile.tag.toUpperCase()}</button>
+              </div>
+
+              {selectedAgentProfile.profileType !== 'claimed-tag' && (
+                <a
+                  className="agent-profile-explorer-link"
+                  href={`https://erc-8004.quicknode.com/agents/arc-testnet/${selectedAgentProfile.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >View agent on 8004scan <ExternalLink size={12} /></a>
               )}
             </div>
           </div>
@@ -4633,11 +4579,11 @@ export default function App() {
               </div>
 
               <div style={{ padding: '8px 10px', background: 'rgba(0, 82, 255, 0.06)', borderRadius: '6px', border: '1px solid rgba(0, 82, 255, 0.15)', fontSize: '11px', color: 'var(--privy-color-interactive)' }}>
-                🔒 <strong>Smart Escrow Guarantee:</strong> Bounty funds are locked in the Arc Osaka escrow smart contract and released deterministically upon milestone verification.
+                🔒 <strong>Smart Escrow:</strong> Funds are locked until milestone verification.
               </div>
 
               <button type="submit" className="btn-action-primary" style={{ marginTop: '4px' }}>
-                Lock in Escrow & Publish Bounty
+                Create Task
               </button>
             </form>
           </div>

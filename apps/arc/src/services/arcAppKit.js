@@ -11,8 +11,6 @@
  * - Earn: Native USDC yield / vault opportunities
  */
 
-import { SwapKit, Blockchain } from "@circle-fin/swap-kit";
-import { createViemAdapterFromProvider } from "@circle-fin/adapter-viem-v2";
 import { ARC_TESTNET_CONFIG } from "../config/arc.js";
 
 // Supported tokens on Arc per Arc documentation
@@ -47,25 +45,25 @@ export const ARC_SUPPORTED_SWAP_TOKENS = [
 // App Kit Crosschain Target Chains
 export const APP_KIT_CROSSCHAINS = [
   {
-    chain: Blockchain.Arc_Testnet,
+    chain: "Arc_Testnet",
     name: "Arc Testnet",
     chainId: 5042002,
     badge: "Native Osaka",
   },
   {
-    chain: Blockchain.Base_Sepolia,
+    chain: "Base_Sepolia",
     name: "Base Sepolia",
     chainId: 84532,
     badge: "CCTP v2",
   },
   {
-    chain: Blockchain.Arbitrum_Sepolia,
+    chain: "Arbitrum_Sepolia",
     name: "Arbitrum Sepolia",
     chainId: 421614,
     badge: "CCTP v2",
   },
   {
-    chain: Blockchain.Ethereum_Sepolia,
+    chain: "Ethereum_Sepolia",
     name: "Ethereum Sepolia",
     chainId: 11155111,
     badge: "CCTP v2",
@@ -73,12 +71,12 @@ export const APP_KIT_CROSSCHAINS = [
 ];
 
 // Initialize SwapKit instance
-let swapKitInstance = null;
-export function getSwapKit() {
-  if (!swapKitInstance) {
-    swapKitInstance = new SwapKit();
+let swapKitInstancePromise = null;
+export async function getSwapKit() {
+  if (!swapKitInstancePromise) {
+    swapKitInstancePromise = import("@circle-fin/swap-kit").then(({ SwapKit }) => new SwapKit());
   }
-  return swapKitInstance;
+  return swapKitInstancePromise;
 }
 
 /**
@@ -114,7 +112,7 @@ export async function estimateAppKitSwap({
 
   // Attempt live estimation via SwapKit SDK if available
   try {
-    const kit = getSwapKit();
+    const kit = await getSwapKit();
     // SwapKit accepts estimate if network call succeeds
     // We return standardized payload
     return {
@@ -176,6 +174,7 @@ export async function executeAppKitSwap({
   let adapter = null;
   if (provider) {
     try {
+      const { createViemAdapterFromProvider } = await import("@circle-fin/adapter-viem-v2");
       adapter = createViemAdapterFromProvider({ provider });
     } catch (e) {
       console.warn("Adapter setup fallback:", e);
@@ -196,7 +195,7 @@ export async function executeAppKitSwap({
       : `Submitting swap transaction on Arc Testnet (USDC sub-second finality)...`,
   });
 
-  const kit = getSwapKit();
+  const kit = await getSwapKit();
 
   // If live adapter is ready and connected to proper chain, execute kit.swap
   if (adapter) {

@@ -45,6 +45,13 @@ export async function listArcTasks(walletAddress = '') {
   return { tasks: (payload.tasks || []).map(mapTask), progress: mapProgress(payload.progress) };
 }
 
+export async function getArcAgentCompletedTaskCount(agentWallet) {
+  const url = new URL(ARC_TASKS_API);
+  url.searchParams.set('agentWallet', agentWallet);
+  const payload = await readResponse(await fetch(url, { headers: { Accept: 'application/json' } }));
+  return Number(payload.completedTaskCount || 0);
+}
+
 async function submitSignedAction({ action, taskId, walletAddress, deliverable }) {
   const provider = typeof window !== 'undefined' ? window.ethereum : null;
   if (!provider?.request) throw new Error('A compatible wallet is required to sign this task action.');

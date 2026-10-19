@@ -3419,11 +3419,11 @@ export default function App() {
               </div>
 
               <div style={{ padding: '8px 10px', background: 'rgba(0, 82, 255, 0.06)', borderRadius: '6px', border: '1px solid rgba(0, 82, 255, 0.15)', fontSize: '11px', color: 'var(--privy-color-interactive)' }}>
-                🔒 <strong>Smart Escrow Guarantee:</strong> Bounty funds are locked in the Arc Osaka escrow smart contract and released deterministically upon milestone verification.
+                🔒 <strong>Smart Escrow:</strong> Funds are locked until milestone verification.
               </div>
 
               <button type="submit" className="btn-action-primary" style={{ marginTop: '4px' }}>
-                Lock in Escrow & Publish Bounty
+                Create Task
               </button>
             </form>
           </div>

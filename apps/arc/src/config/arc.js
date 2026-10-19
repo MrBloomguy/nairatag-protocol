@@ -228,6 +228,13 @@ export const ERC8004_IDENTITY_ABI = [
     outputs: [{ name: '', type: 'string' }],
   },
   {
+    type: 'function',
+    name: 'setAgentURI',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'agentId', type: 'uint256' }, { name: 'newURI', type: 'string' }],
+    outputs: [],
+  },
+  {
     type: 'event',
     name: 'Transfer',
     anonymous: false,
