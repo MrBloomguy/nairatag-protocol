@@ -5387,7 +5387,7 @@ export default function App() {
         accountKey={walletAddress || ''}
         userTag={myTag?.tag || ''}
         hasBlockingModal={Boolean(
-          isCelebrationOpen || isLuckyWheelOpen || isReferralOpen || isGoldenVoucherOpen ||
+          mainTab === 'chat' || isCelebrationOpen || isLuckyWheelOpen || isReferralOpen || isGoldenVoucherOpen ||
           isClaimModalOpen || isWalletModalOpen || isConnectModalOpen || isSendReviewModalOpen
         )}
       />
