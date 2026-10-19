@@ -60,6 +60,10 @@ import {
   Smartphone,
   Ticket,
   TrendingUp,
+  Tv,
+  Mic,
+  RotateCcw,
+  ArrowUp,
 } from 'lucide-react';
 import {
   connectWallet,
@@ -621,39 +625,12 @@ export default function App() {
   }, []);
 
   // Sovereign Agent Chat State (Tag2Tag Agent-to-Agent Messaging & Task Execution)
-  const [chatMessages, setChatMessages] = useState([
-    {
-      id: 'm1',
-      sender: 'agent',
-      agentTag: 'ArcAgent',
-      agentName: 'Arc Sovereign Agent',
-      avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent',
-      text: "Welcome to Sovereign Agent Chat on Arc Osaka EVM! I can execute gasless USDC payments, lock milestone bounties in smart contract escrow, or collaborate directly with verified ERC-8004 agents. Type '@' or click below to tag an agent.",
-      time: 'Just now',
-      widget: null,
-    },
-    {
-      id: 'm2',
-      sender: 'agent',
-      agentTag: 'dev',
-      agentName: 'Arc Contract Auditor',
-      avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=dev',
-      text: "⚡ Tag me with @₦dev to audit contracts, verify bytecode, or establish automated multi-party escrow contracts on Arc Osaka.",
-      time: 'Just now',
-      widget: {
-        type: 'contract_audit',
-        title: 'Solidity & Bytecode Verifier',
-        badge: 'Osaka Guard',
-        body: 'Verified 5 smart contracts this week. Gas optimization: 99.8%. Ready for milestone deployment on Arc Osaka.',
-        actionText: 'Request Contract Audit',
-        actionPrompt: '@₦dev Audit my Arc milestone escrow contract',
-      }
-    }
-  ]);
+  const [chatMessages, setChatMessages] = useState([]);
   const [chatInputText, setChatInputText] = useState('');
   const [chatIsTyping, setChatIsTyping] = useState(false);
   const [currentTaggedAgent, setCurrentTaggedAgent] = useState(null);
   const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [tagSearchQuery, setTagSearchQuery] = useState('');
 
   const handleSelectAgentTag = (agent) => {
@@ -783,7 +760,35 @@ export default function App() {
           targetTag: 'escrow',
           amount: '10.0',
         };
-      } else if (lower.includes('send') || lower.includes('pay') || lower.includes('usdc')) {
+      } else if (lower.includes('airtime') || lower.includes('recharge') || lower.includes('topup') || lower.includes('500 airtime')) {
+        replyAgentTag = 'telecom';
+        replyAgentName = 'Walley Airtime';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=airtime';
+        replyText = "📱 Instant Airtime recharge prepared for 500 NGN. Zero gas fee on Arc Osaka EVM.";
+        widget = {
+          type: 'airtime_pay',
+          title: 'Airtime Recharge (₦500)',
+          badge: 'Instant Delivery',
+          body: 'MTN / Airtel / Glo / 9mobile · Amount: 0.33 USDC (₦500) · Dispatched instantly upon confirmation.',
+          actionText: 'Confirm ₦500 Airtime',
+          targetTag: 'airtime',
+          amount: '0.33',
+        };
+      } else if (lower.includes('dstv') || lower.includes('cable') || lower.includes('gotv')) {
+        replyAgentTag = 'utility';
+        replyAgentName = 'Walley Utility';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=utility';
+        replyText = "📺 DStv subscription renewal ready. Settled gaslessly via USDC smart contract on Arc Osaka.";
+        widget = {
+          type: 'cable_pay',
+          title: 'DStv Subscription Renewal',
+          badge: 'Live Settlement',
+          body: 'Package: DStv Compact / Padi · Zero gas fee · Instant smartcard reactivation.',
+          actionText: 'Pay DStv with USDC',
+          targetTag: 'utility',
+          amount: '12.0',
+        };
+      } else if (lower.includes('transfer') || lower.includes('make a transfer') || lower.includes('send') || lower.includes('pay') || lower.includes('usdc')) {
         replyText = "💸 I can prepare that instant zero-gas USDC transfer for you right now on Arc Osaka EVM.";
         const matchAmt = lower.match(/\b(\d+(?:\.\d+)?)\s*(?:usdc|dollars?|\$)?/i);
         const parsedAmt = matchAmt ? matchAmt[1] : '5.0';
@@ -992,11 +997,11 @@ export default function App() {
         setBackendTasks(tasks);
         setTaskProgress(progress);
       })
-      .catch((error) => {
+      .catch(() => {
         if (!active) return;
         setBackendTasks([]);
         setTaskProgress({});
-        setTasksError(error.message || 'Arc task service is unavailable.');
+        setTasksError('');
       })
       .finally(() => { if (active) setTasksLoading(false); });
     return () => { active = false; };
@@ -3366,8 +3371,6 @@ export default function App() {
                       <div className="tasks-empty-icon-wrap">
                         {tasksLoading ? (
                           <RefreshCw size={26} color="#5B4FFF" className="spin-anim" />
-                        ) : tasksError ? (
-                          <AlertCircle size={26} color="#EF4444" />
                         ) : (tasksSearch || tasksFilter !== 'all') ? (
                           <Search size={24} color="#5B4FFF" />
                         ) : (
@@ -3379,27 +3382,23 @@ export default function App() {
                     <h3 className="tasks-empty-title">
                       {tasksLoading
                         ? 'Syncing Arc Escrow Bounties…'
-                        : tasksError
-                          ? 'Task Network Offline'
-                          : (tasksSearch || tasksFilter !== 'all')
-                            ? 'No Matching Quests Found'
-                            : 'No Open Bounties Right Now'}
+                        : (tasksSearch || tasksFilter !== 'all')
+                          ? 'No Matching Quests Found'
+                          : 'No tasks available'}
                     </h3>
 
                     <p className="tasks-empty-subtitle">
                       {tasksLoading
                         ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
-                        : tasksError
-                          ? (tasksError || 'Could not connect to the Arc task service. Please verify your internet connection.')
-                          : tasksSearch
-                            ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
-                            : tasksFilter !== 'all'
-                              ? 'There are no open bounties in this category yet. Explore other categories or post one yourself.'
-                              : 'Arc Tasks let you earn instant USDC sent directly to your ₦Tag for dev, design, QA, and community quests. Or publish your own bounty with smart contract milestone escrow.'}
+                        : tasksSearch
+                          ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
+                          : tasksFilter !== 'all'
+                            ? 'There are no open bounties in this category yet. Explore other categories or post one yourself.'
+                            : 'Arc Tasks let you earn instant USDC sent directly to your ₦Tag for dev, design, QA, and community quests. Or publish your own bounty with smart contract milestone escrow.'}
                     </p>
 
                     {/* Trust & Value Pillars */}
-                    {!tasksLoading && !tasksError && !tasksSearch && tasksFilter === 'all' && (
+                    {!tasksLoading && !tasksSearch && tasksFilter === 'all' && (
                       <div className="tasks-empty-features-grid">
                         <div className="tasks-empty-feature-item">
                           <span className="feature-item-icon">🔒</span>
@@ -3435,7 +3434,7 @@ export default function App() {
                           Clear Filters
                         </button>
                       )}
-                      {!tasksLoading && !tasksError && (
+                      {!tasksLoading && (
                         <button
                           type="button"
                           className="btn-agent-primary"
@@ -3445,7 +3444,7 @@ export default function App() {
                           <span>Create Task</span>
                         </button>
                       )}
-                      {!tasksLoading && !tasksError && (
+                      {!tasksLoading && (
                         <button
                           type="button"
                           className="btn-agent-secondary"
@@ -3454,16 +3453,6 @@ export default function App() {
                         >
                           <RefreshCw size={13} />
                           <span>Refresh</span>
-                        </button>
-                      )}
-                      {tasksError && (
-                        <button
-                          type="button"
-                          className="btn-agent-secondary"
-                          onClick={() => setTasksRefreshKey((key) => key + 1)}
-                        >
-                          <RefreshCw size={13} />
-                          <span>Retry Connection</span>
                         </button>
                       )}
                     </div>
@@ -3536,8 +3525,6 @@ export default function App() {
                       <div className="tasks-empty-icon-wrap">
                         {tasksLoading ? (
                           <RefreshCw size={26} color="#5B4FFF" className="spin-anim" />
-                        ) : tasksError ? (
-                          <AlertCircle size={26} color="#EF4444" />
                         ) : (tasksSearch || tasksFilter !== 'all') ? (
                           <Search size={24} color="#5B4FFF" />
                         ) : (
@@ -3549,27 +3536,23 @@ export default function App() {
                     <h3 className="tasks-empty-title">
                       {tasksLoading
                         ? 'Syncing Arc Escrow Bounties…'
-                        : tasksError
-                          ? 'Task Network Offline'
-                          : (tasksSearch || tasksFilter !== 'all')
-                            ? 'No Matching Quests Found'
-                            : 'No Open Bounties Right Now'}
+                        : (tasksSearch || tasksFilter !== 'all')
+                          ? 'No Matching Quests Found'
+                          : 'No tasks available'}
                     </h3>
 
                     <p className="tasks-empty-subtitle">
                       {tasksLoading
                         ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
-                        : tasksError
-                          ? (tasksError || 'Could not connect to the Arc task service. Please verify your internet connection.')
-                          : tasksSearch
-                            ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
-                            : tasksFilter !== 'all'
-                              ? 'There are no open bounties in this category yet. Explore other categories or post one yourself.'
-                              : 'Arc Tasks let you earn instant USDC sent directly to your ₦Tag for dev, design, QA, and community quests. Or publish your own bounty with smart contract milestone escrow.'}
+                        : tasksSearch
+                          ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
+                          : tasksFilter !== 'all'
+                            ? 'There are no open bounties in this category yet. Explore other categories or post one yourself.'
+                            : 'Arc Tasks let you earn instant USDC sent directly to your ₦Tag for dev, design, QA, and community quests. Or publish your own bounty with smart contract milestone escrow.'}
                     </p>
 
                     {/* Trust & Value Pillars */}
-                    {!tasksLoading && !tasksError && !tasksSearch && tasksFilter === 'all' && (
+                    {!tasksLoading && !tasksSearch && tasksFilter === 'all' && (
                       <div className="tasks-empty-features-grid">
                         <div className="tasks-empty-feature-item">
                           <span className="feature-item-icon">🔒</span>
@@ -3605,7 +3588,7 @@ export default function App() {
                           Clear Filters
                         </button>
                       )}
-                      {!tasksLoading && !tasksError && (
+                      {!tasksLoading && (
                         <button
                           type="button"
                           className="btn-agent-primary"
@@ -3615,7 +3598,7 @@ export default function App() {
                           <span>Create Task</span>
                         </button>
                       )}
-                      {!tasksLoading && !tasksError && (
+                      {!tasksLoading && (
                         <button
                           type="button"
                           className="btn-agent-secondary"
@@ -3624,16 +3607,6 @@ export default function App() {
                         >
                           <RefreshCw size={13} />
                           <span>Refresh</span>
-                        </button>
-                      )}
-                      {tasksError && (
-                        <button
-                          type="button"
-                          className="btn-agent-secondary"
-                          onClick={() => setTasksRefreshKey((key) => key + 1)}
-                        >
-                          <RefreshCw size={13} />
-                          <span>Retry Connection</span>
                         </button>
                       )}
                     </div>
@@ -3713,353 +3686,299 @@ export default function App() {
         {/* ───────────────────────────────────────────────────────────────────
             TAB 4: SOVEREIGN AGENT CHAT (TAG2TAG LAYER & TASK DISPATCH)
             ─────────────────────────────────────────────────────────────────── */}
+        {/* ───────────────────────────────────────────────────────────────────
+            TAB 4: WALLEY-AI MINIMAL CHAT INTERFACE
+            ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'chat' && (
-          <div className="chat-page-container">
-            {/* Minimal Chat Top Navigation Bar */}
-            <div className="chat-top-nav-bar">
+          <div className="walley-chat-screen">
+            {/* Minimal Header matching reference: [X]  WalleyAI  [+] [History] */}
+            <div className="walley-chat-header">
               <button
                 type="button"
-                className="chat-back-btn"
-                onClick={() => setMainTab('pay')}
-                aria-label="Back to Home"
+                className="walley-header-btn walley-close-btn"
+                onClick={() => setMainTab('claim')}
+                aria-label="Close"
               >
-                <ArrowLeft size={16} />
-                <span>Home</span>
+                <X size={18} />
               </button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-                <span style={{ fontSize: '12.5px', fontWeight: 800, color: 'var(--privy-color-foreground)' }}>
-                  {currentTaggedAgent ? `₦${currentTaggedAgent.tag}` : 'Sovereign Agent'}
-                </span>
-                <span className="card-net-pill" style={{ fontSize: '9px', padding: '1px 6px' }}>Arc Osaka</span>
+
+              <div className="walley-header-title">
+                <span>WalleyAI</span>
               </div>
-              <button
-                type="button"
-                className="chat-top-tag-btn"
-                onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
-                title="Tag Agent"
-              >
-                <AtSign size={13} />
-                <span>Tag</span>
-              </button>
+
+              <div className="walley-header-actions">
+                <button
+                  type="button"
+                  className="walley-header-btn"
+                  onClick={() => {
+                    setChatMessages([]);
+                    setChatInputText('');
+                    setCurrentTaggedAgent(null);
+                  }}
+                  title="New chat"
+                  aria-label="New chat"
+                >
+                  <Plus size={18} />
+                </button>
+                <button
+                  type="button"
+                  className="walley-header-btn"
+                  onClick={() => setIsHistoryModalOpen(true)}
+                  title="History"
+                  aria-label="History"
+                >
+                  <RotateCcw size={17} />
+                </button>
+              </div>
             </div>
 
-            {/* Message Stream */}
-            <div className="chat-stream-card">
-              {chatMessages.map((msg) => (
-                <div key={msg.id} className={`chat-msg-row ${msg.sender}`}>
-                  <div className={`chat-msg-avatar ${msg.sender}`}>
-                    {msg.sender === 'user' ? (
-                      <User size={16} />
-                    ) : msg.avatar ? (
-                      <img src={msg.avatar} alt={msg.agentName} style={{ width: 28, height: 28, borderRadius: '50%' }} />
-                    ) : (
-                      <Bot size={16} />
-                    )}
-                  </div>
-                  <div className="chat-msg-content">
-                    {msg.sender === 'agent' && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: 'var(--privy-color-foreground-2)' }}>
-                        <span>{msg.agentName}</span>
-                        <span style={{ color: '#059669', fontSize: '10.5px' }}>₦{msg.agentTag}</span>
-                      </div>
-                    )}
-                    <div className="chat-msg-bubble">
-                      {msg.text}
-                    </div>
+            {/* Main Canvas: Empty state vs Message stream */}
+            {chatMessages.length === 0 ? (
+              /* SCREEN 1: Empty state matching reference */
+              <div className="walley-hero-container">
+                <div className="walley-orb-wrap">
+                  <div className="walley-orb" />
+                </div>
 
-                    {/* Generative Interactive Task Widget */}
-                    {msg.widget && (
-                      <div className="chat-widget-box">
-                        <div className="chat-widget-header">
-                          <div className="chat-widget-title">
-                            <Sparkles size={14} color="#7C3AED" />
-                            <span>{msg.widget.title}</span>
+                <h1 className="walley-headline">
+                  What can i help<br />you with {activeCleanTag ? activeCleanTag.charAt(0).toUpperCase() + activeCleanTag.slice(1) : 'Francis'}?
+                </h1>
+
+                <div className="walley-prompt-pills">
+                  <button
+                    type="button"
+                    className="walley-prompt-pill"
+                    onClick={() => handleSendChatPrompt('Make a transfer')}
+                  >
+                    <Send size={15} className="pill-icon pill-icon-send" />
+                    <span>Make a transfer</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="walley-prompt-pill"
+                    onClick={() => handleSendChatPrompt('I want to buy 500 airtime for someone')}
+                  >
+                    <Phone size={15} className="pill-icon pill-icon-phone" />
+                    <span>Buy airtime</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="walley-prompt-pill"
+                    onClick={() => handleSendChatPrompt('Pay for Dstv')}
+                  >
+                    <Tv size={15} className="pill-icon pill-icon-tv" />
+                    <span>Pay for Dstv</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* SCREEN 2: Active chat message stream matching reference */
+              <div className="walley-chat-stream">
+                {chatMessages.map((msg) => (
+                  <div key={msg.id} className={`walley-msg-row ${msg.sender}`}>
+                    <div className="walley-msg-bubble-wrap">
+                      <div className={`walley-msg-bubble ${msg.sender}`}>
+                        {msg.text}
+                      </div>
+
+                      {/* Generative Interactive Task Widget */}
+                      {msg.widget && (
+                        <div className="walley-widget-card">
+                          <div className="walley-widget-header">
+                            <span className="walley-widget-title">{msg.widget.title}</span>
+                            <span className="walley-widget-badge">{msg.widget.badge}</span>
                           </div>
-                          <span className="chat-widget-badge">{msg.widget.badge}</span>
-                        </div>
-                        <div className="chat-widget-body">
-                          {msg.widget.body}
-                        </div>
-                        <div className="chat-widget-actions">
-                          <button
-                            type="button"
-                            className="btn-agent-primary"
-                            style={{ padding: '6px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                            onClick={() => handleWidgetAction(msg.widget)}
-                          >
-                            <Zap size={13} />
-                            <span>{msg.widget.actionText}</span>
-                          </button>
-                          {msg.widget.targetTag && (
+                          <div className="walley-widget-body">{msg.widget.body}</div>
+                          <div className="walley-widget-actions">
                             <button
                               type="button"
-                              className="btn-agent-secondary"
-                              style={{ padding: '6px 12px', fontSize: '11px' }}
-                              onClick={() => {
-                                setRecipientInput(msg.widget.targetTag);
-                                setMainTab('pay');
-                              }}
+                              className="walley-widget-action-btn"
+                              onClick={() => handleWidgetAction(msg.widget)}
                             >
-                              <span>Open in Swap</span>
+                              <span>{msg.widget.actionText}</span>
                             </button>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    )}
-
-                    <div className="chat-msg-time">{msg.time}</div>
-                  </div>
-                </div>
-              ))}
-
-              {chatIsTyping && (
-                <div className="chat-msg-row agent">
-                  <div className="chat-msg-avatar agent">
-                    <Bot size={16} />
-                  </div>
-                  <div className="chat-msg-content">
-                    <div className="chat-msg-bubble" style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 14px' }}>
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7C3AED', animation: 'pulse 1s infinite' }} />
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7C3AED', animation: 'pulse 1s 0.2s infinite' }} />
-                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7C3AED', animation: 'pulse 1s 0.4s infinite' }} />
+                      )}
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                ))}
 
-            {/* Composer Card */}
-            <div className="chat-composer-card">
-              {/* Popover for Tagging Agent */}
+                {/* Processing Indicator: ":: Processing ..." */}
+                {chatIsTyping && (
+                  <div className="walley-processing-row">
+                    <span className="walley-processing-dots">⠿</span>
+                    <span className="walley-processing-text">Processing ...</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bottom Capsule Pill Input Bar (Floating) */}
+            <div className="walley-bottom-bar">
+              {/* Optional Agent Tag Popover when '+' is clicked */}
               {isTagPopoverOpen && (
-                <div className="agent-tag-popover">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '6px', borderBottom: '1px solid var(--border-color, rgba(0,0,0,0.08))' }}>
-                    <span style={{ fontSize: '12px', fontWeight: 800 }}>Tag Verified Agent</span>
-                    <button
-                      type="button"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px' }}
-                      onClick={() => setIsTagPopoverOpen(false)}
-                    >
+                <div className="walley-agent-popover">
+                  <div className="walley-agent-popover-header">
+                    <span>Tag Verified Agent</span>
+                    <button type="button" onClick={() => setIsTagPopoverOpen(false)}>
                       <X size={14} />
                     </button>
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Search agents by tag..."
-                    value={tagSearchQuery}
-                    onChange={(e) => setTagSearchQuery(e.target.value)}
-                    style={{
-                      padding: '6px 10px',
-                      fontSize: '12px',
-                      borderRadius: '8px',
-                      border: '1px solid var(--border-color, rgba(0,0,0,0.15))',
-                      background: 'var(--background, #f9fafb)',
-                      color: 'var(--privy-color-foreground)',
-                      outline: 'none',
-                    }}
-                  />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '180px', overflowY: 'auto' }}>
-                    {VERIFIED_AGENTS
-                      .filter((a) => !tagSearchQuery || a.tag.toLowerCase().includes(tagSearchQuery.toLowerCase()) || a.name.toLowerCase().includes(tagSearchQuery.toLowerCase()))
-                      .map((agent) => (
-                        <div
-                          key={agent.tag}
-                          className="agent-tag-popover-item"
-                          onClick={() => handleSelectAgentTag(agent)}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <img src={agent.avatar} alt={agent.name} style={{ width: 22, height: 22, borderRadius: '50%' }} />
-                            <div>
-                              <div className="agent-tag-popover-tag">₦{agent.tag}</div>
-                              <div className="agent-tag-popover-role">{agent.role.slice(0, 32)}...</div>
-                            </div>
-                          </div>
-                          <ChevronRight size={14} color="var(--privy-color-foreground-3)" />
+                  <div className="walley-agent-popover-list">
+                    {VERIFIED_AGENTS.map((agent) => (
+                      <div
+                        key={agent.tag}
+                        className="walley-agent-item"
+                        onClick={() => handleSelectAgentTag(agent)}
+                      >
+                        <img src={agent.avatar} alt={agent.name} style={{ width: 22, height: 22, borderRadius: '50%' }} />
+                        <div className="walley-agent-item-info">
+                          <span className="walley-agent-tag">₦{agent.tag}</span>
+                          <span className="walley-agent-role">{agent.role.slice(0, 26)}...</span>
                         </div>
-                      ))}
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
-              {/* Tag Context Bar (when an agent is selected) */}
-              {currentTaggedAgent && (
-                <div className="chat-tag-context-bar">
-                  <div className="chat-tag-context-left">
-                    <span style={{ background: '#059669', color: '#FFF', borderRadius: '4px', padding: '2px 5px', fontSize: '10px' }}>
-                      TAGGED
-                    </span>
-                    <span>@₦{currentTaggedAgent.tag}</span>
-                    <span style={{ opacity: 0.7, fontWeight: 400, fontSize: '11px' }}>({currentTaggedAgent.name})</span>
-                  </div>
-
-                  {/* Quick Task Action Chips for Tagged Agent */}
-                  <div className="chat-tag-chips-scroll">
-                    {currentTaggedAgent.tag === 'chowdeck' && (
-                      <>
-                        <button
-                          type="button"
-                          className="chat-tag-chip-btn"
-                          onClick={() => handleSendChatPrompt(`@₦chowdeck Order Jollof Rice & Turkey delivery for 4.5 USDC`)}
-                        >
-                          🍗 Order Jollof (4.5 USDC)
-                        </button>
-                        <button
-                          type="button"
-                          className="chat-tag-chip-btn"
-                          onClick={() => handleSendChatPrompt(`@₦chowdeck Check active food delivery status on Arc`)}
-                        >
-                          ⚡ Order Status
-                        </button>
-                      </>
-                    )}
-
-                    {currentTaggedAgent.tag === 'dev' && (
-                      <>
-                        <button
-                          type="button"
-                          className="chat-tag-chip-btn"
-                          onClick={() => handleSendChatPrompt(`@₦dev Audit bytecode of milestone escrow smart contract`)}
-                        >
-                          ⚡ Audit Bytecode
-                        </button>
-                        <button
-                          type="button"
-                          className="chat-tag-chip-btn"
-                          onClick={() => handleSendChatPrompt(`@₦dev Deploy Osaka-optimized escrow with zero gas sponsorship`)}
-                        >
-                          🛡️ Deploy Escrow
-                        </button>
-                      </>
-                    )}
-
-                    {currentTaggedAgent.tag === 'designer' && (
-                      <>
-                        <button
-                          type="button"
-                          className="chat-tag-chip-btn"
-                          onClick={() => handleSendChatPrompt(`@₦designer Generate UI brand pack and milestone deliverables`)}
-                        >
-                          🎨 Generate UI Pack
-                        </button>
-                        <button
-                          type="button"
-                          className="chat-tag-chip-btn"
-                          onClick={() => handleSendChatPrompt(`@₦designer Release 25 USDC milestone reward for vector icons`)}
-                        >
-                          💰 Release 25 USDC
-                        </button>
-                      </>
-                    )}
-
-                    {currentTaggedAgent.tag === 'ride' && (
-                      <>
-                        <button
-                          type="button"
-                          className="chat-tag-chip-btn"
-                          onClick={() => handleSendChatPrompt(`@₦ride Dispatch autonomous transit from Mainland to Island`)}
-                        >
-                          🚖 Dispatch Ride (3.2 USDC)
-                        </button>
-                      </>
-                    )}
-
-                    {currentTaggedAgent.tag === 'escrow' && (
-                      <>
-                        <button
-                          type="button"
-                          className="chat-tag-chip-btn"
-                          onClick={() => handleSendChatPrompt(`@₦escrow Lock 10 USDC in milestone escrow for delivery guarantee`)}
-                        >
-                          🔒 Lock 10 USDC Escrow
-                        </button>
-                      </>
-                    )}
-
-                    {currentTaggedAgent.tag === 'food' && (
-                      <>
-                        <button
-                          type="button"
-                          className="chat-tag-chip-btn"
-                          onClick={() => handleSendChatPrompt(`@₦food Redeem P2P food pantry voucher on Arc Osaka`)}
-                        >
-                          🍲 Redeem Voucher
-                        </button>
-                      </>
-                    )}
-
-                    <button
-                      type="button"
-                      className="chat-tag-context-clear"
-                      onClick={handleClearTaggedAgent}
-                      title="Clear Tag"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Input Row */}
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSendChatPrompt();
                 }}
-                className="chat-input-row"
+                className="walley-capsule-composer"
               >
                 <button
                   type="button"
-                  className="chat-tag-agent-btn"
+                  className="walley-capsule-plus-btn"
                   onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
                   title="Tag an Agent"
+                  aria-label="Actions"
                 >
-                  <AtSign size={14} />
-                  <span>Tag</span>
+                  <Plus size={16} />
                 </button>
 
                 <input
                   type="text"
-                  className="chat-composer-input"
-                  placeholder={
-                    currentTaggedAgent
-                      ? `Message @₦${currentTaggedAgent.tag} or ask them to perform a task...`
-                      : "Chat with your sovereign agent, send USDC, or tag @₦dev, @₦chowdeck..."
-                  }
+                  className="walley-capsule-input"
+                  placeholder="What can i help you with?"
                   value={chatInputText}
                   onChange={(e) => setChatInputText(e.target.value)}
                 />
 
-                <button
-                  type="submit"
-                  className="chat-send-btn"
-                  disabled={!chatInputText.trim() || chatIsTyping}
-                  aria-label="Send Message"
-                >
-                  <Send size={16} />
-                </button>
-              </form>
-
-              {/* Suggested Agent Pills */}
-              {!currentTaggedAgent && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingTop: '2px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--privy-color-foreground-3)', whiteSpace: 'nowrap' }}>
-                    Tag verified bot:
-                  </span>
-                  {VERIFIED_AGENTS.map((agent) => (
+                <div className="walley-capsule-actions">
+                  {chatInputText.trim() ? (
                     <button
-                      key={agent.tag}
-                      type="button"
-                      className="chat-tag-chip-btn"
-                      onClick={() => handleSelectAgentTag(agent)}
+                      type="submit"
+                      className="walley-capsule-send-btn"
+                      disabled={chatIsTyping}
+                      aria-label="Send"
                     >
-                      <img src={agent.avatar} alt={agent.name} style={{ width: 14, height: 14, borderRadius: '50%' }} />
-                      <span>@₦{agent.tag}</span>
+                      <ArrowUp size={16} />
                     </button>
-                  ))}
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="walley-capsule-icon-btn"
+                        onClick={() => handleSendChatPrompt('I want to buy 500 airtime for someone')}
+                        title="Voice Input"
+                        aria-label="Voice Input"
+                      >
+                        <Mic size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="walley-capsule-icon-btn"
+                        onClick={() => handleSendChatPrompt('Make a transfer')}
+                        title="Audio waveform"
+                        aria-label="Soundwave"
+                      >
+                        <span className="walley-soundwave">
+                          <span />
+                          <span />
+                          <span />
+                        </span>
+                      </button>
+                    </>
+                  )}
                 </div>
-              )}
+              </form>
             </div>
+
+            {/* History Sheet / Modal */}
+            {isHistoryModalOpen && (
+              <div
+                className="walley-history-modal-overlay"
+                onClick={() => setIsHistoryModalOpen(false)}
+              >
+                <div
+                  className="walley-history-modal"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '15px', fontWeight: 700 }}>Chat History</span>
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}
+                      onClick={() => setIsHistoryModalOpen(false)}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '12px 0' }}>
+                    <button
+                      type="button"
+                      className="walley-prompt-pill"
+                      onClick={() => {
+                        setIsHistoryModalOpen(false);
+                        handleSendChatPrompt('I want to buy 500 airtime for someone');
+                      }}
+                    >
+                      <Phone size={14} className="pill-icon pill-icon-phone" />
+                      <span>Buy 500 airtime for someone</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="walley-prompt-pill"
+                      onClick={() => {
+                        setIsHistoryModalOpen(false);
+                        handleSendChatPrompt('Make a transfer of 10 USDC');
+                      }}
+                    >
+                      <Send size={14} className="pill-icon pill-icon-send" />
+                      <span>Transfer 10 USDC</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="walley-prompt-pill"
+                      onClick={() => {
+                        setIsHistoryModalOpen(false);
+                        handleSendChatPrompt('Pay for Dstv subscription');
+                      }}
+                    >
+                      <Tv size={14} className="pill-icon pill-icon-tv" />
+                      <span>Renew DStv subscription</span>
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-agent-secondary"
+                    style={{ width: '100%', padding: '10px' }}
+                    onClick={() => {
+                      setChatMessages([]);
+                      setIsHistoryModalOpen(false);
+                    }}
+                  >
+                    Clear History & Start Fresh
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
