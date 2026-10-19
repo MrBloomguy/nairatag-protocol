@@ -3691,43 +3691,48 @@ export default function App() {
             ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'chat' && (
           <div className="walley-chat-screen">
-            {/* Minimal Header matching reference: [X]  WalleyAI  [+] [History] */}
-            <div className="walley-chat-header">
+            {/* Top Navigation Bar: Sovereign Agent on Arc Osaka (no outline background) */}
+            <div className="chat-top-nav-bar">
               <button
                 type="button"
-                className="walley-header-btn walley-close-btn"
+                className="chat-back-btn"
                 onClick={() => setMainTab('claim')}
-                aria-label="Close"
+                aria-label="Back to Home"
               >
-                <X size={18} />
+                <ArrowLeft size={16} />
+                <span>Home</span>
               </button>
 
-              <div className="walley-header-title">
-                <span>WalleyAI</span>
+              <div className="chat-header-center">
+                <span className="chat-status-dot" />
+                <span className="chat-header-agent-name">
+                  {currentTaggedAgent ? `₦${currentTaggedAgent.tag}` : 'Sovereign Agent'}
+                </span>
+                <span className="card-net-pill" style={{ fontSize: '9px', padding: '1px 6px' }}>Arc Osaka</span>
               </div>
 
-              <div className="walley-header-actions">
+              <div className="chat-header-actions">
                 <button
                   type="button"
-                  className="walley-header-btn"
+                  className="chat-top-new-btn"
                   onClick={() => {
                     setChatMessages([]);
                     setChatInputText('');
                     setCurrentTaggedAgent(null);
                   }}
-                  title="New chat"
-                  aria-label="New chat"
+                  title="New Chat"
+                  aria-label="New Chat"
                 >
-                  <Plus size={18} />
+                  <Plus size={16} />
                 </button>
                 <button
                   type="button"
-                  className="walley-header-btn"
-                  onClick={() => setIsHistoryModalOpen(true)}
-                  title="History"
-                  aria-label="History"
+                  className="chat-top-tag-btn"
+                  onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
+                  title="Tag Agent"
                 >
-                  <RotateCcw size={17} />
+                  <AtSign size={13} />
+                  <span>Tag</span>
                 </button>
               </div>
             </div>
