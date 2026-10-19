@@ -3268,21 +3268,22 @@ export default function App() {
               <>
             {/* Top Bar: Search and Grid/List View Toggle */}
             <div className="agents-top-bar">
-              <div className="agents-top-controls" style={{ width: '100%', justifyContent: 'space-between' }}>
-                {/* Search Bar */}
-                <div className="agents-search-input-wrap" style={{ flex: 1, maxWidth: '420px' }}>
-                  <Search size={14} color="var(--privy-color-foreground-3)" />
+              <div className="agents-top-controls task-top-controls" style={{ width: '100%', justifyContent: 'space-between', gap: '8px' }}>
+                {/* Search Bar (controlled compact width so Create Task button never gets pushed off) */}
+                <div className="agents-search-input-wrap task-search-wrap" style={{ flex: '0 1 170px', maxWidth: '190px', minWidth: 0 }}>
+                  <Search size={14} color="var(--privy-color-foreground-3)" style={{ flexShrink: 0 }} />
                   <input
                     type="text"
-                    className="agents-search-input"
-                    placeholder="Search bounties, skills, or tags..."
+                    className="agents-search-input task-search-input"
+                    placeholder="Search..."
                     value={tasksSearch}
                     onChange={(e) => setTasksSearch(e.target.value)}
+                    style={{ minWidth: 0, width: '100%' }}
                   />
                   {tasksSearch && (
                     <button
                       type="button"
-                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--privy-color-foreground-3)' }}
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--privy-color-foreground-3)', flexShrink: 0 }}
                       onClick={() => setTasksSearch('')}
                     >
                       <X size={13} />
@@ -3291,7 +3292,7 @@ export default function App() {
                 </div>
 
                 {/* Grid / List Switcher + Create Task Button */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div className="task-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: 'auto' }}>
                   <div className="agents-view-toggle">
                     <button
                       type="button"
@@ -3300,7 +3301,7 @@ export default function App() {
                       title="Grid View"
                       aria-label="Grid View"
                     >
-                      <LayoutGrid size={15} />
+                      <LayoutGrid size={14} />
                     </button>
                     <button
                       type="button"
@@ -3309,14 +3310,14 @@ export default function App() {
                       title="List View"
                       aria-label="List View"
                     >
-                      <List size={15} />
+                      <List size={14} />
                     </button>
                   </div>
 
                   <button
                     type="button"
-                    className="btn-agent-primary"
-                    style={{ padding: '6px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                    className="btn-agent-primary create-task-header-btn"
+                    style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', flexShrink: 0 }}
                     onClick={() => setIsPostTaskOpen(true)}
                   >
                     <Plus size={14} />
@@ -3372,13 +3373,69 @@ export default function App() {
             {tasksViewMode === 'grid' && (
               <div className="agents-milestones-grid">
                 {filteredTasks.length === 0 ? (
-                  <div style={{ gridColumn: '1 / -1', padding: '36px 16px', textAlign: 'center', background: 'var(--surface1, #ffffff)', borderRadius: 'var(--radius-card, 24px)', border: '1px dashed var(--border-color, rgba(0,0,0,0.12))' }}>
-                    <Briefcase size={28} color="var(--privy-color-foreground-2)" style={{ margin: '0 auto 8px' }} />
-                    <div style={{ fontSize: '14px', fontWeight: 700 }}>{tasksLoading ? 'Loading Arc tasks…' : tasksError ? 'Arc task service unavailable' : 'No tasks match your filter'}</div>
-                    <div style={{ fontSize: '12px', color: 'var(--privy-color-foreground-2)', marginTop: '4px' }}>
-                      {tasksError || (tasksLoading ? 'Fetching task data from the shared task service.' : 'Try searching for different keywords.')}
+                  <div className="tasks-empty-state-card" style={{ gridColumn: '1 / -1' }}>
+                    <div className="tasks-empty-icon-wrap">
+                      {tasksLoading ? (
+                        <RefreshCw size={22} color="#5B4FFF" className="spin-anim" />
+                      ) : tasksError ? (
+                        <AlertCircle size={24} color="#EF4444" />
+                      ) : (tasksSearch || tasksFilter !== 'all') ? (
+                        <Search size={22} color="#5B4FFF" />
+                      ) : (
+                        <Sparkles size={24} color="#5B4FFF" />
+                      )}
                     </div>
-                    {tasksError && <button type="button" className="btn-agent-secondary" style={{ marginTop: '10px' }} onClick={() => setTasksRefreshKey((key) => key + 1)}>Retry connection</button>}
+                    <h3 className="tasks-empty-title">
+                      {tasksLoading
+                        ? 'Loading Arc Tasks…'
+                        : tasksError
+                          ? 'Task Network Offline'
+                          : tasksSearch || tasksFilter !== 'all'
+                            ? 'No Matching Tasks'
+                            : 'No Active Tasks Yet'}
+                    </h3>
+                    <p className="tasks-empty-subtitle">
+                      {tasksLoading
+                        ? 'Syncing onchain escrow tasks and bounties from Arc Osaka…'
+                        : tasksError
+                          ? (tasksError || 'Could not reach the task service. Please check your network.')
+                          : tasksSearch
+                            ? `No tasks found matching "${tasksSearch}". Try clearing your search or switching categories.`
+                            : tasksFilter !== 'all'
+                              ? 'There are currently no tasks listed in this category. Try switching categories or clearing filters.'
+                              : 'Be the first to publish a bounty with automated smart contract milestone escrow!'}
+                    </p>
+                    <div className="tasks-empty-actions">
+                      {(tasksSearch || tasksFilter !== 'all') && (
+                        <button
+                          type="button"
+                          className="btn-agent-secondary"
+                          onClick={() => { setTasksSearch(''); setTasksFilter('all'); }}
+                        >
+                          Clear Filters
+                        </button>
+                      )}
+                      {!tasksLoading && !tasksError && (
+                        <button
+                          type="button"
+                          className="btn-agent-primary"
+                          onClick={() => setIsPostTaskOpen(true)}
+                        >
+                          <Plus size={14} />
+                          <span>Create Task</span>
+                        </button>
+                      )}
+                      {tasksError && (
+                        <button
+                          type="button"
+                          className="btn-agent-secondary"
+                          onClick={() => setTasksRefreshKey((key) => key + 1)}
+                        >
+                          <RefreshCw size={13} />
+                          <span>Retry Connection</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   filteredTasks.map((task, idx) => {
@@ -3443,10 +3500,69 @@ export default function App() {
             {tasksViewMode === 'list' && (
               <div className="agents-circle-list">
                 {filteredTasks.length === 0 ? (
-                  <div style={{ padding: '36px 16px', textAlign: 'center', background: 'var(--surface1, #ffffff)', borderRadius: 'var(--radius-card, 24px)', border: '1px dashed var(--border-color, rgba(0,0,0,0.12))' }}>
-                    <Briefcase size={28} color="var(--privy-color-foreground-2)" style={{ margin: '0 auto 8px' }} />
-                    <div style={{ fontSize: '14px', fontWeight: 700 }}>{tasksLoading ? 'Loading Arc tasks…' : tasksError ? 'Arc task service unavailable' : 'No tasks match your filter'}</div>
-                    {tasksError && <button type="button" className="btn-agent-secondary" style={{ marginTop: '10px' }} onClick={() => setTasksRefreshKey((key) => key + 1)}>Retry connection</button>}
+                  <div className="tasks-empty-state-card">
+                    <div className="tasks-empty-icon-wrap">
+                      {tasksLoading ? (
+                        <RefreshCw size={22} color="#5B4FFF" className="spin-anim" />
+                      ) : tasksError ? (
+                        <AlertCircle size={24} color="#EF4444" />
+                      ) : (tasksSearch || tasksFilter !== 'all') ? (
+                        <Search size={22} color="#5B4FFF" />
+                      ) : (
+                        <Sparkles size={24} color="#5B4FFF" />
+                      )}
+                    </div>
+                    <h3 className="tasks-empty-title">
+                      {tasksLoading
+                        ? 'Loading Arc Tasks…'
+                        : tasksError
+                          ? 'Task Network Offline'
+                          : tasksSearch || tasksFilter !== 'all'
+                            ? 'No Matching Tasks'
+                            : 'No Active Tasks Yet'}
+                    </h3>
+                    <p className="tasks-empty-subtitle">
+                      {tasksLoading
+                        ? 'Syncing onchain escrow tasks and bounties from Arc Osaka…'
+                        : tasksError
+                          ? (tasksError || 'Could not reach the task service. Please check your network.')
+                          : tasksSearch
+                            ? `No tasks found matching "${tasksSearch}". Try clearing your search or switching categories.`
+                            : tasksFilter !== 'all'
+                              ? 'There are currently no tasks listed in this category. Try switching categories or clearing filters.'
+                              : 'Be the first to publish a bounty with automated smart contract milestone escrow!'}
+                    </p>
+                    <div className="tasks-empty-actions">
+                      {(tasksSearch || tasksFilter !== 'all') && (
+                        <button
+                          type="button"
+                          className="btn-agent-secondary"
+                          onClick={() => { setTasksSearch(''); setTasksFilter('all'); }}
+                        >
+                          Clear Filters
+                        </button>
+                      )}
+                      {!tasksLoading && !tasksError && (
+                        <button
+                          type="button"
+                          className="btn-agent-primary"
+                          onClick={() => setIsPostTaskOpen(true)}
+                        >
+                          <Plus size={14} />
+                          <span>Create Task</span>
+                        </button>
+                      )}
+                      {tasksError && (
+                        <button
+                          type="button"
+                          className="btn-agent-secondary"
+                          onClick={() => setTasksRefreshKey((key) => key + 1)}
+                        >
+                          <RefreshCw size={13} />
+                          <span>Retry Connection</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   filteredTasks.map((task, idx) => {
