@@ -3960,50 +3960,17 @@ export default function App() {
             ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'chat' && (
           <div className="walley-chat-screen">
-            {/* Top Navigation Bar: Sovereign Agent on Arc Osaka (no outline background) */}
+            {/* Top Navigation Bar: Back Arrow button only */}
             <div className="chat-top-nav-bar">
               <button
                 type="button"
                 className="chat-back-btn"
                 onClick={() => setMainTab('claim')}
-                aria-label="Back to Home"
+                aria-label="Back"
+                title="Back"
               >
-                <ArrowLeft size={16} />
-                <span>Home</span>
+                <ArrowLeft size={18} />
               </button>
-
-              <div className="chat-header-center">
-                <span className="chat-status-dot" />
-                <span className="chat-header-agent-name">
-                  {currentTaggedAgent ? `₦${currentTaggedAgent.tag}` : 'Sovereign Agent'}
-                </span>
-                <span className="card-net-pill" style={{ fontSize: '9px', padding: '1px 6px' }}>Arc Osaka</span>
-              </div>
-
-              <div className="chat-header-actions">
-                <button
-                  type="button"
-                  className="chat-top-new-btn"
-                  onClick={() => {
-                    setChatMessages([]);
-                    setChatInputText('');
-                    setCurrentTaggedAgent(null);
-                  }}
-                  title="New Chat"
-                  aria-label="New Chat"
-                >
-                  <Plus size={16} />
-                </button>
-                <button
-                  type="button"
-                  className="chat-top-tag-btn"
-                  onClick={() => setIsTagPopoverOpen(!isTagPopoverOpen)}
-                  title="Tag Agent"
-                >
-                  <AtSign size={13} />
-                  <span>Tag</span>
-                </button>
-              </div>
             </div>
 
             {/* Main Canvas: Empty state vs Message stream */}

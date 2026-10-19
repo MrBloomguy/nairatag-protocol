@@ -5462,14 +5462,14 @@ body:has(.agent-modal-backdrop) {
   }
 }
 
-/* Top Nav Bar: Sovereign Agent (Borderless, no outline background) */
+/* Top Nav Bar: Back Arrow only */
 .chat-top-nav-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   width: 100%;
-  padding: 8px 4px;
-  margin-bottom: 8px;
+  padding: 4px 0;
+  margin-bottom: 4px;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
@@ -5478,21 +5478,26 @@ body:has(.agent-modal-backdrop) {
 .chat-back-btn {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   background: transparent;
   border: none;
-  font-size: 13px;
-  font-weight: 700;
   color: var(--privy-color-foreground-2);
   cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 8px;
+  padding: 0;
   transition: all 0.15s ease;
 }
 
 .chat-back-btn:hover {
-  color: var(--primary, #0052FF);
-  background: rgba(0, 82, 255, 0.08);
+  color: var(--privy-color-foreground);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .chat-back-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
 }
 
 .chat-header-center {
