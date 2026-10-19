@@ -3257,9 +3257,9 @@ export default function App() {
             {/* Top Bar: Search and Grid/List View Toggle */}
             <div className="agents-top-bar">
               <div className="agents-top-controls task-top-controls" style={{ width: '100%', justifyContent: 'space-between', gap: '8px' }}>
-                {/* Search Bar (controlled compact width so Create Task button never gets pushed off) */}
-                <div className="agents-search-input-wrap task-search-wrap" style={{ flex: '0 1 170px', maxWidth: '190px', minWidth: 0 }}>
-                  <Search size={14} color="var(--privy-color-foreground-3)" style={{ flexShrink: 0 }} />
+                {/* Search Bar (reduced compact length to leave maximum room for Create Task) */}
+                <div className="agents-search-input-wrap task-search-wrap" style={{ flex: '0 1 110px', maxWidth: '120px', minWidth: '70px' }}>
+                  <Search size={13} color="var(--privy-color-foreground-3)" style={{ flexShrink: 0 }} />
                   <input
                     type="text"
                     className="agents-search-input task-search-input"
@@ -3274,7 +3274,7 @@ export default function App() {
                       style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--privy-color-foreground-3)', flexShrink: 0 }}
                       onClick={() => setTasksSearch('')}
                     >
-                      <X size={13} />
+                      <X size={12} />
                     </button>
                   )}
                 </div>
@@ -3305,10 +3305,10 @@ export default function App() {
                   <button
                     type="button"
                     className="btn-agent-primary create-task-header-btn"
-                    style={{ padding: '6px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', flexShrink: 0 }}
+                    style={{ padding: '6px 11px', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', flexShrink: 0 }}
                     onClick={() => setIsPostTaskOpen(true)}
                   >
-                    <Plus size={14} />
+                    <Plus size={13} />
                     <span>Create Task</span>
                   </button>
                 </div>
@@ -3362,37 +3362,69 @@ export default function App() {
               <div className="agents-milestones-grid">
                 {filteredTasks.length === 0 ? (
                   <div className="tasks-empty-state-card" style={{ gridColumn: '1 / -1' }}>
-                    <div className="tasks-empty-icon-wrap">
-                      {tasksLoading ? (
-                        <RefreshCw size={22} color="#5B4FFF" className="spin-anim" />
-                      ) : tasksError ? (
-                        <AlertCircle size={24} color="#EF4444" />
-                      ) : (tasksSearch || tasksFilter !== 'all') ? (
-                        <Search size={22} color="#5B4FFF" />
-                      ) : (
-                        <Sparkles size={24} color="#5B4FFF" />
-                      )}
+                    <div className="tasks-empty-badge-glow">
+                      <div className="tasks-empty-icon-wrap">
+                        {tasksLoading ? (
+                          <RefreshCw size={26} color="#5B4FFF" className="spin-anim" />
+                        ) : tasksError ? (
+                          <AlertCircle size={26} color="#EF4444" />
+                        ) : (tasksSearch || tasksFilter !== 'all') ? (
+                          <Search size={24} color="#5B4FFF" />
+                        ) : (
+                          <Sparkles size={26} color="#5B4FFF" />
+                        )}
+                      </div>
                     </div>
+
                     <h3 className="tasks-empty-title">
                       {tasksLoading
-                        ? 'Loading Arc Tasks…'
+                        ? 'Syncing Arc Escrow Bounties…'
                         : tasksError
                           ? 'Task Network Offline'
-                          : tasksSearch || tasksFilter !== 'all'
-                            ? 'No Matching Tasks'
-                            : 'No Active Tasks Yet'}
+                          : (tasksSearch || tasksFilter !== 'all')
+                            ? 'No Matching Quests Found'
+                            : 'No Open Bounties Right Now'}
                     </h3>
+
                     <p className="tasks-empty-subtitle">
                       {tasksLoading
-                        ? 'Syncing onchain escrow tasks and bounties from Arc Osaka…'
+                        ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
                         : tasksError
-                          ? (tasksError || 'Could not reach the task service. Please check your network.')
+                          ? (tasksError || 'Could not connect to the Arc task service. Please verify your internet connection.')
                           : tasksSearch
-                            ? `No tasks found matching "${tasksSearch}". Try clearing your search or switching categories.`
+                            ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
                             : tasksFilter !== 'all'
-                              ? 'There are currently no tasks listed in this category. Try switching categories or clearing filters.'
-                              : 'Be the first to publish a bounty with automated smart contract milestone escrow!'}
+                              ? 'There are no open bounties in this category yet. Explore other categories or post one yourself.'
+                              : 'Arc Tasks let you earn instant USDC sent directly to your ₦Tag for dev, design, QA, and community quests. Or publish your own bounty with smart contract milestone escrow.'}
                     </p>
+
+                    {/* Trust & Value Pillars */}
+                    {!tasksLoading && !tasksError && !tasksSearch && tasksFilter === 'all' && (
+                      <div className="tasks-empty-features-grid">
+                        <div className="tasks-empty-feature-item">
+                          <span className="feature-item-icon">🔒</span>
+                          <div className="feature-item-text">
+                            <strong>Smart Escrow</strong>
+                            <span>Funds locked on Arc</span>
+                          </div>
+                        </div>
+                        <div className="tasks-empty-feature-item">
+                          <span className="feature-item-icon">⚡</span>
+                          <div className="feature-item-text">
+                            <strong>Instant USDC</strong>
+                            <span>Paid to your ₦Tag</span>
+                          </div>
+                        </div>
+                        <div className="tasks-empty-feature-item">
+                          <span className="feature-item-icon">⭐</span>
+                          <div className="feature-item-text">
+                            <strong>Earn Points</strong>
+                            <span>Level up reputation</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="tasks-empty-actions">
                       {(tasksSearch || tasksFilter !== 'all') && (
                         <button
@@ -3411,6 +3443,17 @@ export default function App() {
                         >
                           <Plus size={14} />
                           <span>Create Task</span>
+                        </button>
+                      )}
+                      {!tasksLoading && !tasksError && (
+                        <button
+                          type="button"
+                          className="btn-agent-secondary"
+                          onClick={() => setTasksRefreshKey((key) => key + 1)}
+                          title="Refresh tasks list"
+                        >
+                          <RefreshCw size={13} />
+                          <span>Refresh</span>
                         </button>
                       )}
                       {tasksError && (
@@ -3489,37 +3532,69 @@ export default function App() {
               <div className="agents-circle-list">
                 {filteredTasks.length === 0 ? (
                   <div className="tasks-empty-state-card">
-                    <div className="tasks-empty-icon-wrap">
-                      {tasksLoading ? (
-                        <RefreshCw size={22} color="#5B4FFF" className="spin-anim" />
-                      ) : tasksError ? (
-                        <AlertCircle size={24} color="#EF4444" />
-                      ) : (tasksSearch || tasksFilter !== 'all') ? (
-                        <Search size={22} color="#5B4FFF" />
-                      ) : (
-                        <Sparkles size={24} color="#5B4FFF" />
-                      )}
+                    <div className="tasks-empty-badge-glow">
+                      <div className="tasks-empty-icon-wrap">
+                        {tasksLoading ? (
+                          <RefreshCw size={26} color="#5B4FFF" className="spin-anim" />
+                        ) : tasksError ? (
+                          <AlertCircle size={26} color="#EF4444" />
+                        ) : (tasksSearch || tasksFilter !== 'all') ? (
+                          <Search size={24} color="#5B4FFF" />
+                        ) : (
+                          <Sparkles size={26} color="#5B4FFF" />
+                        )}
+                      </div>
                     </div>
+
                     <h3 className="tasks-empty-title">
                       {tasksLoading
-                        ? 'Loading Arc Tasks…'
+                        ? 'Syncing Arc Escrow Bounties…'
                         : tasksError
                           ? 'Task Network Offline'
-                          : tasksSearch || tasksFilter !== 'all'
-                            ? 'No Matching Tasks'
-                            : 'No Active Tasks Yet'}
+                          : (tasksSearch || tasksFilter !== 'all')
+                            ? 'No Matching Quests Found'
+                            : 'No Open Bounties Right Now'}
                     </h3>
+
                     <p className="tasks-empty-subtitle">
                       {tasksLoading
-                        ? 'Syncing onchain escrow tasks and bounties from Arc Osaka…'
+                        ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
                         : tasksError
-                          ? (tasksError || 'Could not reach the task service. Please check your network.')
+                          ? (tasksError || 'Could not connect to the Arc task service. Please verify your internet connection.')
                           : tasksSearch
-                            ? `No tasks found matching "${tasksSearch}". Try clearing your search or switching categories.`
+                            ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
                             : tasksFilter !== 'all'
-                              ? 'There are currently no tasks listed in this category. Try switching categories or clearing filters.'
-                              : 'Be the first to publish a bounty with automated smart contract milestone escrow!'}
+                              ? 'There are no open bounties in this category yet. Explore other categories or post one yourself.'
+                              : 'Arc Tasks let you earn instant USDC sent directly to your ₦Tag for dev, design, QA, and community quests. Or publish your own bounty with smart contract milestone escrow.'}
                     </p>
+
+                    {/* Trust & Value Pillars */}
+                    {!tasksLoading && !tasksError && !tasksSearch && tasksFilter === 'all' && (
+                      <div className="tasks-empty-features-grid">
+                        <div className="tasks-empty-feature-item">
+                          <span className="feature-item-icon">🔒</span>
+                          <div className="feature-item-text">
+                            <strong>Smart Escrow</strong>
+                            <span>Funds locked on Arc</span>
+                          </div>
+                        </div>
+                        <div className="tasks-empty-feature-item">
+                          <span className="feature-item-icon">⚡</span>
+                          <div className="feature-item-text">
+                            <strong>Instant USDC</strong>
+                            <span>Paid to your ₦Tag</span>
+                          </div>
+                        </div>
+                        <div className="tasks-empty-feature-item">
+                          <span className="feature-item-icon">⭐</span>
+                          <div className="feature-item-text">
+                            <strong>Earn Points</strong>
+                            <span>Level up reputation</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="tasks-empty-actions">
                       {(tasksSearch || tasksFilter !== 'all') && (
                         <button
@@ -3538,6 +3613,17 @@ export default function App() {
                         >
                           <Plus size={14} />
                           <span>Create Task</span>
+                        </button>
+                      )}
+                      {!tasksLoading && !tasksError && (
+                        <button
+                          type="button"
+                          className="btn-agent-secondary"
+                          onClick={() => setTasksRefreshKey((key) => key + 1)}
+                          title="Refresh tasks list"
+                        >
+                          <RefreshCw size={13} />
+                          <span>Refresh</span>
                         </button>
                       )}
                       {tasksError && (
