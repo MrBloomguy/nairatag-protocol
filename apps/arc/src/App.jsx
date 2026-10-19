@@ -583,8 +583,8 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Navigation: 'pay' (Home) | 'claim' | 'tasks' | 'agents' | 'chat' | 'faq' | 'rewards'
-  const VALID_TABS = ['pay', 'claim', 'tasks', 'agents', 'chat', 'faq', 'rewards'];
+  // Navigation: 'claim' (Official Home) | 'tasks' | 'agents' | 'pay' | 'chat' | 'faq' | 'rewards'
+  const VALID_TABS = ['claim', 'tasks', 'agents', 'pay', 'chat', 'faq', 'rewards'];
   const [mainTab, setMainTabState] = useState(() => {
     try {
       const hash = window.location.hash.replace('#', '').toLowerCase();
@@ -592,7 +592,7 @@ export default function App() {
         return hash;
       }
     } catch { }
-    return 'pay';
+    return 'claim'; // Claim page is the official home page
   });
 
   const setMainTab = useCallback((tab) => {
@@ -1992,37 +1992,33 @@ export default function App() {
       <header className={`app-header ${mainTab === 'claim' ? 'claim-active' : ''}`}>
         {/* Left Side: Brand Logo Badge + Mobile Hamburger Menu */}
         <div className="app-header-left">
-          <div className="app-brand" onClick={() => setMainTab('pay')}>
+          <div className="app-brand" onClick={() => setMainTab('claim')}>
             <div className="brand-badge" title="NairaTag on Arc">
               <img src="/nairatag-logo.png" alt="NairaTag" className="brand-logo-img" />
             </div>
           </div>
 
-          {mainTab === 'claim' ? (
-            <button
-              type="button"
-              className="claim-mobile-back"
-              onClick={() => setMainTab('pay')}
-              aria-label="Back to home"
-              title="Back"
-            >
-              <ArrowLeft size={22} />
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="mobile-hamburger-btn"
-              onClick={() => setIsMobileMenuOpen(true)}
-              aria-label="Open navigation menu"
-              title="Menu"
-            >
-              <Menu size={22} />
-            </button>
-          )}
+          <button
+            type="button"
+            className="mobile-hamburger-btn"
+            onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Open navigation menu"
+            title="Menu"
+          >
+            <Menu size={22} />
+          </button>
         </div>
 
         {/* Center: Desktop Navigation Tabs (Hidden on mobile) */}
         <nav className="app-nav-tabs desktop-only">
+          <button
+            type="button"
+            className={`nav-tab-btn ${mainTab === 'claim' ? 'active' : ''}`}
+            onClick={() => setMainTab('claim')}
+          >
+            <Sparkles size={14} />
+            <span>Claim ₦Tag</span>
+          </button>
           <button
             type="button"
             className={`nav-tab-btn ${mainTab === 'tasks' ? 'active' : ''}`}
@@ -2039,14 +2035,6 @@ export default function App() {
             <Bot size={14} />
             <span>Agents</span>
             <span className="nav-badge-pill" style={{ background: '#7c3aed' }}>8</span>
-          </button>
-          <button
-            type="button"
-            className={`nav-tab-btn ${mainTab === 'claim' ? 'active' : ''}`}
-            onClick={() => setMainTab('claim')}
-          >
-            <Sparkles size={14} />
-            <span>Claim ₦Tag</span>
           </button>
           <button
             type="button"
@@ -2309,6 +2297,24 @@ export default function App() {
             <div className="mobile-drawer-links">
               <button
                 type="button"
+                className={`mobile-nav-link ${mainTab === 'claim' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainTab('claim');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon-box">
+                  <Sparkles size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <span className="mobile-nav-title">Claim ₦Tag</span>
+                  <span className="mobile-nav-desc">Mint sovereign onchain identity handle</span>
+                </div>
+                {mainTab === 'claim' && <span className="mobile-nav-active-pill">Active</span>}
+              </button>
+
+              <button
+                type="button"
                 className={`mobile-nav-link ${mainTab === 'tasks' ? 'active' : ''}`}
                 onClick={() => {
                   setMainTab('tasks');
@@ -2341,24 +2347,6 @@ export default function App() {
                   <span className="mobile-nav-desc">Autonomous ERC-8004 reputation directory</span>
                 </div>
                 {mainTab === 'agents' && <span className="mobile-nav-active-pill">Active</span>}
-              </button>
-
-              <button
-                type="button"
-                className={`mobile-nav-link ${mainTab === 'claim' ? 'active' : ''}`}
-                onClick={() => {
-                  setMainTab('claim');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <div className="mobile-nav-icon-box">
-                  <Sparkles size={18} />
-                </div>
-                <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Claim ₦Tag</span>
-                  <span className="mobile-nav-desc">Mint sovereign onchain identity handle</span>
-                </div>
-                {mainTab === 'claim' && <span className="mobile-nav-active-pill">Active</span>}
               </button>
 
               <button
@@ -4150,9 +4138,22 @@ export default function App() {
           MOBILE FIXED FOOTER MENU (MATCHING EXACT USER SCREENSHOT STYLE)
           (Hidden on Chat page per user specification)
           ─────────────────────────────────────────────────────────────────── */}
-      {mainTab !== 'chat' && mainTab !== 'claim' && (
+      {mainTab !== 'chat' && (
         <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
-          {/* 0. Tasks */}
+          {/* 1. Claim (Official Home) */}
+          <button
+            type="button"
+            className={`mobile-footer-item ${mainTab === 'claim' ? 'active' : ''}`}
+            onClick={() => setMainTab('claim')}
+            aria-label="Claim"
+          >
+            <div className="mobile-footer-icon-wrap">
+              <Sparkles size={22} strokeWidth={mainTab === 'claim' ? 2.4 : 1.8} />
+            </div>
+            <span className="mobile-footer-label">Claim</span>
+          </button>
+
+          {/* 2. Tasks */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'tasks' ? 'active' : ''}`}
@@ -4177,7 +4178,7 @@ export default function App() {
             <span className="mobile-footer-label">Tasks</span>
           </button>
 
-          {/* 1. Agents (with Purple Pill Badge "8") */}
+          {/* 3. Agents (with Purple Pill Badge "8") */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'agents' ? 'active' : ''}`}
@@ -4191,20 +4192,7 @@ export default function App() {
             <span className="mobile-footer-label">Agents</span>
           </button>
 
-          {/* 2. Claim */}
-          <button
-            type="button"
-            className={`mobile-footer-item ${mainTab === 'claim' ? 'active' : ''}`}
-            onClick={() => setMainTab('claim')}
-            aria-label="Claim"
-          >
-            <div className="mobile-footer-icon-wrap">
-              <Sparkles size={22} strokeWidth={mainTab === 'claim' ? 2.4 : 1.8} />
-            </div>
-            <span className="mobile-footer-label">Claim</span>
-          </button>
-
-          {/* 3. Swap */}
+          {/* 4. Swap */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'pay' ? 'active' : ''}`}
@@ -4217,7 +4205,7 @@ export default function App() {
             <span className="mobile-footer-label">Swap</span>
           </button>
 
-          {/* 4. Chat */}
+          {/* 5. Chat */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'chat' ? 'active' : ''}`}
@@ -4231,7 +4219,7 @@ export default function App() {
             <span className="mobile-footer-label">Chat</span>
           </button>
 
-          {/* Rewards is the last destination in the mobile navigation. */}
+          {/* 6. Rewards */}
           <button
             type="button"
             className={`mobile-footer-item ${mainTab === 'rewards' ? 'active' : ''}`}
