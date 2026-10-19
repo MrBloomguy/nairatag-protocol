@@ -3710,41 +3710,14 @@ export default function App() {
                           : 'No tasks available'}
                     </h3>
 
-                    <p className="tasks-empty-subtitle">
-                      {tasksLoading
-                        ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
-                        : tasksSearch
-                          ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
-                          : tasksFilter !== 'all'
-                            ? 'There are no open bounties in this category yet. Explore other categories or post one yourself.'
-                            : 'Arc Tasks let you earn instant USDC sent directly to your ₦Tag for dev, design, QA, and community quests. Or publish your own bounty with smart contract milestone escrow.'}
-                    </p>
-
-                    {/* Trust & Value Pillars */}
-                    {!tasksLoading && !tasksSearch && tasksFilter === 'all' && (
-                      <div className="tasks-empty-features-grid">
-                        <div className="tasks-empty-feature-item">
-                          <span className="feature-item-icon">🔒</span>
-                          <div className="feature-item-text">
-                            <strong>Smart Escrow</strong>
-                            <span>Funds locked on Arc</span>
-                          </div>
-                        </div>
-                        <div className="tasks-empty-feature-item">
-                          <span className="feature-item-icon">⚡</span>
-                          <div className="feature-item-text">
-                            <strong>Instant USDC</strong>
-                            <span>Paid to your ₦Tag</span>
-                          </div>
-                        </div>
-                        <div className="tasks-empty-feature-item">
-                          <span className="feature-item-icon">⭐</span>
-                          <div className="feature-item-text">
-                            <strong>Earn Points</strong>
-                            <span>Level up reputation</span>
-                          </div>
-                        </div>
-                      </div>
+                    {(tasksLoading || tasksSearch || tasksFilter !== 'all') && (
+                      <p className="tasks-empty-subtitle">
+                        {tasksLoading
+                          ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
+                          : tasksSearch
+                            ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
+                            : 'There are no open bounties in this category yet. Explore other categories or post one yourself.'}
+                      </p>
                     )}
 
                     <div className="tasks-empty-actions">
@@ -3864,41 +3837,14 @@ export default function App() {
                           : 'No tasks available'}
                     </h3>
 
-                    <p className="tasks-empty-subtitle">
-                      {tasksLoading
-                        ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
-                        : tasksSearch
-                          ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
-                          : tasksFilter !== 'all'
-                            ? 'There are no open bounties in this category yet. Explore other categories or post one yourself.'
-                            : 'Arc Tasks let you earn instant USDC sent directly to your ₦Tag for dev, design, QA, and community quests. Or publish your own bounty with smart contract milestone escrow.'}
-                    </p>
-
-                    {/* Trust & Value Pillars */}
-                    {!tasksLoading && !tasksSearch && tasksFilter === 'all' && (
-                      <div className="tasks-empty-features-grid">
-                        <div className="tasks-empty-feature-item">
-                          <span className="feature-item-icon">🔒</span>
-                          <div className="feature-item-text">
-                            <strong>Smart Escrow</strong>
-                            <span>Funds locked on Arc</span>
-                          </div>
-                        </div>
-                        <div className="tasks-empty-feature-item">
-                          <span className="feature-item-icon">⚡</span>
-                          <div className="feature-item-text">
-                            <strong>Instant USDC</strong>
-                            <span>Paid to your ₦Tag</span>
-                          </div>
-                        </div>
-                        <div className="tasks-empty-feature-item">
-                          <span className="feature-item-icon">⭐</span>
-                          <div className="feature-item-text">
-                            <strong>Earn Points</strong>
-                            <span>Level up reputation</span>
-                          </div>
-                        </div>
-                      </div>
+                    {(tasksLoading || tasksSearch || tasksFilter !== 'all') && (
+                      <p className="tasks-empty-subtitle">
+                        {tasksLoading
+                          ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
+                          : tasksSearch
+                            ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
+                            : 'There are no open bounties in this category yet. Explore other categories or post one yourself.'}
+                      </p>
                     )}
 
                     <div className="tasks-empty-actions">
