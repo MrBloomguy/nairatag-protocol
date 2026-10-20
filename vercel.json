@@ -4,24 +4,24 @@
   "outputDirectory": ".",
   "routes": [
     {
-      "src": "/api/arc-rewards(.*)",
-      "dest": "/api/arc-rewards"
-    },
-    {
-      "src": "/api/arc-tasks(.*)",
-      "dest": "/api/arc-tasks"
-    },
-    {
-      "src": "/api/arc-follows(.*)",
-      "dest": "/api/arc-follows"
+      "src": "/api/arc-agents(.*)",
+      "dest": "/api/arc?route=agents"
     },
     {
       "src": "/api/arc-chat(.*)",
-      "dest": "/api/arc-chat"
+      "dest": "/api/arc?route=chat"
     },
     {
-      "src": "/api/arc-agents(.*)",
-      "dest": "/api/arc-agents"
+      "src": "/api/arc-rewards(.*)",
+      "dest": "/api/arc?route=rewards"
+    },
+    {
+      "src": "/api/arc-tasks(.*)",
+      "dest": "/api/arc?route=tasks"
+    },
+    {
+      "src": "/api/arc-follows(.*)",
+      "dest": "/api/arc?route=follows"
     },
     {
       "src": "/api/celotags(.*)",
