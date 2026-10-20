@@ -1,6 +1,7 @@
 // @ts-nocheck
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import AuthConnectModal from './components/auth/AuthConnectModal';
 import {
   Wallet,
   CheckCircle2,
@@ -5049,112 +5050,20 @@ export default function App() {
           MODAL 1: CONNECT WALLET OVERLAY (CIRCLE W3S + BROWSER WALLETS)
           ─────────────────────────────────────────────────────────────────── */}
       {isConnectModalOpen && (
-        <div className="modal-backdrop" onClick={() => setIsConnectModalOpen(false)}>
-          <div className="modal-dialog connect-modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'linear-gradient(135deg, #0052FF, #00D2FF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-                  <ShieldCheck size={15} />
-                </div>
-                <span className="card-header-title">Connect Account</span>
-              </div>
-              <button
-                type="button"
-                style={{ background: 'none', border: 'none', color: 'var(--privy-color-foreground-2)', cursor: 'pointer' }}
-                onClick={() => setIsConnectModalOpen(false)}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            {/* FEATURED: Circle Programmable Wallets (Web3 Services) */}
-            <div className="circle-auth-container">
-              <div className="circle-auth-badge">
-                <Sparkles size={11} />
-                <span>RECOMMENDED • ZERO SEED PHRASE</span>
-              </div>
-              <div className="circle-auth-title">Circle Programmable Wallet</div>
-              <p className="circle-auth-desc">
-                Log in instantly with your Email or NairaTag handle. Powered by Circle Web3 Services on Arc Osaka.
-              </p>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleConnectCircle();
-                }}
-                className="circle-auth-form"
-              >
-                <div className="circle-auth-input-wrapper">
-                  <AtSign size={15} className="circle-input-icon" />
-                  <input
-                    type="text"
-                    className="circle-auth-input"
-                    placeholder="Enter email or ₦handle (e.g. segun@arc.io)"
-                    value={circleInput}
-                    onChange={(e) => setCircleInput(e.target.value)}
-                    disabled={isConnecting}
-                    autoFocus
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="circle-auth-submit-btn"
-                  disabled={isConnecting || !circleInput.trim()}
-                >
-                  {isConnecting && circleStatus ? (
-                    <>
-                      <RefreshCw size={14} className="animate-spin" />
-                      <span>{circleStatus}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Continue with Circle</span>
-                      <ArrowRight size={14} />
-                    </>
-                  )}
-                </button>
-              </form>
-            </div>
-
-            {/* Divider */}
-            <div className="circle-modal-divider">
-              <span>OR CONNECT BROWSER WALLET</span>
-            </div>
-
-            {/* External Web3 Wallets */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {[
-                { name: 'Arc Wallet', type: 'Arc Wallet', badge: 'EVM 5042002' },
-                { name: 'MetaMask', type: 'MetaMask' },
-                { name: 'Coinbase Wallet', type: 'Coinbase Wallet' },
-                { name: 'WalletConnect', type: 'WalletConnect' },
-              ].map((w) => (
-                <button
-                  key={w.name}
-                  type="button"
-                  className="token-input-box circle-wallet-alt-btn"
-                  style={{ cursor: 'pointer', textAlign: 'left', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px' }}
-                  disabled={isConnecting}
-                  onClick={() => handleConnect(w.type)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Wallet size={15} color="var(--privy-color-foreground-2)" />
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--privy-color-foreground)' }}>{w.name}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    {w.badge && <span className="card-net-pill" style={{ fontSize: '9px', padding: '1px 5px' }}>{w.badge}</span>}
-                    <ChevronRight size={15} color="var(--privy-color-foreground-2)" />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <AuthConnectModal
+          onClose={() => setIsConnectModalOpen(false)}
+          isConnecting={isConnecting}
+          circleInput={circleInput}
+          setCircleInput={setCircleInput}
+          circleStatus={circleStatus}
+          circleInputType="text"
+          circleInputLabel="Email or NairaTag"
+          circleInputPlaceholder="Email or ₦handle"
+          handleConnectCircle={handleConnectCircle}
+          handleConnect={handleConnect}
+        />
       )}
 
-      {/* ───────────────────────────────────────────────────────────────────
-          MODAL 2: CELEBRATION SHEET
-          ─────────────────────────────────────────────────────────────────── */}
       {isCelebrationOpen && celebrationDetails && (
         <div className="modal-backdrop" onClick={() => setIsCelebrationOpen(false)}>
           <div className="modal-dialog celebration-sheet" onClick={(e) => e.stopPropagation()}>
