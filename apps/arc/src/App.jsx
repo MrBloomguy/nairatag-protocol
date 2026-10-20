@@ -1585,6 +1585,38 @@ export default function App() {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
   };
 
+  // Chat Greeting: 'Hey there!' when logged out, daytime greeting when logged in
+  const chatGreeting = useMemo(() => {
+    if (!walletAddress) {
+      return 'Hey there!';
+    }
+    const hour = new Date().getHours();
+    let timeGreeting = 'Good morning';
+    if (hour >= 12 && hour < 17) {
+      timeGreeting = 'Good afternoon';
+    } else if (hour >= 17 || hour < 5) {
+      timeGreeting = 'Good evening';
+    }
+
+    if (myTag?.tag) {
+      const clean = myTag.tag.replace(/^[$₦]/, '').trim();
+      const formatted = clean ? `₦${clean.charAt(0).toUpperCase() + clean.slice(1)}` : '';
+      return formatted ? `${timeGreeting}, ${formatted}!` : `${timeGreeting}!`;
+    }
+
+    if (walletAddress) {
+      return `${timeGreeting}, ${shorten(walletAddress)}!`;
+    }
+
+    return `${timeGreeting}!`;
+  }, [walletAddress, myTag]);
+
+  // Chat User Avatar: User's profile avatar or deterministic NairaTag mascot (replaces generic 80px orb)
+  const chatUserAvatar = useMemo(() => {
+    const seed = myTag?.cleanTag || (myTag?.tag ? myTag.tag.replace(/^[$₦]/, '') : '') || (walletAddress ? walletAddress.slice(2, 10) : 'nairatag');
+    return resolveTagProfile(seed, { avatarSize: 52 });
+  }, [myTag, walletAddress]);
+
   // Balance refresh
   const refreshBalance = useCallback(async (address) => {
     if (!address) return;
@@ -3960,8 +3992,8 @@ export default function App() {
             ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'chat' && (
           <div className="walley-chat-screen">
-            {/* Top Navigation Bar: Back Arrow button only */}
-            <div className="chat-top-nav-bar">
+            {/* Top Navigation Bar: Back Arrow button on mobile only (hidden on desktop) */}
+            <div className="chat-top-nav-bar mobile-only">
               <button
                 type="button"
                 className="chat-back-btn"
@@ -3977,12 +4009,31 @@ export default function App() {
             {chatMessages.length === 0 ? (
               /* SCREEN 1: Empty state matching reference */
               <div className="walley-hero-container">
-                <div className="walley-orb-wrap">
-                  <div className="walley-orb" />
+                <div className="walley-avatar-wrap">
+                  {myTag?.avatar ? (
+                    <img
+                      src={myTag.avatar}
+                      alt={myTag?.tag || 'Profile'}
+                      className="walley-user-avatar-img"
+                      onClick={() => (walletAddress ? setIsWalletModalOpen(true) : setIsConnectModalOpen(true))}
+                    />
+                  ) : (
+                    <div
+                      className="walley-user-avatar"
+                      style={{
+                        boxShadow: chatUserAvatar?.palette?.glow
+                          ? `0 6px 20px ${chatUserAvatar.palette.glow}`
+                          : '0 6px 18px rgba(0, 0, 0, 0.15)',
+                      }}
+                      onClick={() => (walletAddress ? setIsWalletModalOpen(true) : setIsConnectModalOpen(true))}
+                      dangerouslySetInnerHTML={{ __html: chatUserAvatar?.avatarSvg || '' }}
+                      title={walletAddress ? (myTag ? `₦${myTag.tag}` : shorten(walletAddress)) : 'Sign in'}
+                    />
+                  )}
                 </div>
 
                 <h1 className="walley-headline">
-                  What can i help<br />you with {activeCleanTag ? activeCleanTag.charAt(0).toUpperCase() + activeCleanTag.slice(1) : 'Francis'}?
+                  {chatGreeting}
                 </h1>
 
                 <div className="walley-prompt-pills">
