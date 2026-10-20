@@ -5729,6 +5729,82 @@ body:has(.agent-modal-backdrop) {
   align-self: flex-start;
 }
 
+.walley-msg-model-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #0052FF;
+  background: rgba(0, 82, 255, 0.08);
+  border: 1px solid rgba(0, 82, 255, 0.15);
+  margin-bottom: 6px;
+  width: fit-content;
+}
+
+[data-theme="dark"] .walley-msg-model-tag {
+  color: #60A5FA;
+  background: rgba(96, 165, 250, 0.12);
+  border-color: rgba(96, 165, 250, 0.25);
+}
+
+.walley-msg-text-content {
+  white-space: pre-line;
+  line-height: 1.5;
+}
+
+.walley-msg-speech-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.walley-msg-speak-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--privy-color-foreground-2, #6B7280);
+  background: var(--surface2, rgba(0, 0, 0, 0.04));
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.walley-msg-speak-btn:hover {
+  background: var(--primary, #0052FF);
+  color: #FFFFFF;
+  border-color: var(--primary, #0052FF);
+}
+
+.walley-msg-speak-btn.speaking {
+  background: rgba(239, 68, 68, 0.12);
+  color: #EF4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.walley-msg-speak-btn.speaking:hover {
+  background: #EF4444;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .walley-msg-speak-btn {
+  background: #1F2027;
+  border-color: #2E3038;
+  color: #9CA3AF;
+}
+
+[data-theme="dark"] .walley-msg-speak-btn:hover {
+  background: var(--primary, #0052FF);
+  color: #FFFFFF;
+}
+
 /* Processing Indicator: ":: Processing ..." */
 .walley-processing-row {
   display: flex;

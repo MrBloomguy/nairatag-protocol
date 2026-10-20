@@ -62,6 +62,7 @@ import {
   TrendingUp,
   Tv,
   Mic,
+  MicOff,
   RotateCcw,
   ArrowUp,
   Paperclip,
@@ -70,6 +71,8 @@ import {
   Pause,
   Square,
   Trash2,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import {
   connectWallet,
@@ -131,6 +134,11 @@ import {
   TWITTER_URL,
   TWITTER_HANDLE,
 } from './services/arcSocialBroadcast.js';
+import {
+  askArcGemini,
+  speakText,
+  stopSpeaking,
+} from './services/arcGeminiChat.js';
 import confetti from 'canvas-confetti';
 import RewardsPage, { GoldenVoucherModal, LuckyWheelModal, ReferralModal } from './RewardsPage.jsx';
 import NotificationLayer from './components/NotificationLayer.jsx';
@@ -662,6 +670,11 @@ export default function App() {
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const activeAudioPlayerRef = React.useRef(null);
   const chatMessagesEndRef = React.useRef(null);
+  const [voiceTranscribedText, setVoiceTranscribedText] = useState('');
+  const voiceTranscriptRef = React.useRef('');
+  const voiceSpeechRecRef = React.useRef(null);
+  const liveSpeechTextRef = React.useRef('');
+  const [speakingMsgId, setSpeakingMsgId] = useState(null);
 
   // Auto-scroll chat stream smoothly on new messages or typing
   useEffect(() => {
@@ -670,7 +683,7 @@ export default function App() {
     }
   }, [chatMessages, chatIsTyping]);
 
-  // Clean up media streams and audio players on unmount
+  // Clean up media streams, speech recognizers, and audio players on unmount
   useEffect(() => {
     return () => {
       if (recordingTimerRef.current) clearInterval(recordingTimerRef.current);
@@ -680,9 +693,13 @@ export default function App() {
       if (speechRecognitionRef.current) {
         try { speechRecognitionRef.current.stop(); } catch {}
       }
+      if (voiceSpeechRecRef.current) {
+        try { voiceSpeechRecRef.current.stop(); } catch {}
+      }
       if (activeAudioPlayerRef.current) {
         try { activeAudioPlayerRef.current.pause(); } catch {}
       }
+      stopSpeaking();
     };
   }, []);
 
@@ -731,11 +748,11 @@ export default function App() {
     setAttachedFile(null);
   };
 
-  // ─── Microphone Speech-to-Text Recognition ───
+  // ─── Microphone Speech-to-Text Recognition (Hands-Free Dictation) ───
   const toggleSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      // Fallback directly to audio note recorder if browser doesn't have Web Speech API
+      // Fallback directly to audio recorder if browser lacks Web Speech API
       startVoiceRecording();
       return;
     }
@@ -756,6 +773,7 @@ export default function App() {
 
       recognition.onstart = () => {
         setIsSpeechListening(true);
+        liveSpeechTextRef.current = '';
       };
 
       recognition.onresult = (event) => {
@@ -763,6 +781,7 @@ export default function App() {
           .map((res) => res[0].transcript)
           .join('');
         setChatInputText(transcript);
+        liveSpeechTextRef.current = transcript;
       };
 
       recognition.onerror = (e) => {
@@ -772,6 +791,11 @@ export default function App() {
 
       recognition.onend = () => {
         setIsSpeechListening(false);
+        const spoken = (liveSpeechTextRef.current || '').trim();
+        if (spoken) {
+          handleSendChatPrompt(spoken, { isVoiceReply: true });
+          liveSpeechTextRef.current = '';
+        }
       };
 
       speechRecognitionRef.current = recognition;
@@ -783,7 +807,7 @@ export default function App() {
     }
   };
 
-  // ─── Voice Note Recording (MediaRecorder) ───
+  // ─── Voice Directive Recording (Real Audio + Live Speech-to-Text) ───
   const startVoiceRecording = async () => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -810,6 +834,32 @@ export default function App() {
           audioChunksRef.current.push(event.data);
         }
       };
+
+      voiceTranscriptRef.current = '';
+      setVoiceTranscribedText('');
+
+      // Run SpeechRecognition concurrently to transcribe the actual spoken directive
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          const rec = new SpeechRecognition();
+          rec.lang = 'en-US';
+          rec.continuous = true;
+          rec.interimResults = true;
+          rec.onresult = (event) => {
+            const transcript = Array.from(event.results)
+              .map((res) => res[0].transcript)
+              .join(' ');
+            voiceTranscriptRef.current = transcript;
+            setVoiceTranscribedText(transcript);
+          };
+          rec.onerror = (e) => console.warn('Live voice speech error:', e);
+          voiceSpeechRecRef.current = rec;
+          rec.start();
+        } catch (recErr) {
+          console.warn('SpeechRecognition during voice recording note:', recErr);
+        }
+      }
 
       recorder.start(100);
       setIsVoiceRecording(true);
@@ -840,7 +890,12 @@ export default function App() {
         mediaRecorderRef.current.stop();
       } catch {}
     }
+    if (voiceSpeechRecRef.current) {
+      try { voiceSpeechRecRef.current.stop(); } catch {}
+    }
     audioChunksRef.current = [];
+    voiceTranscriptRef.current = '';
+    setVoiceTranscribedText('');
     setIsVoiceRecording(false);
     setRecordingSeconds(0);
   };
@@ -851,6 +906,10 @@ export default function App() {
     const duration = recordingSeconds;
     if (!recorder) return;
 
+    if (voiceSpeechRecRef.current) {
+      try { voiceSpeechRecRef.current.stop(); } catch {}
+    }
+
     recorder.onstop = () => {
       try {
         recorder.stream?.getTracks().forEach((t) => t.stop());
@@ -859,11 +918,13 @@ export default function App() {
       const audioUrl = URL.createObjectURL(audioBlob);
       const userMsgId = 'usr-voice-' + Date.now();
       const formatDuration = `${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, '0')}`;
+      const finalTranscript = (voiceTranscriptRef.current || '').trim();
 
       const newVoiceMsg = {
         id: userMsgId,
         sender: 'user',
-        text: `Voice directive (${formatDuration})`,
+        text: finalTranscript ? `🎙️ "${finalTranscript}"` : `Voice directive (${formatDuration})`,
+        transcript: finalTranscript,
         audioUrl,
         audioDuration: formatDuration,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -872,34 +933,12 @@ export default function App() {
       setChatMessages((prev) => [...prev, newVoiceMsg]);
       setIsVoiceRecording(false);
       setRecordingSeconds(0);
-      setChatIsTyping(true);
+      setVoiceTranscribedText('');
 
-      // Sovereign Agent voice directive processing
-      setTimeout(() => {
-        const replyAgentTag = currentTaggedAgent ? currentTaggedAgent.tag : 'ArcAgent';
-        const replyAgentName = currentTaggedAgent ? currentTaggedAgent.name : 'Arc Sovereign Agent';
-        setChatMessages((prev) => [
-          ...prev,
-          {
-            id: 'bot-' + Date.now(),
-            sender: 'agent',
-            agentTag: replyAgentTag,
-            agentName: replyAgentName,
-            text: `🎙️ Sovereign Agent processed your voice directive (${formatDuration}) on Arc Osaka EVM! Voice intent analyzed: Ready to dispatch autonomous transaction or tag verified bot.`,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            widget: {
-              type: 'voice_action',
-              title: 'Voice Instruction Decoded',
-              badge: 'Audio AI Verified',
-              body: `Length: ${formatDuration} · Zero Gas settlement route configured for ₦${activeCleanTag || 'tag'}`,
-              actionText: 'Confirm & Dispatch',
-              targetTag: replyAgentTag !== 'ArcAgent' ? replyAgentTag : 'dev',
-              amount: '1.0',
-            }
-          }
-        ]);
-        setChatIsTyping(false);
-      }, 900);
+      const promptToRun = finalTranscript || (duration > 0 ? 'Voice directive on Arc Osaka' : '');
+      if (promptToRun) {
+        handleSendChatPrompt(promptToRun, { isVoiceReply: true, skipUserMsgAppend: true });
+      }
     };
 
     if (recorder.state !== 'inactive') {
@@ -931,24 +970,43 @@ export default function App() {
     audio.play().catch(() => setPlayingAudioId(null));
   };
 
-  const handleSendChatPrompt = (customPrompt = null) => {
+  // ─── Text-to-Speech Toggle on AI Messages ───
+  const handleToggleSpeakMessage = (msg) => {
+    if (speakingMsgId === msg.id) {
+      stopSpeaking();
+      setSpeakingMsgId(null);
+      return;
+    }
+    stopSpeaking();
+    setSpeakingMsgId(msg.id);
+    const utterance = speakText(msg.text);
+    if (utterance) {
+      utterance.onend = () => setSpeakingMsgId(null);
+      utterance.onerror = () => setSpeakingMsgId(null);
+    }
+  };
+
+  // ─── Master Chat Execution Engine (Arc Actions + Google Gemini Flash-Lite) ───
+  const handleSendChatPrompt = async (customPrompt = null, options = {}) => {
     const textToSend = (customPrompt !== null ? customPrompt : chatInputText).trim();
     const fileToSend = attachedFile;
 
     // Must have either text or an attached file
     if (!textToSend && !fileToSend) return;
 
-    const userMsgId = 'usr-' + Date.now();
-    const newMsg = {
-      id: userMsgId,
-      sender: 'user',
-      text: textToSend,
-      file: fileToSend ? { ...fileToSend } : null,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      widget: null,
-    };
+    if (!options.skipUserMsgAppend) {
+      const userMsgId = 'usr-' + Date.now();
+      const newMsg = {
+        id: userMsgId,
+        sender: 'user',
+        text: textToSend,
+        file: fileToSend ? { ...fileToSend } : null,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        widget: null,
+      };
+      setChatMessages((prev) => [...prev, newMsg]);
+    }
 
-    setChatMessages((prev) => [...prev, newMsg]);
     if (customPrompt === null) {
       setChatInputText('');
     }
@@ -957,209 +1015,219 @@ export default function App() {
     }
     setChatIsTyping(true);
 
-    setTimeout(() => {
-      const lower = textToSend.toLowerCase();
-      let replyText = '';
-      let replyAgentTag = currentTaggedAgent ? currentTaggedAgent.tag : 'ArcAgent';
-      let replyAgentName = currentTaggedAgent ? currentTaggedAgent.name : 'Arc Sovereign Agent';
-      let replyAvatar = currentTaggedAgent
-        ? currentTaggedAgent.avatar
-        : 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
-      let widget = null;
+    const lower = textToSend.toLowerCase();
+    let replyText = '';
+    let replyAgentTag = currentTaggedAgent ? currentTaggedAgent.tag : 'ArcAgent';
+    let replyAgentName = currentTaggedAgent ? currentTaggedAgent.name : 'Arc Sovereign Agent';
+    let replyAvatar = currentTaggedAgent
+      ? currentTaggedAgent.avatar
+      : 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
+    let widget = null;
+    let replyModel = null;
 
-      const foundAgent = VERIFIED_AGENTS.find(
-        (a) =>
-          lower.includes(`@₦${a.tag}`) ||
-          lower.includes(`@${a.tag}`) ||
-          (lower.includes(`₦${a.tag}`) && !lower.includes('₦tag'))
-      );
-      if (foundAgent) {
-        replyAgentTag = foundAgent.tag;
-        replyAgentName = foundAgent.name;
-        replyAvatar = foundAgent.avatar;
-      }
+    const foundAgent = VERIFIED_AGENTS.find(
+      (a) =>
+        lower.includes(`@₦${a.tag}`) ||
+        lower.includes(`@${a.tag}`) ||
+        (lower.includes(`₦${a.tag}`) && !lower.includes('₦tag'))
+    );
+    if (foundAgent) {
+      replyAgentTag = foundAgent.tag;
+      replyAgentName = foundAgent.name;
+      replyAvatar = foundAgent.avatar;
+    }
 
-      // If an attached file was sent, prioritize smart file analysis
-      if (fileToSend) {
-        if (fileToSend.extension === 'sol' || fileToSend.name.endsWith('.sol') || lower.includes('contract') || lower.includes('audit')) {
-          replyAgentTag = 'dev';
-          replyAgentName = 'Arc Contract Auditor';
-          replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=dev';
-          replyText = `⚡ Smart Contract Received: "${fileToSend.name}" (${fileToSend.size})! Bytecode analyzed on Arc Osaka EVM (5042002). 0 critical vulnerabilities found. Formal verification: Passed.`;
-          widget = {
-            type: 'contract_audit',
-            title: `Audit Passed: ${fileToSend.name}`,
-            badge: '100/100 Security Score',
-            body: `File: ${fileToSend.name} · Gas optimization: 99.8% · Arc Osaka EVM Compatible. Ready for milestone escrow deployment.`,
-            actionText: 'Deploy Verified Contract',
-            targetTag: 'dev',
-            amount: '2.0',
-          };
-        } else if (fileToSend.isImage) {
-          replyAgentTag = 'designer';
-          replyAgentName = 'MuseSpark Creative';
-          replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=designer';
-          replyText = `🖼️ Deliverable / Asset Received: "${fileToSend.name}" (${fileToSend.size})! Visual artifact verified against Arc milestone quest criteria.`;
-          widget = {
-            type: 'design_task',
-            title: `Verified: ${fileToSend.name}`,
-            badge: 'Milestone In Escrow',
-            body: `Deliverable: ${fileToSend.name} · Resolution & metadata verified. Funds locked in milestone escrow ready for release.`,
-            actionText: 'Approve & Release Payment',
-            targetTag: 'designer',
-            amount: '15.0',
-          };
-        } else {
-          replyAgentTag = 'dev';
-          replyAgentName = 'Arc Sovereign Agent';
-          replyText = `📑 File Received: "${fileToSend.name}" (${fileToSend.size})! Payload parsed in Arc Osaka sovereign agent environment. Ready to execute requested actions.`;
-          widget = {
-            type: 'file_processed',
-            title: `Processed: ${fileToSend.name}`,
-            badge: 'Payload Validated',
-            body: `Size: ${fileToSend.size} · Checksum verified on Arc Osaka. Ready to trigger pipeline.`,
-            actionText: 'Confirm Execution',
-            targetTag: 'dev',
-            amount: '1.0',
-          };
-        }
-      } else if (replyAgentTag === 'chowdeck' || lower.includes('food') || lower.includes('chowdeck') || lower.includes('jollof') || lower.includes('order')) {
-        replyAgentTag = 'chowdeck';
-        replyAgentName = 'Chowdeck Food Bot';
-        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=chowdeck';
-        replyText = "🍗 Chowdeck Agent connected on Arc Osaka EVM! Food order route dispatched. Settlement verified with zero gas fee.";
-        widget = {
-          type: 'food_order',
-          title: 'Chowdeck Express Delivery #882',
-          badge: 'Zero Gas Settlement',
-          body: 'Item: Jollof Feast Box + Peppered Chicken · Price: 4.5 USDC (₦6,750) · Est. Delivery: 24 mins',
-          actionText: 'Execute USDC Settlement',
-          targetTag: 'chowdeck',
-          amount: '4.5',
-        };
-      } else if (replyAgentTag === 'dev' || lower.includes('audit') || lower.includes('contract') || lower.includes('solidity') || lower.includes('bytecode')) {
+    // If an attached file was sent, prioritize smart file analysis
+    if (fileToSend) {
+      if (fileToSend.extension === 'sol' || fileToSend.name.endsWith('.sol') || lower.includes('contract') || lower.includes('audit')) {
         replyAgentTag = 'dev';
         replyAgentName = 'Arc Contract Auditor';
         replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=dev';
-        replyText = "⚡ Contract Auditor engaged on Arc Osaka (Chain 5042002). Bytecode verification complete. 0 critical vulnerabilities found.";
+        replyText = `⚡ Smart Contract Received: "${fileToSend.name}" (${fileToSend.size})! Bytecode analyzed on Arc Osaka EVM (5042002). 0 critical vulnerabilities found. Formal verification: Passed.`;
         widget = {
           type: 'contract_audit',
-          title: 'Milestone Escrow Audit Report',
-          badge: 'Passed Audit (100/100)',
-          body: 'Target: MilestoneEscrow.sol · Formal verification: Passed · Non-reentrant & ERC-4337 Sponsored',
-          actionText: 'Deploy Verified Escrow',
+          title: `Audit Passed: ${fileToSend.name}`,
+          badge: '100/100 Security Score',
+          body: `File: ${fileToSend.name} · Gas optimization: 99.8% · Arc Osaka EVM Compatible. Ready for milestone escrow deployment.`,
+          actionText: 'Deploy Verified Contract',
           targetTag: 'dev',
           amount: '2.0',
         };
-      } else if (replyAgentTag === 'designer' || lower.includes('design') || lower.includes('logo') || lower.includes('banner') || lower.includes('ui')) {
+      } else if (fileToSend.isImage) {
         replyAgentTag = 'designer';
         replyAgentName = 'MuseSpark Creative';
         replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=designer';
-        replyText = "🎨 MuseSpark generative pipeline triggered. High-resolution vector assets and UI components generated.";
+        replyText = `🖼️ Deliverable / Asset Received: "${fileToSend.name}" (${fileToSend.size})! Visual artifact verified against Arc milestone quest criteria.`;
         widget = {
           type: 'design_task',
-          title: 'Cyber-Naira Vector Assets Pack',
+          title: `Verified: ${fileToSend.name}`,
           badge: 'Milestone In Escrow',
-          body: 'Specs: 4 SVG Logo Marks + 3 Social Banners · Reward: 25 USDC (₦37,500) locked in contract',
+          body: `Deliverable: ${fileToSend.name} · Resolution & metadata verified. Funds locked in milestone escrow ready for release.`,
           actionText: 'Approve & Release Payment',
           targetTag: 'designer',
-          amount: '25.0',
-        };
-      } else if (replyAgentTag === 'ride' || lower.includes('ride') || lower.includes('transit') || lower.includes('dispatch')) {
-        replyAgentTag = 'ride';
-        replyAgentName = 'Arc Transit Router';
-        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=ride';
-        replyText = "🚖 Arc Transit Router online. Autonomous logistics, routing, and ride settlement initialized.";
-        widget = {
-          type: 'transit_dispatch',
-          title: 'Autonomous Ride Dispatch #TR-502',
-          badge: 'Driver En Route',
-          body: 'Pickup: Lagos Mainland · Destination: Victoria Island · Fare: 3.2 USDC (₦4,800)',
-          actionText: 'Pay Fare with USDC',
-          targetTag: 'ride',
-          amount: '3.2',
-        };
-      } else if (replyAgentTag === 'escrow' || lower.includes('escrow') || lower.includes('lock') || lower.includes('milestone')) {
-        replyAgentTag = 'escrow';
-        replyAgentName = 'Arc P2P Arbiter';
-        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=escrow';
-        replyText = "🔒 Arc Non-Custodial Escrow Vault opened. Funds are securely locked in smart contract until delivery hash is validated.";
-        widget = {
-          type: 'escrow_lock',
-          title: 'Smart Contract Escrow Lock',
-          badge: '100% USDC Protected',
-          body: 'Contract: 0x7FA938...b3e1496 · Conditional release upon proof-of-work receipt on Arc Osaka.',
-          actionText: 'Lock 10 USDC in Escrow',
-          targetTag: 'escrow',
-          amount: '10.0',
-        };
-      } else if (lower.includes('airtime') || lower.includes('recharge') || lower.includes('topup') || lower.includes('500 airtime')) {
-        replyAgentTag = 'telecom';
-        replyAgentName = 'Walley Airtime';
-        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=airtime';
-        replyText = "📱 Instant Airtime recharge prepared for 500 NGN. Zero gas fee on Arc Osaka EVM.";
-        widget = {
-          type: 'airtime_pay',
-          title: 'Airtime Recharge (₦500)',
-          badge: 'Instant Delivery',
-          body: 'MTN / Airtel / Glo / 9mobile · Amount: 0.33 USDC (₦500) · Dispatched instantly upon confirmation.',
-          actionText: 'Confirm ₦500 Airtime',
-          targetTag: 'airtime',
-          amount: '0.33',
-        };
-      } else if (lower.includes('dstv') || lower.includes('cable') || lower.includes('gotv')) {
-        replyAgentTag = 'utility';
-        replyAgentName = 'Walley Utility';
-        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=utility';
-        replyText = "📺 DStv subscription renewal ready. Settled gaslessly via USDC smart contract on Arc Osaka.";
-        widget = {
-          type: 'cable_pay',
-          title: 'DStv Subscription Renewal',
-          badge: 'Live Settlement',
-          body: 'Package: DStv Compact / Padi · Zero gas fee · Instant smartcard reactivation.',
-          actionText: 'Pay DStv with USDC',
-          targetTag: 'utility',
-          amount: '12.0',
-        };
-      } else if (lower.includes('transfer') || lower.includes('make a transfer') || lower.includes('send') || lower.includes('pay') || lower.includes('usdc')) {
-        replyText = "💸 I can prepare that instant zero-gas USDC transfer for you right now on Arc Osaka EVM.";
-        const matchAmt = lower.match(/\b(\d+(?:\.\d+)?)\s*(?:usdc|dollars?|\$)?/i);
-        const parsedAmt = matchAmt ? matchAmt[1] : '5.0';
-        widget = {
-          type: 'quick_pay',
-          title: `Instant USDC Transfer`,
-          badge: 'Zero Gas Fee',
-          body: `Amount: ${parsedAmt} USDC · Instant settlement to verified ₦Tag on Arc Osaka.`,
-          actionText: `Send ${parsedAmt} USDC`,
-          targetTag: replyAgentTag !== 'ArcAgent' ? replyAgentTag : 'dev',
-          amount: parsedAmt,
+          amount: '15.0',
         };
       } else {
-        replyText = `Understood! I've logged your request: "${textToSend}". You can tag any verified agent with @₦tag to collaborate or delegate onchain tasks.`;
+        replyAgentTag = 'dev';
+        replyAgentName = 'Arc Sovereign Agent';
+        replyText = `📑 File Received: "${fileToSend.name}" (${fileToSend.size})! Payload parsed in Arc Osaka sovereign agent environment. Ready to execute requested actions.`;
         widget = {
-          type: 'agent_info',
-          title: `${replyAgentName} Profile`,
-          badge: 'ERC-8004 Registered',
-          body: 'Autonomous AI agent verified on Arc Osaka. Ready to accept micro-payments and bounties.',
-          actionText: `Dispatch Task to ₦${replyAgentTag}`,
-          actionPrompt: `@₦${replyAgentTag} Execute task on Arc Osaka`,
+          type: 'file_processed',
+          title: `Processed: ${fileToSend.name}`,
+          badge: 'Payload Validated',
+          body: `Size: ${fileToSend.size} · Checksum verified on Arc Osaka. Ready to trigger pipeline.`,
+          actionText: 'Confirm Execution',
+          targetTag: 'dev',
+          amount: '1.0',
         };
       }
-
-      const botReply = {
-        id: 'bot-' + Date.now(),
-        sender: 'agent',
-        agentTag: replyAgentTag,
-        agentName: replyAgentName,
-        avatar: replyAvatar,
-        text: replyText,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        widget: widget,
+    } else if (replyAgentTag === 'chowdeck' || lower.includes('food') || lower.includes('chowdeck') || lower.includes('jollof') || lower.includes('order')) {
+      replyAgentTag = 'chowdeck';
+      replyAgentName = 'Chowdeck Food Bot';
+      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=chowdeck';
+      replyText = "🍗 Chowdeck Agent connected on Arc Osaka EVM! Food order route dispatched. Settlement verified with zero gas fee.";
+      widget = {
+        type: 'food_order',
+        title: 'Chowdeck Express Delivery #882',
+        badge: 'Zero Gas Settlement',
+        body: 'Item: Jollof Feast Box + Peppered Chicken · Price: 4.5 USDC (₦6,750) · Est. Delivery: 24 mins',
+        actionText: 'Execute USDC Settlement',
+        targetTag: 'chowdeck',
+        amount: '4.5',
       };
+    } else if (replyAgentTag === 'dev' || lower.includes('audit') || lower.includes('contract') || lower.includes('solidity') || lower.includes('bytecode')) {
+      replyAgentTag = 'dev';
+      replyAgentName = 'Arc Contract Auditor';
+      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=dev';
+      replyText = "⚡ Contract Auditor engaged on Arc Osaka (Chain 5042002). Bytecode verification complete. 0 critical vulnerabilities found.";
+      widget = {
+        type: 'contract_audit',
+        title: 'Milestone Escrow Audit Report',
+        badge: 'Passed Audit (100/100)',
+        body: 'Target: MilestoneEscrow.sol · Formal verification: Passed · Non-reentrant & ERC-4337 Sponsored',
+        actionText: 'Deploy Verified Escrow',
+        targetTag: 'dev',
+        amount: '2.0',
+      };
+    } else if (replyAgentTag === 'designer' || lower.includes('design') || lower.includes('logo') || lower.includes('banner') || lower.includes('ui')) {
+      replyAgentTag = 'designer';
+      replyAgentName = 'MuseSpark Creative';
+      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=designer';
+      replyText = "🎨 MuseSpark generative pipeline triggered. High-resolution vector assets and UI components generated.";
+      widget = {
+        type: 'design_task',
+        title: 'Cyber-Naira Vector Assets Pack',
+        badge: 'Milestone In Escrow',
+        body: 'Specs: 4 SVG Logo Marks + 3 Social Banners · Reward: 25 USDC (₦37,500) locked in contract',
+        actionText: 'Approve & Release Payment',
+        targetTag: 'designer',
+        amount: '25.0',
+      };
+    } else if (replyAgentTag === 'ride' || lower.includes('ride') || lower.includes('transit') || lower.includes('dispatch')) {
+      replyAgentTag = 'ride';
+      replyAgentName = 'Arc Transit Router';
+      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=ride';
+      replyText = "🚖 Arc Transit Router online. Autonomous logistics, routing, and ride settlement initialized.";
+      widget = {
+        type: 'transit_dispatch',
+        title: 'Autonomous Ride Dispatch #TR-502',
+        badge: 'Driver En Route',
+        body: 'Pickup: Lagos Mainland · Destination: Victoria Island · Fare: 3.2 USDC (₦4,800)',
+        actionText: 'Pay Fare with USDC',
+        targetTag: 'ride',
+        amount: '3.2',
+      };
+    } else if (replyAgentTag === 'escrow' || lower.includes('escrow') || lower.includes('lock') || lower.includes('milestone')) {
+      replyAgentTag = 'escrow';
+      replyAgentName = 'Arc P2P Arbiter';
+      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=escrow';
+      replyText = "🔒 Arc Non-Custodial Escrow Vault opened. Funds are securely locked in smart contract until delivery hash is validated.";
+      widget = {
+        type: 'escrow_lock',
+        title: 'Smart Contract Escrow Lock',
+        badge: '100% USDC Protected',
+        body: 'Contract: 0x7FA938...b3e1496 · Conditional release upon proof-of-work receipt on Arc Osaka.',
+        actionText: 'Lock 10 USDC in Escrow',
+        targetTag: 'escrow',
+        amount: '10.0',
+      };
+    } else if (lower.includes('airtime') || lower.includes('recharge') || lower.includes('topup') || lower.includes('500 airtime')) {
+      replyAgentTag = 'telecom';
+      replyAgentName = 'Walley Airtime';
+      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=airtime';
+      replyText = "📱 Instant Airtime recharge prepared for 500 NGN. Zero gas fee on Arc Osaka EVM.";
+      widget = {
+        type: 'airtime_pay',
+        title: 'Airtime Recharge (₦500)',
+        badge: 'Instant Delivery',
+        body: 'MTN / Airtel / Glo / 9mobile · Amount: 0.33 USDC (₦500) · Dispatched instantly upon confirmation.',
+        actionText: 'Confirm ₦500 Airtime',
+        targetTag: 'airtime',
+        amount: '0.33',
+      };
+    } else if (lower.includes('dstv') || lower.includes('cable') || lower.includes('gotv')) {
+      replyAgentTag = 'utility';
+      replyAgentName = 'Walley Utility';
+      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=utility';
+      replyText = "📺 DStv subscription renewal ready. Settled gaslessly via USDC smart contract on Arc Osaka.";
+      widget = {
+        type: 'cable_pay',
+        title: 'DStv Subscription Renewal',
+        badge: 'Live Settlement',
+        body: 'Package: DStv Compact / Padi · Zero gas fee · Instant smartcard reactivation.',
+        actionText: 'Pay DStv with USDC',
+        targetTag: 'utility',
+        amount: '12.0',
+      };
+    } else if (lower.includes('transfer') || lower.includes('make a transfer') || lower.includes('send') || lower.includes('pay') || lower.includes('usdc')) {
+      replyText = "💸 I can prepare that instant zero-gas USDC transfer for you right now on Arc Osaka EVM.";
+      const matchAmt = lower.match(/\b(\d+(?:\.\d+)?)\s*(?:usdc|dollars?|\$)?/i);
+      const parsedAmt = matchAmt ? matchAmt[1] : '5.0';
+      widget = {
+        type: 'quick_pay',
+        title: `Instant USDC Transfer`,
+        badge: 'Zero Gas Fee',
+        body: `Amount: ${parsedAmt} USDC · Instant settlement to verified ₦Tag on Arc Osaka.`,
+        actionText: `Send ${parsedAmt} USDC`,
+        targetTag: replyAgentTag !== 'ArcAgent' ? replyAgentTag : 'dev',
+        amount: parsedAmt,
+      };
+    } else {
+      // Connect to Google Gemini 3.5 Flash-Lite (Free Tier)
+      try {
+        const geminiRes = await askArcGemini({
+          prompt: textToSend,
+          history: chatMessages,
+          context: { myTag, walletAddress }
+        });
+        replyText = geminiRes.text;
+        replyModel = geminiRes.model;
+        replyAgentName = 'Gemini 3.5 Flash-Lite';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=gemini-flash';
+      } catch (err) {
+        replyText = `Understood! I've logged your request: "${textToSend}". On Arc Osaka EVM, you can transfer USDC, audit contracts, or tag verified agents.`;
+      }
+    }
 
-      setChatMessages((prev) => [...prev, botReply]);
-      setChatIsTyping(false);
-    }, 700);
+    const botReply = {
+      id: 'bot-' + Date.now(),
+      sender: 'agent',
+      agentTag: replyAgentTag,
+      agentName: replyAgentName,
+      avatar: replyAvatar,
+      text: replyText,
+      model: replyModel,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      widget: widget,
+    };
+
+    setChatMessages((prev) => [...prev, botReply]);
+    setChatIsTyping(false);
+
+    if (options.isVoiceReply && replyText) {
+      speakText(replyText);
+      setSpeakingMsgId(botReply.id);
+    }
   };
 
   const handleWidgetAction = (widget) => {
@@ -4203,7 +4271,26 @@ export default function App() {
                       {/* Text Message Bubble (if text exists) */}
                       {msg.text && (
                         <div className={`walley-msg-bubble ${msg.sender}`}>
-                          {msg.text}
+                          {msg.model && (
+                            <div className="walley-msg-model-tag">
+                              <Sparkles size={11} />
+                              <span>Gemini 3.5 Flash-Lite</span>
+                            </div>
+                          )}
+                          <div className="walley-msg-text-content">{msg.text}</div>
+                          {msg.sender === 'agent' && (
+                            <div className="walley-msg-speech-bar">
+                              <button
+                                type="button"
+                                className={`walley-msg-speak-btn ${speakingMsgId === msg.id ? 'speaking' : ''}`}
+                                onClick={() => handleToggleSpeakMessage(msg)}
+                                title={speakingMsgId === msg.id ? "Stop voice" : "Read aloud (Voice)"}
+                              >
+                                {speakingMsgId === msg.id ? <VolumeX size={12} /> : <Volume2 size={12} />}
+                                <span>{speakingMsgId === msg.id ? "Stop voice" : "Read aloud"}</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -4315,7 +4402,9 @@ export default function App() {
                     <span className="recording-timer-text">
                       {Math.floor(recordingSeconds / 60)}:{String(recordingSeconds % 60).padStart(2, '0')}
                     </span>
-                    <span className="recording-hint">Recording voice directive...</span>
+                    <span className="recording-hint">
+                      {voiceTranscribedText ? `“${voiceTranscribedText}”` : "Listening... speak your directive"}
+                    </span>
                   </div>
 
                   <div className="recording-waveform-anim">
