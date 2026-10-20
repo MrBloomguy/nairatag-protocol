@@ -12,8 +12,8 @@ export const TELEGRAM_CHANNEL_HANDLE = '@nairatagupdates';
 export const TELEGRAM_CHANNEL_URL = 'https://t.me/nairatagupdates';
 export const TELEGRAM_BOT_HANDLE = '@MyNairatagbot';
 export const TELEGRAM_BOT_URL = 'https://t.me/MyNairatagbot';
-export const TWITTER_HANDLE = '@TagProtocol';
-export const TWITTER_URL = 'https://x.com/TagProtocol';
+export const TWITTER_HANDLE = '@NairaTaghq';
+export const TWITTER_URL = 'https://x.com/NairaTaghq';
 
 /**
  * Broadcasts a verified Arc Osaka NairaTag claim directly to the official Telegram channel
@@ -72,7 +72,7 @@ export async function broadcastArcClaimToTelegram({ tag, owner, txHash, explorer
  */
 export function getTwitterShareUrl({ tag, txHash }) {
   const clean = String(tag || '').replace(/^[₦$@#]/, '').toUpperCase();
-  const text = `Just claimed my sovereign ₦${clean} handle on @TagProtocol on Arc Osaka EVM! ⚡ Instant USDC payments with sub-second finality and zero gas fees.\n\nClaim yours: https://arc.nairatag.ng?ref=₦${clean} #Arc #NairaTag #Crypto`;
+  const text = `Just claimed my sovereign ₦${clean} handle on @NairaTaghq on Arc Osaka EVM! ⚡ Instant USDC payments with sub-second finality and zero gas fees.\n\nClaim yours: https://arc.nairatag.ng?ref=₦${clean} #Arc #NairaTag #Crypto`;
   return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
 }
 
