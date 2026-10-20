@@ -16,6 +16,14 @@
       "dest": "/api/arc-follows"
     },
     {
+      "src": "/api/arc-chat(.*)",
+      "dest": "/api/arc-chat"
+    },
+    {
+      "src": "/api/arc-agents(.*)",
+      "dest": "/api/arc-agents"
+    },
+    {
       "src": "/api/celotags(.*)",
       "dest": "/api/celotags"
     },

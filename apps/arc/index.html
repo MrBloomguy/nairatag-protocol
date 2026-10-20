@@ -121,6 +121,21 @@
     </div>
     <div class="splash-spinner"></div>
   </div>
+  <script>
+    (function() {
+      function dismissSplash() {
+        var s = document.getElementById('app-splash');
+        if (s) {
+          s.style.opacity = '0';
+          s.style.visibility = 'hidden';
+          s.style.pointerEvents = 'none';
+          setTimeout(function() { if (s && s.parentNode) s.parentNode.removeChild(s); }, 400);
+        }
+      }
+      setTimeout(dismissSplash, 600);
+      window.addEventListener('load', function() { setTimeout(dismissSplash, 200); });
+    })();
+  </script>
 
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>

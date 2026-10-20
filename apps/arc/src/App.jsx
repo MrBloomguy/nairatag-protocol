@@ -73,6 +73,9 @@ import {
   Trash2,
   Volume2,
   VolumeX,
+  Car,
+  Utensils,
+  ArrowLeftRight,
 } from 'lucide-react';
 import {
   connectWallet,
@@ -83,6 +86,11 @@ import {
   activeArcChain,
   getEthereumProvider,
 } from './services/arcPayment.js';
+import {
+  authenticateWithCircle,
+  getStoredCircleSession,
+  clearCircleSession,
+} from './services/circleWallet.js';
 import {
   resolveTag,
 } from './services/nairatagResolver.js';
@@ -669,6 +677,7 @@ export default function App() {
   const speechRecognitionRef = React.useRef(null);
   const [playingAudioId, setPlayingAudioId] = useState(null);
   const activeAudioPlayerRef = React.useRef(null);
+  const chatStreamRef = React.useRef(null);
   const chatMessagesEndRef = React.useRef(null);
   const [voiceTranscribedText, setVoiceTranscribedText] = useState('');
   const voiceTranscriptRef = React.useRef('');
@@ -676,12 +685,30 @@ export default function App() {
   const liveSpeechTextRef = React.useRef('');
   const [speakingMsgId, setSpeakingMsgId] = useState(null);
 
-  // Auto-scroll chat stream smoothly on new messages or typing
+  // Auto-scroll chat stream strictly inside its own container without scrolling window/page
   useEffect(() => {
-    if (chatMessagesEndRef.current) {
-      chatMessagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (chatStreamRef.current) {
+      chatStreamRef.current.scrollTo({
+        top: chatStreamRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
     }
   }, [chatMessages, chatIsTyping]);
+
+  // Lock document and body to viewport height in chat mode (WhatsApp / ChatGPT style)
+  useEffect(() => {
+    if (mainTab === 'chat') {
+      document.documentElement.classList.add('chat-active');
+      document.body.classList.add('chat-active');
+    } else {
+      document.documentElement.classList.remove('chat-active');
+      document.body.classList.remove('chat-active');
+    }
+    return () => {
+      document.documentElement.classList.remove('chat-active');
+      document.body.classList.remove('chat-active');
+    };
+  }, [mainTab]);
 
   // Clean up media streams, speech recognizers, and audio players on unmount
   useEffect(() => {
@@ -1324,6 +1351,12 @@ export default function App() {
   const [myTag, setMyTag] = useState(null);
   const userTag = myTag?.tag || 'nairatag';
 
+  // Circle Programmable Wallet State
+  const [authProvider, setAuthProvider] = useState(null); // 'circle' | 'injected'
+  const [circleSession, setCircleSession] = useState(null);
+  const [circleInput, setCircleInput] = useState('');
+  const [circleStatus, setCircleStatus] = useState('');
+
   // Modals
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [isSendReviewModalOpen, setIsSendReviewModalOpen] = useState(false);
@@ -1711,12 +1744,79 @@ export default function App() {
     }
   }, []);
 
+  // Auto-restore Circle session on mount
+  useEffect(() => {
+    try {
+      const stored = getStoredCircleSession();
+      if (stored && stored.walletAddress) {
+        setWalletAddress(stored.walletAddress);
+        setAuthProvider('circle');
+        setCircleSession(stored);
+        setIsArcNetwork(true);
+        refreshBalance(stored.walletAddress);
+      }
+    } catch (e) {
+      console.warn('[App] Restoring Circle session note:', e);
+    }
+  }, [refreshBalance]);
+
+  // Connect via Circle Programmable Wallet (Web3 Services)
+  const handleConnectCircle = async (idInput) => {
+    const id = (idInput || circleInput || '').trim();
+    if (!id) {
+      showToast('Please enter an email or NairaTag handle', 'error', 3000);
+      return;
+    }
+    setIsConnecting(true);
+    setCircleStatus('Connecting to Circle Web3 Services...');
+    try {
+      const res = await authenticateWithCircle({
+        identifier: id,
+        onStatusUpdate: ({ message }) => {
+          setCircleStatus(message);
+        },
+      });
+      setWalletAddress(res.walletAddress);
+      setAuthProvider('circle');
+      setCircleSession(res);
+      setIsArcNetwork(true);
+      await refreshBalance(res.walletAddress);
+      setIsConnectModalOpen(false);
+      setCircleStatus('');
+      showToast(`Connected Circle Wallet: ${shorten(res.walletAddress)}`, 'success', 3000);
+    } catch (err) {
+      console.error('Circle auth failed:', err);
+      setCircleStatus('');
+      showToast(`Circle login error: ${err.message}`, 'error', 4000);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  // Disconnect active wallet (Circle or Injected)
+  const handleDisconnect = () => {
+    if (authProvider === 'circle') {
+      clearCircleSession();
+    }
+    setWalletAddress(null);
+    setAuthProvider(null);
+    setCircleSession(null);
+    setMyTag(null);
+    setUsdcBalance({ formatted: '0.00', raw: 0n, rawString: '0' });
+    setIsWalletModalOpen(false);
+    showToast('Wallet disconnected', 'info', 2000);
+  };
+
   // Connect Wallet Handler
   const handleConnect = async (providerType) => {
+    if (providerType === 'Circle' || providerType === 'Circle Wallet') {
+      return handleConnectCircle();
+    }
     setIsConnecting(true);
     try {
       const { address, chainId: cId } = await connectWallet();
       setWalletAddress(address);
+      setAuthProvider('injected');
       setChainId(cId);
       setIsArcNetwork(cId === activeArcChain.id);
       await refreshBalance(address);
@@ -2486,14 +2586,6 @@ export default function App() {
           </button>
           <button
             type="button"
-            className={`nav-tab-btn ${mainTab === 'pay' ? 'active' : ''}`}
-            onClick={() => setMainTab('pay')}
-          >
-            <ArrowDownUp size={14} />
-            <span>Swap</span>
-          </button>
-          <button
-            type="button"
             className={`nav-tab-btn ${mainTab === 'chat' ? 'active' : ''}`}
             onClick={() => setMainTab('chat')}
           >
@@ -2701,6 +2793,9 @@ export default function App() {
               title="Click to view Sovereign Portfolio"
             >
               <span className="wallet-connected-dot" />
+              {authProvider === 'circle' && (
+                <span className="circle-tag-pill" title="Powered by Circle Web3 Services">Circle</span>
+              )}
               <span className="wallet-connected-handle">{myTag ? `₦${myTag.tag}` : shorten(walletAddress)}</span>
               <span className="wallet-connected-sep desktop-only">|</span>
               <span className="wallet-connected-bal desktop-only">{usdcBalance.formatted} USDC</span>
@@ -2795,24 +2890,6 @@ export default function App() {
                   <span className="mobile-nav-desc">Autonomous ERC-8004 reputation directory</span>
                 </div>
                 {mainTab === 'agents' && <span className="mobile-nav-active-pill">Active</span>}
-              </button>
-
-              <button
-                type="button"
-                className={`mobile-nav-link ${mainTab === 'pay' ? 'active' : ''}`}
-                onClick={() => {
-                  setMainTab('pay');
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <div className="mobile-nav-icon-box">
-                  <ArrowDownUp size={18} />
-                </div>
-                <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Swap & Pay</span>
-                  <span className="mobile-nav-desc">Instant USDC transfer with zero gas fees</span>
-                </div>
-                {mainTab === 'pay' && <span className="mobile-nav-active-pill">Active</span>}
               </button>
 
               <button
@@ -4154,67 +4231,113 @@ export default function App() {
 
             {/* Main Canvas: Empty state vs Message stream */}
             {chatMessages.length === 0 ? (
-              /* SCREEN 1: Empty state matching reference */
-              <div className="walley-hero-container">
-                <div className="walley-avatar-wrap">
-                  {myTag?.avatar ? (
-                    <img
-                      src={myTag.avatar}
-                      alt={myTag?.tag || 'Profile'}
-                      className="walley-user-avatar-img"
-                      onClick={() => (walletAddress ? setIsWalletModalOpen(true) : setIsConnectModalOpen(true))}
-                    />
-                  ) : (
-                    <div
-                      className="walley-user-avatar"
-                      style={{
-                        boxShadow: chatUserAvatar?.palette?.glow
-                          ? `0 6px 20px ${chatUserAvatar.palette.glow}`
-                          : '0 6px 18px rgba(0, 0, 0, 0.15)',
-                      }}
-                      onClick={() => (walletAddress ? setIsWalletModalOpen(true) : setIsConnectModalOpen(true))}
-                      dangerouslySetInnerHTML={{ __html: chatUserAvatar?.avatarSvg || '' }}
-                      title={walletAddress ? (myTag ? `₦${myTag.tag}` : shorten(walletAddress)) : 'Sign in'}
-                    />
-                  )}
+              /* SCREEN 1: Redesigned Welcome & Quick-Action Dashboard Matching Reference */
+              <div className="walley-hero-container ref-chat-layout">
+                {/* 3D Agent Mascot Character */}
+                <div className="ref-mascot-wrapper">
+                  <img
+                    src="/agent-mascot.png"
+                    alt="NairaTag Agent"
+                    className="ref-mascot-img"
+                  />
                 </div>
 
-                <h1 className="walley-headline">
-                  {chatGreeting}
+                {/* Personalized Greeting */}
+                <h1 className="ref-chat-heading">
+                  {walletAddress && myTag?.tag
+                    ? `Hey ${myTag.tag.replace(/^[₦$@#]/, '')} 👋`
+                    : (walletAddress ? `Hey ${shorten(walletAddress)} 👋` : 'Hey there 👋')}
                 </h1>
 
-                <div className="walley-prompt-pills">
+                {/* Friendly Subtitle */}
+                <p className="ref-chat-sub">
+                  I'm your NairaTag agent. What can I help you get done today?
+                </p>
+
+                {/* 3x2 Quick-Action Grid */}
+                <div className="ref-action-grid">
+                  {/* Card 1: Tasks */}
                   <button
                     type="button"
-                    className="walley-prompt-pill"
-                    onClick={() => handleSendChatPrompt('Make a transfer')}
+                    className="ref-action-card card-tasks"
+                    onClick={() => setMainTab('tasks')}
                   >
-                    <Send size={15} className="pill-icon pill-icon-send" />
-                    <span>Make a transfer</span>
+                    <div className="ref-action-icon-circle icon-circle-tasks">
+                      <ArrowLeftRight size={14} />
+                    </div>
+                    <span className="ref-action-title">Tasks</span>
+                    <span className="ref-action-sub">Earn rewards</span>
                   </button>
 
+                  {/* Card 2: Swap */}
                   <button
                     type="button"
-                    className="walley-prompt-pill"
-                    onClick={() => handleSendChatPrompt('I want to buy 500 airtime for someone')}
+                    className="ref-action-card card-swap"
+                    onClick={() => handleSendChatPrompt('I want to swap tokens')}
                   >
-                    <Phone size={15} className="pill-icon pill-icon-phone" />
-                    <span>Buy airtime</span>
+                    <div className="ref-action-icon-circle icon-circle-swap">
+                      <ArrowDownUp size={14} />
+                    </div>
+                    <span className="ref-action-title">Swap</span>
+                    <span className="ref-action-sub">Trade tokens</span>
                   </button>
 
+                  {/* Card 3: Ride */}
                   <button
                     type="button"
-                    className="walley-prompt-pill"
-                    onClick={() => handleSendChatPrompt('Pay for Dstv')}
+                    className="ref-action-card card-ride"
+                    onClick={() => handleSendChatPrompt('Book a ride with @₦ride')}
                   >
-                    <Tv size={15} className="pill-icon pill-icon-tv" />
-                    <span>Pay for Dstv</span>
+                    <div className="ref-action-icon-circle icon-circle-ride">
+                      <Car size={14} />
+                    </div>
+                    <span className="ref-action-title">Ride</span>
+                    <span className="ref-action-sub">Get a ride</span>
+                  </button>
+
+                  {/* Card 4: Food */}
+                  <button
+                    type="button"
+                    className="ref-action-card card-food"
+                    onClick={() => handleSendChatPrompt('Order meals with @₦chowdeck')}
+                  >
+                    <div className="ref-action-icon-circle icon-circle-food">
+                      <Utensils size={14} />
+                    </div>
+                    <span className="ref-action-title">Food</span>
+                    <span className="ref-action-sub">Order meals</span>
+                  </button>
+
+                  {/* Card 5: Agent */}
+                  <button
+                    type="button"
+                    className="ref-action-card card-agent"
+                    onClick={() => setMainTab('agents')}
+                  >
+                    <div className="ref-action-icon-circle icon-circle-agent">
+                      <Tag size={14} />
+                    </div>
+                    <span className="ref-action-title">Agent</span>
+                    <span className="ref-action-sub">Do more</span>
+                  </button>
+
+                  {/* Card 6: More */}
+                  <button
+                    type="button"
+                    className="ref-action-card card-more"
+                    onClick={() => handleSendChatPrompt('Show all available NairaTag features and commands')}
+                  >
+                    <div className="ref-action-icon-circle icon-circle-more">
+                      <MoreHorizontal size={14} />
+                    </div>
+                    <span className="ref-action-title">More</span>
+                    <span className="ref-action-sub">Coming soon</span>
                   </button>
                 </div>
               </div>
             ) : (
               /* SCREEN 2: Active chat message stream matching reference */
-              <div className="walley-chat-stream">
+              <div className="walley-chat-stream" ref={chatStreamRef}>
                 {chatMessages.map((msg) => (
                   <div key={msg.id} className={`walley-msg-row ${msg.sender}`}>
                     <div className="walley-msg-bubble-wrap">
@@ -4463,48 +4586,49 @@ export default function App() {
                   <input
                     type="text"
                     className="walley-capsule-input"
-                    placeholder={attachedFile ? `Sending ${attachedFile.name}...` : (isSpeechListening ? "Listening to your voice..." : "What can i help you with?")}
+                    placeholder={attachedFile ? `Sending ${attachedFile.name}...` : (isSpeechListening ? "Listening to your voice..." : "Type a message...")}
                     value={chatInputText}
                     onChange={(e) => setChatInputText(e.target.value)}
+                    onFocus={() => {
+                      window.scrollTo(0, 0);
+                      document.body.scrollTop = 0;
+                    }}
+                    autoComplete="off"
                   />
 
                   <div className="walley-capsule-actions">
-                    {chatInputText.trim() || attachedFile ? (
-                      <button
-                        type="submit"
-                        className="walley-capsule-send-btn"
-                        disabled={chatIsTyping}
-                        aria-label="Send"
-                        title="Send"
-                      >
-                        <ArrowUp size={16} />
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          className={`walley-capsule-icon-btn ${isSpeechListening ? 'listening-active' : ''}`}
-                          onClick={toggleSpeechRecognition}
-                          title={isSpeechListening ? "Stop listening" : "Speak to AI (Speech-to-Text)"}
-                          aria-label={isSpeechListening ? "Stop listening" : "Speak to AI"}
-                        >
-                          <Mic size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="walley-capsule-icon-btn"
-                          onClick={startVoiceRecording}
-                          title="Record Voice Note to Sovereign Agent"
-                          aria-label="Record Voice Note"
-                        >
-                          <span className="walley-soundwave">
-                            <span />
-                            <span />
-                            <span />
-                          </span>
-                        </button>
-                      </>
-                    )}
+                    <button
+                      type="button"
+                      className={`walley-capsule-icon-btn ${isSpeechListening ? 'listening-active' : ''}`}
+                      onClick={toggleSpeechRecognition}
+                      title={isSpeechListening ? "Stop listening" : "Speak to AI (Speech-to-Text)"}
+                      aria-label={isSpeechListening ? "Stop listening" : "Speak to AI"}
+                    >
+                      <Mic size={18} />
+                    </button>
+                    <button
+                      type="button"
+                      className="walley-capsule-icon-btn"
+                      onClick={startVoiceRecording}
+                      title="Record Voice Note"
+                      aria-label="Record Voice Note"
+                      style={{ padding: '4px' }}
+                    >
+                      <span className="walley-soundwave">
+                        <span />
+                        <span />
+                        <span />
+                      </span>
+                    </button>
+                    <button
+                      type="submit"
+                      className="walley-capsule-send-btn ref-send-btn"
+                      disabled={chatIsTyping || (!chatInputText.trim() && !attachedFile)}
+                      aria-label="Send"
+                      title="Send"
+                    >
+                      <Send size={14} style={{ transform: 'translateX(-1px) translateY(0.5px)' }} />
+                    </button>
                   </div>
                 </form>
               )}
@@ -4797,18 +4921,6 @@ export default function App() {
             <span className="mobile-footer-label">Agents</span>
           </button>
 
-          {/* 4. Swap */}
-          <button
-            type="button"
-            className={`mobile-footer-item ${mainTab === 'pay' ? 'active' : ''}`}
-            onClick={() => setMainTab('pay')}
-            aria-label="Swap"
-          >
-            <div className="mobile-footer-icon-wrap">
-              <ArrowDownUp size={22} strokeWidth={mainTab === 'pay' ? 2.4 : 1.8} />
-            </div>
-            <span className="mobile-footer-label">Swap</span>
-          </button>
 
           {/* 5. Chat */}
           <button
@@ -4934,13 +5046,18 @@ export default function App() {
       )}
 
       {/* ───────────────────────────────────────────────────────────────────
-          MODAL 1: CONNECT WALLET OVERLAY
+          MODAL 1: CONNECT WALLET OVERLAY (CIRCLE W3S + BROWSER WALLETS)
           ─────────────────────────────────────────────────────────────────── */}
       {isConnectModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsConnectModalOpen(false)}>
-          <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="card-header-title">Connect Wallet</span>
+          <div className="modal-dialog connect-modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'linear-gradient(135deg, #0052FF, #00D2FF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                  <ShieldCheck size={15} />
+                </div>
+                <span className="card-header-title">Connect Account</span>
+              </div>
               <button
                 type="button"
                 style={{ background: 'none', border: 'none', color: 'var(--privy-color-foreground-2)', cursor: 'pointer' }}
@@ -4949,9 +5066,65 @@ export default function App() {
                 <X size={18} />
               </button>
             </div>
+
+            {/* FEATURED: Circle Programmable Wallets (Web3 Services) */}
+            <div className="circle-auth-container">
+              <div className="circle-auth-badge">
+                <Sparkles size={11} />
+                <span>RECOMMENDED • ZERO SEED PHRASE</span>
+              </div>
+              <div className="circle-auth-title">Circle Programmable Wallet</div>
+              <p className="circle-auth-desc">
+                Log in instantly with your Email or NairaTag handle. Powered by Circle Web3 Services on Arc Osaka.
+              </p>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleConnectCircle();
+                }}
+                className="circle-auth-form"
+              >
+                <div className="circle-auth-input-wrapper">
+                  <AtSign size={15} className="circle-input-icon" />
+                  <input
+                    type="text"
+                    className="circle-auth-input"
+                    placeholder="Enter email or ₦handle (e.g. segun@arc.io)"
+                    value={circleInput}
+                    onChange={(e) => setCircleInput(e.target.value)}
+                    disabled={isConnecting}
+                    autoFocus
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="circle-auth-submit-btn"
+                  disabled={isConnecting || !circleInput.trim()}
+                >
+                  {isConnecting && circleStatus ? (
+                    <>
+                      <RefreshCw size={14} className="animate-spin" />
+                      <span>{circleStatus}</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Continue with Circle</span>
+                      <ArrowRight size={14} />
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
+
+            {/* Divider */}
+            <div className="circle-modal-divider">
+              <span>OR CONNECT BROWSER WALLET</span>
+            </div>
+
+            {/* External Web3 Wallets */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {[
-                { name: 'Arc Wallet (Recommended)', type: 'Arc Wallet' },
+                { name: 'Arc Wallet', type: 'Arc Wallet', badge: 'EVM 5042002' },
                 { name: 'MetaMask', type: 'MetaMask' },
                 { name: 'Coinbase Wallet', type: 'Coinbase Wallet' },
                 { name: 'WalletConnect', type: 'WalletConnect' },
@@ -4959,13 +5132,19 @@ export default function App() {
                 <button
                   key={w.name}
                   type="button"
-                  className="token-input-box"
+                  className="token-input-box circle-wallet-alt-btn"
                   style={{ cursor: 'pointer', textAlign: 'left', display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px' }}
                   disabled={isConnecting}
                   onClick={() => handleConnect(w.type)}
                 >
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--privy-color-foreground)' }}>{w.name}</span>
-                  <ChevronRight size={15} color="var(--privy-color-foreground-2)" />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Wallet size={15} color="var(--privy-color-foreground-2)" />
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--privy-color-foreground)' }}>{w.name}</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    {w.badge && <span className="card-net-pill" style={{ fontSize: '9px', padding: '1px 5px' }}>{w.badge}</span>}
+                    <ChevronRight size={15} color="var(--privy-color-foreground-2)" />
+                  </div>
                 </button>
               ))}
             </div>
@@ -5387,6 +5566,9 @@ export default function App() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <span style={{ fontSize: '14px', fontWeight: 800 }}>{myTag ? `₦${myTag.tag}` : 'Sovereign Wallet'}</span>
                   <span className="card-net-pill">Arc Osaka</span>
+                  {authProvider === 'circle' && (
+                    <span className="circle-tag-pill" style={{ fontSize: '9px', padding: '1px 6px' }}>Circle W3S</span>
+                  )}
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>
                   {walletAddress ? shorten(walletAddress) : 'Not Connected'}
@@ -5522,6 +5704,21 @@ export default function App() {
                 ))}
               </div>
             )}
+
+            {/* Wallet Provider Actions / Disconnect */}
+            <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid var(--privy-color-border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <ShieldCheck size={13} color={authProvider === 'circle' ? '#0052FF' : 'var(--privy-color-interactive)'} />
+                <span>{authProvider === 'circle' ? 'Circle Programmable Wallet (W3S)' : 'Injected Web3 Wallet'}</span>
+              </div>
+              <button
+                type="button"
+                className="wallet-disconnect-btn"
+                onClick={handleDisconnect}
+              >
+                Disconnect
+              </button>
+            </div>
           </div>
         </div>
       )}

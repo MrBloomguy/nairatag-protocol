@@ -5419,46 +5419,73 @@ body:has(.agent-modal-backdrop) {
 /* ─────────────────────────────────────────────────────────────────────────────
    WALLEY-AI MINIMAL CHAT INTERFACE (MATCHING REFERENCE UI)
    ───────────────────────────────────────────────────────────────────────────── */
-/* Container when in chat mode: full viewport height minus header, strictly no outer page scroll */
-.main-content-wrapper.chat-mode {
-  padding: 0 !important;
-  height: calc(100dvh - 65px) !important;
-  max-height: calc(100dvh - 65px) !important;
+/* Strictly lock window and outer scroll in chat mode (WhatsApp & ChatGPT Architecture) */
+html.chat-active,
+body.chat-active,
+html:has(.main-content-wrapper.chat-mode),
+body:has(.main-content-wrapper.chat-mode) {
+  height: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  max-width: 100vw !important;
+}
+
+html.chat-active #root,
+body.chat-active #root,
+html:has(.main-content-wrapper.chat-mode) #root,
+body:has(.main-content-wrapper.chat-mode) #root {
+  height: 100% !important;
+  height: 100dvh !important;
+  max-height: 100dvh !important;
   min-height: 0 !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
+  position: relative !important;
+  width: 100% !important;
 }
 
-@media (max-width: 768px) {
-  .main-content-wrapper.chat-mode {
-    height: calc(100dvh - 58px) !important;
-    max-height: calc(100dvh - 58px) !important;
-  }
+/* Container when in chat mode: fills remaining vertical height under header, strictly no outer page scroll */
+.main-content-wrapper.chat-mode {
+  padding: 0 !important;
+  margin: 0 !important;
+  flex: 1 1 0% !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  position: relative !important;
 }
 
 .walley-chat-screen {
-  width: 100%;
-  max-width: 460px;
-  margin: 0 auto;
-  height: 100%;
-  max-height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  padding: 6px 14px 10px 14px;
-  box-sizing: border-box;
+  width: 100% !important;
+  max-width: 480px !important;
+  margin: 0 auto !important;
+  height: 100% !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  position: relative !important;
+  padding: 2px 14px 0 14px !important;
+  box-sizing: border-box !important;
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 @media (max-width: 768px) {
   .walley-chat-screen {
-    padding: 4px 12px 8px 12px;
+    padding: 0 12px 0 12px !important;
   }
 }
 
@@ -5885,16 +5912,20 @@ body:has(.agent-modal-backdrop) {
   opacity: 0.92;
 }
 
-/* Bottom Floating Capsule Composer (Pinned & Never Scrolls with page) */
+/* Bottom Floating Capsule Composer (Strictly Sticky at Bottom) */
 .walley-bottom-bar {
-  width: 100%;
-  position: relative;
-  bottom: auto;
-  z-index: 40;
-  padding-top: 6px;
-  padding-bottom: max(6px, env(safe-area-inset-bottom));
-  background: transparent !important;
-  flex-shrink: 0;
+  width: 100% !important;
+  position: sticky !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 50 !important;
+  padding-top: 6px !important;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px)) !important;
+  background: var(--surface2) !important;
+  flex-shrink: 0 !important;
+  margin-top: auto !important;
+  box-sizing: border-box !important;
 }
 
 .walley-capsule-composer {
@@ -6877,6 +6908,546 @@ body:has(.agent-modal-backdrop) {
   transform: translateY(-1px);
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   REFERENCE-ALIGNED CHAT PAGE LAYOUT (ADAPTED TO NAIRATAG ARC THEME)
+   ═══════════════════════════════════════════════════════════════════ */
 
+.ref-chat-layout {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 1 1 0% !important;
+  min-height: 0 !important;
+  width: 100% !important;
+  max-width: 330px !important;
+  margin: 0 auto !important;
+  padding: 6px 4px 6px 4px !important;
+  text-align: center !important;
+  animation: fadeIn 0.25s ease forwards !important;
+  box-sizing: border-box !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
 
+.ref-chat-layout::-webkit-scrollbar {
+  display: none !important;
+}
 
+/* 3D Agent Mascot Character Avatar */
+.ref-mascot-wrapper {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  margin: 0 0 5px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: mascotFloat 3.8s ease-in-out infinite;
+}
+
+@keyframes mascotFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(1.2deg);
+  }
+}
+
+.ref-mascot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px rgba(16, 185, 129, 0.2));
+}
+
+[data-theme="dark"] .ref-mascot-img {
+  filter: drop-shadow(0 8px 18px rgba(187, 242, 70, 0.25));
+}
+
+/* Greeting Headline */
+.ref-chat-heading {
+  font-family: var(--font-maru, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--privy-color-foreground, #111827);
+  letter-spacing: -0.3px;
+  margin: 0 0 3px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+[data-theme="dark"] .ref-chat-heading {
+  color: #FFFFFF;
+}
+
+/* Friendly Subtitle */
+.ref-chat-sub {
+  font-size: 11.5px;
+  font-weight: 450;
+  line-height: 1.35;
+  color: var(--privy-color-foreground-2, #6B7280);
+  max-width: 250px;
+  margin: 0 auto 10px auto;
+}
+
+[data-theme="dark"] .ref-chat-sub {
+  color: #9CA3AF;
+}
+
+/* 3x2 Quick Actions Grid - Compact & Sleek */
+.ref-action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.ref-action-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 3px 6px 3px;
+  background: var(--surface1, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.07));
+  border-radius: 13px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  text-align: center;
+}
+
+[data-theme="dark"] .ref-action-card {
+  background: #17181D;
+  border-color: #24252B;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+}
+
+.ref-action-card:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="dark"] .ref-action-card:hover {
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.4);
+  border-color: rgba(187, 242, 70, 0.35);
+}
+
+.ref-action-card:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Circular Icon Containers */
+.ref-action-icon-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  transition: transform 0.2s ease;
+}
+
+.ref-action-card:hover .ref-action-icon-circle {
+  transform: scale(1.08);
+}
+
+/* Exact Theme Accents for the 6 Cards */
+.icon-circle-tasks {
+  background: rgba(16, 185, 129, 0.14);
+  color: #10B981;
+}
+.icon-circle-swap {
+  background: rgba(168, 85, 247, 0.14);
+  color: #A855F7;
+}
+.icon-circle-ride {
+  background: rgba(59, 130, 246, 0.14);
+  color: #3B82F6;
+}
+.icon-circle-food {
+  background: rgba(249, 115, 22, 0.14);
+  color: #F97316;
+}
+.icon-circle-agent {
+  background: rgba(139, 92, 246, 0.14);
+  color: #8B5CF6;
+}
+.icon-circle-more {
+  background: rgba(148, 163, 184, 0.16);
+  color: #94A3B8;
+}
+
+[data-theme="dark"] .icon-circle-tasks {
+  background: rgba(187, 242, 70, 0.15);
+  color: #BBF246;
+}
+
+.ref-action-title {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--privy-color-foreground, #111827);
+  letter-spacing: -0.2px;
+  line-height: 1.15;
+  margin-bottom: 1px;
+}
+
+[data-theme="dark"] .ref-action-title {
+  color: #F3F4F6;
+}
+
+.ref-action-sub {
+  font-size: 9px;
+  font-weight: 450;
+  color: var(--privy-color-foreground-2, #6B7280);
+  line-height: 1.15;
+}
+
+[data-theme="dark"] .ref-action-sub {
+  color: #9CA3AF;
+}
+
+/* Claim Your NairaTag Banner */
+.ref-claim-banner {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(187, 242, 70, 0.12) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.04);
+  text-align: left;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+[data-theme="dark"] .ref-claim-banner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(187, 242, 70, 0.08) 100%);
+  border-color: rgba(187, 242, 70, 0.22);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.ref-claim-banner:hover {
+  transform: translateY(-1.5px);
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.12);
+}
+
+[data-theme="dark"] .ref-claim-banner:hover {
+  border-color: rgba(187, 242, 70, 0.4);
+  box-shadow: 0 4px 16px rgba(187, 242, 70, 0.15);
+}
+
+.ref-claim-banner-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.16);
+  color: #10B981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .ref-claim-banner-icon {
+  background: rgba(187, 242, 70, 0.18);
+  color: #BBF246;
+}
+
+.ref-claim-banner-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ref-claim-banner-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--privy-color-foreground, #111827);
+  line-height: 1.25;
+}
+
+[data-theme="dark"] .ref-claim-banner-title {
+  color: #FFFFFF;
+}
+
+.ref-claim-banner-sub {
+  font-size: 10.5px;
+  font-weight: 450;
+  color: var(--privy-color-foreground-2, #6B7280);
+  line-height: 1.25;
+  margin-top: 1px;
+}
+
+[data-theme="dark"] .ref-claim-banner-sub {
+  color: #9CA3AF;
+}
+
+.ref-claim-banner-arrow {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10B981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+[data-theme="dark"] .ref-claim-banner-arrow {
+  background: rgba(187, 242, 70, 0.14);
+  color: #BBF246;
+}
+
+.ref-claim-banner:hover .ref-claim-banner-arrow {
+  transform: translateX(2px);
+}
+
+/* Green Circular Send Button in Bottom Bar */
+.walley-capsule-send-btn.ref-send-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #10B981;
+  color: #FFFFFF;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .walley-capsule-send-btn.ref-send-btn {
+  background: #10B981;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.45);
+}
+
+.walley-capsule-send-btn.ref-send-btn:hover:not(:disabled) {
+  background: #059669;
+  transform: scale(1.06);
+}
+
+.walley-capsule-send-btn.ref-send-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.walley-capsule-send-btn.ref-send-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   CIRCLE PROGRAMMABLE WALLET (W3S) AUTHENTICATION LAYER
+   ========================================================================== */
+
+.circle-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #0052FF;
+  background: rgba(0, 82, 255, 0.12);
+  border: 1px solid rgba(0, 82, 255, 0.28);
+  border-radius: 999px;
+  padding: 1px 7px;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .circle-tag-pill {
+  color: #388BFD;
+  background: rgba(56, 139, 253, 0.15);
+  border-color: rgba(56, 139, 253, 0.35);
+}
+
+.circle-auth-container {
+  background: linear-gradient(135deg, rgba(0, 82, 255, 0.08) 0%, rgba(187, 242, 70, 0.05) 100%);
+  border: 1px solid rgba(0, 82, 255, 0.24);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 82, 255, 0.06);
+}
+
+[data-theme="dark"] .circle-auth-container {
+  background: linear-gradient(135deg, rgba(0, 82, 255, 0.14) 0%, rgba(187, 242, 70, 0.06) 100%);
+  border-color: rgba(0, 82, 255, 0.32);
+}
+
+.circle-auth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #0052FF;
+  background: rgba(0, 82, 255, 0.12);
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+[data-theme="dark"] .circle-auth-badge {
+  color: #58A6FF;
+  background: rgba(88, 166, 255, 0.16);
+}
+
+.circle-auth-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--privy-color-foreground);
+  margin-bottom: 4px;
+  letter-spacing: -0.2px;
+}
+
+.circle-auth-desc {
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--privy-color-foreground-2);
+  margin: 0 0 10px 0;
+}
+
+.circle-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.circle-auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.circle-input-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--privy-color-foreground-2);
+  pointer-events: none;
+}
+
+.circle-auth-input {
+  width: 100%;
+  padding: 9px 12px 9px 32px;
+  background: var(--privy-color-background-surface);
+  border: 1px solid var(--privy-color-border-subtle);
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--privy-color-foreground);
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.circle-auth-input:focus {
+  border-color: #0052FF;
+  box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.15);
+}
+
+.circle-auth-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px 14px;
+  background: #0052FF;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 12px rgba(0, 82, 255, 0.35);
+}
+
+.circle-auth-submit-btn:hover:not(:disabled) {
+  background: #0045d8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 82, 255, 0.45);
+}
+
+.circle-auth-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.circle-modal-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 12px 0 10px 0;
+}
+
+.circle-modal-divider::before,
+.circle-modal-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--privy-color-border-subtle);
+}
+
+.circle-modal-divider span {
+  padding: 0 8px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--privy-color-foreground-2);
+  text-transform: uppercase;
+}
+
+.circle-wallet-alt-btn {
+  transition: all 0.18s ease;
+}
+
+.circle-wallet-alt-btn:hover {
+  background: var(--privy-color-background-surface-2) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.wallet-disconnect-btn {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #ef4444;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wallet-disconnect-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.45);
+  transform: translateY(-1px);
+}
