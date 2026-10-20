@@ -121,6 +121,16 @@ import {
   recordReferralSignup,
   rememberReferralFromUrl,
 } from './services/referrals.js';
+import {
+  broadcastArcClaimToTelegram,
+  getTwitterShareUrl,
+  getTelegramShareUrl,
+  getWhatsAppShareUrl,
+  TELEGRAM_CHANNEL_URL,
+  TELEGRAM_CHANNEL_HANDLE,
+  TWITTER_URL,
+  TWITTER_HANDLE,
+} from './services/arcSocialBroadcast.js';
 import confetti from 'canvas-confetti';
 import RewardsPage, { GoldenVoucherModal, LuckyWheelModal, ReferralModal } from './RewardsPage.jsx';
 import NotificationLayer from './components/NotificationLayer.jsx';
@@ -2320,9 +2330,19 @@ export default function App() {
           setArcRewardsError(rewardError.message || 'Referral reward could not be recorded.');
         }
       }
+      // Broadcast verified Arc claim to official Telegram channel
+      broadcastArcClaimToTelegram({
+        tag: res.cleanTag,
+        owner: walletAddress,
+        txHash: res.txHash,
+        explorerUrl: res.explorerUrl,
+        erc8004Id: agentRegistration?.id || null,
+      }).catch((broadcastErr) => console.warn('[Telegram Broadcast]', broadcastErr));
+
       triggerCelebrationConfetti();
       setCelebrationDetails({
         type: 'claim',
+        cleanTag: res.cleanTag,
         txHash: res.txHash,
         amount: `₦${res.cleanTag.toUpperCase()}`,
         recipient: 'Sovereign Onchain Tag',
@@ -3093,13 +3113,45 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className="btn-claimed-action"
-                      onClick={() => triggerCopy('my_tag', `₦${myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}`)}
-                    >
-                      {copiedKey === 'my_tag' ? 'Copied' : 'Copy'}
-                    </button>
+                    <div className="active-claimed-actions">
+                      <button
+                        type="button"
+                        className="btn-claimed-action"
+                        onClick={() => triggerCopy('my_tag', `₦${myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}`)}
+                        title="Copy ₦Tag"
+                      >
+                        {copiedKey === 'my_tag' ? 'Copied' : 'Copy'}
+                      </button>
+                      <a
+                        href={getTwitterShareUrl({ tag: myTag.tag })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-claimed-social-action"
+                        title="Share on X"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                        </svg>
+                      </a>
+                      <a
+                        href={getTelegramShareUrl({ tag: myTag.tag })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-claimed-social-action"
+                        title="Share on Telegram"
+                      >
+                        <Send size={12} />
+                      </a>
+                      <a
+                        href={getWhatsAppShareUrl({ tag: myTag.tag })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-claimed-social-action"
+                        title="Share on WhatsApp"
+                      >
+                        <Share2 size={12} />
+                      </a>
+                    </div>
                   </div>
                 )}
 
@@ -3257,6 +3309,33 @@ export default function App() {
                   </div>
                 </div>
               )}
+
+              {/* Official Live Claim Notification Feeds (Telegram & X) */}
+              <div className="claim-social-channels-bar">
+                <a
+                  href={TELEGRAM_CHANNEL_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="claim-social-channel-chip chip-telegram"
+                  title="Live Arc Osaka Claim Alerts on Telegram"
+                >
+                  <span className="social-chip-dot pulse-telegram" />
+                  <Send size={12} />
+                  <span>Telegram Feed: <strong>{TELEGRAM_CHANNEL_HANDLE}</strong></span>
+                </a>
+                <a
+                  href={TWITTER_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="claim-social-channel-chip chip-twitter"
+                  title="Follow @TagProtocol on X"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                  <span>Follow <strong>{TWITTER_HANDLE}</strong></span>
+                </a>
+              </div>
             </main>
 
           </div>
@@ -4872,6 +4951,63 @@ export default function App() {
                 </div>
               )}
             </div>
+
+            {/* Social Intent Sharing & Telegram Broadcast Confirmation */}
+            {celebrationDetails.type === 'claim' && (
+              <div className="celebration-social-box">
+                <div className="celebration-social-header">
+                  <span className="celebration-social-title">Claim Broadcasted Live</span>
+                  <a
+                    href={TELEGRAM_CHANNEL_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="celebration-live-channel-link"
+                    title="View live broadcast on Telegram"
+                  >
+                    <span className="celebration-live-dot" />
+                    <span>{TELEGRAM_CHANNEL_HANDLE}</span>
+                    <ExternalLink size={10} />
+                  </a>
+                </div>
+
+                <div className="celebration-social-buttons">
+                  <a
+                    href={getTwitterShareUrl({ tag: celebrationDetails.cleanTag, txHash: celebrationDetails.txHash })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="celebration-social-btn btn-x"
+                    title="Share to X"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    <span>Post to X</span>
+                  </a>
+
+                  <a
+                    href={getTelegramShareUrl({ tag: celebrationDetails.cleanTag })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="celebration-social-btn btn-tg"
+                    title="Share on Telegram"
+                  >
+                    <Send size={13} />
+                    <span>Telegram</span>
+                  </a>
+
+                  <a
+                    href={getWhatsAppShareUrl({ tag: celebrationDetails.cleanTag })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="celebration-social-btn btn-wa"
+                    title="Share on WhatsApp"
+                  >
+                    <Share2 size={13} />
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+            )}
 
             <button
               type="button"

@@ -6554,5 +6554,253 @@ body:has(.agent-modal-backdrop) {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   ARC OSAKA CLAIM SOCIAL BROADCAST & LIVE CHANNELS UI
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Quick social buttons on the active claimed banner */
+.btn-claimed-social-action {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 82, 255, 0.08);
+  color: var(--primary, #0052FF);
+  border: 1px solid rgba(0, 82, 255, 0.15);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  padding: 0;
+}
+
+.btn-claimed-social-action:hover {
+  background: var(--primary, #0052FF);
+  color: #FFFFFF;
+  transform: translateY(-1px) scale(1.06);
+}
+
+[data-theme="dark"] .btn-claimed-social-action {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #E5E7EB;
+}
+
+[data-theme="dark"] .btn-claimed-social-action:hover {
+  background: var(--primary, #0052FF);
+  color: #FFFFFF;
+  border-color: var(--primary, #0052FF);
+}
+
+/* Claim Page Live Social Channels Bar below the Carousel */
+.claim-social-channels-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  width: 100%;
+}
+
+.claim-social-channel-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--privy-color-foreground-2, #6B7280);
+  background: var(--surface1, #FFFFFF);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  text-decoration: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.claim-social-channel-chip strong {
+  font-weight: 700;
+  color: var(--privy-color-foreground, #111827);
+}
+
+.claim-social-channel-chip:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: var(--privy-color-foreground, #111827);
+  border-color: rgba(0, 82, 255, 0.25);
+}
+
+.claim-social-channel-chip.chip-telegram:hover {
+  border-color: rgba(36, 161, 222, 0.45);
+  color: #24A1DE;
+}
+
+.claim-social-channel-chip.chip-twitter:hover {
+  border-color: rgba(0, 0, 0, 0.3);
+  color: #000000;
+}
+
+[data-theme="dark"] .claim-social-channel-chip {
+  background: #17181D;
+  border-color: #24252B;
+  color: #9CA3AF;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .claim-social-channel-chip strong {
+  color: #F3F4F6;
+}
+
+[data-theme="dark"] .claim-social-channel-chip.chip-telegram:hover {
+  border-color: rgba(36, 161, 222, 0.5);
+  color: #38BDF8;
+}
+
+[data-theme="dark"] .claim-social-channel-chip.chip-twitter:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #FFFFFF;
+}
+
+.social-chip-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #24A1DE;
+  display: inline-block;
+}
+
+.pulse-telegram {
+  animation: tgPulse 1.8s infinite ease-in-out;
+}
+
+@keyframes tgPulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(36, 161, 222, 0.6); }
+  70% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(36, 161, 222, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(36, 161, 222, 0); }
+}
+
+/* Celebration Modal Social Intent Share Box */
+.celebration-social-box {
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--surface2, rgba(0, 0, 0, 0.03));
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+}
+
+[data-theme="dark"] .celebration-social-box {
+  background: #131417;
+  border-color: #24252B;
+}
+
+.celebration-social-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  font-size: 11px;
+}
+
+.celebration-social-title {
+  font-weight: 600;
+  color: var(--privy-color-foreground-2, #6B7280);
+}
+
+.celebration-live-channel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #24A1DE;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 11px;
+  transition: opacity 0.15s ease;
+}
+
+.celebration-live-channel-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.celebration-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  display: inline-block;
+  animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.85); }
+}
+
+.celebration-social-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.celebration-social-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+}
+
+.celebration-social-btn.btn-x {
+  background: #000000;
+  color: #FFFFFF;
+}
+
+.celebration-social-btn.btn-x:hover {
+  background: #24252B;
+  transform: translateY(-1px);
+}
+
+[data-theme="dark"] .celebration-social-btn.btn-x {
+  background: #202229;
+  border-color: #31333B;
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .celebration-social-btn.btn-x:hover {
+  background: #2A2C35;
+}
+
+.celebration-social-btn.btn-tg {
+  background: #24A1DE;
+  color: #FFFFFF;
+}
+
+.celebration-social-btn.btn-tg:hover {
+  background: #1E87BA;
+  transform: translateY(-1px);
+}
+
+.celebration-social-btn.btn-wa {
+  background: #25D366;
+  color: #FFFFFF;
+}
+
+.celebration-social-btn.btn-wa:hover {
+  background: #1EAE54;
+  transform: translateY(-1px);
+}
+
+
 
 
