@@ -55,11 +55,10 @@ export default function AuthConnectModal({
             </div>
             <div className="auth-welcome-copy">
               <h2 id="auth-screen-title">Your NairaTag<br />starts here.</h2>
-              <p>One account for your Arc wallet, payments, and agents.</p>
             </div>
             <div className="auth-welcome-actions">
               <button type="button" className="auth-main-cta" onClick={() => setScreen('create')}>
-                Continue with Circle email <ArrowRight size={17} />
+                Continue with email <ArrowRight size={17} />
               </button>
               <button type="button" className="auth-signin-link" onClick={() => setScreen('signin')}>
                 I already have an account <span>Sign in</span>
@@ -102,7 +101,7 @@ export default function AuthConnectModal({
                 <button type="submit" className="auth-main-cta" disabled={isConnecting || !circleInput.trim()}>
                   {isConnecting && circleStatus
                     ? <><RefreshCw size={15} className="animate-spin" /><span>{circleStatus}</span></>
-                    : <><span>{screen === 'create' ? 'Create account with Circle email' : 'Continue with Circle email'}</span><ArrowRight size={17} /></>}
+                    : <><span>{screen === 'create' ? 'Create account with email' : 'Continue with email'}</span><ArrowRight size={17} /></>}
                 </button>
               </form>
             ) : (
