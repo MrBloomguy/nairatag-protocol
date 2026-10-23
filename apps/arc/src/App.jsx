@@ -1559,15 +1559,16 @@ function ArcAppShell() {
   }, [claimInput, myTag]);
 
   const claimPreviewText = claimInput.replace(/^[$₦]/, '').toUpperCase() || 'Tag';
-  const claimPreviewBaseSize = typeof window === 'undefined'
-    ? 48
-    : Math.max(48, Math.min(0.11 * window.innerWidth, 76));
-  const claimPreviewFitSize = typeof window === 'undefined'
-    ? 48
-    : Math.min(424, window.innerWidth - 64) / ((claimPreviewText.length + 1) * 0.62);
-  const claimPreviewFontSize = claimPreviewText.length > 8
-    ? `${Math.max(22, Math.min(claimPreviewBaseSize, claimPreviewFitSize))}px`
-    : undefined;
+  const claimPreviewFontSize = useMemo(() => {
+    const len = claimPreviewText.length;
+    if (len <= 4) return 'clamp(38px, 9.5vw, 64px)';
+    if (len <= 6) return 'clamp(30px, 7.5vw, 52px)';
+    if (len <= 9) return 'clamp(22px, 5.8vw, 40px)';
+    if (len <= 13) return 'clamp(17px, 4.4vw, 30px)';
+    if (len <= 18) return 'clamp(14px, 3.5vw, 24px)';
+    if (len <= 24) return 'clamp(12px, 2.9vw, 19px)';
+    return 'clamp(10px, 2.4vw, 16px)';
+  }, [claimPreviewText]);
 
   // Dynamic live mascot for claim input searchbar (updates in real-time as user types)
   const liveMascotProfile = useMemo(() => {
@@ -3592,11 +3593,11 @@ function ArcAppShell() {
                   <div className="claim-stage-subtitle">Claim your NairaTag</div>
                   <div
                     className={`claim-live-tag-display ${claimInput.trim() ? 'has-value' : ''}`}
-                    style={claimPreviewFontSize ? {
+                    style={{
                       fontSize: claimPreviewFontSize,
-                      fontWeight: claimPreviewText.length > 16 ? 700 : 800,
-                      letterSpacing: '-0.055em',
-                    } : undefined}
+                      fontWeight: claimPreviewText.length > 14 ? 700 : 800,
+                      letterSpacing: claimPreviewText.length > 12 ? '-0.02em' : '-0.04em',
+                    }}
                     onClick={() => {
                       const input = document.getElementById('claim-tag-input-field');
                       if (input) input.focus();

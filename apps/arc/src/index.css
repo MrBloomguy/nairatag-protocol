@@ -1876,9 +1876,9 @@ html[data-theme="dark"] body {
 
 .claim-live-tag-display {
   font-family: var(--font-maru), sans-serif;
-  font-size: clamp(52px, 12vw, 82px);
+  font-size: clamp(38px, 9.5vw, 64px);
   font-weight: 800;
-  line-height: 1.05;
+  line-height: 1.08;
   letter-spacing: -0.04em;
   color: var(--privy-color-foreground-3);
   margin: 4px 0 12px;
@@ -1887,8 +1887,10 @@ html[data-theme="dark"] body {
   user-select: none;
   white-space: nowrap;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  width: 100%;
+  overflow: visible;
+  text-overflow: clip;
+  transition: font-size 140ms ease;
 }
 
 .claim-live-tag-display.has-value {
