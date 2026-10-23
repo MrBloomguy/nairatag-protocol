@@ -8139,17 +8139,18 @@ body:has(.main-content-wrapper.chat-mode) #root {
 .auth-text-button:disabled { cursor: not-allowed; opacity: 0.5; }
 
 .welcome-rewards-backdrop { z-index: 10020; }
-.welcome-rewards-dialog { position: relative; width: min(100% - 32px, 410px); padding: 30px 24px 22px; text-align: center; }
-.welcome-rewards-close { position: absolute; top: 12px; right: 12px; display: grid; width: 34px; height: 34px; place-items: center; border: 0; border-radius: 50%; background: var(--surface2); color: var(--privy-color-foreground-2); cursor: pointer; }
-.welcome-rewards-icon { display: grid; width: 54px; height: 54px; margin: 0 auto 14px; place-items: center; border-radius: 17px; background: var(--brand-naira-tint); color: var(--brand-naira); }
-.welcome-rewards-eyebrow { margin: 0 0 8px; color: var(--brand-naira); font-size: 10px; font-weight: 800; letter-spacing: 1.3px; }
-.welcome-rewards-dialog h2 { margin: 0; color: var(--privy-color-foreground); font-size: 25px; letter-spacing: -0.7px; }
-.welcome-rewards-copy { margin: 10px auto 20px; color: var(--privy-color-foreground-2); font-size: 13px; line-height: 1.5; }
-.welcome-points-card { display: grid; gap: 5px; margin-bottom: 18px; padding: 16px; border: 1px solid var(--border); border-radius: 15px; background: var(--surface2); }
+.welcome-rewards-dialog { position: relative; width: min(100% - 32px, 330px); padding: 22px 18px 16px; text-align: center; border-radius: 18px; }
+.welcome-rewards-close { position: absolute; top: 10px; right: 10px; display: grid; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 50%; background: var(--surface2); color: var(--privy-color-foreground-2); cursor: pointer; }
+.welcome-rewards-icon { display: grid; width: 40px; height: 40px; margin: 0 auto 8px; place-items: center; border-radius: 12px; background: var(--brand-naira-tint); color: var(--brand-naira); }
+.welcome-rewards-eyebrow { margin: 0 0 4px; color: var(--brand-naira); font-size: 10px; font-weight: 700; letter-spacing: 0.8px; }
+.welcome-rewards-dialog h2 { margin: 0; color: var(--privy-color-foreground); font-size: 19px; font-weight: 700; letter-spacing: -0.4px; }
+.welcome-rewards-copy { margin: 6px auto 12px; color: var(--privy-color-foreground-2); font-size: 12px; line-height: 1.45; }
+.welcome-points-card { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface2); }
 .welcome-points-card span { color: var(--privy-color-foreground-2); font-size: 12px; }
-.welcome-points-card strong { color: var(--privy-color-foreground); font-size: 29px; letter-spacing: -0.8px; }
-.welcome-rewards-dialog .auth-main-cta { min-height: 46px; }
-.welcome-rewards-link { margin-top: 12px; padding: 6px 10px; border: 0; background: none; color: var(--primary); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.welcome-points-card strong { color: var(--brand-naira); font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+.welcome-rewards-dialog .auth-main-cta { min-height: 38px; font-size: 13px; border-radius: 10px; }
+.welcome-rewards-perks { display: flex; align-items: center; justify-content: center; margin-bottom: 12px; padding: 8px 10px; border-radius: 10px; background: var(--surface2); font-size: 11px; font-weight: 600; color: var(--brand-naira); }
+.welcome-rewards-link { margin-top: 6px; padding: 4px; border: 0; background: none; color: var(--privy-color-foreground-2); font: inherit; font-size: 11px; cursor: pointer; }
 
 .auth-wallet-screen { padding-bottom: 4px; }
 .auth-wallet-list { display: grid; gap: 8px; margin-top: 22px; }

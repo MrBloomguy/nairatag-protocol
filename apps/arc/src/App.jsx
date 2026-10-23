@@ -5171,15 +5171,15 @@ function ArcAppShell() {
           <section className="modal-dialog welcome-rewards-dialog" role="dialog" aria-modal="true" aria-labelledby="welcome-rewards-title" onClick={(event) => event.stopPropagation()}>
             <button type="button" className="welcome-rewards-close" onClick={() => setWelcomeDetails(null)} aria-label="Close welcome message"><X size={18} /></button>
             <div className="welcome-rewards-icon"><Sparkles size={24} /></div>
-            <p className="welcome-rewards-eyebrow">YOUR ACCOUNT IS READY</p>
+            <p className="welcome-rewards-eyebrow">ACCOUNT READY</p>
             <h2 id="welcome-rewards-title">{welcomeDetails.tag ? `Welcome, ${welcomeDetails.tag}!` : 'Welcome to NairaTag!'}</h2>
-            <p className="welcome-rewards-copy">Your Arc wallet is ready. Here are your earned Protocol Points.</p>
+            <p className="welcome-rewards-copy">Your wallet is connected and ready to send USDC.</p>
             <div className="welcome-points-card">
-              <span>Protocol Points earned</span>
-              <strong>{welcomeDetails.points == null ? 'Syncing…' : Number(welcomeDetails.points).toLocaleString()}</strong>
+              <span>Protocol Points</span>
+              <strong>{Number(welcomeDetails.points) > 0 ? `+${Number(welcomeDetails.points).toLocaleString()}` : '🎁 Free Spin Ready'}</strong>
             </div>
-            <button type="button" className="auth-main-cta" onClick={() => setWelcomeDetails(null)}>Get started</button>
-            <button type="button" className="welcome-rewards-link" onClick={() => { setWelcomeDetails(null); setMainTab('rewards'); }}>View rewards</button>
+            <button type="button" className="auth-main-cta" onClick={() => { setWelcomeDetails(null); setMainTab('rewards'); }}>Claim Daily Rewards</button>
+            <button type="button" className="welcome-rewards-link" onClick={() => setWelcomeDetails(null)}>Continue to Wallet</button>
           </section>
         </div>
       )}
