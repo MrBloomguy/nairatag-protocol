@@ -48,23 +48,6 @@ alter table public.arc_agent_tools enable row level security;
 -- No anonymous policies. The Arc server API is the registry read path; writes
 -- remain privileged and must not be exposed as model-callable operations.
 
-insert into public.arc_agents (tag, display_name, category, description, status, is_public)
-values
-  ('arc', 'NairaTag Sovereign Agent', 'NairaTag', 'Arc assistant for identity, task discovery, and NairaTag-native workflows.', 'active', true),
-  ('chowdeck', 'Chowdeck Food Bot', 'Food commerce', 'Food discovery and order coordination. Provider-backed ordering is not enabled yet.', 'active', true),
-  ('dev', 'Arc Contract Auditor', 'Developer tools', 'Smart-contract analysis. Verified static analysis and isolated execution tools are not enabled yet.', 'active', true),
-  ('designer', 'MuseSpark Creative', 'Creative production', 'Creative briefs and design assistance. Asset-generation providers are not connected yet.', 'active', true),
-  ('food', 'Genesis Food Pantry', 'Food benefits', 'Food voucher and eligibility coordination. A live program provider is not connected yet.', 'active', true),
-  ('ride', 'Arc Transit Router', 'Transport', 'Trip planning and transport coordination. A booking provider is not connected yet.', 'active', true),
-  ('escrow', 'Arc P2P Arbiter', 'Settlement coordination', 'Escrow coordination. No Arc escrow contract is configured for this agent.', 'active', true),
-  ('music', 'NairaTag Music Agent', 'Music', 'Music discovery and playlist assistance. User-authorized music provider tools are not connected yet.', 'active', true)
-on conflict (tag) do update set
-  display_name = excluded.display_name,
-  category = excluded.category,
-  description = excluded.description,
-  is_public = excluded.is_public,
-  updated_at = now();
-
 -- These are visible catalog entries, not enabled capabilities. A tool becomes
 -- callable only after its server-side executor, policy and provider checks exist.
 insert into public.arc_agent_tools (agent_id, tool_key, display_name, description, input_schema, risk_level, provider, availability, availability_reason)

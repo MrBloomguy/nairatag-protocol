@@ -1,34 +1,8 @@
 import crypto from 'node:crypto';
+import { checkTagAvailabilityAsync } from './claims.js';
 
 // Embedded RSA Private Key matching the VALID registered public key on Meta Cloud API
-const PRIVATE_KEY_PEM = process.env.WHATSAPP_FLOW_PRIVATE_KEY || `-----BEGIN PRIVATE KEY-----
-MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDe8KbLTeaKzo3Q
-Ok+5+jEdMz/v8rMQSn8APc/KE7/4x/qMuv6TPPIHpErjl1emLsJAUyjdVNRNWaeC
-Vh4na68v8KnfFN1RpY3jbN4MH0k/SPT28VlkcAA0r17OttMWKMqqnmmZKqA+ukm2
-dDWDkx5lDfhNF/lK01AZU2ZlfImGMZsmNXY+iYw40HFLhZva53wRpQviYqkvBNqJ
-CmYBwWhM379CuPwdISUZQOWMO9zHR4/OKXUgXLAZ++M/1q9Qt7WGOgsnd8NdftRA
-cuvL9QF0qb0K0LUBvu8DT5C92bRd//2V9MgM2X42+FZzdt0d9ExAPGZUhRMtTwiy
-k5X0X+VZAgMBAAECggEAKI3LMYlaqh5XwqyQyypdW8vyUgIqm4iJoLAdx8se7TDn
-fUkYvQzllAlJTCxAF+1CjbPy54wiUG3CIF3s/0vB4u0a4YcomU0NyfSIUdkxGE97
-rB4MHk6XYv4Rt3WfYVULRM0rNV8BJlf5x7RM9cHB0i0f4Vo+kWNuGyVGJ6jnVV8C
-w9i9JERIvo1tE+YqDUINKKchS+DKfosM3c5rDHtH8SC352YkRo6PYI0tVhHeQTG5
-JUR+T2ehFf25LE4znXfqYjQWSYxa+lgHg5uaTabSZfZfhVaAKDXP7MGs65eHECTE
-3UoQgGZl9LJGM2At85roTHI1/OzrpqG66Otwkl3INwKBgQD0PPNaOh365RXB19rb
-1z1KyIKP8AKzouGQUMKJ/c5/aBk7HM54er7pLa8rDKeknPoDW9wWqd6YozC1SC9x
-LgIJ/Of9ezrMktnGkOUqJMyIs23IY2bVBO5DDAuIiLj1F9YZfZ4un1V7IIJNG7O8
-eg9zxTgkLimsPrJOdDbmXeXjywKBgQDprSGpq0t0D9CNuyBqthal1JRUIlhvcnGI
-HEXSkbC9ZoGKqbMpZajJpRoOsR1a2tbuRUeGxXl5mMTy2XE84C7h1JN7+xj+rc4l
-iktOwzt/FV+dAQt3KJySyU9FEb197PRNjTuDvXF+dqXnYPdggghjCF4mMCEsmOxt
-OX2gfDIe6wKBgQDSGPxdyVCw2w/0R/ME2grnocRufVBVpu/SbSZr/eD8yFer+gPC
-sBQ6Egp1RdWQTVjkOskA1e+d7gOgbhAhlCo83UnTS4YxJMIhhdMchbtMfM0bbCax
-aCRtmJbzRGmWrIKIOv8vq/CkkjqEiif7IiTYufapaOyANw67Xk07rdpsMQKBgEtx
-mUe1RTQgkv3fZ5TsWx2JJ6aOPC0nLt55+lUEsqJDwRkqtuxrpPYNdv89UbPuqavd
-9Dzf7ttCZnvdlkDIRHqm7kL+C9DV/pOCNdQlFkVueiMvnisHkp2VnyE2nA5W/X04
-VvmupUDmP6QXW2buNJT8s6DysxM6AEM3Z4bz8h6nAoGBAN+sXaDpo0/eNF40y7ki
-gRUV6i4xZn81Lq7cq6lL0KCSFjgx8c214Uh5ljEPE90oa73DD6qxjSz5360f+Gei
-L8tdxRv8fh5J152t3kFa9qjEfMISio1snVBuTBBsB89bJ6Qu3JN3EddGdWoe5XLP
-2C7AV1j1JhnAg9wk08LStCc3
------END PRIVATE KEY-----`;
+const PRIVATE_KEY_PEM = process.env.WHATSAPP_FLOW_PRIVATE_KEY;
 
 function decryptRequest(body, privatePem) {
   const { encrypted_aes_key, encrypted_flow_data, initial_vector } = body;
@@ -128,18 +102,30 @@ export default async function handler(req, res) {
           data: {}
         };
       } else if (action === 'data_exchange') {
-        const rawTag = data?.tag_name || data?.tag_input || 'michael';
-        const cleanTag = String(rawTag).replace(/^[₦#@]/, '').trim().toUpperCase();
-
-        responsePayload = {
-          screen: 'CLAIM_SUMMARY',
-          data: {
-            tag_display: `₦${cleanTag}`,
-            status_badge: '🟢 AVAILABLE',
-            status_message: 'This name is available for claim.',
-            is_available: true
-          }
-        };
+        const rawTag = data?.tag_name || data?.tag_input || '';
+        const cleanTag = String(rawTag).replace(/^[₦#@]/, '').trim().toLowerCase();
+        try {
+          const availability = await checkTagAvailabilityAsync(cleanTag);
+          responsePayload = {
+            screen: 'CLAIM_SUMMARY',
+            data: {
+              tag_display: '₦' + cleanTag.toUpperCase(),
+              status_badge: availability.available ? 'AVAILABLE' : 'UNAVAILABLE',
+              status_message: availability.available ? 'This name is available in the live registry. Continue in NairaTag to sign the claim.' : availability.reason || 'This name is not available.',
+              is_available: Boolean(availability.available)
+            }
+          };
+        } catch (error) {
+          responsePayload = {
+            screen: 'CLAIM_SUMMARY',
+            data: {
+              tag_display: '₦' + cleanTag.toUpperCase(),
+              status_badge: 'UNAVAILABLE',
+              status_message: 'Could not verify this name right now. Please try again.',
+              is_available: false
+            }
+          };
+        }
       } else {
         responsePayload = {
           data: { acknowledged: true }

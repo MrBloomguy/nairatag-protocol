@@ -34,7 +34,7 @@ import {
 
 import { getClaimRecord } from './claims.js';
 
-// Global Singleton Protocol State (in-memory + seeded with anchor agents)
+// Protocol helpers are request-local; persisted claims remain the identity source.
 export const registry = new CeloTagsRegistry({ enforceOneTagPerWallet: true });
 export const resolver = new CeloTagsResolver({ registry });
 export const permissionManager = new PermissionManager();
@@ -43,149 +43,6 @@ export const escrowClient = new CeloTagsEscrowClient({
   resolver,
   escrowAddress: '0x5b73C5498c1E3b4dbA84de0F1833c4a029d90519'
 });
-
-// Seed Flagship Reference Agents into CeloTags Protocol Layer
-const seedAgents = [
-  {
-    identifier: '₦SEGUN',
-    name: '₦SEGUN Sovereign Operator',
-    owner: '0x8217316A99D41c6dCe89D46e9A34c1143D1A914c',
-    operator: '0x8217316A99D41c6dCe89D46e9A34c1143D1A914c',
-    category: 'personal',
-    description: 'Personal AI coordinator, Tag2Tag orchestration, and MiniPay execution agent',
-    verificationLevel: 'cryptographically_evidenced',
-    capabilities: [
-      {
-        id: 'coordination.orchestration.dispatch',
-        name: 'Task Delegation & Orchestration',
-        category: 'ops',
-        pricing: { amount: 0, currency: 'cNGN' }
-      },
-      {
-        id: 'finance.payments.cngn',
-        name: 'MiniPay cNGN Instant Settlement',
-        category: 'finance',
-        pricing: { amount: 0, currency: 'cNGN' }
-      }
-    ],
-    endpoints: {
-      a2a: 'https://nairatag.ng/api/a2a/segun',
-      mcp: 'https://nairatag.ng/api/mcp/segun'
-    },
-    reputation: { score: 94, tasksCompleted: 28, disputeRatePct: 0 }
-  },
-  {
-    identifier: '₦CHOWDECK',
-    name: 'Chowdeck Delivery Dispatch Agent',
-    owner: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
-    category: 'service',
-    description: 'Lagos on-demand food logistics, address resolution, and delivery dispatch',
-    verificationLevel: 'integration_reported',
-    capabilities: [
-      {
-        id: 'logistics.delivery.dispatch',
-        name: 'Delivery Dispatch & Order Routing',
-        category: 'logistics',
-        regions: ['NG']
-      }
-    ],
-    reputation: { score: 96, tasksCompleted: 514, disputeRatePct: 0.2 }
-  },
-  {
-    identifier: '₦DEV',
-    name: 'Celo SmartContract Engineer Agent',
-    owner: '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-    category: 'service',
-    description: 'Autonomous Solidity contract audits, CIP-64 gas fee integration, and Viem scripts',
-    verificationLevel: 'cryptographically_evidenced',
-    capabilities: [
-      {
-        id: 'dev.contracts.audit',
-        name: 'Celo Smart Contract Audit',
-        category: 'dev',
-        pricing: { amount: 25000, currency: 'cNGN' }
-      }
-    ],
-    reputation: { score: 98, tasksCompleted: 282, disputeRatePct: 0 }
-  },
-  {
-    identifier: '₦RESEARCHER',
-    name: 'African Market & Fintech Intelligence Agent',
-    owner: '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
-    category: 'service',
-    description: 'Autonomous research comparing live transaction latency and African payment rails',
-    verificationLevel: 'cryptographically_evidenced',
-    capabilities: [
-      {
-        id: 'research.fintech.benchmark',
-        name: 'African Fintech API Benchmarks',
-        category: 'research',
-        pricing: { amount: 15000, currency: 'cNGN' }
-      }
-    ],
-    reputation: { score: 99, tasksCompleted: 33, disputeRatePct: 0 }
-  },
-  {
-    identifier: 'GH₵AMA',
-    name: 'Ghana Commerce & Mobile Money Agent',
-    owner: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
-    category: 'service',
-    description: 'Cross-border Ghanaian merchant pricing, MoMo discovery, and cUSD coordination',
-    verificationLevel: 'integration_reported',
-    capabilities: [
-      {
-        id: 'commerce.crossborder.pricing',
-        name: 'Ghanaian Market Price Intelligence',
-        category: 'commerce',
-        regions: ['GH', 'NG']
-      }
-    ],
-    reputation: { score: 92, tasksCompleted: 45, disputeRatePct: 0 }
-  }
-];
-
-// Initialize registry & resolver with seed records
-for (const item of seedAgents) {
-  try {
-    registry.registerIdentity({
-      identifier: item.identifier,
-      owner: item.owner,
-      type: item.category === 'personal' ? 'human' : 'agent'
-    });
-    resolver.registerProfile(item);
-  } catch (err) {
-    // Already registered or duplicate
-  }
-}
-
-// Seed default PermissionGrant & Reference Escrow Task for demonstrations
-try {
-  permissionManager.createGrant({
-    principal: '0x8217316A99D41c6dCe89D46e9A34c1143D1A914c', // ₦SEGUN
-    subject: '0x8217316A99D41c6dCe89D46e9A34c1143D1A914c',
-    action: 'EXECUTE_BOUNDED_TRANSFER',
-    spendingLimits: { maxPerTx: 25000, dailyCap: 100000, currency: 'cNGN' }
-  });
-
-  escrowClient._tasks.set('task_ref_001', {
-    id: 'task_ref_001',
-    creator: '0x8217316a99d41c6dce89d46e9a34c1143d1a914c',
-    creatorUrn: 'urn:celotag:ng:segun',
-    creatorDisplay: '₦SEGUN',
-    assignee: '0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc',
-    assigneeUrn: 'urn:celotag:gh:ama',
-    assigneeDisplay: 'GH₵AMA',
-    tokenSymbol: 'cNGN',
-    tokenAddress: '0x3d5ae86F34E2a82771496D140daFAEf3789dF888',
-    amount: 15000,
-    status: ESCROW_TASK_STATUSES.ASSIGNED,
-    deadline: Date.now() + 604800000,
-    deliverableHash: null,
-    deliverableData: null,
-    createdAt: Date.now() - 3600000,
-    completedAt: null
-  });
-} catch {}
 
 /**
  * Builds the canonical ERC-8004 Network Capability Manifest.
@@ -268,6 +125,16 @@ export default async function handler(req, res) {
   const url = new URL(req.url, `https://${req.headers.host || 'localhost'}`);
   const pathname = decodeURIComponent(url.pathname);
   const searchParams = url.searchParams;
+
+  if (pathname === '/api/celotags/discover') {
+    return res.status(503).json({ ok: false, error: 'CeloTags discovery is unavailable until a persistent CeloTags profile provider is configured.' });
+  }
+  if (pathname.startsWith('/api/celotags/permissions/grant') && req.method === 'POST') {
+    return res.status(503).json({ ok: false, error: 'Persistent permission-grant storage is not configured.' });
+  }
+  if (pathname.startsWith('/api/celotags/escrow/')) {
+    return res.status(503).json({ ok: false, error: 'Celo escrow is unavailable because no persistent escrow service is configured.' });
+  }
 
   // 1. GET /api/celotags/namespaces
   if (pathname === '/api/celotags/namespaces') {

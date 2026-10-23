@@ -100,8 +100,7 @@ export class NairaTagResolver {
     };
 
     if (!this.fetch) {
-      // Offline fallback
-      return baseEntity;
+      throw new Error('NairaTag registry lookup is unavailable.');
     }
 
     try {
@@ -112,35 +111,26 @@ export class NairaTagResolver {
       }
 
       const data = await res.json();
-      if (data.ok) {
-        const isRegistered = Boolean(data.address && data.address !== '0x0000000000000000000000000000000000000000');
-        const entity = {
-          ...baseEntity,
-          available: !isRegistered,
-          owner: isRegistered ? data.address : null,
-          address: isRegistered ? data.address : null,
-          verified: isRegistered,
-          virtualAccount: data.settlement?.virtualAccount || null,
-          metadata: {
-            balances: data.balances || {},
-            points: data.points || 0
-          }
-        };
+      if (!data.ok) throw new Error(data.error || 'NairaTag registry lookup failed.');
+      const isRegistered = Boolean(data.address && data.address !== '0x0000000000000000000000000000000000000000');
+      const entity = {
+        ...baseEntity,
+        available: !isRegistered,
+        owner: isRegistered ? data.address : null,
+        address: isRegistered ? data.address : null,
+        verified: isRegistered,
+        virtualAccount: data.settlement?.virtualAccount || null,
+        metadata: {
+          balances: data.balances || {},
+          points: data.points || 0
+        }
+      };
 
-        this._setCache(cleanTag, entity);
-        return entity;
-      }
+      this._setCache(cleanTag, entity);
+      return entity;
     } catch (err) {
-      // Graceful fallback: return unverified/available entity without throwing
+      throw new Error(`NairaTag registry lookup failed: ${err.message}`);
     }
-
-    // Default optimistic entity if unmined/unclaimed
-    const fallbackEntity = {
-      ...baseEntity,
-      available: true
-    };
-    this._setCache(cleanTag, fallbackEntity);
-    return fallbackEntity;
   }
 
   /**

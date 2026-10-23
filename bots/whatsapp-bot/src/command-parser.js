@@ -97,14 +97,14 @@ export function parseWhatsAppCommand(text) {
     };
   }
 
-  // Claim: e.g. "claim ₦MIKKI" or "claim mikki"
-  const claimMatch = cleaned.match(/^claim\s+(@?₦?[a-zA-Z0-9_-]+)/i);
+  // Claim: e.g. "claim", "claim ₦MIKKI", "claim mikki"
+  const claimMatch = cleaned.match(/^claim(?:\s+(@?₦?[a-zA-Z0-9_-]+))?$/i);
   if (claimMatch) {
-    const rawTarget = claimMatch[1].replace(/^@/, '');
-    const cleanRecipient = getCanonicalIdentifier(rawTarget);
+    const rawTarget = claimMatch[1] ? claimMatch[1].replace(/^@/, '') : '';
+    const cleanRecipient = rawTarget ? getCanonicalIdentifier(rawTarget) : '';
     return {
       type: 'claim',
-      recipient: `₦${cleanRecipient}`,
+      recipient: cleanRecipient ? `₦${cleanRecipient}` : null,
       cleanRecipient
     };
   }

@@ -77,11 +77,10 @@ function generateStandaloneCardSvg(handle, options = {}) {
     <text x="0" y="44" font-family="'Poppins Rounded', sans-serif" font-weight="900" font-size="52" fill="${p.textOnCard}">₦</text>
   </g>
 
-  <!-- Top-Right Network Pill -->
-  <g transform="translate(300, 36)">
-    <rect width="104" height="34" rx="17" fill="#ffffff" fill-opacity="0.95"/>
-    <circle cx="17" cy="17" r="8" fill="${networkDotColor}"/>
-    <text x="34" y="22" class="net-text">${networkLabel}</text>
+  <!-- Top-Right Brand Pill (Exact match to design mockup) -->
+  <g transform="translate(305, 36)">
+    <rect width="98" height="32" rx="16" fill="rgba(0,0,0,0.15)"/>
+    <text x="49" y="21" font-family="'Poppins Rounded', 'Poppins', sans-serif" font-weight="700" font-size="13" fill="${p.textOnCard}" text-anchor="middle">NairaTag</text>
   </g>
 
   <!-- Center Character Avatar -->
@@ -89,16 +88,9 @@ function generateStandaloneCardSvg(handle, options = {}) {
     ${TagAvatar.generateAvatarSvg(profile.hashIndex, 200)}
   </g>
 
-  <!-- Bottom Details: ₦tagname + Verified Seal -->
-  <g transform="translate(36, 440)">
-    <text x="0" y="40" class="card-title">${escapeXml(tagText)}</text>
-    <text x="0" y="70" class="card-sub">${escapeXml(subtitle)}</text>
-
-    <!-- Verified Badge Icon -->
-    <g transform="translate(325, 10)">
-      <circle cx="20" cy="20" r="18" fill="#0a0a0a"/>
-      <path d="M13 20.5L18 25L28 15" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-    </g>
+  <!-- Bottom Details: ₦tagname (lowercase bold, exact mockup styling) -->
+  <g transform="translate(36, 460)">
+    <text x="0" y="32" font-family="'Poppins Rounded', 'Poppins', sans-serif" font-weight="800" font-size="40" fill="${p.textOnCard}" letter-spacing="-0.03em">₦${escapeXml(handle.toLowerCase())}</text>
   </g>
 </svg>
 `.trim();

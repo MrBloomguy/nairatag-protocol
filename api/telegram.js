@@ -1,7 +1,8 @@
 import { toolCheckTag } from './agent.js';
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8663138070:AAElmwCbB-vjoYXe3w__zqCxOUT5URIBMNk';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || 'https://nairatag.ng';
+const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || null;
 
 async function telegramApi(method, body) {
   const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/${method}`, {
@@ -21,6 +22,7 @@ export default async function handler(req, res) {
     return res.status(204).end();
   }
 
+  if (!TELEGRAM_BOT_TOKEN) return res.status(503).json({ ok: false, error: 'Telegram bot is not configured.' });
   if (req.method === 'GET') {
     const { setup } = req.query || {};
     if (setup === '1' || setup === 'true') {
@@ -29,7 +31,7 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, webhookUrl, telegram: result });
     }
     const info = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo`).then(r => r.json()).catch(e => ({ error: e.message }));
-    return res.status(200).json({ ok: true, bot: '@MyNairatagbot', webhookInfo: info });
+    return res.status(200).json({ ok: true, bot: TELEGRAM_BOT_USERNAME ? '@' + TELEGRAM_BOT_USERNAME : null, webhookInfo: info });
   }
 
   if (req.method !== 'POST') {
@@ -51,16 +53,9 @@ export default async function handler(req, res) {
 
     // Handle /start or /help
     if (/^\/?(?:start|help)/i.test(text)) {
-      const welcome = `🇳🇬 <b>Welcome to NairaTag, ${username}!</b>\n\n` +
-        `NairaTag is the sovereign onchain identity & payment rail on Base.\n\n` +
-        `• <b>Claim your ₦Tag</b> (e.g. <code>/claim ${username.toLowerCase().replace(/[^a-z0-9_]/g, '') || 'name'}</code>)\n` +
-        `• <b>Earn ₦1,000 Welcome Voucher</b> on successful claim\n` +
-        `• <b>Non-custodial:</b> Claim directly to your own wallet\n` +
-        `• <b>Direct NUBAN bank rail:</b> Instant Flutterwave settlement\n\n` +
-        `<b>Quick Commands:</b>\n` +
-        `👉 <code>/claim &lt;name&gt;</code> — Check & claim\n` +
-        `👉 <code>/check &lt;name&gt;</code> — Verify availability\n\n` +
-        `<i>Tap below to open the NairaTag Claim Hub directly in Telegram:</i>`;
+      const welcome = `Welcome to NairaTag, ${username}!\n\n` +
+        `NairaTag links readable tags to Arc wallets. Use /check <name> to check a tag against the live registry.\n\n` +
+        `A tag claim is completed in the NairaTag app with your wallet signature.`;
 
       await telegramApi('sendMessage', {
         chat_id: chatId,
@@ -69,7 +64,7 @@ export default async function handler(req, res) {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: '🏷️ Claim a ₦Tag', web_app: { url: `${PUBLIC_BASE_URL}/claim` } },
+              { text: 'Open NairaTag', web_app: { url: `${PUBLIC_BASE_URL}/claim` } },
               { text: '💬 AI Agent', web_app: { url: `${PUBLIC_BASE_URL}/agent` } }
             ],
             [
@@ -105,10 +100,8 @@ export default async function handler(req, res) {
       if (check.available) {
         const claimUrl = `${PUBLIC_BASE_URL}/claim?claim=${clean}`;
         const msg = `🎉 <b>₦${clean} is Available!</b>\n\n` +
-          `• <b>Network:</b> Base L2 (Ethereum)\n` +
-          `• <b>Reward:</b> ₦1,000 Welcome Voucher unlocked on claim\n` +
-          `• <b>Routing:</b> Direct NUBAN bank resolution\n\n` +
-          `You can claim it instantly with your wallet inside Telegram or on the web:`;
+          `• <b>Network:</b> Arc Testnet\n` +
+          `Open the NairaTag app to review availability and complete a wallet-signed claim:`;
 
         await telegramApi('sendMessage', {
           chat_id: chatId,
@@ -126,11 +119,7 @@ export default async function handler(req, res) {
           }
         });
       } else {
-        const takenMsg = `❌ <b>₦${clean}</b> is already registered.\n\n` +
-          `Try an alternative:\n` +
-          `• <code>/claim ${clean}01</code>\n` +
-          `• <code>/claim ${clean}ng</code>\n` +
-          `• <code>/claim real_${clean}</code>`;
+        const takenMsg = `The live registry did not report ₦${clean} as available. Open the NairaTag app to check its current status.`;
 
         await telegramApi('sendMessage', {
           chat_id: chatId,
@@ -144,8 +133,7 @@ export default async function handler(req, res) {
     // Default conversational help
     await telegramApi('sendMessage', {
       chat_id: chatId,
-      text: `👋 I can help you check and claim any <b>₦Tag</b>.\n\n` +
-        `Type <code>/claim &lt;name&gt;</code> (for example: <code>/claim ${username.toLowerCase().replace(/[^a-z0-9_]/g, '') || 'femi'}</code>) to get started!`,
+      text: `Use /check <name> to query the live tag registry. Claims are completed in the NairaTag app with a wallet signature.`,
       parse_mode: 'HTML',
       reply_markup: {
         inline_keyboard: [

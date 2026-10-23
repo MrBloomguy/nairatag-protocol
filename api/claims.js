@@ -14,7 +14,6 @@ import {
   findClaimByTag, 
   insertSupabaseClaim 
 } from '../lib/supabase.js';
-import { recordReferralBonus, getOrCreateUser } from './points.js';
 import { CanonicalIdentifier, ClaimSignatureVerifier } from '../packages/celotags-protocol/src/index.js';
 
 // Cryptographic EIP-712 Claim Signature Verifier
@@ -185,13 +184,11 @@ export async function getClaimRecord(identifierOrWallet) {
     const norm = input.toLowerCase();
     const inMem = walletToClaim.get(norm);
     if (inMem) return inMem;
-    try {
-      const dbClaim = await findClaimByWallet(norm);
+    const dbClaim = await findClaimByWallet(norm);
       if (dbClaim) {
         walletToClaim.set(norm, dbClaim);
         return dbClaim;
       }
-    } catch {}
     return null;
   }
 
@@ -204,13 +201,11 @@ export async function getClaimRecord(identifierOrWallet) {
 
   const inMem = tagToClaim.get(handle);
   if (inMem) return inMem;
-  try {
-    const dbClaim = await findClaimByTag(handle);
+  const dbClaim = await findClaimByTag(handle);
     if (dbClaim) {
       tagToClaim.set(handle, dbClaim);
       return dbClaim;
     }
-  } catch {}
   return null;
 }
 
@@ -355,64 +350,26 @@ export async function registerClaim({
     }
 
     let finalTx = txHash;
-    if (!finalTx) {
-      try {
-        finalTx = await broadcastClaimOnChain(clean);
-      } catch {}
-    }
-    const generatedTx = finalTx || ('0x' + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(''));
-    const currentBlock = 2185000 + verifiedClaims.length;
-
-    let newClaim;
-    try {
-      newClaim = await insertSupabaseClaim({
-        tag: `₦${clean}`,
-        cleanTag: clean,
-        walletAddress: normalizedWallet,
-        network: network || 'Celo Sepolia',
-        isSub,
-        block: currentBlock,
-        txHash: generatedTx,
-        reputation: 100
-      });
-      newClaim.authorization = authorizationLevel;
-      newClaim.urn = canonical.urn;
-    } catch (err) {
-      console.warn('[Supabase insert fallback]', err.message);
-      newClaim = {
-        tag: `₦${clean}`,
-        cleanTag: clean,
-        canonicalUrn: canonical.urn,
-        isSub: Boolean(isSub),
-        address: normalizedWallet,
-        network: network || 'Celo Sepolia',
-        block: currentBlock,
-        tx: generatedTx,
-        authorization: authorizationLevel,
-        reputation: 100,
-        timestamp: Date.now()
-      };
+    if (!finalTx) finalTx = await broadcastClaimOnChain(clean);
+    if (!finalTx || !/^0x[a-fA-F0-9]{64}$/.test(finalTx)) {
+      throw new Error('The claim transaction was not submitted. Configure a working relayer or provide a confirmed transaction hash, then try again.');
     }
 
+    const newClaim = await insertSupabaseClaim({
+      tag: '₦' + clean,
+      cleanTag: clean,
+      walletAddress: normalizedWallet,
+      network: network || 'Celo Sepolia',
+      isSub,
+      block: null,
+      txHash: finalTx,
+      reputation: null
+    });
+    newClaim.authorization = authorizationLevel;
+    newClaim.urn = canonical.urn;
     verifiedClaims.unshift(newClaim);
     walletToClaim.set(normalizedWallet, newClaim);
     tagToClaim.set(clean, newClaim);
-
-    // Credit claimer 100 points
-    try {
-      getOrCreateUser(normalizedWallet, `₦${clean}`);
-    } catch (err) {
-      console.warn('[Claims points credit error]', err);
-    }
-
-    // If claimed through a referral link, credit referrer
-    if (referrer) {
-      try {
-        recordReferralBonus(referrer, normalizedWallet, `₦${clean}`);
-      } catch (err) {
-        console.warn('[Claims referral credit error]', err);
-      }
-    }
 
     return newClaim;
   } finally {

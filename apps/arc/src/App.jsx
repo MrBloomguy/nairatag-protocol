@@ -5,12 +5,12 @@ import AuthConnectModal from './components/auth/AuthConnectModal';
 import ProfileAvatar from './components/ProfileAvatar';
 import ChatActivityIndicator from './components/chat/ChatActivityIndicator';
 import PersonalAgentPanel from './components/chat/PersonalAgentPanel';
-import { ClipboardCheckIcon } from './components/icons/clipboard-check';
-import { ChevronsLeftRightIcon } from './components/icons/chevrons-left-right';
-import { CarIcon } from './components/icons/car';
-import { CookingPotIcon } from './components/icons/cooking-pot';
-import { HandCoinsIcon } from './components/icons/hand-coins';
-import { TicketIcon } from './components/icons/ticket';
+import { ClipboardCheck as ClipboardCheckIcon } from 'lucide-react';
+import { ChevronsLeftRight as ChevronsLeftRightIcon } from 'lucide-react';
+import { Car as CarIcon } from 'lucide-react';
+import { CookingPot as CookingPotIcon } from 'lucide-react';
+import { HandCoins as HandCoinsIcon } from 'lucide-react';
+import { Ticket as TicketIcon } from 'lucide-react';
 import {
   Wallet,
   CheckCircle2,
@@ -172,6 +172,7 @@ import {
 } from './services/arcChat.js';
 import { createArcPlatformAgent, enableArcMcpTool, fetchArcAgentDirectory, getAdminArcAgentRegistry, transitionArcAgent } from './services/arcAgents.js';
 import PlatformAgentAdminPage from './components/admin/PlatformAgentAdminPage.jsx';
+import PublicProfilePage from './components/PublicProfilePage.jsx';
 import confetti from 'canvas-confetti';
 import RewardsPage, { GoldenVoucherModal, LuckyWheelModal, ReferralModal } from './RewardsPage.jsx';
 import NotificationLayer from './components/NotificationLayer.jsx';
@@ -417,135 +418,6 @@ export const FAQ_ITEMS = [
       { label: 'Follow @NairaTaghq on X', url: 'https://x.com/NairaTaghq' },
     ]
   }
-];
-
-export const DEFAULT_TASKS = [
-  {
-    id: 'b001',
-    rank: '#1',
-    rankTop: 'rank-top1',
-    badgeType: 'emerald',
-    badgeName: 'Testing',
-    title: 'Test NairaTag Instant USDC Settlement on Arc Osaka',
-    category: 'test',
-    categoryLabel: '🧪 Testing',
-    status: 'open',
-    rewardUSDC: 25,
-    rewardNGN: '₦37,125',
-    points: 250,
-    deadline: '2 days left',
-    applicants: 4,
-    creatorTag: '₦CORE_DEV',
-    escrowStatus: '🔒 Funded in Escrow',
-    description: 'Execute and test a deterministic sub-second USDC payment using the Arc testnet memo registry and verify receipt on ArcScan.',
-    deliverable: 'ArcScan transaction hash showing finalized payment.',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b001',
-  },
-  {
-    id: 'b002',
-    rank: '#2',
-    rankTop: 'rank-top2',
-    badgeType: 'cyan',
-    badgeName: 'Engineering',
-    title: 'Build Telegram Bot Adapter for ₦Tag Pay',
-    category: 'dev',
-    categoryLabel: '⚡ Engineering',
-    status: 'in_progress',
-    rewardUSDC: 120,
-    rewardNGN: '₦178,200',
-    points: 800,
-    deadline: '4 days left',
-    applicants: 3,
-    creatorTag: '₦ARCLABS',
-    escrowStatus: '🔒 Milestone 2/4 Funded',
-    description: 'Implement a GramJS or aiogram bot template that resolves ₦Tags and returns Arc Osaka payment links with deep-linking.',
-    deliverable: 'GitHub repository with clean README and Dockerfile.',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b002',
-  },
-  {
-    id: 'b003',
-    rank: '#3',
-    rankTop: 'rank-top3',
-    badgeType: 'magenta',
-    badgeName: 'Design',
-    title: 'Design 5 Sovereign NairaTag Social Banners',
-    category: 'design',
-    categoryLabel: '🎨 Design',
-    status: 'open',
-    rewardUSDC: 45,
-    rewardNGN: '₦66,825',
-    points: 450,
-    deadline: '1 day left',
-    applicants: 6,
-    creatorTag: '₦CREATIVE',
-    escrowStatus: '🔒 Funded in Escrow',
-    description: 'Create 5 high-impact, sleek 1200x628px social banners highlighting sub-second Arc Osaka finality and zero-gas UX.',
-    deliverable: 'Figma file + exported SVGs and PNG assets.',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b003',
-  },
-  {
-    id: 'b004',
-    rank: '#4',
-    rankTop: '',
-    badgeType: 'gold',
-    badgeName: 'Data & AI',
-    title: 'Collect Jumia & Konga Product Price Feeds (7 Days)',
-    category: 'data',
-    categoryLabel: '📊 Data & AI',
-    status: 'submitted',
-    rewardUSDC: 50,
-    rewardNGN: '₦74,250',
-    points: 500,
-    deadline: '5 days left',
-    applicants: 2,
-    creatorTag: '₦SHOP_AI',
-    escrowStatus: '⏳ Pending Milestone Review',
-    description: 'Scrape and format daily pricing data for 50 consumer electronics in Lagos to supply decentralized AI agent pricing oracles.',
-    deliverable: 'Timestamped JSON/CSV dataset with normalized currency fields.',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b004',
-  },
-  {
-    id: 'b005',
-    rank: '#5',
-    rankTop: '',
-    badgeType: 'ruby',
-    badgeName: 'Content',
-    title: 'Write Technical Developer Guide for Arc ERC-8004',
-    category: 'content',
-    categoryLabel: '✍️ Content',
-    status: 'open',
-    rewardUSDC: 60,
-    rewardNGN: '₦89,100',
-    points: 600,
-    deadline: '3 days left',
-    applicants: 2,
-    creatorTag: '₦FOUNDATION',
-    escrowStatus: '🔒 Funded in Escrow',
-    description: 'Author a step-by-step markdown tutorial explaining how autonomous AI agents register their identity and receive fees on Arc.',
-    deliverable: 'Markdown guide with executable code snippets.',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b005',
-  },
-  {
-    id: 'b006',
-    rank: '#6',
-    rankTop: '',
-    badgeType: 'bronze',
-    badgeName: 'Community QA',
-    title: 'Verify Nigerian Phone-to-NairaTag Resolver Accuracy',
-    category: 'community',
-    categoryLabel: '📱 Community QA',
-    status: 'open',
-    rewardUSDC: 15,
-    rewardNGN: '₦22,275',
-    points: 150,
-    deadline: '2 days left',
-    applicants: 8,
-    creatorTag: '₦COMMUNITY',
-    escrowStatus: '🔒 Instant Reward',
-    description: 'Test local MTN, Airtel, and Glo phone number resolution formats (080, 070, +234) into verified ₦Tags in the Arc terminal.',
-    deliverable: 'Short feedback note and resolution log.',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=b006',
-  },
 ];
 
 // PlatformAgentAdminPage is imported from ./components/admin/PlatformAgentAdminPage.jsx
@@ -1347,12 +1219,18 @@ function ArcAppShell() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
-  const [myTag, setMyTag] = useState(null);
-  const displayUserTag = myTag?.tag ? `₦${String(myTag.tag).replace(/^[$₦]/, '')}` : null;
+  const [myTag, setMyTag] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nairatag_claimed_tag_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return null;
+  });
+  const displayUserTag = myTag?.tag ? `₦${String(myTag.tag).replace(/^[$₦]/, '').toUpperCase()}` : null;
   const [accountEmail, setAccountEmail] = useState('');
   const accountUsername = accountEmail.includes('@') ? accountEmail.slice(0, accountEmail.indexOf('@')) : accountEmail;
-  const displayAccountName = displayUserTag || (accountUsername ? `₦${accountUsername}` : null);
-  const userTag = myTag?.tag || 'nairatag';
+  const displayAccountName = displayUserTag || (accountUsername ? `₦${accountUsername.toUpperCase()}` : null);
+  const userTag = myTag?.tag ? String(myTag.tag).replace(/^[$₦]/, '').toLowerCase() : (accountUsername || 'nairatag');
 
   // Circle Programmable Wallet State
   const [authProvider, setAuthProvider] = useState(null); // 'circle' | 'injected'
@@ -2707,6 +2585,12 @@ function ArcAppShell() {
         erc8004Id: agentRegistration?.id || null,
       }).catch((broadcastErr) => console.warn('[Telegram Broadcast]', broadcastErr));
 
+      // ── Immediately update the user's identity across the app ──
+      setMyTag({ tag: res.cleanTag, owner: walletAddress });
+      try {
+        localStorage.setItem('nairatag_claimed_tag_v1', JSON.stringify({ tag: res.cleanTag, owner: walletAddress }));
+      } catch {}
+
       triggerCelebrationConfetti();
       setCelebrationDetails({
         type: 'claim',
@@ -3688,7 +3572,7 @@ function ArcAppShell() {
                   {isClaiming ? (
                     <>
                       <RefreshCw size={16} className="animate-spin" />
-                      <span>Claiming & linking ERC-8004…</span>
+                      <span>Claiming your ₦Tag…</span>
                     </>
                   ) : (
                     <span>Claim</span>
@@ -5336,7 +5220,7 @@ function ArcAppShell() {
               disabled={!claimStatus?.available || isClaiming}
               onClick={handleExecuteClaim}
             >
-              {isClaiming ? 'Claiming & linking ERC-8004…' : 'Claim & link ERC-8004'}
+              {isClaiming ? 'Claiming your ₦Tag…' : `Claim ₦${(claimInput.replace(/^[$₦@#]/, '') || 'Tag').toUpperCase()}`}
             </button>
           </div>
         </div>
@@ -5807,6 +5691,21 @@ function ArcAppShell() {
 }
 
 export default function App() {
-  const adminPath = typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin';
-  return adminPath ? <PlatformAgentAdminPage /> : <ArcAppShell />;
+  const pathname = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+  const agentMatch = pathname.match(/^\/agent\/([a-zA-Z0-9_-]+)/i);
+  const tagMatch = pathname.match(/^\/tag\/([a-zA-Z0-9_-]+)/i);
+
+  if (pathname === '/admin') {
+    return <PlatformAgentAdminPage />;
+  }
+
+  if (agentMatch) {
+    return <PublicProfilePage rawHandle={agentMatch[1]} type="agent" />;
+  }
+
+  if (tagMatch) {
+    return <PublicProfilePage rawHandle={tagMatch[1]} type="tag" />;
+  }
+
+  return <ArcAppShell />;
 }

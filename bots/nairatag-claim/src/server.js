@@ -609,19 +609,14 @@ async function handleMessage({ id, username, chatType, text, reply }) {
       const selectedService = celoSepoliaService;
       const result = await selectedService.checkAvailability(handle);
       if (!result.available) return reply(`🔒 ${result.display} is already registered on NairaTag Network.`);
-      const prepared = await selectedService.prepareClaim(result.handle);
-      recordLifecycle({ walletAddress: null, eventType: 'prepared', handle: result.handle, network: 'celoSepolia' });
       return reply([
-        `✅ ${result.display} is available on Celo Sepolia.`, '',
-        'Approve this claim transaction:',
-        `Chain: ${prepared.chainId || 11142220}`,
-        `Contract: ${prepared.contract}`,
-        `Function: ${prepared.function}`,
-        `Data: ${prepared.calldata}`,
-        '',
-        JSON.stringify({ chain: 'celo-sepolia', chainId: 11142220, calls: [{ to: prepared.contract, value: '0x0', data: prepared.calldata }] }),
+        `🟢 *${result.display} is available!*`, '',
+        `Claim your sovereign tag in seconds:`,
+        `👉 https://arc.nairatag.ng/#claim?tag=${result.handle}`, '',
+        `• No wallet required — simply sign in with email`,
+        `• Instant NGN receiving account`,
+        `• Autonomous personal AI agent`
       ].join('\n'));
-      return reply(`✅ *${result.display} is available!*\n\nClaim it directly with your wallet:\n${service.claimUrl(result.handle)}`);
     } catch (error) {
       return reply(`I could not check that handle. ${error.message}`);
     }

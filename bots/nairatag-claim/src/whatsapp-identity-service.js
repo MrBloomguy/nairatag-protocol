@@ -302,22 +302,24 @@ function createWhatsAppIdentityService({
         );
       }
 
-      // Screen 3: Claim Flow / Connect Wallet
+      // Screen 3: Seamless 1-Tap Claim Flow (No Web3 wallet connect required)
       if (input.startsWith('btn_claim_tag_')) {
         const tag = input.slice('btn_claim_tag_'.length).toLowerCase();
         activeSessions.set(phone, { state: 'VERIFYING_CLAIM', selectedTag: tag });
         return replyWithButtons(
           [
-            `Great! Let's get you set up.`,
+            `Ready to activate *₦${tag}*!`,
             ``,
-            `To claim *₦${tag}*, connect your wallet. You can use a Web3 wallet or create a new one.`,
+            `Your WhatsApp number (${maskPhone(phone)}) is verified.`,
+            `Tap confirm below to mint your sovereign ₦Tag instantly.`,
             ``,
-            `💳 *Connect your wallet*`,
-            `_This helps secure your ₦Tag and gives you access to your wallet._`
+            `✓ Instant NGN bank receiving account`,
+            `✓ Autonomous AI agent setup`,
+            `✓ Zero gas fees or wallet setup needed`
           ].join('\n'),
           [
-            { id: `btn_confirm_claim_${tag}`, title: `Connect wallet` },
-            { id: `btn_create_wallet_${tag}`, title: `Create new wallet` }
+            { id: `btn_confirm_claim_${tag}`, title: `Confirm & Claim ₦${tag}` },
+            { id: `btn_menu`, title: `Cancel` }
           ]
         );
       }
@@ -378,8 +380,8 @@ function createWhatsAppIdentityService({
             `│  ₦  *#${tag.toUpperCase()}*    🟢 Active`,
             `│     nairatag.ng/₦${tag}`,
             `│`,
-            `│  🆔 Celo wallet: 0x7a3...91c4`,
-            `│  🌐 Network: Celo Sepolia`,
+            `│  📱 Phone: ${maskPhone(phone)}`,
+            `│  🌐 Status: Verified Sovereign Tag`,
             `│  👤 Profile: Ready to customize`,
             `└───────────────────────────┘`
           ].join('\n'),
@@ -634,8 +636,8 @@ function createWhatsAppIdentityService({
       );
     }
 
-    // 1. Tag lookup trigger (e.g. "₦asake", "asake", "check ₦michael", "tag chowdeck")
-    const lookupMatch = input.match(/^(?:check|find|tag|whois)?\s*([₦@][a-zA-Z0-9_]+|[a-zA-Z0-9_]{3,20})$/i);
+    // 1. Tag lookup & claim trigger (e.g. "₦asake", "asake", "check ₦michael", "claim ₦michael", "tag chowdeck")
+    const lookupMatch = input.match(/^(?:check|claim|find|tag|whois)?\s*([₦@][a-zA-Z0-9_]+|[a-zA-Z0-9_]{3,20})$/i);
     const session = activeSessions.get(phone);
 
     if (session?.state === 'WAITING_CUSTOM_NAME') {
@@ -654,7 +656,7 @@ function createWhatsAppIdentityService({
             ``,
             `*What you'll get:*`,
             `🆔 Your unique ₦Tag`,
-            `⛓ A Celo wallet (onchain)`,
+            `⚡ Instant NGN receiving account`,
             `🔗 A profile you can share`
           ].join('\n'),
           [
@@ -686,26 +688,26 @@ function createWhatsAppIdentityService({
 
     // Direct ₦Tag lookup & Group Chat Mode (Screen 5 & Screen 7)
     if (input.startsWith('₦') || (lookupMatch && !['hi', 'hello', 'start', 'help', 'menu'].includes(input.toLowerCase()))) {
-      const handle = cleanHandle(input);
+      const targetRaw = lookupMatch && lookupMatch[1] ? lookupMatch[1] : input;
+      const handle = cleanHandle(targetRaw);
       if (handle.length >= 3) {
         try {
           const resolveRes = await tagService.resolveTag(handle);
           const display = `₦${handle.toLowerCase()}`;
           if (resolveRes.exists) {
-            const role = resolveRes.profile?.role || 'View profile';
-            const shortAddr = resolveRes.resolvedAddress ? `${resolveRes.resolvedAddress.slice(0, 6)}...${resolveRes.resolvedAddress.slice(-4)}` : '0x9f2e...3ac1';
+            const role = resolveRes.profile?.role || 'Sovereign Identity';
+            const shortAddr = resolveRes.resolvedAddress ? `${resolveRes.resolvedAddress.slice(0, 6)}...${resolveRes.resolvedAddress.slice(-4)}` : null;
             return replyWithButtons(
               [
                 `Here's what I found for *${display}*:`,
                 ``,
                 `┌───────────────────────────┐`,
                 `│  ₦  *${display}*    🟢 Verified NairaTag`,
-                `│`,
-                `│  🆔 Wallet address: ${shortAddr}`,
-                `│  🌐 Network: Celo Sepolia`,
+                shortAddr ? `│  🆔 Address: ${shortAddr}` : null,
+                `│  🌐 Status: Active Onchain`,
                 `│  👤 Profile: ${role}`,
                 `└───────────────────────────┘`
-              ].join('\n'),
+              ].filter(Boolean).join('\n'),
               [
                 { id: `btn_send_payment_${handle}`, title: `Send to ${display}` },
                 { id: `btn_view_dashboard`, title: `View profile` }
@@ -724,7 +726,7 @@ function createWhatsAppIdentityService({
                 ``,
                 `*What you'll get:*`,
                 `🆔 Your unique ₦Tag`,
-                `⛓ A Celo wallet (onchain)`,
+                `⚡ Instant NGN receiving account`,
                 `🔗 A profile you can share`
               ].join('\n'),
               [

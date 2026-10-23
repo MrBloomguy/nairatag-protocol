@@ -1,38 +1,29 @@
 import { useEffect, useMemo, useState } from 'react';
 
 const DEFAULT_AGENT_AVATAR = 'https://api.dicebear.com/7.x/identicon/svg?seed=gemini-flash';
-const AGENT_AVATARS = [
-  { tag: 'chowdeck', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=chowdeck' },
-  { tag: 'dev', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=dev' },
-  { tag: 'designer', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=designer' },
-  { tag: 'food', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=food' },
-  { tag: 'ride', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=ride' },
-  { tag: 'escrow', avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=escrow' },
-];
-
 const INTENTS = [
   {
     id: 'food',
     match: /\b(food|eat|meal|restaurant|chowdeck|jollof|lunch|dinner|breakfast)\b/i,
-    avatar: AGENT_AVATARS[0].avatar,
+    avatar: DEFAULT_AGENT_AVATAR,
     phases: ['Checking order', 'Sorting details', 'Getting options ready'],
   },
   {
     id: 'travel',
     match: /\b(ride|travel|transit|trip|driver|pickup|destination|dispatch)\b/i,
-    avatar: AGENT_AVATARS[4].avatar,
+    avatar: DEFAULT_AGENT_AVATAR,
     phases: ['Checking route', 'Planning trip', 'Getting options ready'],
   },
   {
     id: 'contract',
     match: /\b(contract|solidity|audit|bytecode|security|deploy)\b/i,
-    avatar: AGENT_AVATARS[1].avatar,
+    avatar: DEFAULT_AGENT_AVATAR,
     phases: ['Reviewing request', 'Checking details', 'Preparing guidance'],
   },
   {
     id: 'creative',
     match: /\b(design|logo|banner|image|visual|creative|ui|artwork)\b/i,
-    avatar: AGENT_AVATARS[2].avatar,
+    avatar: DEFAULT_AGENT_AVATAR,
     phases: ['Shaping ideas', 'Finding a direction', 'Polishing'],
   },
   {

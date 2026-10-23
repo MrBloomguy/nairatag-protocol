@@ -10,7 +10,38 @@ function escapeAttribute(value) {
 function setMeta(html, selector, content) {
   const safeContent = escapeAttribute(content);
   const pattern = new RegExp(`(<meta\\s+${selector}\\s+content=")[^"]*("\\s*\\/?>)`, 'i');
-  return html.replace(pattern, `$1${safeContent}$2`);
+  if (pattern.test(html)) {
+    return html.replace(pattern, `$1${safeContent}$2`);
+  }
+  return html.replace('</head>', `  <meta ${selector} content="${safeContent}" />\n</head>`);
+}
+
+function getBaseHtml() {
+  const candidates = [
+    path.join(process.cwd(), 'dist', 'index.html'),
+    path.join(process.cwd(), 'index.html'),
+    path.join(process.cwd(), 'apps', 'arc', 'dist', 'index.html'),
+    path.join(process.cwd(), 'apps', 'arc', 'index.html')
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        return fs.readFileSync(p, 'utf8');
+      }
+    } catch {}
+  }
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NairaTag Identity</title>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+</html>`;
 }
 
 export default function handler(req, res) {
@@ -22,8 +53,7 @@ export default function handler(req, res) {
       return res.status(400).send('Invalid NairaTag');
     }
 
-    const htmlPath = path.join(process.cwd(), 'index.html');
-    const html = fs.readFileSync(htmlPath, 'utf8');
+    const html = getBaseHtml();
     const forwardedHost = req.headers['x-forwarded-host'] || req.headers.host || 'arc.nairatag.ng';
     const host = String(forwardedHost).split(',')[0].trim();
     const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
@@ -34,19 +64,21 @@ export default function handler(req, res) {
     const title = `${tag} · NairaTag on Arc`;
     const description = `Send USDC on Arc directly to ${tag}, a human-readable NairaTag identity.`;
 
-    let page = html;
-    page = page.replace(/<title>[^<]*<\/title>/i, `<title>${escapeAttribute(title)}</title>`);
+    let page = html.includes('<title>') 
+      ? html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeAttribute(title)}</title>`)
+      : html.replace('</head>', `<title>${escapeAttribute(title)}</title></head>`);
+
     page = setMeta(page, 'property="og:title"', title);
     page = setMeta(page, 'property="og:description"', description);
     page = setMeta(page, 'property="og:image"', imageUrl);
     page = setMeta(page, 'property="og:url"', tagUrl);
     page = setMeta(page, 'property="og:type"', 'profile');
-    page = page.replace('</head>', '  <meta property="og:image:width" content="1200" />\n  <meta property="og:image:height" content="630" />\n</head>');
+    page = setMeta(page, 'property="og:image:width"', '1200');
+    page = setMeta(page, 'property="og:image:height"', '630');
+    page = setMeta(page, 'name="twitter:card"', 'summary_large_image');
     page = setMeta(page, 'name="twitter:title"', title);
     page = setMeta(page, 'name="twitter:description"', description);
     page = setMeta(page, 'name="twitter:image"', imageUrl);
-    page = page.replace(/<meta\s+name="twitter:card"\s+content="[^"]*"\s*\/?\s*>/i,
-      '<meta name="twitter:card" content="summary_large_image" />');
     page = setMeta(page, 'name="description"', description);
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
