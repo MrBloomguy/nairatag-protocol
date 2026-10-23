@@ -206,6 +206,7 @@ export async function sendUsdcOnArc({
   amountUsdc,
   memoText = '',
   memo,
+  onStatusUpdate = () => {},
 }) {
   const startTime = Date.now();
   if (!fromAddress || !isAddress(fromAddress)) {
@@ -261,6 +262,7 @@ export async function sendUsdcOnArc({
 
   const cleanMemo = String(memoText || memo || '').trim();
   let hash;
+  onStatusUpdate({ step: 'transacting', message: 'Sending transaction to your wallet...' });
 
   if (cleanMemo) {
     // Encode the inner USDC transfer call
@@ -298,6 +300,7 @@ export async function sendUsdcOnArc({
     throw new Error('No transaction hash returned from wallet.');
   }
 
+  onStatusUpdate({ step: 'confirming', message: 'Waiting for Arc confirmation...' });
   // Wait for deterministic sub-second receipt on Arc
   const receipt = await publicClient.waitForTransactionReceipt({
     hash,

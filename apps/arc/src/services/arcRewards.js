@@ -1,5 +1,11 @@
-const ARC_REWARDS_API = import.meta.env.VITE_ARC_REWARDS_API || 'https://nairatag.ng/api/arc-rewards';
+import { broadcastArcRewardToTelegram } from './arcSocialBroadcast.js';
+const ARC_REWARDS_API = import.meta.env.VITE_ARC_REWARDS_API || (import.meta.env.DEV ? '/api/arc-rewards' : 'https://nairatag.ng/api/arc-rewards');
 const ARC_CHAIN_ID = 5042002;
+
+function arcRewardsUrl() {
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://nairatag.ng';
+  return new URL(ARC_REWARDS_API, base);
+}
 
 function mapState(value = {}) {
   const referrals = value.referrals || {};
@@ -38,7 +44,7 @@ async function parseResponse(response) {
 
 export async function getArcRewardState(walletAddress) {
   if (!walletAddress) return mapState();
-  const url = new URL(ARC_REWARDS_API);
+  const url = arcRewardsUrl();
   url.searchParams.set('wallet', walletAddress);
   const payload = await parseResponse(await fetch(url, { headers: { Accept: 'application/json' } }));
   return mapState(payload.state);
@@ -73,6 +79,9 @@ export async function submitArcRewardAction({ action, walletAddress, tag, referr
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify(payload),
   }));
+  if (['daily_claim', 'spin', 'payment_confirmed', 'referral_signup'].includes(action)) {
+    broadcastArcRewardToTelegram(payload).catch((error) => console.warn('[Telegram reward alert]', error.message));
+  }
   return { result: response.result, state: mapState(response.state) };
 }
 

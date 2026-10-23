@@ -1,10 +1,14 @@
 import agents from '../lib/arc/agents.js';
+import auth from '../lib/arc/auth.js';
 import chat from '../lib/arc/chat.js';
 import follows from '../lib/arc/follows.js';
 import rewards from '../lib/arc/rewards.js';
 import tasks from '../lib/arc/tasks.js';
+import admin from '../lib/arc/admin.js';
+import personalAgent from '../lib/arc/personal-agent.js';
+import personalAgentReconcile from '../lib/arc/personal-agent-reconcile.js';
 
-const handlers = { agents, chat, follows, rewards, tasks };
+const handlers = { auth, agents, chat, follows, rewards, tasks, admin, personalagent: personalAgent, memoryreconcile: personalAgentReconcile };
 
 export default async function handler(req, res) {
   const route = String(req.query?.route || '').toLowerCase();
@@ -12,3 +16,4 @@ export default async function handler(req, res) {
   if (!selectedHandler) return res.status(404).json({ error: 'Arc API route not found.' });
   return selectedHandler(req, res);
 }
+

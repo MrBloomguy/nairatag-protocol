@@ -1,285 +1,339 @@
-/**
- * @file circleWallet.js
- * @description Circle Programmable Wallets (Web3 Services / W3S) Authentication & Management Layer.
- * Powered by Circle Console API Key: TEST_API_KEY:b808dc3c8e9f40b6428467baeaa4393f:0024868181ece1a3d47cd866ac5127db
- *
- * Supports:
- * - One-click Social / Email / Handle authentication into Circle Programmable Wallets
- * - Native Arc Osaka (Chain 5042002 / ARC-TESTNET) onchain wallet provisioning
- * - Session token generation & challenge initialization (User-Controlled Wallets)
- * - Deterministic sovereign smart wallet derivation for zero-friction onboarding
- * - Live onchain USDC balance integration on Arc Osaka
- */
+import { encodeFunctionData, isAddress, getAddress, keccak256, parseUnits, stringToHex } from 'viem';
+import {
+  ARC_MEMO_ABI,
+  ARC_MEMO_ADDRESS,
+  ARC_NAIRATAG_REGISTRY_ADDRESS,
+  ARC_NAIRATAG_RESOLVER_ADDRESS,
+  ARC_USDC_ADDRESS,
+  ARC_USDC_DECIMALS,
+  ERC20_ABI,
+} from '../config/arc.js';
+import { getUsdcBalance, publicClient } from './arcPayment.js';
 
-import { getAddress, keccak256, toHex } from 'viem';
-import { getUsdcBalance } from './arcPayment.js';
+const APP_ID = import.meta.env.VITE_CIRCLE_APP_ID || '';
+const LEGACY_STORAGE_KEY = 'nairatag_circle_wallet_v1';
+let sdkPromise;
+let sdkInstance;
+let loginCallback;
 
-export const CIRCLE_API_KEY =
-  import.meta.env.VITE_CIRCLE_API_KEY ||
-  'TEST_CLIENT_KEY:1262c7bb86d161621fc2bccc45c92290:1598ace5d08617730d4340d6d166f342';
-
-export const CIRCLE_BASE_URL = 'https://api.circle.com/v1/w3s';
-export const CIRCLE_STORAGE_KEY = 'nairatag_circle_wallet_v1';
-
-/**
- * Normalizes an email, phone number, or NairaTag handle into a valid Circle userId
- * (Circle requires a string between 5 and 50 characters).
- */
-export function normalizeCircleUserId(identifier) {
-  if (!identifier) return `nt_guest_${Date.now().toString(36)}`;
-  const clean = String(identifier)
-    .trim()
-    .toLowerCase()
-    .replace(/^[@₦$#]/, '')
-    .replace(/[^a-z0-9_.-]/g, '_');
-
-  const prefix = 'nt_';
-  const combined = `${prefix}${clean}`;
-  if (combined.length > 48) {
-    return combined.slice(0, 48);
-  }
-  if (combined.length < 5) {
-    return `${combined}_usr`;
-  }
-  return combined;
+function notifyStatus(onStatusUpdate, step, message) {
+  onStatusUpdate?.({ step, message });
 }
 
-/**
- * Retrieves the stored Circle wallet session from localStorage.
- */
-export function getStoredCircleSession() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(CIRCLE_STORAGE_KEY);
-    if (!raw) return null;
-    const session = JSON.parse(raw);
-    if (session?.walletAddress && session?.userId) {
-      return session;
-    }
-    return null;
-  } catch (e) {
-    console.warn('[CircleWallet] Error reading stored session:', e);
-    return null;
+async function getSdk() {
+  if (!APP_ID || APP_ID.startsWith('TEST_CLIENT_KEY:')) {
+    throw new Error('A Circle Wallet App ID is required. Set VITE_CIRCLE_APP_ID from the Circle Wallets Configurator; a Circle client key cannot be used as the App ID.');
   }
+  if (!sdkPromise) {
+    sdkPromise = import('@circle-fin/w3s-pw-web-sdk').then(({ W3SSdk }) => {
+      sdkInstance = new W3SSdk({ appSettings: { appId: APP_ID } }, (error, result) => {
+        if (!loginCallback) return;
+        const complete = loginCallback;
+        loginCallback = null;
+        if (error || !result?.userToken || !result?.encryptionKey) {
+          complete.reject(new Error(error?.message || 'Circle sign-in could not be verified.'));
+          return;
+        }
+        complete.resolve({ userToken: result.userToken, encryptionKey: result.encryptionKey });
+      });
+      return sdkInstance;
+    }).catch((error) => {
+      sdkPromise = null;
+      throw error;
+    });
+  }
+  return sdkPromise;
 }
 
-/**
- * Saves an active Circle wallet session to localStorage.
- */
-export function saveCircleSession(session) {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.setItem(CIRCLE_STORAGE_KEY, JSON.stringify(session));
-  } catch (e) {
-    console.warn('[CircleWallet] Error saving session:', e);
-  }
-}
-
-/**
- * Clears the active Circle wallet session from localStorage.
- */
-export function clearCircleSession() {
-  if (typeof window === 'undefined') return;
-  try {
-    window.localStorage.removeItem(CIRCLE_STORAGE_KEY);
-  } catch (e) {
-    console.warn('[CircleWallet] Error clearing session:', e);
-  }
-}
-
-/**
- * Calls Circle W3S REST API with the developer API key.
- */
-async function callCircleApi(endpoint, options = {}) {
-  const url = endpoint.startsWith('http') ? endpoint : `${CIRCLE_BASE_URL}${endpoint}`;
-  const headers = {
-    Authorization: `Bearer ${CIRCLE_API_KEY}`,
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-    ...(options.headers || {}),
-  };
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
+async function circleAction(action, params = {}) {
+  const response = await fetch('/api/circle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, ...params }),
   });
-
   const data = await response.json().catch(() => ({}));
-
   if (!response.ok) {
-    const errorMsg = data?.message || data?.error || `Circle API request failed (${response.status})`;
-    const error = new Error(errorMsg);
-    error.code = data?.code;
+    const error = new Error(data.error || data.message || 'Circle service request failed.');
+    error.code = data.code;
     error.status = response.status;
-    error.details = data;
     throw error;
   }
-
-  return data?.data !== undefined ? data.data : data;
+  return data;
 }
 
-/**
- * Registers or retrieves a user in Circle W3S.
- */
-export async function createOrGetCircleUser(userId) {
-  try {
-    const user = await callCircleApi('/users', {
-      method: 'POST',
-      body: JSON.stringify({ userId }),
-    });
-    return user;
-  } catch (err) {
-    // If user already exists (155101 or 409 Conflict), fetch the user directly
-    if (err.code === 155101 || err.status === 409 || err.message?.toLowerCase().includes('already exists')) {
-      try {
-        const existing = await callCircleApi(`/users/${encodeURIComponent(userId)}`, { method: 'GET' });
-        return existing?.user || existing;
-      } catch (getErr) {
-        return { id: userId, status: 'ENABLED' };
-      }
-    }
-    throw err;
+export async function requestCircleEmailOtp(email) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    throw new Error('Enter a valid email address for Circle email verification.');
   }
-}
-
-/**
- * Creates a secure session userToken for an authenticated Circle user.
- */
-export async function getCircleUserToken(userId) {
-  const result = await callCircleApi('/users/token', {
-    method: 'POST',
-    body: JSON.stringify({ userId }),
-  });
-  return {
-    userToken: result.userToken,
-    encryptionKey: result.encryptionKey,
-  };
-}
-
-/**
- * Queries existing wallets associated with a Circle user.
- */
-export async function getCircleUserWallets(userId, userToken = null) {
-  try {
-    const headers = userToken ? { 'X-User-Token': userToken } : {};
-    const result = await callCircleApi(`/wallets?userId=${encodeURIComponent(userId)}`, {
-      method: 'GET',
-      headers,
-    });
-    return result?.wallets || [];
-  } catch (err) {
-    console.warn('[CircleWallet] Wallets query note:', err.message);
-    return [];
+  const sdk = await getSdk();
+  const deviceId = await sdk.getDeviceId();
+  const otp = await circleAction('requestEmailOtp', { deviceId, email: normalizedEmail });
+  if (!otp?.deviceToken || !otp?.deviceEncryptionKey || !otp?.otpToken) {
+    throw new Error('Circle did not return the email verification session.');
   }
-}
-
-/**
- * Initializes a User-Controlled Wallet challenge on Circle W3S for Arc Osaka (Chain 5042002 / ARC-TESTNET).
- */
-export async function initializeCircleWalletChallenge(userToken, blockchain = 'ARC-TESTNET') {
-  const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : `nt_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
-  const result = await callCircleApi('/user/initialize', {
-    method: 'POST',
-    headers: {
-      'X-User-Token': userToken,
+  sdk.updateConfigs({
+    appSettings: { appId: APP_ID },
+    loginConfigs: {
+      deviceToken: otp.deviceToken,
+      deviceEncryptionKey: otp.deviceEncryptionKey,
+      otpToken: otp.otpToken,
+      email: { email: normalizedEmail },
     },
-    body: JSON.stringify({
-      idempotencyKey,
-      blockchains: [blockchain],
-    }),
   });
-
-  return {
-    challengeId: result?.challengeId,
-  };
+  return { email: normalizedEmail };
 }
 
-/**
- * Derives a deterministic sovereign EVM address on Arc Osaka for a given identifier and Circle tenant.
- * Ensures the user has an immediate, stable onchain identity to receive USDC and mint their ₦Tag.
- */
-export function deriveDeterministicArcAddress(identifier) {
-  const clean = String(identifier).trim().toLowerCase();
-  const salt = `circle_w3s_arc_5042002_${clean}`;
-  const hash = keccak256(toHex(salt));
-  // Take last 20 bytes for standard EVM address
-  const addressRaw = '0x' + hash.slice(-40);
-  return getAddress(addressRaw);
+export async function verifyCircleEmailOtp() {
+  const sdk = await getSdk();
+  if (loginCallback) throw new Error('Circle verification is already in progress.');
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      if (!loginCallback) return;
+      loginCallback = null;
+      reject(new Error('Circle email verification timed out. Request a new code and try again.'));
+    }, 180_000);
+    loginCallback = {
+      resolve: (result) => { clearTimeout(timeout); resolve(result); },
+      reject: (error) => { clearTimeout(timeout); reject(error); },
+    };
+    try {
+      sdk.verifyOtp();
+    } catch (error) {
+      loginCallback = null;
+      clearTimeout(timeout);
+      reject(error);
+    }
+  });
 }
 
-/**
- * Primary Authentication Entrypoint: Sign In / Create Wallet with Circle Web3 Services.
- *
- * Takes an email or NairaTag handle, creates or verifies the user in Circle Console,
- * issues a Circle userToken, and establishes an active sovereign wallet session on Arc Osaka.
- */
-export async function authenticateWithCircle({ identifier, onStatusUpdate = () => {} }) {
-  if (!identifier || !identifier.trim()) {
-    throw new Error('Please enter a valid email address or NairaTag handle to sign in with Circle.');
+function executeChallenge(sdk, session, challengeId, { allowInProgress = false } = {}) {
+  if (!challengeId) return Promise.reject(new Error('Circle did not return a signing challenge.'));
+  sdk.setAuthentication({ userToken: session.userToken, encryptionKey: session.encryptionKey });
+  return new Promise((resolve, reject) => {
+    sdk.execute(challengeId, (error, result) => {
+      if (error) {
+        reject(new Error(error.message || 'Circle wallet challenge was not completed.'));
+        return;
+      }
+      if (result?.status === 'IN_PROGRESS' && allowInProgress) {
+        resolve(result);
+        return;
+      }
+      if (result?.status && result.status !== 'COMPLETE') {
+        reject(new Error(`Circle challenge ended with status ${result.status}.`));
+        return;
+      }
+      resolve(result || {});
+    });
+  });
+}
+
+function wait(milliseconds) {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function waitForCircleChallenge(userToken, challengeId, onStatusUpdate) {
+  const timeoutAt = Date.now() + 60_000;
+  let attempt = 0;
+  while (Date.now() < timeoutAt) {
+    const response = await circleAction('getChallenge', { userToken, challengeId });
+    const challenge = response?.challenge || response?.data?.challenge || response?.data || response;
+    const status = String(challenge?.status || '').toUpperCase();
+    if (status === 'COMPLETE') return challenge;
+    if (['FAILED', 'EXPIRED', 'CANCELLED'].includes(status)) {
+      throw new Error(challenge?.errorMessage || `Circle wallet setup did not complete (${status}). Please try again.`);
+    }
+    notifyStatus(onStatusUpdate, 'create', 'Circle is finishing your wallet setup...');
+    await wait(Math.min(1000 + attempt * 250, 2500));
+    attempt += 1;
   }
+  throw new Error('Circle is still processing your wallet setup. Please wait a moment and sign in again.');
+}
 
-  const cleanIdentifier = identifier.trim();
-  const userId = normalizeCircleUserId(cleanIdentifier);
-
-  onStatusUpdate({ step: 'register', message: 'Connecting to Circle Web3 Services...' });
-
-  // 1. Create or retrieve user in Circle Console
-  const circleUser = await createOrGetCircleUser(userId);
-
-  onStatusUpdate({ step: 'token', message: 'Issuing secure Circle session token...' });
-
-  // 2. Obtain session userToken
-  const { userToken, encryptionKey } = await getCircleUserToken(userId);
-
-  onStatusUpdate({ step: 'wallets', message: 'Checking Circle onchain accounts on Arc Osaka...' });
-
-  // 3. Check for existing wallets in Circle
-  const existingWallets = await getCircleUserWallets(userId, userToken);
-  let resolvedAddress = null;
-  let walletId = null;
-
-  if (existingWallets && existingWallets.length > 0) {
-    const arcWallet = existingWallets.find((w) => w.blockchain === 'ARC-TESTNET') || existingWallets[0];
-    resolvedAddress = arcWallet.address;
-    walletId = arcWallet.id;
-  } else {
-    // 4. Generate onchain deterministic sovereign address on Arc Osaka
-    onStatusUpdate({ step: 'provision', message: 'Provisioning sovereign Circle account on Arc Osaka EVM...' });
-    resolvedAddress = deriveDeterministicArcAddress(cleanIdentifier);
-    walletId = `w3s_${userId}`;
+async function loadArcWallet(userToken, onStatusUpdate) {
+  const maxAttempts = 16;
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const result = await circleAction('listWallets', { userToken });
+    const wallets = result.wallets || [];
+    const wallet = wallets.find((item) => item.blockchain === 'ARC-TESTNET');
+    if (wallet?.id && wallet?.address) return wallet;
+    if (attempt < maxAttempts - 1) {
+      notifyStatus(onStatusUpdate, 'wallets', 'Your Arc wallet is being prepared...');
+      await wait(Math.min(1000 + attempt * 250, 2500));
+    }
   }
+  throw new Error('Circle sign-in succeeded, but your Arc wallet is still being prepared. Please try again in a moment.');
+}
 
-  onStatusUpdate({ step: 'balance', message: 'Fetching live USDC balance on Arc...' });
-
-  // 5. Fetch live USDC balance on Arc Osaka
-  let balance = { formatted: '0.00', value: 0n };
+export async function connectCircleWallet(login, onStatusUpdate = () => {}) {
+  if (!login?.userToken || !login?.encryptionKey) throw new Error('Complete Circle email verification first.');
+  const sdk = await getSdk();
+  const session = { ...login };
+  let wallet;
+  let isNewWallet = true;
+  notifyStatus(onStatusUpdate, 'initialize', 'Setting up your Circle wallet on Arc Testnet...');
   try {
-    balance = await getUsdcBalance(resolvedAddress);
-  } catch (balErr) {
-    console.warn('[CircleWallet] Balance query note:', balErr.message);
+    const initialized = await circleAction('initializeUser', { userToken: session.userToken });
+    notifyStatus(onStatusUpdate, 'create', 'Creating your Circle wallet...');
+    const challengeResult = await executeChallenge(sdk, session, initialized.challengeId, { allowInProgress: true });
+    if (challengeResult?.status === 'IN_PROGRESS') {
+      await waitForCircleChallenge(session.userToken, initialized.challengeId, onStatusUpdate);
+    }
+    wallet = await loadArcWallet(session.userToken, onStatusUpdate);
+  } catch (error) {
+    // Circle returns 155106 when this user has already completed initialization.
+    if (Number(error.code) !== 155106) throw error;
+    isNewWallet = false;
+    notifyStatus(onStatusUpdate, 'wallets', 'Loading your existing Circle wallet...');
+    wallet = await loadArcWallet(session.userToken, onStatusUpdate);
   }
 
-  // 6. Assemble session object
-  const session = {
-    userId,
-    identifier: cleanIdentifier,
-    userToken,
-    encryptionKey,
-    walletAddress: resolvedAddress,
-    walletId,
-    authProvider: 'circle',
-    blockchain: 'ARC-TESTNET',
-    chainId: 5042002,
-    createdAt: new Date().toISOString(),
-    pinStatus: circleUser?.pinStatus || 'UNSET',
-  };
-
-  saveCircleSession(session);
-
-  onStatusUpdate({ step: 'ready', message: 'Circle Wallet connected!' });
+  let balance = { formatted: '0.00', raw: 0n, rawString: '0', symbol: 'USDC' };
+  try {
+    const result = await circleAction('getTokenBalance', { userToken: session.userToken, walletId: wallet.id });
+    const entries = result.tokenBalances || [];
+    const usdc = entries.find((entry) => entry.token?.symbol?.startsWith('USDC') || entry.token?.name?.includes('USDC'));
+    const formatted = String(usdc?.amount || '0');
+    balance = { formatted, raw: parseUnits(formatted, ARC_USDC_DECIMALS), rawString: formatted, symbol: 'USDC' };
+  } catch (error) {
+    console.warn('[CircleWallet] Could not load Circle wallet balance:', error.message);
+  }
 
   return {
     ...session,
+    walletAddress: getAddress(wallet.address),
+    isNewWallet,
+    walletId: wallet.id,
+    authProvider: 'circle',
+    blockchain: 'ARC-TESTNET',
+    chainId: 5042002,
     balance,
   };
 }
+
+export async function executeCircleContract({ session, contractAddress, abiFunctionSignature, abiParameters, onStatusUpdate = () => {} }) {
+  if (!session?.walletId || !session?.userToken || !session?.encryptionKey) {
+    throw new Error('Your Circle session expired. Reconnect your Circle wallet to continue.');
+  }
+  if (!isAddress(contractAddress)) throw new Error('Invalid transaction contract address.');
+  const walletAddress = getAddress(session.walletAddress);
+  const sdk = await getSdk();
+  const challenge = await circleAction('createContractExecution', {
+    userToken: session.userToken,
+    walletId: session.walletId,
+    contractAddress: getAddress(contractAddress),
+    abiFunctionSignature,
+    abiParameters,
+  });
+  notifyStatus(onStatusUpdate, 'transacting', 'Sending transaction to Circle...');
+  const result = await executeChallenge(sdk, session, challenge.challengeId);
+  const txHash = result?.txHash || result?.transactionHash || result?.data?.txHash || result?.data?.transactionHash || null;
+  if (!txHash) {
+    throw new Error('Circle authorized the request but did not return a transaction hash. Check the Circle transaction activity before retrying.');
+  }
+  notifyStatus(onStatusUpdate, 'confirming', 'Waiting for Arc confirmation...');
+  return {
+    txHash,
+    hash: txHash,
+    explorerUrl: `https://explorer.testnet.arc.io/tx/${txHash}`,
+    from: walletAddress,
+    executionTimeMs: 0,
+  };
+}
+
+export async function sendUsdcWithCircle({ session, fromAddress, toAddress, amountUsdc, memoText = '', onStatusUpdate = () => {} }) {
+  if (!isAddress(fromAddress) || !isAddress(toAddress)) throw new Error('Sender or recipient address is invalid.');
+  if (getAddress(fromAddress) !== getAddress(session?.walletAddress)) throw new Error('The Circle session does not own the connected sender wallet.');
+  const amount = String(amountUsdc || '').trim();
+  if (!/^\d+(\.\d{1,6})?$/.test(amount) || Number(amount) <= 0) throw new Error('Enter a valid USDC amount with up to 6 decimal places.');
+  const amountBaseUnits = parseUnits(amount, ARC_USDC_DECIMALS);
+  const currentBalance = await getUsdcBalance(fromAddress);
+  if (currentBalance.raw < amountBaseUnits) {
+    throw new Error(`Insufficient USDC balance. You have ${currentBalance.formatted} USDC, but need ${amount} USDC.`);
+  }
+  const memo = String(memoText || '').trim();
+  let execution;
+  const startTime = Date.now();
+  if (memo) {
+    const transferCallData = encodeFunctionData({
+      abi: ERC20_ABI,
+      functionName: 'transfer',
+      args: [getAddress(toAddress), amountBaseUnits],
+    });
+    const memoBytes = stringToHex(memo);
+    const memoId = keccak256(memoBytes);
+    execution = await executeCircleContract({
+      session,
+      contractAddress: ARC_MEMO_ADDRESS,
+      abiFunctionSignature: 'memo(address,bytes,bytes32,bytes)',
+      abiParameters: [ARC_USDC_ADDRESS, transferCallData, memoId, memoBytes],
+      onStatusUpdate,
+    });
+  } else {
+    execution = await executeCircleContract({
+      session,
+      contractAddress: ARC_USDC_ADDRESS,
+      abiFunctionSignature: 'transfer(address,uint256)',
+      abiParameters: [getAddress(toAddress), amountBaseUnits.toString()],
+      onStatusUpdate,
+    });
+  }
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: execution.txHash, confirmations: 1, timeout: 120_000 });
+  if (receipt.status !== 'success') throw new Error(`Circle wallet transaction failed on Arc. Transaction: ${execution.txHash}`);
+  return {
+    ...execution,
+    receipt,
+    recipientAddress: getAddress(toAddress),
+    amount,
+    hasMemo: Boolean(memo),
+    memoText: memo || null,
+    blockNumber: Number(receipt.blockNumber),
+    executionTimeMs: Date.now() - startTime,
+  };
+}
+
+export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
+  const cleanTag = String(rawTag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
+  if (!/^[a-z0-9][a-z0-9_]{1,30}[a-z0-9]$/.test(cleanTag) || cleanTag.includes('__')) {
+    throw new Error('NairaTags must be 3–32 letters, numbers, or single underscores inside the name.');
+  }
+  if (!isAddress(walletAddress) || getAddress(walletAddress) !== getAddress(session?.walletAddress)) {
+    throw new Error('The Circle session does not own the connected wallet.');
+  }
+  const execution = await executeCircleContract({
+    session,
+    contractAddress: ARC_NAIRATAG_REGISTRY_ADDRESS,
+    abiFunctionSignature: 'claim(string,address)',
+    abiParameters: [cleanTag, ARC_NAIRATAG_RESOLVER_ADDRESS],
+  });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: execution.txHash, confirmations: 1, timeout: 120_000 });
+  if (receipt.status !== 'success') throw new Error(`Circle wallet tag claim failed on Arc. Transaction: ${execution.txHash}`);
+  return {
+    ...execution,
+    success: true,
+    cleanTag,
+    tag: cleanTag,
+    owner: getAddress(walletAddress),
+    receipt,
+  };
+}
+
+// Circle sessions and signing credentials are deliberately memory-only.
+export function getStoredCircleSession() {
+  try {
+    if (typeof window !== 'undefined') window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch { /* Browser storage may be disabled. */ }
+  return null;
+}
+
+export function clearCircleSession() {
+  try {
+    if (typeof window !== 'undefined') window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+  } catch { /* Browser storage may be disabled. */ }
+  if (loginCallback) loginCallback.reject(new Error('Circle sign-in was cancelled.'));
+  loginCallback = null;
+  sdkInstance = null;
+  sdkPromise = null;
+}
+

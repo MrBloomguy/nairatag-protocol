@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,13 +8,15 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
   <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
-  <title id="meta-page-title">₦Tag Sovereign Onchain Identity</title>
-  <meta name="description" id="meta-page-desc" content="Send crypto directly to this NairaTag sovereign identity on Base and Chain 901." />
+  <title id="meta-page-title">₦Tag Onchain Identity</title>
+  <meta name="description" id="meta-page-desc"
+    content="Send crypto directly to this NairaTag sovereign identity on Base and Chain 901." />
 
   <!-- Open Graph & Social Cards (Hydrated server-side and client-side) -->
   <meta property="og:type" content="profile" />
   <meta property="og:title" id="og-title" content="₦Tag • Sovereign Identity" />
-  <meta property="og:description" id="og-desc" content="The simplest way to receive crypto on Base. Verified on-chain." />
+  <meta property="og:description" id="og-desc"
+    content="The simplest way to receive crypto on Base. Verified on-chain." />
   <meta property="og:image" id="og-image" content="/cards/MICHAEL.svg?mode=og" />
   <meta property="og:url" id="og-url" content="http://127.0.0.1:8088/tag/MICHAEL" />
 
@@ -24,7 +27,8 @@
   <meta name="twitter:image" id="tw-image" content="/cards/MICHAEL.svg?mode=og" />
 
   <!-- oEmbed Discovery -->
-  <link rel="alternate" type="application/json+oembed" id="oembed-link" href="/oembed?format=json" title="₦Tag oEmbed Profile" />
+  <link rel="alternate" type="application/json+oembed" id="oembed-link" href="/oembed?format=json"
+    title="₦Tag oEmbed Profile" />
 
   <!-- Styling & Typography -->
   <link rel="stylesheet" href="/hub/theme.css" />
@@ -47,8 +51,14 @@
       --tag-primary: #bbf246;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
       background: var(--bg-page);
       color: var(--ink);
       font-family: 'Poppins Rounded', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -87,11 +97,13 @@
       align-items: center;
       justify-content: space-between;
     }
+
     .header-left {
       display: flex;
       align-items: center;
       gap: 12px;
     }
+
     .brand-pill {
       display: inline-flex;
       align-items: center;
@@ -106,7 +118,11 @@
       border: 1px solid var(--line);
       transition: border-color 0.15s ease;
     }
-    .brand-pill:hover { border-color: var(--tag-primary); }
+
+    .brand-pill:hover {
+      border-color: var(--tag-primary);
+    }
+
     .brand-glyph {
       width: 22px;
       height: 22px;
@@ -119,6 +135,7 @@
       font-size: 13px;
       font-weight: 900;
     }
+
     .header-right {
       display: flex;
       align-items: center;
@@ -151,14 +168,49 @@
       justify-content: space-between;
       animation: bannerSlide 0.25s ease;
     }
-    .payment-request-banner.visible { display: flex; }
-    @keyframes bannerSlide { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
 
-    .req-banner-left { display: flex; align-items: center; gap: 10px; }
-    .req-banner-icon { font-size: 20px; }
-    .req-banner-title { font-size: 12.5px; font-weight: 800; color: #fb923c; }
-    .req-banner-sub { font-size: 11px; color: #a1a1aa; }
-    .req-banner-amount { font-size: 16px; font-weight: 900; color: #ffffff; }
+    .payment-request-banner.visible {
+      display: flex;
+    }
+
+    @keyframes bannerSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .req-banner-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .req-banner-icon {
+      font-size: 20px;
+    }
+
+    .req-banner-title {
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #fb923c;
+    }
+
+    .req-banner-sub {
+      font-size: 11px;
+      color: #a1a1aa;
+    }
+
+    .req-banner-amount {
+      font-size: 16px;
+      font-weight: 900;
+      color: #ffffff;
+    }
 
     /* Card Wrapper with 3D Tilt Physics */
     .card-stage {
@@ -166,12 +218,14 @@
       width: 100%;
       max-width: 380px;
     }
+
     .card-tilt-wrap {
       width: 100%;
       transition: transform 0.15s ease-out;
       transform-style: preserve-3d;
       cursor: pointer;
     }
+
     .card-svg-slot {
       width: 100%;
       border-radius: 36px;
@@ -179,6 +233,7 @@
       display: flex;
       justify-content: center;
     }
+
     .card-svg-slot svg {
       width: 100%;
       height: auto;
@@ -207,6 +262,7 @@
       border-bottom: 1px solid var(--line);
       padding-bottom: 14px;
     }
+
     .network-pill-group {
       display: flex;
       background: var(--bg-surface);
@@ -215,6 +271,7 @@
       padding: 3px;
       gap: 4px;
     }
+
     .net-pill-btn {
       padding: 4px 12px;
       border-radius: 9999px;
@@ -230,12 +287,19 @@
       align-items: center;
       gap: 5px;
     }
+
     .net-pill-btn.active {
       background: #000000;
       color: #ffffff;
       border: 1px solid var(--line);
     }
-    .net-dot { width: 7px; height: 7px; border-radius: 50%; background: #0052ff; }
+
+    .net-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #0052ff;
+    }
 
     /* Address Row */
     .resolved-address-box {
@@ -248,9 +312,30 @@
       justify-content: space-between;
       gap: 10px;
     }
-    .addr-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-    .addr-label { font-size: 10px; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .addr-hash { font-size: 12.5px; font-family: monospace; color: #ffffff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .addr-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .addr-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .addr-hash {
+      font-size: 12.5px;
+      font-family: monospace;
+      color: #ffffff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     .addr-copy-btn {
       background: var(--bg-card);
@@ -265,7 +350,10 @@
       transition: all 0.12s ease;
       flex-shrink: 0;
     }
-    .addr-copy-btn:hover { border-color: var(--tag-primary); }
+
+    .addr-copy-btn:hover {
+      border-color: var(--tag-primary);
+    }
 
     /* Action Buttons (Stage 4) */
     .action-btn-stack {
@@ -273,10 +361,12 @@
       flex-direction: column;
       gap: 10px;
     }
+
     .action-btn-row {
       display: flex;
       gap: 10px;
     }
+
     .btn-pay-hero {
       width: 100%;
       padding: 15px 20px;
@@ -296,6 +386,7 @@
       text-decoration: none;
       box-shadow: 0 4px 20px rgba(187, 242, 70, 0.25);
     }
+
     .btn-pay-hero:hover {
       opacity: 0.95;
       transform: translateY(-2px);
@@ -320,6 +411,7 @@
       transition: all 0.15s ease;
       text-decoration: none;
     }
+
     .btn-send-main:hover {
       background: #1c1c1c;
       border-color: #383d46;
@@ -340,7 +432,10 @@
       cursor: pointer;
       transition: border-color 0.15s ease;
     }
-    .btn-qr-icon:hover { border-color: var(--tag-primary); }
+
+    .btn-qr-icon:hover {
+      border-color: var(--tag-primary);
+    }
 
     /* V2 Pixel Avatar Studio Deck */
     .avatar-studio-deck {
@@ -353,16 +448,19 @@
       flex-direction: column;
       gap: 14px;
     }
+
     .studio-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
+
     .studio-title-group {
       display: flex;
       align-items: center;
       gap: 8px;
     }
+
     .studio-pill {
       font-size: 10px;
       font-weight: 800;
@@ -373,16 +471,19 @@
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
+
     .studio-title {
       font-size: 13.5px;
       font-weight: 800;
       color: #ffffff;
     }
+
     .studio-desc {
       font-size: 12px;
       color: var(--ink-muted);
       line-height: 1.5;
     }
+
     .studio-body {
       display: flex;
       gap: 14px;
@@ -392,6 +493,7 @@
       border-radius: 14px;
       padding: 12px 14px;
     }
+
     .studio-preview-box {
       width: 64px;
       height: 64px;
@@ -404,16 +506,19 @@
       overflow: hidden;
       flex-shrink: 0;
     }
+
     .studio-preview-box svg {
       width: 100%;
       height: 100%;
     }
+
     .studio-ctrls {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
+
     .studio-file-label {
       display: inline-flex;
       align-items: center;
@@ -430,10 +535,12 @@
       transition: all 0.15s ease;
       width: fit-content;
     }
+
     .studio-file-label:hover {
       background: #2c3138;
       border-color: var(--tag-primary);
     }
+
     .studio-freeze-badge {
       font-size: 11px;
       color: #10b981;
@@ -451,13 +558,20 @@
       border-top: 1px solid var(--line);
       padding-top: 14px;
     }
-    .share-deck-label { font-size: 11px; font-weight: 700; color: var(--ink-muted); }
+
+    .share-deck-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--ink-muted);
+    }
+
     .share-chips-row {
       display: flex;
       align-items: center;
       gap: 6px;
       flex-wrap: wrap;
     }
+
     .share-chip {
       padding: 6px 12px;
       border-radius: 9999px;
@@ -473,6 +587,7 @@
       cursor: pointer;
       transition: all 0.12s ease;
     }
+
     .share-chip:hover {
       background: #202020;
       border-color: #444444;
@@ -493,9 +608,20 @@
       padding: 16px;
       animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .action-modal-overlay.open { display: flex; }
 
-    @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .action-modal-overlay.open {
+      display: flex;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
 
     .action-modal-card {
       width: 100%;
@@ -515,7 +641,13 @@
       align-items: center;
       justify-content: space-between;
     }
-    .modal-title { font-size: 16px; font-weight: 800; color: #ffffff; }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
     .modal-close-btn {
       background: transparent;
       border: none;
@@ -525,7 +657,11 @@
       padding: 4px 8px;
       border-radius: 6px;
     }
-    .modal-close-btn:hover { color: #ffffff; background: #222222; }
+
+    .modal-close-btn:hover {
+      color: #ffffff;
+      background: #222222;
+    }
 
     /* Currency Tabs */
     .curr-tabs {
@@ -536,6 +672,7 @@
       padding: 3px;
       gap: 4px;
     }
+
     .curr-tab-btn {
       flex: 1;
       padding: 7px;
@@ -549,6 +686,7 @@
       font-family: inherit;
       transition: all 0.12s ease;
     }
+
     .curr-tab-btn.active {
       background: #000000;
       color: #ffffff;
@@ -565,6 +703,7 @@
       flex-direction: column;
       gap: 4px;
     }
+
     .amount-top-row {
       display: flex;
       align-items: center;
@@ -573,12 +712,19 @@
       font-weight: 700;
       color: #71717a;
     }
+
     .amount-input-row {
       display: flex;
       align-items: baseline;
       gap: 8px;
     }
-    .amount-symbol { font-size: 26px; font-weight: 900; color: var(--tag-primary); }
+
+    .amount-symbol {
+      font-size: 26px;
+      font-weight: 900;
+      color: var(--tag-primary);
+    }
+
     .amount-input {
       flex: 1;
       background: transparent;
@@ -589,7 +735,11 @@
       color: #ffffff;
       font-family: inherit;
     }
-    .amount-fiat-sub { font-size: 12px; color: #71717a; }
+
+    .amount-fiat-sub {
+      font-size: 12px;
+      color: #71717a;
+    }
 
     /* Quick Preset Chips */
     .preset-chips-row {
@@ -597,6 +747,7 @@
       gap: 6px;
       flex-wrap: wrap;
     }
+
     .preset-chip {
       padding: 4px 10px;
       border-radius: 8px;
@@ -608,7 +759,10 @@
       cursor: pointer;
       transition: all 0.12s ease;
     }
-    .preset-chip:hover { border-color: var(--tag-primary); }
+
+    .preset-chip:hover {
+      border-color: var(--tag-primary);
+    }
 
     /* Execution Pathways */
     .pathway-buttons-deck {
@@ -617,6 +771,7 @@
       gap: 8px;
       margin-top: 6px;
     }
+
     .btn-exec-wallet {
       padding: 14px;
       border-radius: 14px;
@@ -632,6 +787,7 @@
       justify-content: center;
       gap: 8px;
     }
+
     .btn-exec-deeplink {
       padding: 12px;
       border-radius: 14px;
@@ -649,7 +805,11 @@
       justify-content: center;
       gap: 8px;
     }
-    .btn-exec-deeplink:hover { background: #1c1c1c; border-color: #333333; }
+
+    .btn-exec-deeplink:hover {
+      background: #1c1c1c;
+      border-color: #333333;
+    }
 
     /* QR Code Modal */
     .qr-modal-overlay {
@@ -663,7 +823,11 @@
       justify-content: center;
       padding: 16px;
     }
-    .qr-modal-overlay.open { display: flex; }
+
+    .qr-modal-overlay.open {
+      display: flex;
+    }
+
     .qr-card {
       background: #0a0a0a;
       border: 1px solid #222222;
@@ -676,6 +840,7 @@
       max-width: 360px;
       width: 100%;
     }
+
     .qr-box {
       width: 200px;
       height: 200px;
@@ -692,16 +857,19 @@
         padding: 0 16px;
         height: 50px;
       }
+
       .brand-pill {
         font-size: 13.5px;
         padding: 3px 8px;
         gap: 6px;
       }
+
       .header-right .btn-outline,
       .header-right a {
         padding: 4px 10px;
         font-size: 12px;
       }
+
       .tag-container {
         padding: 20px 16px 60px 16px;
         gap: 20px;
@@ -709,25 +877,31 @@
         max-width: 440px;
         margin: 0 auto;
       }
+
       .card-stage {
         max-width: 100%;
         width: 100%;
       }
+
       .resolver-deck {
         padding: 16px 14px;
         border-radius: 20px;
         width: 100%;
       }
+
       .resolved-address-box {
         padding: 10px 12px;
       }
+
       .action-btn-row {
         gap: 8px;
       }
+
       .action-modal-card {
         padding: 18px 16px;
         border-radius: 22px;
       }
+
       .qr-card {
         padding: 20px 16px;
         border-radius: 22px;
@@ -735,6 +909,7 @@
     }
   </style>
 </head>
+
 <body>
 
   <div class="bg-ambient-glow" id="bg-ambient-glow"></div>
@@ -743,7 +918,8 @@
   <header class="tag-header">
     <div class="header-left">
       <a class="brand-pill" href="/claim">
-        <span class="brand-glyph" style="background:#000000; overflow:hidden;"><img src="/hub/nairatag-icon.png" alt="₦" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;" /></span>
+        <span class="brand-glyph" style="background:#000000; overflow:hidden;"><img src="/hub/nairatag-icon.png" alt="₦"
+            style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;" /></span>
         <span>NairaTag</span>
       </a>
     </div>
@@ -831,7 +1007,8 @@
           <a class="share-chip" id="chip-share-wa" target="_blank" href="#">
             <span>💬 WhatsApp</span>
           </a>
-          <button class="share-chip" id="chip-share-story" type="button" style="background:rgba(37,211,102,0.12); border-color:rgba(37,211,102,0.4); color:#25d366;">
+          <button class="share-chip" id="chip-share-story" type="button"
+            style="background:rgba(37,211,102,0.12); border-color:rgba(37,211,102,0.4); color:#25d366;">
             <span>📸 WhatsApp Status</span>
           </button>
           <a class="share-chip" id="chip-share-x" target="_blank" href="#">
@@ -859,7 +1036,8 @@
         </div>
       </div>
       <p class="studio-desc">
-        Every ₦Tag gets a deterministic, recognizable pixel identity derived from your profile or photo, universally recognized across NairaTag, agents, and apps.
+        Every ₦Tag gets a deterministic, recognizable pixel identity derived from your profile or photo, universally
+        recognized across NairaTag, agents, and apps.
       </p>
       <div class="studio-body">
         <div class="studio-preview-box" id="studio-avatar-slot">
@@ -870,7 +1048,8 @@
             <span>📸 Update via Photo</span>
             <input type="file" id="avatar-photo-input" accept="image/*" style="display:none;" />
           </label>
-          <span style="font-size:11px; color:var(--ink-muted);" id="avatar-upload-status">Upload a photo to generate an AI retro pixel avatar</span>
+          <span style="font-size:11px; color:var(--ink-muted);" id="avatar-upload-status">Upload a photo to generate an
+            AI retro pixel avatar</span>
         </div>
       </div>
     </div>
@@ -937,18 +1116,19 @@
         <button class="modal-close-btn" id="qr-close-btn" type="button">✕</button>
       </div>
       <div class="qr-box" id="qr-code-box"></div>
-      <span style="font-size:11.5px; font-family:monospace; color:#a1a1aa; text-align:center; word-break:break-all;" id="qr-addr-text">0x...</span>
+      <span style="font-size:11.5px; font-family:monospace; color:#a1a1aa; text-align:center; word-break:break-all;"
+        id="qr-addr-text">0x...</span>
     </div>
   </div>
 
   <!-- Scripts -->
   <script src="/hub/tag-avatar.js"></script>
   <script>
-    (async function() {
+    (async function () {
       // 1. Extract Tag Handle & Query Parameters
       const pathname = window.location.pathname;
       const params = new URLSearchParams(window.location.search);
-      
+
       let rawTag = params.get('tag') || pathname.replace(/^\/tag\/?/, '').replace(/^\/₦\/?/, '').replace(/^\/hub\/tag\.html\/?/, '');
       if (!rawTag) rawTag = 'michael';
       const handle = rawTag.replace(/^₦/, '').toLowerCase();
@@ -1008,7 +1188,7 @@
               return;
             }
           }
-        } catch {}
+        } catch { }
 
         // Priority 2: Query hub resolver API
         try {
@@ -1020,7 +1200,7 @@
             updateDeepLink();
             return;
           }
-        } catch (err) {}
+        } catch (err) { }
 
         // Priority 3: Query claims registry
         try {
@@ -1028,7 +1208,7 @@
           if (res2.ok && res2.address) {
             resolvedAddress = res2.address;
           }
-        } catch (err2) {}
+        } catch (err2) { }
 
         document.getElementById('addr-hash').textContent = resolvedAddress;
         document.getElementById('addr-hash').title = resolvedAddress;
@@ -1095,7 +1275,7 @@
             if (freezeBadge) freezeBadge.innerHTML = `<span>🔒 Frozen v${res.avatar.version}</span>`;
             return;
           }
-        } catch(e) {}
+        } catch (e) { }
         if (studioAvatarSlot) studioAvatarSlot.innerHTML = profile.avatarSvg;
       }
       loadCanonicalAvatar();
@@ -1342,4 +1522,5 @@
     })();
   </script>
 </body>
+
 </html>

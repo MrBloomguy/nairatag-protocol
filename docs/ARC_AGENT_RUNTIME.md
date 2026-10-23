@@ -23,6 +23,9 @@ The Arc migration `202610200002_arc_agent_registry.sql` adds:
 - `arc_agent_tools`: typed input schemas, risk class, provider, availability,
   and an internal executor key. Database data cannot name an arbitrary URL or
   cause the server to execute arbitrary code.
+- `arc_agent_integrations`: private MCP connection records, including encrypted
+  credentials and connection health. `arc_agent_tools.runtime_config` stores the
+  remote MCP tool name and stays server-only under RLS.
 
 The seed records list the seven current platform agents and proposed tool
 contracts. Provider-specific tools remain planned until an authorized provider,
@@ -32,25 +35,37 @@ server adapter, user permissions, and operational controls are in place.
 
 - `GET /api/arc-agents` returns public Arc agents and their tool availability.
 - `GET /api/arc-agents?tag=chowdeck` resolves one agent identity.
-- `POST /api/arc-agents` provisions a platform-owned tag with Bearer authorization
-  from the server-only `ARC_AGENT_ADMIN_TOKEN`, or with a wallet signature from
-  a wallet listed in `ARC_AGENT_ADMIN_WALLETS`. New entries start chat-only and
-  cannot attach or enable tools through this endpoint. The Agents page includes
-  a wallet-signed provisioning form; no admin token is exposed to the browser.
+- `POST /api/arc-agents` provisions a platform-owned private draft with Bearer
+  authorization from the server-only `ARC_AGENT_ADMIN_TOKEN`, or with a wallet
+  signature from a wallet listed in `ARC_AGENT_ADMIN_WALLETS`. Wallet-signed
+  lifecycle actions validate, publish, suspend, reactivate, and retire identities.
+- MCP agent drafts accept a Streamable HTTP endpoint and optional bearer/API-key
+  credential. The server requires HTTPS and public DNS addresses, blocks redirects,
+  encrypts credentials with AES-256-GCM, then tests initialization and lists tools.
+  Tools stay private; only advertised tools marked `readOnlyHint` can be enabled
+  after an administrator reviews the description and input schema.
+- MCP calls are rechecked against the current public/active agent, enabled tool,
+  read-only risk, endpoint, and unchanged live schema before execution. Tool inputs
+  and results are bounded; credentials and raw MCP arguments/results are omitted
+  from durable run events. MCP writes, OAuth, local stdio, and financial actions
+  remain unavailable.
 - The response distinguishes `identity.type: platform` from `identity.type:
   erc8004`; it never infers ERC-8004 verification from a display name or tag.
 - Provider tools still require reviewed server-side executor changes and access
   credentials. The public API and model cannot select arbitrary code or URLs.
 
-Production requires `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, and `GEMINI_API_KEY`.
+Production requires `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `GEMINI_API_KEY`, and
+`ARC_MCP_ENCRYPTION_KEY` (a base64-encoded random 32-byte key, generated and stored
+only in the backend deployment environment). Keep the key stable to decrypt saved
+credentials; rotate it only with a credential re-encryption migration.
 Set `ARC_AGENT_ADMIN_WALLETS` to a comma-separated allowlist of admin EOA
 addresses before using the wallet-signed provisioning form. `ARC_RPC_URL` may
 override the Arc Testnet RPC; it defaults to `https://rpc.testnet.arc.io`.
 
 ## Runtime contract
 
-The next runtime layer should expose typed, allowlisted adapters rather than
-model-generated URLs or SQL:
+The runtime exposes typed, allowlisted adapters rather than model-generated URLs
+or SQL:
 
 1. Authenticate the user and resolve the requested tag from this registry.
 2. Load only that agent's `enabled` tools and validate arguments against their
@@ -99,16 +114,18 @@ retried with a new idempotency key or presented as success.
 
 ## Initial rollout
 
-The Arc chat runtime now has a hard-coded executor allowlist for two read-only
-tools: resolving a NairaTag against the Arc registry and listing open Arc tasks
-from the database. Gemini may call only tools marked enabled for the selected
-agent. Calls are validated and recorded in `arc_agent_run_events`; the final
-assistant response is saved only after the run succeeds. Provider-specific
-capabilities remain planned and are not callable.
+The Arc chat runtime supports native read tools for NairaTag resolution, Arc task
+listing, and capability discovery, plus reviewed MCP read-only tools. Gemini may
+call only tools marked enabled for the selected agent. Calls are validated and
+recorded in `arc_agent_run_events`; MCP payloads are redacted from those events.
+The same signed chat path serves text and voice transcripts.
 
-1. Apply the registry migration and deploy the Arc-only registry and chat routes.
-2. Add provider credentials and approved OAuth connections per user/provider.
-3. Implement quotes and exact-approval records before any commerce booking tool.
+1. Apply `202610210001_arc_agent_identity_lifecycle.sql` and
+   `202610210002_arc_mcp_agent_runtime.sql`, set the backend encryption key, and
+   deploy the Arc-only registry and chat routes.
+2. Configure a public HTTPS MCP endpoint and credentials in the `/admin` form;
+   review discovered capabilities before validation and publication.
+3. Add provider OAuth, quotes, and exact-approval records before commerce writes.
 4. Add durable asynchronous workers and reconciliation before production writes.
 
 The registry migration, API, and routing are Arc-only. Do not route these tools

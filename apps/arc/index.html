@@ -13,18 +13,22 @@
     content="Send USDC on Arc to a human-readable NairaTag identity instead of a wallet address." />
   
   <!-- Favicon & Icons -->
-  <link rel="icon" type="image/png" href="/favicon.png" />
-  <link rel="apple-touch-icon" href="/splash-logo.png" />
+  <link rel="icon" type="image/png" href="/nairatag-logo.png" />
+  <link rel="apple-touch-icon" href="/nairatag-logo.png" />
   <link rel="manifest" href="/site.webmanifest" />
   
   <!-- Open Graph / Meta -->
   <meta property="og:title" content="NairaTag • Send USDC on Arc" />
   <meta property="og:description" content="Send USDC on Arc to a name, not an address." />
-  <meta property="og:image" content="/nairatag-logo.png" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://arc.nairatag.ng/" />
+  <meta property="og:image" content="https://arc.nairatag.ng/nairatag-logo.png" />
+  <meta name="twitter:title" content="NairaTag • Send USDC on Arc" />
+  <meta name="twitter:description" content="Send USDC on Arc to a name, not an address." />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@NairaTaghq" />
   <meta name="twitter:creator" content="@NairaTaghq" />
-  <meta name="twitter:image" content="/nairatag-logo.png" />
+  <meta name="twitter:image" content="https://arc.nairatag.ng/nairatag-logo.png" />
   
   <style>
     html, body {
@@ -66,7 +70,9 @@
     .splash-card img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
+      padding: 4px;
+      background: #000;
       display: block;
     }
     .splash-brand {

@@ -1,7 +1,19 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "npm run vercel-build",
   "outputDirectory": "dist",
   "rewrites": [
+    {
+      "source": "/agent/:handle",
+      "destination": "/api/agent?handle=:handle"
+    },
+    {
+      "source": "/tag/:handle",
+      "destination": "/api/tag?handle=:handle"
+    },
+    {
+      "source": "/cards/:handle",
+      "destination": "/api/cards?handle=:handle"
+    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

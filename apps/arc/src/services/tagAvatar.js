@@ -309,26 +309,29 @@
     if (c.visor) {
       // Cyber glowing goggles
       for (let x = 8; x <= 16; x++) {
-        pixels.push({ x, y: 11, color: '#67e8f9' }, { x, y: 12, color: '#06b6d4' });
+        pixels.push(
+          { x, y: 11, color: '#67e8f9', className: 'avatar-eye-pixel' },
+          { x, y: 12, color: '#06b6d4', className: 'avatar-eye-pixel' }
+        );
       }
     } else if (c.glasses) {
       // Sunglasses
       pixels.push(
-        { x: 8, y: 11, color: '#000' }, { x: 9, y: 11, color: '#000' }, { x: 10, y: 11, color: '#000' },
-        { x: 8, y: 12, color: '#171717' }, { x: 9, y: 12, color: '#171717' }, { x: 10, y: 12, color: '#171717' },
-        { x: 11, y: 11, color: '#000' }, // bridge
-        { x: 12, y: 11, color: '#000' }, { x: 13, y: 11, color: '#000' }, { x: 14, y: 11, color: '#000' },
-        { x: 12, y: 12, color: '#171717' }, { x: 13, y: 12, color: '#171717' }, { x: 14, y: 12, color: '#171717' }
+        { x: 8, y: 11, color: '#000', className: 'avatar-eye-pixel' }, { x: 9, y: 11, color: '#000', className: 'avatar-eye-pixel' }, { x: 10, y: 11, color: '#000', className: 'avatar-eye-pixel' },
+        { x: 8, y: 12, color: '#171717', className: 'avatar-eye-pixel' }, { x: 9, y: 12, color: '#171717', className: 'avatar-eye-pixel' }, { x: 10, y: 12, color: '#171717', className: 'avatar-eye-pixel' },
+        { x: 11, y: 11, color: '#000', className: 'avatar-eye-pixel' }, // bridge
+        { x: 12, y: 11, color: '#000', className: 'avatar-eye-pixel' }, { x: 13, y: 11, color: '#000', className: 'avatar-eye-pixel' }, { x: 14, y: 11, color: '#000', className: 'avatar-eye-pixel' },
+        { x: 12, y: 12, color: '#171717', className: 'avatar-eye-pixel' }, { x: 13, y: 12, color: '#171717', className: 'avatar-eye-pixel' }, { x: 14, y: 12, color: '#171717', className: 'avatar-eye-pixel' }
       );
     } else {
       // Standard big anime/pixel eyes
       pixels.push(
-        { x: 9, y: 11, color: '#000000' }, { x: 10, y: 11, color: '#000000' },
-        { x: 9, y: 12, color: '#000000' }, { x: 10, y: 12, color: '#000000' },
-        { x: 9, y: 11, color: '#ffffff' }, // eye shine
-        { x: 14, y: 11, color: '#000000' }, { x: 15, y: 11, color: '#000000' },
-        { x: 14, y: 12, color: '#000000' }, { x: 15, y: 12, color: '#000000' },
-        { x: 14, y: 11, color: '#ffffff' } // eye shine
+        { x: 9, y: 11, color: '#000000', className: 'avatar-eye-pixel' }, { x: 10, y: 11, color: '#000000', className: 'avatar-eye-pixel' },
+        { x: 9, y: 12, color: '#000000', className: 'avatar-eye-pixel' }, { x: 10, y: 12, color: '#000000', className: 'avatar-eye-pixel' },
+        { x: 9, y: 11, color: '#ffffff', className: 'avatar-eye-pixel' }, // eye shine
+        { x: 14, y: 11, color: '#000000', className: 'avatar-eye-pixel' }, { x: 15, y: 11, color: '#000000', className: 'avatar-eye-pixel' },
+        { x: 14, y: 12, color: '#000000', className: 'avatar-eye-pixel' }, { x: 15, y: 12, color: '#000000', className: 'avatar-eye-pixel' },
+        { x: 14, y: 11, color: '#ffffff', className: 'avatar-eye-pixel' } // eye shine
       );
     }
 
@@ -412,7 +415,7 @@
     // Render pixel grid into SVG rect elements
     const pixelSize = size / 24;
     const rectsSvg = pixels.map(px => {
-      return `<rect x="${(px.x * pixelSize).toFixed(1)}" y="${(px.y * pixelSize).toFixed(1)}" width="${pixelSize.toFixed(1)}" height="${pixelSize.toFixed(1)}" fill="${px.color}" shape-rendering="crispEdges"/>`;
+      return `<rect${px.className ? ` class="${px.className}"` : ''} x="${(px.x * pixelSize).toFixed(1)}" y="${(px.y * pixelSize).toFixed(1)}" width="${pixelSize.toFixed(1)}" height="${pixelSize.toFixed(1)}" fill="${px.color}" shape-rendering="crispEdges"/>`;
     }).join('');
 
     return `

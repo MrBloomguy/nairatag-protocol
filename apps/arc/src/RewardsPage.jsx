@@ -32,6 +32,7 @@ import {
 } from './services/referrals.js';
 import { consumeDailySpin, getDailySpinStats } from './services/wheelRewards.js';
 import { getArcRewardState, submitArcRewardAction } from './services/arcRewards.js';
+import { getTagShareUrl, getTelegramShareIntentUrl, getTwitterRewardShareUrl } from './services/arcSocialBroadcast.js';
 import './rewards.css';
 
 /**
@@ -860,6 +861,10 @@ export default function RewardsPage({
   userTag = '',
   accountKey = userTag,
   pointsBalance = 0,
+  earnedVouchers = [],
+  onRefreshVouchers,
+  initialPage = null,
+  onInitialPageHandled,
   usdcBalance = null,
   onRewardState,
   serviceError = '',
@@ -868,6 +873,11 @@ export default function RewardsPage({
 }) {
   // Modals
   const [activeRewardPage, setActiveRewardPage] = useState(null);
+  useEffect(() => {
+    if (!initialPage) return;
+    setActiveRewardPage(initialPage);
+    onInitialPageHandled?.();
+  }, [initialPage]);
   const referralTag = String(userTag || '').replace(/^[$₦@#]/, '').trim().toLowerCase();
   const [myReferralStats, setMyReferralStats] = useState({ points: 0, joinedCount: 0, completedCount: 0, referrals: [] });
   const [dailyStreak, setDailyStreak] = useState({ streakCount: 0, lastClaimDate: null });
@@ -1065,7 +1075,36 @@ export default function RewardsPage({
           </article>
         </div>
         <p className="rewards-assets-note">Referral and daily streak rewards are paid in Points. USDC and cNGN payouts require a funded rewards distributor.</p>
+        <div className="rewards-social-share-row" aria-label="Share your rewards">
+          <span>Share your NairaTag rewards</span>
+          <a href={getTwitterRewardShareUrl({ points: totalPoints, userTag })} target="_blank" rel="noopener noreferrer">Share on X</a>
+          <a href={getTelegramShareIntentUrl({ text: `I am earning Protocol Points and exploring tasks on NairaTag.`, url: userTag ? getTagShareUrl(userTag) : 'https://arc.nairatag.ng/#rewards' })} target="_blank" rel="noopener noreferrer">Share on Telegram</a>
+        </div>
       </div>
+
+      {earnedVouchers.length > 0 && (
+        <div className="rewards-section rewards-legacy-vouchers earned-task-vouchers">
+          <div className="rewards-section-header">
+            <span className="rewards-section-title">Vouchers earned from Tasks</span>
+            <span className="rewards-pill-tag">{earnedVouchers.length} SUBMITTED</span>
+          </div>
+          {onRefreshVouchers && <button type="button" className="btn-agent-secondary" onClick={onRefreshVouchers}>Refresh wallet claims</button>}
+          <p className="earned-task-vouchers-note">Claims sync from the server for this wallet. Approved tasks credit Protocol Points; provider-issued airtime and data vouchers are not configured.</p>
+          <div className="earned-task-vouchers-grid">
+            {earnedVouchers.map((voucher) => (
+              <article className="earned-task-voucher-card" key={voucher.taskId}>
+                <span className="earned-task-voucher-icon"><Ticket size={19} /></span>
+                <div className="earned-task-voucher-copy">
+                  <strong>{voucher.name}</strong>
+                  <span>{voucher.value}</span>
+                  <small>{voucher.status === 'approved' ? 'Approved' : voucher.status === 'rejected' ? 'Rejected' : 'Pending review'} · Submitted {new Date(voucher.earnedAt).toLocaleDateString()}</small>
+                </div>
+                <button type="button" className="voucher-ticket-use-btn" disabled title="Provider voucher delivery is not configured.">{voucher.status === 'approved' ? 'Points credited' : voucher.status === 'rejected' ? 'Not approved' : 'In review'}</button>
+              </article>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Legacy voucher catalog is retained in code while the rewards program focuses on points and tokens. */}
       <div className="rewards-section rewards-legacy-vouchers">

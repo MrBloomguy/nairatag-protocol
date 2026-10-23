@@ -35,7 +35,7 @@ export function createReferralLink(tag) {
   const clean = cleanTag(tag);
   if (!clean || typeof window === 'undefined') return '';
   const url = new URL(window.location.href);
-  url.pathname = '/';
+  url.pathname = `/tag/${encodeURIComponent(clean.toUpperCase())}`;
   url.search = '';
   url.searchParams.set('ref', `₦${clean}`);
   url.hash = 'claim';

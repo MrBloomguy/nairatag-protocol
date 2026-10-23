@@ -2184,3 +2184,8 @@
     padding: 18px 14px;
   }
 }
+
+.rewards-social-share-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; color: var(--privy-color-foreground-2); font-size: 10px; }
+.rewards-social-share-row > span { margin-right: 3px; }
+.rewards-social-share-row a { padding: 6px 9px; border: 1px solid var(--border-color, rgba(0,0,0,.1)); border-radius: 999px; color: var(--privy-color-foreground); background: var(--surface1, #fff); text-decoration: none; font-weight: 750; }
+.rewards-social-share-row a:hover { color: #5b4fff; border-color: #5b4fff; }

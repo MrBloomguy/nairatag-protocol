@@ -4,6 +4,14 @@
   "outputDirectory": ".",
   "routes": [
     {
+      "src": "/api/arc-auth(.*)",
+      "dest": "/api/arc?route=auth"
+    },
+    {
+      "src": "/api/arc-personal-agent(.*)",
+      "dest": "/api/arc?route=personalagent"
+    },
+    {
       "src": "/api/arc-agents(.*)",
       "dest": "/api/arc?route=agents"
     },
@@ -18,6 +26,10 @@
     {
       "src": "/api/arc-tasks(.*)",
       "dest": "/api/arc?route=tasks"
+    },
+    {
+      "src": "/api/arc-admin(.*)",
+      "dest": "/api/arc?route=admin"
     },
     {
       "src": "/api/arc-follows(.*)",
@@ -40,32 +52,62 @@
       "dest": "/landing/index.html"
     },
     {
-      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "celotags.nairatag.ng"
+        }
+      ],
       "src": "/(landing/.*)",
       "dest": "/$1"
     },
     {
-      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "celotags.nairatag.ng"
+        }
+      ],
       "src": "/(hub/.*)",
       "dest": "/$1"
     },
     {
-      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "celotags.nairatag.ng"
+        }
+      ],
       "src": "/claim(\\?.*)?",
       "dest": "/hub/claim.html"
     },
     {
-      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "celotags.nairatag.ng"
+        }
+      ],
       "src": "/(api/.*)",
       "dest": "/$1"
     },
     {
-      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "celotags.nairatag.ng"
+        }
+      ],
       "src": "/docs(.*)",
       "dest": "/landing/docs.html"
     },
     {
-      "has": [{ "type": "host", "value": "celotags.nairatag.ng" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "celotags.nairatag.ng"
+        }
+      ],
       "src": "/(.*)",
       "dest": "/landing/index.html"
     },
@@ -86,13 +128,15 @@
       "dest": "/api/tag?handle=$handle"
     },
     {
-      "src": "/₦(?<handle>[^/]+)(/.*)?",
+      "src": "/â‚¦(?<handle>[^/]+)(/.*)?",
       "dest": "/api/tag?handle=$handle"
     },
     {
       "src": "/pay/(?<handle>[^/?]+)(\\?.*)?",
       "status": 302,
-      "headers": { "Location": "/hub/swap.html?tab=pay&to=$handle" }
+      "headers": {
+        "Location": "/hub/swap.html?tab=pay&to=$handle"
+      }
     },
     {
       "src": "/pay(\\?.*)?",
@@ -113,7 +157,9 @@
     {
       "src": "/wallet(\\?.*)?",
       "status": 302,
-      "headers": { "Location": "/profile" }
+      "headers": {
+        "Location": "/profile"
+      }
     },
     {
       "src": "/claim(\\?.*)?",
@@ -244,25 +290,43 @@
       "dest": "/$1"
     }
   ],
+  "crons": [
+    { "path": "/api/arc?route=memoryreconcile", "schedule": "0 0 * * *" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, HEAD, OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, HEAD, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization"
+        }
       ]
     },
     {
       "source": "/hub/sw.js",
       "headers": [
-        { "key": "Service-Worker-Allowed", "value": "/" }
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
       ]
     },
     {
       "source": "/sw.js",
       "headers": [
-        { "key": "Service-Worker-Allowed", "value": "/" }
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        }
       ]
     }
   ]

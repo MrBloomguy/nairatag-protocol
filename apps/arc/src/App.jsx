@@ -2,6 +2,15 @@
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import AuthConnectModal from './components/auth/AuthConnectModal';
+import ProfileAvatar from './components/ProfileAvatar';
+import ChatActivityIndicator from './components/chat/ChatActivityIndicator';
+import PersonalAgentPanel from './components/chat/PersonalAgentPanel';
+import { ClipboardCheckIcon } from './components/icons/clipboard-check';
+import { ChevronsLeftRightIcon } from './components/icons/chevrons-left-right';
+import { CarIcon } from './components/icons/car';
+import { CookingPotIcon } from './components/icons/cooking-pot';
+import { HandCoinsIcon } from './components/icons/hand-coins';
+import { TicketIcon } from './components/icons/ticket';
 import {
   Wallet,
   CheckCircle2,
@@ -26,11 +35,11 @@ import {
   ArrowLeft,
   ChevronLeft,
   Bot,
+  Brain,
   Award,
   FileText,
   Cpu,
   Layers,
-  ArrowDownUp,
   SlidersHorizontal,
   Flame,
   QrCode,
@@ -44,7 +53,6 @@ import {
   MoreHorizontal,
   HelpCircle,
   ChevronDown,
-  Trophy,
   CheckSquare,
   Coins,
   MessageSquare,
@@ -74,9 +82,6 @@ import {
   Trash2,
   Volume2,
   VolumeX,
-  Car,
-  Utensils,
-  ArrowLeftRight,
 } from 'lucide-react';
 import {
   connectWallet,
@@ -88,16 +93,20 @@ import {
   getEthereumProvider,
 } from './services/arcPayment.js';
 import {
-  authenticateWithCircle,
+  requestCircleEmailOtp,
+  verifyCircleEmailOtp,
+  connectCircleWallet,
+  sendUsdcWithCircle,
+  claimTagWithCircle,
   getStoredCircleSession,
   clearCircleSession,
 } from './services/circleWallet.js';
+import { clearArcSession, establishCircleArcSession, establishWalletArcSession } from './services/arcSession.js';
 import {
   resolveTag,
 } from './services/nairatagResolver.js';
 import { checkArcTagAvailability, claimArcNairaTag, getArcTagForWallet } from './services/arcNairaTag.js';
 import {
-  registerAiAgent,
   buildNairaTagAgentMetadataUri,
   findArcAgentForTag,
   registerNairaTagAgent,
@@ -108,7 +117,6 @@ import {
   getValidationStatus,
 } from './services/erc8004Service.js';
 import {
-  ARC_ERC8004_IDENTITY_REGISTRY,
   ARC_ERC8004_REPUTATION_REGISTRY,
   ARC_ERC8004_VALIDATION_REGISTRY,
   ARC_MEMO_ADDRESS,
@@ -129,6 +137,8 @@ import {
 import { resolveTagProfile } from './services/tagAvatar.js';
 import { getRecentArcTagActivity } from './services/arcRecentTagActivity.js';
 import { getArcAgentFollowState, setArcAgentFollow } from './services/arcAgentFollows.js';
+import { fetchArcAgentMetrics } from './services/arcAgentMetrics.js';
+import { discoverAgentsByCapability, isAgentDiscoveryRequest, resolveAgentMention } from './services/agentDiscovery.js';
 import {
   recordReferralSignup,
   rememberReferralFromUrl,
@@ -137,23 +147,38 @@ import {
   broadcastArcClaimToTelegram,
   getTwitterShareUrl,
   getTelegramShareUrl,
+  getTelegramShareIntentUrl,
+  getTwitterTaskShareUrl,
+  getTagShareUrl,
+  getAgentShareUrl,
+  getAgentTwitterShareUrl,
+  getAgentTelegramShareUrl,
+  getAgentWhatsAppShareUrl,
+  broadcastArcVoucherClaimToTelegram,
   getWhatsAppShareUrl,
   TELEGRAM_CHANNEL_URL,
   TELEGRAM_CHANNEL_HANDLE,
-  TWITTER_URL,
-  TWITTER_HANDLE,
 } from './services/arcSocialBroadcast.js';
 import {
-  askArcGemini,
   speakText,
   stopSpeaking,
 } from './services/arcGeminiChat.js';
+import {
+  clearArcChatHistory,
+  getArcChatHistory,
+  getOrCreateArcChatConversationId,
+  listArcChatConversations,
+  sendArcChatMessage,
+} from './services/arcChat.js';
+import { createArcPlatformAgent, enableArcMcpTool, fetchArcAgentDirectory, getAdminArcAgentRegistry, transitionArcAgent } from './services/arcAgents.js';
+import PlatformAgentAdminPage from './components/admin/PlatformAgentAdminPage.jsx';
 import confetti from 'canvas-confetti';
 import RewardsPage, { GoldenVoucherModal, LuckyWheelModal, ReferralModal } from './RewardsPage.jsx';
 import NotificationLayer from './components/NotificationLayer.jsx';
 import { recordConfirmedPaymentSpin } from './services/wheelRewards.js';
 import { getArcRewardState, markArcNotificationsRead, submitArcRewardAction } from './services/arcRewards.js';
 import { getArcAgentCompletedTaskCount, listArcTasks, startArcTask, submitArcTask } from './services/arcTasks.js';
+import { IN_HOUSE_TASKS, claimInHouseVoucher, getInHouseVouchers, syncInHouseVouchers } from './services/inHouseTasks.js';
 import {
   getNotificationInbox,
   markInboxNotificationRead,
@@ -268,125 +293,27 @@ export function AgentMedallion({ type, size = 64 }) {
   );
 }
 
-/**
- * Curated ERC-8004 Verified Agents on Arc Osaka EVM.
- */
-export const VERIFIED_AGENTS = [
-  {
-    id: '3021',
-    tag: 'chowdeck',
-    name: 'Chowdeck Food Bot',
-    category: 'Delivery & Commerce',
-    role: 'Automated Food Orders & Micro-Payments on Arc',
-    sparks: 99,
-    earnings: '₦145,000',
-    tasksDone: 4,
-    totalTasks: 4,
-    badgeType: 'emerald',
-    badgeName: 'Advanced',
-    owner: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦chowdeck',
-    rank: '#1',
-    rankTop: 'rank-top1',
-    status: 'Verified',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=chowdeck',
-  },
-  {
-    id: '1088',
-    tag: 'dev',
-    name: 'Arc Contract Auditor',
-    category: 'Security & Verification',
-    role: 'Solidity, Vyper & Bytecode Verifier',
-    sparks: 96,
-    earnings: '₦112,500',
-    tasksDone: 5,
-    totalTasks: 5,
-    badgeType: 'cyan',
-    badgeName: 'Serious',
-    owner: '0x24252B1E40AF6366F1749845333F2E4783F415a7',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦dev',
-    rank: '#2',
-    rankTop: 'rank-top2',
-    status: 'Verified',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=dev',
-  },
-  {
-    id: '1042',
-    tag: 'designer',
-    name: 'MuseSpark Creative',
-    category: 'AI & Generative Media',
-    role: 'Generative UI & Visual Assets on Arc',
-    sparks: 94,
-    earnings: '₦88,000',
-    tasksDone: 4,
-    totalTasks: 4,
-    badgeType: 'magenta',
-    badgeName: 'One of a kind',
-    owner: '0x71C84167F3083195655364b964742d057777CC02',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦designer',
-    rank: '#3',
-    rankTop: 'rank-top3',
-    status: 'Verified',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=designer',
-  },
-  {
-    id: '1',
-    tag: 'food',
-    name: 'Genesis Food Pantry',
-    category: 'P2P Micro-Relief',
-    role: 'Instant Meal Vouchers & P2P Settlement',
-    sparks: 92,
-    earnings: '₦64,200',
-    tasksDone: 4,
-    totalTasks: 4,
-    badgeType: 'bronze',
-    badgeName: 'First Steps',
-    owner: '0x0000000000000000000000000000000000000001',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦food',
-    rank: '#4',
-    rankTop: '',
-    status: 'Verified',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=food',
-  },
-  {
-    id: '2',
-    tag: 'ride',
-    name: 'Arc Transit Router',
-    category: 'Logistics & Transit',
-    role: 'Autonomous Ride & Logistics Dispatcher',
-    sparks: 89,
-    earnings: '₦49,500',
-    tasksDone: 4,
-    totalTasks: 4,
-    badgeType: 'gold',
-    badgeName: 'Professional',
-    owner: '0x0000000000000000000000000000000000000002',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦ride',
-    rank: '#5',
-    rankTop: '',
-    status: 'Verified',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=ride',
-  },
-  {
-    id: '3',
-    tag: 'escrow',
-    name: 'Arc P2P Arbiter',
-    category: 'Trust & Dispute Arbiter',
-    role: 'Multi-party Escrow & Milestone Release',
-    sparks: 87,
-    earnings: '₦38,000',
-    tasksDone: 4,
-    totalTasks: 4,
-    badgeType: 'ruby',
-    badgeName: 'Legend',
-    owner: '0x0000000000000000000000000000000000000003',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦escrow',
-    rank: '#6',
-    rankTop: '',
-    status: 'Verified',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=escrow',
-  },
-];
+const CHAT_AGENT_TAG_PATTERN = /(@?₦[a-z0-9_]{2,32}\b)/gi;
+
+function renderChatText(text) {
+  return String(text || '').split(CHAT_AGENT_TAG_PATTERN).flatMap((part, index) => {
+    if (/^@?₦[a-z0-9_]{2,32}$/i.test(part)) {
+      return [<span key={'agent-tag-' + index} className="chat-agent-mention">{part.replace(/^@/, '')}</span>];
+    }
+    return part.split(/(https?:\/\/[^\s<]+)/gi).flatMap((segment, segmentIndex) => {
+      const trailing = (segment.match(/[.,!?;:)\]]+$/) || [''])[0];
+      const href = trailing ? segment.slice(0, -trailing.length) : segment;
+      if (!/^https?:\/\//i.test(href)) return [segment];
+      try {
+        const parsed = new URL(href);
+        if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return [segment];
+        return [<React.Fragment key={'chat-link-' + index + '-' + segmentIndex}><a href={parsed.href} target="_blank" rel="noopener noreferrer">{href}</a>{trailing}</React.Fragment>];
+      } catch {
+        return [segment];
+      }
+    });
+  });
+}
 
 /**
  * Protocol Knowledge Base & FAQ Items for Arc Osaka EVM (Concise & Punchy)
@@ -462,6 +389,32 @@ export const FAQ_ITEMS = [
     question: 'Can apps and developers integrate ₦Tags?',
     answer: [
       'Yes. Any dApp, POS terminal, or checkout can resolve and accept ₦Tags via our open TypeScript SDK, Viem adapter, or Solidity contract.'
+    ]
+  },
+  {
+    id: 9,
+    category: 'contracts',
+    categoryLabel: 'Contracts',
+    question: 'Where can I find the NairaTag smart contracts?',
+    answer: [
+      'The NairaTag Registry and Resolver are deployed on Arc Testnet (Chain ID 5042002). You can inspect each contract and its onchain activity in the Arc Explorer.'
+    ],
+    links: [
+      { label: 'NairaTag Registry', url: 'https://explorer.testnet.arc.io/address/0x034f64b644988406ded382ebabb5c981bd19684a' },
+      { label: 'NairaTag Resolver', url: 'https://explorer.testnet.arc.io/address/0xaee1af632006a5062accdb74f73930439b76efbf' },
+    ]
+  },
+  {
+    id: 10,
+    category: 'social',
+    categoryLabel: 'Social & Community',
+    question: 'Where can I follow NairaTag updates?',
+    answer: [
+      'Follow verified NairaTag channels for claim alerts, project news, and community updates.'
+    ],
+    links: [
+      { label: 'Telegram Feed: @nairatagupdates', url: 'https://t.me/nairatagupdates' },
+      { label: 'Follow @NairaTaghq on X', url: 'https://x.com/NairaTaghq' },
     ]
   }
 ];
@@ -595,7 +548,9 @@ export const DEFAULT_TASKS = [
   },
 ];
 
-export default function App() {
+// PlatformAgentAdminPage is imported from ./components/admin/PlatformAgentAdminPage.jsx
+
+function ArcAppShell() {
   // Theme State: 'light' | 'dark'
   const [theme, setTheme] = useState(() => {
     try {
@@ -620,8 +575,8 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Navigation: 'claim' (Official Home) | 'tasks' | 'agents' | 'pay' | 'chat' | 'faq' | 'rewards'
-  const VALID_TABS = ['claim', 'tasks', 'agents', 'pay', 'chat', 'faq', 'rewards'];
+  // Navigation: 'chat' (Home) | 'claim' | 'tasks' | 'agents' | 'pay' | 'faq' | 'rewards'
+  const VALID_TABS = ['claim', 'tasks', 'agents', 'pay', 'chat', 'faq', 'rewards', 'profile'];
   const [mainTab, setMainTabState] = useState(() => {
     try {
       const hash = window.location.hash.replace('#', '').toLowerCase();
@@ -629,7 +584,7 @@ export default function App() {
         return hash;
       }
     } catch { }
-    return 'claim'; // Claim page is the official home page
+    return 'chat'; // Chat is the default home page
   });
 
   const setMainTab = useCallback((tab) => {
@@ -659,12 +614,70 @@ export default function App() {
 
   // Sovereign Agent Chat State (Tag2Tag Agent-to-Agent Messaging & Task Execution)
   const [chatMessages, setChatMessages] = useState([]);
+  const [chatAgents, setChatAgents] = useState([]);
+  const [agentDirectoryError, setAgentDirectoryError] = useState('');
+  const [agentDirectoryLoading, setAgentDirectoryLoading] = useState(true);
+  const [agentDirectoryStats, setAgentDirectoryStats] = useState({});
+  const [agentStatsLoading, setAgentStatsLoading] = useState(false);
+  const [isChatConversationOpen, setIsChatConversationOpen] = useState(false);
+  const [isTaskChatDraft, setIsTaskChatDraft] = useState(false);
   const [chatInputText, setChatInputText] = useState('');
   const [chatIsTyping, setChatIsTyping] = useState(false);
+  const [chatActivityStep, setChatActivityStep] = useState('thinking');
+  const [chatActivityPrompt, setChatActivityPrompt] = useState('');
   const [currentTaggedAgent, setCurrentTaggedAgent] = useState(null);
   const [isTagPopoverOpen, setIsTagPopoverOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [chatHistoryEntries, setChatHistoryEntries] = useState([]);
+  const [chatHistoryLoading, setChatHistoryLoading] = useState(false);
+  const [chatHistoryError, setChatHistoryError] = useState('');
+  const [activeChatConversationId, setActiveChatConversationId] = useState(null);
+  const [isPersonalAgentOpen, setIsPersonalAgentOpen] = useState(false);
   const [tagSearchQuery, setTagSearchQuery] = useState('');
+
+  const loadAgentDirectory = useCallback(async ({ signal } = {}) => {
+    setAgentDirectoryLoading(true);
+    setAgentDirectoryError('');
+    try {
+      const agents = await fetchArcAgentDirectory({ signal });
+      setChatAgents(agents);
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        setAgentDirectoryError(error.message);
+        console.warn('[Arc agent registry]', error.message);
+      }
+    } finally {
+      if (!signal?.aborted) setAgentDirectoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadAgentDirectory({ signal: controller.signal });
+    return () => controller.abort();
+  }, [loadAgentDirectory]);
+
+  useEffect(() => {
+    if (!chatAgents.length) {
+      setAgentDirectoryStats({});
+      setAgentStatsLoading(false);
+      return undefined;
+    }
+    let active = true;
+    setAgentStatsLoading(true);
+    setAgentDirectoryStats({});
+    Promise.all(chatAgents.map(async (agent) => [agent.tag, await fetchArcAgentMetrics(agent)]))
+      .then((results) => {
+        if (active) setAgentDirectoryStats(Object.fromEntries(results));
+      })
+      .catch((error) => {
+        console.warn('[Arc agent metrics]', error.message);
+      })
+      .finally(() => {
+        if (active) setAgentStatsLoading(false);
+      });
+    return () => { active = false; };
+  }, [chatAgents]);
 
   // File Attachment & Voice Note State
   const [attachedFile, setAttachedFile] = useState(null);
@@ -735,11 +748,12 @@ export default function App() {
     setCurrentTaggedAgent(agent);
     setIsTagPopoverOpen(false);
     setChatInputText((prev) => {
-      const clean = prev.trim();
-      if (!clean.toLowerCase().includes(`@₦${agent.tag.toLowerCase()}`)) {
-        return `@₦${agent.tag} ${clean}`.trim();
+      const mentionPattern = new RegExp(`@₦${agent.tag}\\b`, 'ig');
+      const clean = prev.replace(mentionPattern, `₦${agent.tag}`).trim();
+      if (!clean.toLowerCase().includes(`₦${agent.tag.toLowerCase()}`)) {
+        return `₦${agent.tag} ${clean}`.trim();
       }
-      return prev;
+      return clean;
     });
   };
 
@@ -1021,6 +1035,14 @@ export default function App() {
 
     // Must have either text or an attached file
     if (!textToSend && !fileToSend) return;
+    if (!walletAddress) {
+      setIsConnectModalOpen(true);
+      showToast('Connect an Arc wallet to start a saved chat.', 'info');
+      return;
+    }
+
+    setIsChatConversationOpen(true);
+    setIsTaskChatDraft(false);
 
     if (!options.skipUserMsgAppend) {
       const userMsgId = 'usr-' + Date.now();
@@ -1042,199 +1064,87 @@ export default function App() {
       setAttachedFile(null);
     }
     setChatIsTyping(true);
+    setChatActivityPrompt(`${textToSend} ${fileToSend?.name || ''}`.trim());
+    setChatActivityStep('thinking');
+    await new Promise((resolve) => window.setTimeout(resolve, 260));
 
-    const lower = textToSend.toLowerCase();
+    const agentResolution = resolveAgentMention(textToSend, chatAgents);
+    const foundAgent = agentResolution.kind === 'resolved' ? agentResolution.agent : null;
+    const discoveryRequest = isAgentDiscoveryRequest(textToSend);
+    const capabilityMatches = discoveryRequest ? discoverAgentsByCapability(textToSend, chatAgents) : [];
     let replyText = '';
+    let toolEvents = [];
     let replyAgentTag = currentTaggedAgent ? currentTaggedAgent.tag : 'ArcAgent';
     let replyAgentName = currentTaggedAgent ? currentTaggedAgent.name : 'Arc Sovereign Agent';
     let replyAvatar = currentTaggedAgent
       ? currentTaggedAgent.avatar
       : 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
     let widget = null;
-    let replyModel = null;
 
-    const foundAgent = VERIFIED_AGENTS.find(
-      (a) =>
-        lower.includes(`@₦${a.tag}`) ||
-        lower.includes(`@${a.tag}`) ||
-        (lower.includes(`₦${a.tag}`) && !lower.includes('₦tag'))
-    );
     if (foundAgent) {
       replyAgentTag = foundAgent.tag;
       replyAgentName = foundAgent.name;
       replyAvatar = foundAgent.avatar;
     }
 
-    // If an attached file was sent, prioritize smart file analysis
-    if (fileToSend) {
-      if (fileToSend.extension === 'sol' || fileToSend.name.endsWith('.sol') || lower.includes('contract') || lower.includes('audit')) {
-        replyAgentTag = 'dev';
-        replyAgentName = 'Arc Contract Auditor';
-        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=dev';
-        replyText = `⚡ Smart Contract Received: "${fileToSend.name}" (${fileToSend.size})! Bytecode analyzed on Arc Osaka EVM (5042002). 0 critical vulnerabilities found. Formal verification: Passed.`;
-        widget = {
-          type: 'contract_audit',
-          title: `Audit Passed: ${fileToSend.name}`,
-          badge: '100/100 Security Score',
-          body: `File: ${fileToSend.name} · Gas optimization: 99.8% · Arc Osaka EVM Compatible. Ready for milestone escrow deployment.`,
-          actionText: 'Deploy Verified Contract',
-          targetTag: 'dev',
-          amount: '2.0',
-        };
-      } else if (fileToSend.isImage) {
-        replyAgentTag = 'designer';
-        replyAgentName = 'MuseSpark Creative';
-        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=designer';
-        replyText = `🖼️ Deliverable / Asset Received: "${fileToSend.name}" (${fileToSend.size})! Visual artifact verified against Arc milestone quest criteria.`;
-        widget = {
-          type: 'design_task',
-          title: `Verified: ${fileToSend.name}`,
-          badge: 'Milestone In Escrow',
-          body: `Deliverable: ${fileToSend.name} · Resolution & metadata verified. Funds locked in milestone escrow ready for release.`,
-          actionText: 'Approve & Release Payment',
-          targetTag: 'designer',
-          amount: '15.0',
-        };
+    // Arc chat replies are generated server-side and each turn is signed and saved
+    // through the Arc database API before it is shown as a completed response.
+    setChatActivityStep('writing');
+    try {
+      if (agentResolution.kind === 'ambiguous') {
+        const options = agentResolution.agents.map((agent) => `₦${agent.tag}`).join(', ');
+        replyText = `I found more than one matching agent: ${options}. Please mention the exact NairaTag you want.`;
+        replyAgentTag = 'discovery';
+        replyAgentName = 'NairaTag Discovery';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=nairatag-discovery';
+      } else if (agentResolution.kind === 'unavailable') {
+        replyText = `₦${agentResolution.tag} is not currently listed as a published agent, so I did not send your request to a runtime.`;
+        replyAgentTag = 'discovery';
+        replyAgentName = 'NairaTag Discovery';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=nairatag-discovery';
+      } else if (discoveryRequest) {
+        if (capabilityMatches.length) {
+          replyText = `These published agents have matching callable capabilities:\n${capabilityMatches.map(({ agent, matchedTools, matchedTerms }, index) => {
+            const toolNames = matchedTools.map((tool) => typeof tool === 'string' ? tool : tool.name || tool.title || tool.key || 'enabled tool').join(', ');
+            return `${index + 1}. ₦${agent.tag} — ${agent.name || agent.tag}; matching capability: ${toolNames} (${matchedTerms.join(', ')})`;
+          }).join('\n')}\n\nMention an agent's NairaTag to continue.`;
+        } else {
+          replyText = 'I could not find a published agent with a matching callable tool in the current directory. No integration was invoked.';
+        }
+        replyAgentTag = 'discovery';
+        replyAgentName = 'NairaTag Discovery';
+        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=nairatag-discovery';
       } else {
-        replyAgentTag = 'dev';
-        replyAgentName = 'Arc Sovereign Agent';
-        replyText = `📑 File Received: "${fileToSend.name}" (${fileToSend.size})! Payload parsed in Arc Osaka sovereign agent environment. Ready to execute requested actions.`;
-        widget = {
-          type: 'file_processed',
-          title: `Processed: ${fileToSend.name}`,
-          badge: 'Payload Validated',
-          body: `Size: ${fileToSend.size} · Checksum verified on Arc Osaka. Ready to trigger pipeline.`,
-          actionText: 'Confirm Execution',
-          targetTag: 'dev',
-          amount: '1.0',
-        };
-      }
-    } else if (replyAgentTag === 'chowdeck' || lower.includes('food') || lower.includes('chowdeck') || lower.includes('jollof') || lower.includes('order')) {
-      replyAgentTag = 'chowdeck';
-      replyAgentName = 'Chowdeck Food Bot';
-      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=chowdeck';
-      replyText = "🍗 Chowdeck Agent connected on Arc Osaka EVM! Food order route dispatched. Settlement verified with zero gas fee.";
-      widget = {
-        type: 'food_order',
-        title: 'Chowdeck Express Delivery #882',
-        badge: 'Zero Gas Settlement',
-        body: 'Item: Jollof Feast Box + Peppered Chicken · Price: 4.5 USDC (₦6,750) · Est. Delivery: 24 mins',
-        actionText: 'Execute USDC Settlement',
-        targetTag: 'chowdeck',
-        amount: '4.5',
-      };
-    } else if (replyAgentTag === 'dev' || lower.includes('audit') || lower.includes('contract') || lower.includes('solidity') || lower.includes('bytecode')) {
-      replyAgentTag = 'dev';
-      replyAgentName = 'Arc Contract Auditor';
-      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=dev';
-      replyText = "⚡ Contract Auditor engaged on Arc Osaka (Chain 5042002). Bytecode verification complete. 0 critical vulnerabilities found.";
-      widget = {
-        type: 'contract_audit',
-        title: 'Milestone Escrow Audit Report',
-        badge: 'Passed Audit (100/100)',
-        body: 'Target: MilestoneEscrow.sol · Formal verification: Passed · Non-reentrant & ERC-4337 Sponsored',
-        actionText: 'Deploy Verified Escrow',
-        targetTag: 'dev',
-        amount: '2.0',
-      };
-    } else if (replyAgentTag === 'designer' || lower.includes('design') || lower.includes('logo') || lower.includes('banner') || lower.includes('ui')) {
-      replyAgentTag = 'designer';
-      replyAgentName = 'MuseSpark Creative';
-      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=designer';
-      replyText = "🎨 MuseSpark generative pipeline triggered. High-resolution vector assets and UI components generated.";
-      widget = {
-        type: 'design_task',
-        title: 'Cyber-Naira Vector Assets Pack',
-        badge: 'Milestone In Escrow',
-        body: 'Specs: 4 SVG Logo Marks + 3 Social Banners · Reward: 25 USDC (₦37,500) locked in contract',
-        actionText: 'Approve & Release Payment',
-        targetTag: 'designer',
-        amount: '25.0',
-      };
-    } else if (replyAgentTag === 'ride' || lower.includes('ride') || lower.includes('transit') || lower.includes('dispatch')) {
-      replyAgentTag = 'ride';
-      replyAgentName = 'Arc Transit Router';
-      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=ride';
-      replyText = "🚖 Arc Transit Router online. Autonomous logistics, routing, and ride settlement initialized.";
-      widget = {
-        type: 'transit_dispatch',
-        title: 'Autonomous Ride Dispatch #TR-502',
-        badge: 'Driver En Route',
-        body: 'Pickup: Lagos Mainland · Destination: Victoria Island · Fare: 3.2 USDC (₦4,800)',
-        actionText: 'Pay Fare with USDC',
-        targetTag: 'ride',
-        amount: '3.2',
-      };
-    } else if (replyAgentTag === 'escrow' || lower.includes('escrow') || lower.includes('lock') || lower.includes('milestone')) {
-      replyAgentTag = 'escrow';
-      replyAgentName = 'Arc P2P Arbiter';
-      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=escrow';
-      replyText = "🔒 Arc Non-Custodial Escrow Vault opened. Funds are securely locked in smart contract until delivery hash is validated.";
-      widget = {
-        type: 'escrow_lock',
-        title: 'Smart Contract Escrow Lock',
-        badge: '100% USDC Protected',
-        body: 'Contract: 0x7FA938...b3e1496 · Conditional release upon proof-of-work receipt on Arc Osaka.',
-        actionText: 'Lock 10 USDC in Escrow',
-        targetTag: 'escrow',
-        amount: '10.0',
-      };
-    } else if (lower.includes('airtime') || lower.includes('recharge') || lower.includes('topup') || lower.includes('500 airtime')) {
-      replyAgentTag = 'telecom';
-      replyAgentName = 'Walley Airtime';
-      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=airtime';
-      replyText = "📱 Instant Airtime recharge prepared for 500 NGN. Zero gas fee on Arc Osaka EVM.";
-      widget = {
-        type: 'airtime_pay',
-        title: 'Airtime Recharge (₦500)',
-        badge: 'Instant Delivery',
-        body: 'MTN / Airtel / Glo / 9mobile · Amount: 0.33 USDC (₦500) · Dispatched instantly upon confirmation.',
-        actionText: 'Confirm ₦500 Airtime',
-        targetTag: 'airtime',
-        amount: '0.33',
-      };
-    } else if (lower.includes('dstv') || lower.includes('cable') || lower.includes('gotv')) {
-      replyAgentTag = 'utility';
-      replyAgentName = 'Walley Utility';
-      replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=utility';
-      replyText = "📺 DStv subscription renewal ready. Settled gaslessly via USDC smart contract on Arc Osaka.";
-      widget = {
-        type: 'cable_pay',
-        title: 'DStv Subscription Renewal',
-        badge: 'Live Settlement',
-        body: 'Package: DStv Compact / Padi · Zero gas fee · Instant smartcard reactivation.',
-        actionText: 'Pay DStv with USDC',
-        targetTag: 'utility',
-        amount: '12.0',
-      };
-    } else if (lower.includes('transfer') || lower.includes('make a transfer') || lower.includes('send') || lower.includes('pay') || lower.includes('usdc')) {
-      replyText = "💸 I can prepare that instant zero-gas USDC transfer for you right now on Arc Osaka EVM.";
-      const matchAmt = lower.match(/\b(\d+(?:\.\d+)?)\s*(?:usdc|dollars?|\$)?/i);
-      const parsedAmt = matchAmt ? matchAmt[1] : '5.0';
-      widget = {
-        type: 'quick_pay',
-        title: `Instant USDC Transfer`,
-        badge: 'Zero Gas Fee',
-        body: `Amount: ${parsedAmt} USDC · Instant settlement to verified ₦Tag on Arc Osaka.`,
-        actionText: `Send ${parsedAmt} USDC`,
-        targetTag: replyAgentTag !== 'ArcAgent' ? replyAgentTag : 'dev',
-        amount: parsedAmt,
-      };
-    } else {
-      // Connect to Google Gemini 3.5 Flash-Lite (Free Tier)
-      try {
-        const geminiRes = await askArcGemini({
-          prompt: textToSend,
-          history: chatMessages,
-          context: { myTag, walletAddress }
+        const agentPrompt = fileToSend
+          ? `${textToSend || 'I attached a file.'}\n\nThe attached file is ${fileToSend.name} (${fileToSend.size}); its contents are not included in this chat request.`
+          : textToSend;
+        const selectedAgent = foundAgent || currentTaggedAgent;
+        const agentTag = selectedAgent?.tag || 'arc';
+        const conversationId = getOrCreateArcChatConversationId(walletAddress, agentTag);
+        setActiveChatConversationId(conversationId);
+        const chatResult = await sendArcChatMessage({
+          walletAddress,
+          conversationId,
+          turnId: crypto.randomUUID(),
+          prompt: agentPrompt,
+          agentTag,
+          title: agentPrompt,
         });
-        replyText = geminiRes.text;
-        replyModel = geminiRes.model;
-        replyAgentName = 'Gemini 3.5 Flash-Lite';
-        replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=gemini-flash';
-      } catch (err) {
-        replyText = `Understood! I've logged your request: "${textToSend}". On Arc Osaka EVM, you can transfer USDC, audit contracts, or tag verified agents.`;
+        replyText = chatResult.reply;
+        toolEvents = chatResult.toolEvents || [];
+        if (selectedAgent) {
+          replyAgentTag = selectedAgent.tag;
+          replyAgentName = selectedAgent.name;
+          replyAvatar = selectedAgent.avatar;
+        } else {
+          replyAgentTag = chatResult.personalAgent?.tag || 'ArcAgent';
+          replyAgentName = chatResult.personalAgent?.name || 'Arc Sovereign Agent';
+          replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
+        }
       }
+      widget = null;
+    } catch (err) {
+      replyText = `I couldn't send or save that message: ${err.message}`;
     }
 
     const botReply = {
@@ -1244,13 +1154,14 @@ export default function App() {
       agentName: replyAgentName,
       avatar: replyAvatar,
       text: replyText,
-      model: replyModel,
+      toolEvents,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       widget: widget,
     };
 
     setChatMessages((prev) => [...prev, botReply]);
     setChatIsTyping(false);
+    setChatActivityStep('thinking');
 
     if (options.isVoiceReply && replyText) {
       speakText(replyText);
@@ -1265,6 +1176,92 @@ export default function App() {
       setRecipientInput(widget.targetTag);
       if (widget.amount) setAmountInput(widget.amount);
       setIsSendReviewModalOpen(true);
+    }
+  };
+
+  const handleOpenChatHistory = async () => {
+    setIsHistoryModalOpen(true);
+    setChatHistoryError('');
+    setChatHistoryEntries([]);
+    if (!walletAddress) {
+    setChatHistoryError('Sign in to view saved chats.');
+      return;
+    }
+    setChatHistoryLoading(true);
+    try {
+      const result = await listArcChatConversations({ walletAddress });
+      setChatHistoryEntries(result.conversations || []);
+    } catch (error) {
+      setChatHistoryError(error.message);
+    } finally {
+      setChatHistoryLoading(false);
+    }
+  };
+
+  const handleLoadSavedChat = async (conversation) => {
+    if (!walletAddress) return;
+    setChatHistoryError('');
+    setChatHistoryLoading(true);
+    try {
+      const result = await getArcChatHistory({ walletAddress, conversationId: conversation.id });
+      const activeAgent = chatAgents.find((agent) => agent.tag.toLowerCase() === String(conversation.agent_tag || '').toLowerCase()) || null;
+      const messages = (result.messages || []).map((message) => {
+        const agent = chatAgents.find((entry) => entry.tag.toLowerCase() === String(message.agent_tag || '').toLowerCase());
+        const isAgent = message.role === 'assistant';
+        return {
+          id: message.id,
+          sender: isAgent ? 'agent' : 'user',
+          agentTag: isAgent ? (agent?.tag || 'ArcAgent') : undefined,
+          agentName: isAgent ? (agent?.name || 'Arc Sovereign Agent') : undefined,
+          avatar: isAgent ? (agent?.avatar || 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent') : undefined,
+          text: message.content,
+          time: new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          widget: null,
+        };
+      });
+      setChatMessages(messages);
+      setActiveChatConversationId(conversation.id);
+      setCurrentTaggedAgent(activeAgent);
+      window.localStorage.setItem(
+        `nairatag:arc-chat:${walletAddress.toLowerCase()}:${String(conversation.agent_tag || 'arc').toLowerCase()}`,
+        conversation.id,
+      );
+      setIsChatConversationOpen(true);
+      setIsTaskChatDraft(false);
+      setIsHistoryModalOpen(false);
+    } catch (error) {
+      setChatHistoryError(error.message);
+    } finally {
+      setChatHistoryLoading(false);
+    }
+  };
+
+  const handleClearSavedChatHistory = async () => {
+    if (!walletAddress) {
+      setChatHistoryError('Sign in to clear saved chats.');
+      return;
+    }
+    setChatHistoryError('');
+    setChatHistoryLoading(true);
+    try {
+      await clearArcChatHistory({ walletAddress });
+      const keyPrefix = `nairatag:arc-chat:${walletAddress.toLowerCase()}:`;
+      for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
+        const key = window.localStorage.key(index);
+        if (key?.startsWith(keyPrefix)) window.localStorage.removeItem(key);
+      }
+      setChatHistoryEntries([]);
+      setChatMessages([]);
+      setAgentChatMessages({});
+      setActiveChatConversationId(null);
+      setIsChatConversationOpen(false);
+      setIsTaskChatDraft(false);
+      setCurrentTaggedAgent(null);
+      showToast('Saved chat history cleared.', 'success');
+    } catch (error) {
+      setChatHistoryError(error.message);
+    } finally {
+      setChatHistoryLoading(false);
     }
   };
 
@@ -1336,6 +1333,7 @@ export default function App() {
         !q ||
         item.question.toLowerCase().includes(q) ||
         item.answer.some((a) => a.toLowerCase().includes(q)) ||
+        item.links?.some((link) => link.label.toLowerCase().includes(q)) ||
         item.categoryLabel.toLowerCase().includes(q);
       return matchesCat && matchesQuery;
     });
@@ -1350,27 +1348,40 @@ export default function App() {
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
   const [myTag, setMyTag] = useState(null);
+  const displayUserTag = myTag?.tag ? `₦${String(myTag.tag).replace(/^[$₦]/, '')}` : null;
+  const [accountEmail, setAccountEmail] = useState('');
+  const accountUsername = accountEmail.includes('@') ? accountEmail.slice(0, accountEmail.indexOf('@')) : accountEmail;
+  const displayAccountName = displayUserTag || (accountUsername ? `₦${accountUsername}` : null);
   const userTag = myTag?.tag || 'nairatag';
 
   // Circle Programmable Wallet State
   const [authProvider, setAuthProvider] = useState(null); // 'circle' | 'injected'
   const [circleSession, setCircleSession] = useState(null);
   const [circleInput, setCircleInput] = useState('');
+  const [circleOtpSent, setCircleOtpSent] = useState(false);
   const [circleStatus, setCircleStatus] = useState('');
 
   // Modals
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [authScreen, setAuthScreen] = useState('welcome'); // 'welcome' | 'create' | 'signin' | 'wallets'
   const [isSendReviewModalOpen, setIsSendReviewModalOpen] = useState(false);
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const [celebrationDetails, setCelebrationDetails] = useState(null);
+  const [welcomeDetails, setWelcomeDetails] = useState(null);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [walletTab, setWalletTab] = useState('overview'); // 'overview' | 'qr' | 'history'
 
+  useEffect(() => {
+    if (isConnectModalOpen) setAuthScreen('welcome');
+  }, [isConnectModalOpen]);
+
   // Tasks & Bounties State
   const [tasksFilter, setTasksFilter] = useState('all');
+  useEffect(() => {
+    if (tasksFilter === 'vouchers') setTasksFilter('all');
+  }, [tasksFilter]);
   const [tasksSearch, setTasksSearch] = useState('');
-  const [tasksViewMode, setTasksViewMode] = useState('grid'); // 'grid' | 'list'
   const [isPostTaskOpen, setIsPostTaskOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [taskProgress, setTaskProgress] = useState({});
@@ -1378,6 +1389,8 @@ export default function App() {
   const [tasksLoading, setTasksLoading] = useState(true);
   const [tasksError, setTasksError] = useState('');
   const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
+  const [inHouseVouchers, setInHouseVouchers] = useState([]);
+  const [rewardsInitialPage, setRewardsInitialPage] = useState(null);
   const [taskSubmissionDraft, setTaskSubmissionDraft] = useState('');
   const [userPoints, setUserPoints] = useState(0);
   const [arcRewardsError, setArcRewardsError] = useState('');
@@ -1423,6 +1436,17 @@ export default function App() {
   const allTasks = backendTasks;
 
   useEffect(() => {
+    setInHouseVouchers(getInHouseVouchers(walletAddress));
+    const refresh = (event) => {
+      if (!walletAddress || event.detail?.walletAddress === walletAddress.toLowerCase()) {
+        setInHouseVouchers(getInHouseVouchers(walletAddress));
+      }
+    };
+    window.addEventListener('nairatag-inhouse-vouchers-updated', refresh);
+    return () => window.removeEventListener('nairatag-inhouse-vouchers-updated', refresh);
+  }, [walletAddress]);
+
+  useEffect(() => {
     let active = true;
     setTasksLoading(true);
     setTasksError('');
@@ -1442,10 +1466,19 @@ export default function App() {
     return () => { active = false; };
   }, [walletAddress, tasksRefreshKey]);
 
+  const filteredInHouseTasks = useMemo(() => {
+    const q = tasksSearch.toLowerCase().trim();
+    if (tasksFilter !== 'all' && tasksFilter !== 'community') return [];
+    return IN_HOUSE_TASKS.filter((task) =>
+      !q || [task.title, task.description, task.category, task.voucherName, task.voucherValue]
+        .some((value) => String(value || '').toLowerCase().includes(q))
+    );
+  }, [tasksFilter, tasksSearch]);
+
   const filteredTasks = useMemo(() => {
     const q = tasksSearch.toLowerCase().trim();
-    return allTasks.filter((task) => {
-      const matchCat = tasksFilter === 'all' || task.category === tasksFilter;
+    const matchingTasks = allTasks.filter((task) => {
+      const matchCat = tasksFilter === 'all' || (tasksFilter !== 'nairatag' && task.category === tasksFilter);
       const matchQ =
         !q ||
         task.title.toLowerCase().includes(q) ||
@@ -1454,12 +1487,46 @@ export default function App() {
         task.categoryLabel.toLowerCase().includes(q);
       return matchCat && matchQ;
     });
-  }, [allTasks, tasksFilter, tasksSearch]);
+    const voucherCards = filteredInHouseTasks.map((voucherTask) => ({
+      id: `voucher:${voucherTask.id}`,
+      title: voucherTask.title,
+      description: voucherTask.description,
+      deliverable: voucherTask.description,
+      creatorTag: 'NAIRATAG',
+      categoryLabel: voucherTask.category,
+      deadline: 'Available',
+      rewardUSDC: 0,
+      points: Number(voucherTask.voucherValue.match(/\d+/)?.[0]) || 0,
+      isVoucherTask: true,
+      voucherTask,
+    }));
+    return [...matchingTasks, ...voucherCards];
+  }, [allTasks, filteredInHouseTasks, tasksFilter, tasksSearch]);
 
-  const selectedTask = useMemo(
-    () => allTasks.find((task) => task.id === selectedTaskId) || null,
-    [allTasks, selectedTaskId]
-  );
+  const selectedTask = useMemo(() => {
+    const existingTask = allTasks.find((task) => task.id === selectedTaskId);
+    if (existingTask) return existingTask;
+    const voucherId = String(selectedTaskId || '').startsWith('voucher:') ? selectedTaskId.slice('voucher:'.length) : null;
+    const voucherTask = IN_HOUSE_TASKS.find((task) => task.id === voucherId);
+    if (!voucherTask) return null;
+    return {
+      id: `voucher:${voucherTask.id}`,
+      title: voucherTask.title,
+      description: voucherTask.description,
+      deliverable: voucherTask.description,
+      creatorTag: 'NAIRATAG',
+      categoryLabel: voucherTask.category,
+      deadline: 'Available',
+      rewardUSDC: 0,
+      points: Number(voucherTask.voucherValue.match(/\d+/)?.[0]) || 0,
+      escrowStatus: 'Protocol Points after review',
+      isVoucherTask: true,
+      voucherTask,
+    };
+  }, [allTasks, selectedTaskId]);
+  const selectedVoucherClaim = selectedTask?.isVoucherTask
+    ? inHouseVouchers.find((voucher) => voucher.taskId === selectedTask.voucherTask.id)
+    : null;
 
   // Pay / Send Terminal State
   const [recipientInput, setRecipientInput] = useState('');
@@ -1488,7 +1555,7 @@ export default function App() {
   const [claimCardMode, setClaimCardMode] = useState('identity'); // 'identity' | 'share' | 'referral' | 'qrcode'
 
   const activeCleanTag = useMemo(() => {
-    return claimInput.replace(/^[$₦]/, '').trim() || (myTag ? myTag.tag?.replace(/^[$₦]/, '') : 'TAG');
+    return claimInput.replace(/^[$₦]/, '').trim() || (myTag?.tag ? myTag.tag.replace(/^[$₦]/, '') : 'TAG');
   }, [claimInput, myTag]);
 
   const claimPreviewText = claimInput.replace(/^[$₦]/, '').toUpperCase() || 'Tag';
@@ -1550,15 +1617,11 @@ export default function App() {
   const [borrowBtcAmount, setBorrowBtcAmount] = useState('0.05');
 
   // ERC-8004 Agent Hub State
-  const [agentSubTab, setAgentSubTab] = useState('lookup'); // 'lookup' | 'register'
   const [agentLookupId, setAgentLookupId] = useState('1');
   const [agentDetails, setAgentDetails] = useState(null);
   const [agentDetailsLoading, setAgentDetailsLoading] = useState(false);
   const [agentDetailsError, setAgentDetailsError] = useState(null);
   const [agentReputationList, setAgentReputationList] = useState([]);
-  const [newAgentMetadataUri, setNewAgentMetadataUri] = useState('https://nairatag.ng/api/agent/erc8004/₦food');
-  const [registeringAgent, setRegisteringAgent] = useState(false);
-  const [registeredAgentResult, setRegisteredAgentResult] = useState(null);
 
   // Agents Directory View State (Grid vs List toggle & Profile popup)
   const [agentsViewMode, setAgentsViewMode] = useState('grid'); // 'grid' | 'list'
@@ -1569,7 +1632,29 @@ export default function App() {
   const [agentFollowState, setAgentFollowState] = useState({ agentId: null, followerCount: 0, following: false, loading: false, updating: false, error: null });
 
   useEffect(() => {
-    if (!selectedAgentProfile || selectedAgentProfile.profileType === 'claimed-tag') {
+    const match = window.location.pathname.match(/^\/agent\/([^/]+)\/?$/i);
+    if (!match) return;
+    const sharedTag = decodeURIComponent(match[1]).replace(/^₦/, '').toLowerCase();
+    setMainTabState('agents');
+    const sharedAgent = chatAgents.find((agent) => String(agent.tag || '').toLowerCase() === sharedTag);
+    if (sharedAgent) {
+      setSelectedAgentProfile(sharedAgent);
+      return;
+    }
+    if (!agentDirectoryError && chatAgents.length === 0) return;
+    setSelectedAgentProfile({
+      id: null,
+      tag: sharedTag.toUpperCase(),
+      name: `₦${sharedTag.toUpperCase()}`,
+      category: 'Arc agent',
+      role: 'Shared Arc agent profile',
+      avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(sharedTag)}`,
+      profileType: 'shared-agent',
+    });
+  }, [agentDirectoryError, chatAgents]);
+
+  useEffect(() => {
+    if (!selectedAgentProfile || selectedAgentProfile.profileType === 'claimed-tag' || selectedAgentProfile.profileType === 'platform-agent' || selectedAgentProfile.profileType === 'shared-agent') {
       setAgentFollowState({ agentId: null, followerCount: 0, following: false, loading: false, updating: false, error: null });
       return undefined;
     }
@@ -1589,16 +1674,43 @@ export default function App() {
   // Filtered agents
   const filteredAgents = useMemo(() => {
     const q = agentsSearchQuery.trim().toLowerCase();
-    if (!q) return VERIFIED_AGENTS;
-    return VERIFIED_AGENTS.filter(
+    if (!q) return chatAgents;
+    const capabilityMatches = new Set(discoverAgentsByCapability(q, chatAgents, chatAgents.length).map((match) => match.agent));
+    return chatAgents.filter(
       (a) =>
         a.tag.toLowerCase().includes(q) ||
         a.name.toLowerCase().includes(q) ||
-        a.role.toLowerCase().includes(q) ||
-        a.category.toLowerCase().includes(q) ||
-        String(a.id).includes(q)
+        String(a.role || '').toLowerCase().includes(q) ||
+        String(a.category || '').toLowerCase().includes(q) ||
+        capabilityMatches.has(a)
     );
-  }, [agentsSearchQuery]);
+  }, [agentsSearchQuery, chatAgents]);
+
+  const rankedAgents = useMemo(() => {
+    const earningAmount = (agent) => {
+      const earnings = agentDirectoryStats[agent.tag]?.earnings ?? agent.earnings;
+      if (typeof earnings === 'number') return Number.isFinite(earnings) ? earnings : 0;
+      const parsed = Number(String(earnings ?? '').replace(/[^0-9.-]/g, ''));
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
+    return [...filteredAgents]
+      .sort((a, b) => earningAmount(b) - earningAmount(a) || chatAgents.indexOf(a) - chatAgents.indexOf(b))
+      .map((agent, index) => ({ ...agent, leaderboardRank: index + 1 }));
+  }, [filteredAgents, chatAgents, agentDirectoryStats]);
+
+  const agentEarningsLabel = (agent) => {
+    const earnings = agentDirectoryStats[agent.tag]?.earnings ?? agent.earnings;
+    if (earnings === null || earnings === undefined || earnings === '') return agentStatsLoading ? '…' : '?';
+    const amount = Number(earnings);
+    return `${Number.isFinite(amount) ? amount.toLocaleString(undefined, { maximumFractionDigits: 2 }) : String(earnings)} ${agent.earningsCurrency || 'USDC'}`;
+  };
+
+  const agentPointsLabel = (agent) => {
+    const value = agentDirectoryStats[agent.tag]?.points ?? agent.points;
+    if (value === null || value === undefined || value === '') return agentStatsLoading ? 'Loading points…' : '? Points earned';
+    const points = Number(value);
+    return `${Number.isFinite(points) ? points.toLocaleString() : String(agent.points)} Points earned`;
+  };
 
   // Mobile Navigation & Header State (Matching reference)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -1618,8 +1730,8 @@ export default function App() {
     }
     setMobileSearchLoading(true);
     try {
-      const matchedAgent = VERIFIED_AGENTS.find(
-        (a) => a.tag.toLowerCase() === clean.toLowerCase() || String(a.id) === clean
+      const matchedAgent = chatAgents.find(
+        (a) => a.tag.toLowerCase() === clean.toLowerCase() || String(a.identity?.erc8004AgentId || '') === clean
       );
       const avail = await checkArcTagAvailability(clean);
       setMobileSearchResult({
@@ -1716,18 +1828,12 @@ export default function App() {
       return formatted ? `${timeGreeting}, ${formatted}!` : `${timeGreeting}!`;
     }
 
-    if (walletAddress) {
-      return `${timeGreeting}, ${shorten(walletAddress)}!`;
+    if (accountUsername) {
+      return `${timeGreeting}, ₦${accountUsername}!`;
     }
 
     return `${timeGreeting}!`;
-  }, [walletAddress, myTag]);
-
-  // Chat User Avatar: User's profile avatar or deterministic NairaTag mascot (replaces generic 80px orb)
-  const chatUserAvatar = useMemo(() => {
-    const seed = myTag?.cleanTag || (myTag?.tag ? myTag.tag.replace(/^[$₦]/, '') : '') || (walletAddress ? walletAddress.slice(2, 10) : 'nairatag');
-    return resolveTagProfile(seed, { avatarSize: 52 });
-  }, [myTag, walletAddress]);
+  }, [walletAddress, myTag, accountUsername]);
 
   // Balance refresh
   const refreshBalance = useCallback(async (address) => {
@@ -1738,6 +1844,7 @@ export default function App() {
       setUsdcBalance(bal);
       const tag = await getArcTagForWallet(address);
       setMyTag(tag);
+      return { balance: bal, tag };
     } catch (e) {
       console.warn('Balance refresh failed:', e);
     } finally {
@@ -1762,33 +1869,59 @@ export default function App() {
   }, [refreshBalance]);
 
   // Connect via Circle Programmable Wallet (Web3 Services)
-  const handleConnectCircle = async (idInput) => {
-    const id = (idInput || circleInput || '').trim();
-    if (!id) {
-      showToast('Please enter an email or NairaTag handle', 'error', 3000);
+  const handleConnectCircle = async () => {
+    const email = circleInput.trim();
+    if (!email) {
+      showToast('Enter your email address to receive a Circle verification code.', 'error', 3000);
       return;
     }
     setIsConnecting(true);
-    setCircleStatus('Connecting to Circle Web3 Services...');
+    setCircleStatus('Sending Circle verification email...');
     try {
-      const res = await authenticateWithCircle({
-        identifier: id,
-        onStatusUpdate: ({ message }) => {
-          setCircleStatus(message);
-        },
-      });
+      await requestCircleEmailOtp(email);
+      setCircleOtpSent(true);
+      setCircleStatus('');
+      showToast('Circle sent a verification code to your email.', 'success', 3500);
+    } catch (err) {
+      setCircleStatus('');
+      showToast(`Circle email error: ${err.message}`, 'error', 4500);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleVerifyCircle = async () => {
+    setIsConnecting(true);
+    setCircleStatus('Waiting for Circle email verification...');
+    try {
+      const login = await verifyCircleEmailOtp();
+      const res = await connectCircleWallet(login, ({ message }) => setCircleStatus(message));
+      setAccountEmail(circleInput.trim().toLowerCase());
       setWalletAddress(res.walletAddress);
       setAuthProvider('circle');
       setCircleSession(res);
       setIsArcNetwork(true);
-      await refreshBalance(res.walletAddress);
+      try { await establishCircleArcSession({ userToken: res.userToken, walletAddress: res.walletAddress }); }
+      catch (sessionError) { showToast(`Wallet connected, but account session setup failed: ${sessionError.message}`, 'error', 5000); }
+      const [accountResult, rewardResult] = await Promise.allSettled([
+        refreshBalance(res.walletAddress),
+        getArcRewardState(res.walletAddress),
+      ]);
+      if (rewardResult.status === 'fulfilled') applyArcRewardState(rewardResult.value);
+      else setArcRewardsError(rewardResult.reason?.message || 'Your points are still syncing.');
+      if (res.isNewWallet) {
+        setWelcomeDetails({
+          tag: accountResult.status === 'fulfilled' ? accountResult.value?.tag?.tag : null,
+          points: rewardResult.status === 'fulfilled' ? rewardResult.value?.points : null,
+        });
+      }
       setIsConnectModalOpen(false);
       setCircleStatus('');
+      setCircleOtpSent(false);
       showToast(`Connected Circle Wallet: ${shorten(res.walletAddress)}`, 'success', 3000);
     } catch (err) {
-      console.error('Circle auth failed:', err);
       setCircleStatus('');
-      showToast(`Circle login error: ${err.message}`, 'error', 4000);
+      showToast(`Circle wallet error: ${err.message}`, 'error', 4500);
     } finally {
       setIsConnecting(false);
     }
@@ -1799,9 +1932,13 @@ export default function App() {
     if (authProvider === 'circle') {
       clearCircleSession();
     }
+    clearArcSession();
     setWalletAddress(null);
     setAuthProvider(null);
     setCircleSession(null);
+    setAccountEmail('');
+    setIsNotificationOpen(false);
+    setCircleOtpSent(false);
     setMyTag(null);
     setUsdcBalance({ formatted: '0.00', raw: 0n, rawString: '0' });
     setIsWalletModalOpen(false);
@@ -1820,6 +1957,8 @@ export default function App() {
       setAuthProvider('injected');
       setChainId(cId);
       setIsArcNetwork(cId === activeArcChain.id);
+      try { await establishWalletArcSession(address); }
+      catch (sessionError) { showToast(`Connected, but account session setup failed: ${sessionError.message}`, 'error', 5000); }
       await refreshBalance(address);
       setIsConnectModalOpen(false);
       showToast(`Connected ${shorten(address)}`, 'success', 2500);
@@ -1890,6 +2029,34 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [recipientInput]);
 
+  const handleClaimInHouseVoucher = async (task) => {
+    if (!walletAddress) {
+      showToast('Connect your wallet to claim this voucher.', 'info');
+      setIsConnectModalOpen(true);
+      return;
+    }
+    let vouchers;
+    try {
+      vouchers = await claimInHouseVoucher(walletAddress, task.id);
+      setInHouseVouchers(vouchers);
+    } catch (error) {
+      showToast(error.message || 'Could not save this voucher.', 'error');
+      return;
+    }
+    try {
+      await broadcastArcVoucherClaimToTelegram({ taskId: task.id, walletAddress });
+      showToast(`${task.voucherName} submitted for admin review.`, 'success', 3500);
+    } catch (error) {
+      showToast(`${task.voucherName} submission saved. Telegram alert not sent: ${error.message}`, 'info', 5000);
+    }
+  };
+
+  const handleRefreshVoucherClaims = async () => {
+    if (!walletAddress) return;
+    try { setInHouseVouchers(await syncInHouseVouchers(walletAddress)); }
+    catch (error) { showToast(error.message || 'Could not refresh voucher claims.', 'error'); }
+  };
+
   const handleStartTask = async (task) => {
     if (!walletAddress) {
       showToast('Connect your wallet before starting a bounty.', 'info');
@@ -1897,7 +2064,7 @@ export default function App() {
       return;
     }
     try {
-      const progress = await startArcTask({ taskId: task.id, walletAddress });
+      const progress = await startArcTask({ taskId: task.id, walletAddress, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points });
       setTaskProgress((previous) => ({ ...previous, [task.id]: progress }));
       showToast(`You started: ${task.title}`, 'success');
     } catch (error) {
@@ -1912,7 +2079,7 @@ export default function App() {
       return;
     }
     try {
-      const progress = await submitArcTask({ taskId: task.id, walletAddress, deliverable: submission });
+      const progress = await submitArcTask({ taskId: task.id, walletAddress, deliverable: submission, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points });
       setTaskProgress((previous) => ({ ...previous, [task.id]: progress }));
       setTaskSubmissionDraft('');
       showToast('Submission saved to the Arc task service for owner review.', 'success');
@@ -1923,6 +2090,7 @@ export default function App() {
 
   const handleTaskChat = (task) => {
     setChatInputText(`Hi @₦${task.creatorTag.replace(/^₦/, '')}, I’m working on “${task.title}”. `);
+    setIsTaskChatDraft(true);
     setMainTab('chat');
   };
 
@@ -1961,7 +2129,7 @@ export default function App() {
   };
 
   const handleInviteToEarn = () => {
-    const inviteUrl = `https://arc.nairatag.ng?ref=${myTag ? `₦${myTag.tag}` : 'sovereign'}`;
+    const inviteUrl = myTag?.tag ? getTagShareUrl(myTag.tag) : 'https://arc.nairatag.ng/#claim';
     triggerCopy('invite_link', inviteUrl);
     showToast('🔗 Invite Link Copied! Share with friends to earn 10% fee rebates on Arc.', 'success', 3500);
   };
@@ -1984,7 +2152,7 @@ export default function App() {
       points: Math.round(usdc * 10),
       deadline: postTaskForm.deadline || '3 days left',
       applicants: 0,
-      creatorTag: myTag ? `₦${myTag.tag}` : '₦YOU',
+      creatorTag: displayUserTag || '₦YOU',
       escrowStatus: '🔒 Funded in Escrow',
       description: postTaskForm.description || 'Community bounty on Arc Osaka EVM with automated milestone escrow settlement.',
       deliverable: postTaskForm.requirements || 'Public verification link, GitHub PR, or live demo.',
@@ -2003,42 +2171,40 @@ export default function App() {
     showToast(`Bounty created & ${usdc} USDC locked in Arc milestone escrow!`, 'success', 3500);
   };
 
-  // Muse Spark AI Agent Chat Handler
-  const handleSendAgentChat = (agentId, userText) => {
+  // Agent profile conversations use the live AI service; no canned agent replies.
+  const handleSendAgentChat = async (agentId, userText) => {
     const text = (userText || agentChatInput).trim();
     if (!text) return;
-    const currentMsgs = agentChatMessages[agentId] || [
-      {
-        sender: 'agent',
-        text: `Hello! I am ${selectedAgentProfile?.name || 'Autonomous Agent'} (₦${selectedAgentProfile?.tag?.toUpperCase() || 'AGENT'}), verified under Arc ERC-8004 (#${selectedAgentProfile?.id || ''}). How can I assist you with autonomous tasks or settlements on Arc?`,
-        time: 'Just now'
-      }
-    ];
+    if (!walletAddress) {
+      setIsConnectModalOpen(true);
+      showToast('Connect an Arc wallet to start a saved agent chat.', 'info');
+      return;
+    }
+    const currentMsgs = agentChatMessages[agentId] || [];
 
     const newMsgs = [...currentMsgs, { sender: 'user', text, time: 'Just now' }];
     setAgentChatMessages((prev) => ({ ...prev, [agentId]: newMsgs }));
     setAgentChatInput('');
-
-    setTimeout(() => {
-      let reply = '';
-      const lower = text.toLowerCase();
-      if (lower.includes('send') || lower.includes('pay') || lower.includes('usdc')) {
-        reply = `I can receive settlements directly! You can send USDC to my sovereign handle ₦${selectedAgentProfile?.tag?.toUpperCase()} on Arc Osaka EVM with deterministic sub-second finality.`;
-      } else if (lower.includes('reputation') || lower.includes('score') || lower.includes('erc-8004') || lower.includes('8004')) {
-        reply = `My Arc ERC-8004 identity is verified (#${selectedAgentProfile?.id}). Reputation score: ${selectedAgentProfile?.sparks || 98}/100. All tasks and milestones are logged onchain to the Arc Reputation Registry!`;
-      } else if (lower.includes('service') || lower.includes('do') || lower.includes('work') || lower.includes('task')) {
-        reply = `As ${selectedAgentProfile?.role}, I specialize in autonomous execution, escrow verification, and rapid micro-settlement for African web3 builders.`;
-      } else if (lower.includes('tag') || lower.includes('claim')) {
-        reply = `You can claim your own sovereign ₦Tag right here in the 'Claim ₦Tag' tab! It's free and instantly links your wallet to your sovereign identity.`;
-      } else {
-        reply = `Understood! I'm synchronized with Arc Osaka EVM and ready to execute. Let me know if you want to fund an escrow milestone, dispatch a micro-payment, or inspect my ERC-8004 records.`;
-      }
-
+    try {
+      const agentTag = selectedAgentProfile?.tag || 'arc';
+      const result = await sendArcChatMessage({
+        walletAddress,
+        conversationId: getOrCreateArcChatConversationId(walletAddress, agentTag),
+        turnId: crypto.randomUUID(),
+        prompt: text,
+        agentTag,
+        title: text,
+      });
       setAgentChatMessages((prev) => ({
         ...prev,
-        [agentId]: [...(prev[agentId] || newMsgs), { sender: 'agent', text: reply, time: 'Just now' }]
+        [agentId]: [...(prev[agentId] || newMsgs), { sender: 'agent', text: result.reply, time: 'Just now' }],
       }));
-    }, 450);
+    } catch (error) {
+      setAgentChatMessages((prev) => ({
+        ...prev,
+        [agentId]: [...(prev[agentId] || newMsgs), { sender: 'agent', text: `I couldn't send or save that message: ${error.message}`, time: 'Just now' }],
+      }));
+    }
   };
 
 
@@ -2098,16 +2264,38 @@ export default function App() {
       return;
     }
 
+    setChatActivityStep('waiting');
     setIsSending(true);
     setSendError(null);
     try {
       const targetTag = recipientInput.startsWith('0x') ? null : recipientInput;
-      const result = await sendUsdcOnArc({
-        fromAddress: walletAddress,
-        tagOrAddress: recipientInput.trim(),
-        amountUsdc: amountInput.trim(),
-        memo: memoInput.trim() || undefined,
-      });
+      let result;
+      if (authProvider === 'circle') {
+        let recipientAddress = recipientInput.trim();
+        if (!recipientAddress.startsWith('0x')) {
+          const resolved = await resolveTag(recipientAddress);
+          if (!resolved.success || !resolved.resolvedAddress) {
+            throw new Error(resolved.error || `Could not resolve recipient ${recipientAddress}.`);
+          }
+          recipientAddress = resolved.resolvedAddress;
+        }
+        result = await sendUsdcWithCircle({
+          session: circleSession,
+          fromAddress: walletAddress,
+          toAddress: recipientAddress,
+          amountUsdc: amountInput.trim(),
+          memoText: memoInput.trim(),
+          onStatusUpdate: ({ step }) => setChatActivityStep(step),
+        });
+      } else {
+        result = await sendUsdcOnArc({
+          fromAddress: walletAddress,
+          tagOrAddress: recipientInput.trim(),
+          amountUsdc: amountInput.trim(),
+          memo: memoInput.trim() || undefined,
+          onStatusUpdate: ({ step }) => setChatActivityStep(step),
+        });
+      }
 
       setIsSendReviewModalOpen(false);
       setCelebrationDetails({
@@ -2140,6 +2328,7 @@ export default function App() {
       setSendError(err.message || 'Payment failed on Arc.');
     } finally {
       setIsSending(false);
+      setChatActivityStep('thinking');
     }
   };
 
@@ -2147,6 +2336,10 @@ export default function App() {
   const handleExecuteSwap = async () => {
     if (!walletAddress) {
       setIsConnectModalOpen(true);
+      return;
+    }
+    if (authProvider === 'circle') {
+      showToast('Circle wallet swaps are not available yet. Connect an external EVM wallet to swap.', 'error', 4500);
       return;
     }
     setSwapExecuting(true);
@@ -2214,38 +2407,6 @@ export default function App() {
     }
   };
 
-  // Register Agent
-  const handleRegisterAgent = async () => {
-    if (!walletAddress) {
-      setIsConnectModalOpen(true);
-      return;
-    }
-    setRegisteringAgent(true);
-    setRegisteredAgentResult(null);
-    try {
-      const result = await registerAiAgent({
-        fromAddress: walletAddress,
-        metadataURI: newAgentMetadataUri,
-      });
-      setRegisteredAgentResult(result);
-      if (result.agentId) {
-        setAgentLookupId(result.agentId);
-        setCelebrationDetails({
-          type: 'agent',
-          txHash: result.txHash,
-          amount: `Token #${result.agentId}`,
-          recipient: 'ERC-8004 Identity NFT',
-          explorerUrl: result.explorerUrl,
-        });
-        setIsCelebrationOpen(true);
-      }
-    } catch (err) {
-      alert(`Agent registration failed: ${err.message}`);
-    } finally {
-      setRegisteringAgent(false);
-    }
-  };
-
   // Open Agent Profile Modal & Fetch live onchain details from Arc ERC-8004
   const handleOpenAgentProfile = async (agent) => {
     setSelectedAgentProfile(agent);
@@ -2276,6 +2437,27 @@ export default function App() {
     }
   };
 
+  const handleOpenPlatformAgentProfile = (agent) => {
+    setAgentProfileLiveLoading(false);
+    setAgentProfileLiveData(null);
+    setSelectedAgentProfile({ ...agent, profileType: 'platform-agent' });
+  };
+
+  const openDirectoryAgent = (agent) => {
+    if (agent.identity?.verifiedOnchain && agent.identity?.erc8004AgentId) {
+      handleOpenAgentProfile({ ...agent, id: agent.identity.erc8004AgentId });
+    } else {
+      handleOpenPlatformAgentProfile(agent);
+    }
+  };
+
+  const handleDirectoryCardKeyDown = (event, agent) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      openDirectoryAgent(agent);
+    }
+  };
+
   const persistArcAgentLink = (tag, owner, registration) => {
     const cleanTag = String(tag).replace(/^[₦$@#]/, '').toLowerCase();
     const linkedAgent = {
@@ -2290,6 +2472,11 @@ export default function App() {
       registrationTxHash: registration.txHash,
       linkTxHash: registration.linkTxHash || null,
       status: 'Verified',
+      identity: {
+        type: 'erc8004',
+        verifiedOnchain: true,
+        erc8004AgentId: String(registration.agentId),
+      },
     };
     setArcTagAgentLinks((current) => {
       const next = { ...current, [cleanTag]: linkedAgent };
@@ -2344,7 +2531,7 @@ export default function App() {
 
   const handleToggleAgentFollow = async () => {
     const agent = selectedAgentProfile;
-    if (!agent || agent.profileType === 'claimed-tag') return;
+    if (!agent || agent.profileType === 'claimed-tag' || agent.profileType === 'platform-agent') return;
     if (!walletAddress) {
       setIsConnectModalOpen(true);
       return;
@@ -2381,9 +2568,13 @@ export default function App() {
       return;
     }
 
-    const agent = VERIFIED_AGENTS.find((item) => item.tag.toLowerCase() === tag);
+    const agent = chatAgents.find((item) => item.tag.toLowerCase() === tag);
     if (agent) {
-      handleOpenAgentProfile(agent);
+      if (agent.identity?.verifiedOnchain && agent.identity?.erc8004AgentId) {
+        handleOpenAgentProfile({ ...agent, id: agent.identity.erc8004AgentId });
+      } else {
+        handleOpenPlatformAgentProfile(agent);
+      }
       return;
     }
 
@@ -2472,7 +2663,14 @@ export default function App() {
     }
     setIsClaiming(true);
     try {
-      const res = await claimArcNairaTag({ rawTag: claimInput, walletAddress });
+      let res;
+      if (authProvider === 'circle') {
+        const availability = await checkArcTagAvailability(claimInput, walletAddress);
+        if (!availability.available) throw new Error(availability.reason || 'This NairaTag cannot be claimed.');
+        res = await claimTagWithCircle({ session: circleSession, walletAddress, rawTag: claimInput });
+      } else {
+        res = await claimArcNairaTag({ rawTag: claimInput, walletAddress });
+      }
       let agentRegistration = null;
       let agentLinkError = null;
       try {
@@ -2541,7 +2739,7 @@ export default function App() {
       <header className={`app-header ${mainTab === 'claim' ? 'claim-active' : ''}`}>
         {/* Left Side: Brand Logo Badge + Mobile Hamburger Menu */}
         <div className="app-header-left">
-          <div className="app-brand" onClick={() => setMainTab('claim')}>
+          <div className="app-brand" onClick={() => setMainTab('chat')}>
             <div className="brand-badge" title="NairaTag on Arc">
               <img src="/nairatag-logo.png" alt="NairaTag" className="brand-logo-img" />
             </div>
@@ -2610,7 +2808,7 @@ export default function App() {
           {mainTab !== 'claim' && (
             <button
               type="button"
-              className="header-icon-btn search-trigger-btn"
+              className="header-icon-btn search-trigger-btn desktop-only"
               onClick={() => setIsMobileSearchOpen(true)}
               aria-label="Search tags or agents"
               title="Search"
@@ -2620,7 +2818,7 @@ export default function App() {
           )}
 
           {/* More Button (···) */}
-          <div className="header-more-wrapper">
+          <div className="header-more-wrapper desktop-only">
             <button
               type="button"
               className={`header-icon-btn more-trigger-btn ${isMoreMenuOpen ? 'active' : ''}`}
@@ -2715,8 +2913,8 @@ export default function App() {
             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
           </button>
 
-          {/* Notification Bell */}
-          <div className="header-bell-wrapper">
+          {/* Notifications are part of the signed-in account experience. */}
+          {walletAddress && <div className="header-bell-wrapper">
             <button
               type="button"
               className={`header-bell-btn ${isNotificationOpen ? 'active' : ''}`}
@@ -2784,23 +2982,22 @@ export default function App() {
                 </div>
               </>
             )}
-          </div>
+          </div>}
 
           {/* Connect / Connected Wallet Pill (with Shield Sign in matching screenshot) */}
           {walletAddress ? (
-            <div
+            <button
+              type="button"
               className="wallet-connected-pill"
-              onClick={() => setIsWalletModalOpen(true)}
-              title="Click to view Sovereign Portfolio"
+              onClick={() => setMainTab('profile')}
+              title="Open your profile dashboard"
+              aria-label="Open your profile dashboard"
             >
-              <span className="wallet-connected-dot" />
-              {authProvider === 'circle' && (
-                <span className="circle-tag-pill" title="Powered by Circle Web3 Services">Circle</span>
-              )}
-              <span className="wallet-connected-handle">{myTag ? `₦${myTag.tag}` : shorten(walletAddress)}</span>
+              <ProfileAvatar tag={myTag?.tag} email={accountEmail} size={26} />
+              <span className="wallet-connected-handle">{displayAccountName || 'NairaTag user'}</span>
               <span className="wallet-connected-sep desktop-only">|</span>
               <span className="wallet-connected-bal desktop-only">{usdcBalance.formatted} USDC</span>
-            </div>
+            </button>
           ) : (
             <button
               type="button"
@@ -2870,7 +3067,7 @@ export default function App() {
                 </div>
                 <div className="mobile-nav-text">
                   <span className="mobile-nav-title">Tasks & Bounties</span>
-                  <span className="mobile-nav-desc">Onchain quests, milestone escrow & points</span>
+                  <span className="mobile-nav-desc">Onchain tasks, milestone rewards & points</span>
                 </div>
                 {mainTab === 'tasks' && <span className="mobile-nav-active-pill">Active</span>}
               </button>
@@ -2928,6 +3125,43 @@ export default function App() {
                 </div>
                 <span className="nav-badge-pill" style={{ background: '#ef4444' }}>HOT</span>
               </button>
+
+              <button
+                type="button"
+                className={`mobile-nav-link ${mainTab === 'faq' ? 'active' : ''}`}
+                onClick={() => {
+                  setMainTab('faq');
+                  setIsMobileMenuOpen(false);
+                }}
+              >
+                <div className="mobile-nav-icon-box">
+                  <HelpCircle size={18} />
+                </div>
+                <div className="mobile-nav-text">
+                  <span className="mobile-nav-title">FAQ</span>
+                  <span className="mobile-nav-desc">Answers and contract links</span>
+                </div>
+                {mainTab === 'faq' && <span className="mobile-nav-active-pill">Active</span>}
+              </button>
+
+              {mainTab !== 'claim' && (
+                <button
+                  type="button"
+                  className="mobile-nav-link"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    setIsMobileSearchOpen(true);
+                  }}
+                >
+                  <div className="mobile-nav-icon-box">
+                    <Search size={18} />
+                  </div>
+                  <div className="mobile-nav-text">
+                    <span className="mobile-nav-title">Search</span>
+                    <span className="mobile-nav-desc">Find a NairaTag or agent</span>
+                  </div>
+                </button>
+              )}
             </div>
 
             <div className="mobile-drawer-footer">
@@ -3006,12 +3240,21 @@ export default function App() {
                     style={{ margin: '8px 12px', border: '1px solid var(--privy-color-border)' }}
                     onClick={() => {
                       setIsMobileSearchOpen(false);
-                      handleOpenAgentProfile(mobileSearchResult.agent);
+                      const agent = mobileSearchResult.agent;
+                      if (agent.identity?.verifiedOnchain && agent.identity?.erc8004AgentId) {
+                        handleOpenAgentProfile({ ...agent, id: agent.identity.erc8004AgentId });
+                      } else {
+                        handleOpenPlatformAgentProfile(agent);
+                      }
                     }}
                   >
                     <div className="agent-circle-left">
                       <img src={mobileSearchResult.agent.avatar} alt="" className="agent-circle-avatar-img" />
                       <div className="agent-circle-meta">
+                        <div className="agent-directory-list-description">
+                          {agent.name && agent.name !== agent.tag ? agent.name : agent.category || agent.role}
+                          {agent.category && agent.name && agent.name !== agent.tag ? ` · ${agent.category}` : ''}
+                        </div>
                         <div className="agent-circle-name">
                           <span>{mobileSearchResult.agent.name}</span>
                           <span className="agent-circle-tag-pill">₦{mobileSearchResult.agent.tag}</span>
@@ -3059,6 +3302,51 @@ export default function App() {
 
       {/* ─── Main Application Body ─── */}
       <main className={`main-content-wrapper ${mainTab === 'claim' ? 'claim-active' : ''} ${mainTab === 'chat' ? 'chat-mode' : ''}`}>
+        {mainTab === 'profile' && (
+          <section className="account-dashboard">
+            <div className="account-dashboard-heading">
+              <div>
+                <span className="account-dashboard-eyebrow">ACCOUNT</span>
+                <h1>Profile dashboard</h1>
+                <p>Your NairaTag identity, Arc wallet, and rewards in one place.</p>
+              </div>
+              <button type="button" className="quick-chip-btn" onClick={() => setMainTab('chat')}><ArrowLeft size={14} /> Back to chat</button>
+            </div>
+
+            {walletAddress ? (
+              <>
+                <article className="account-identity-card">
+                  <ProfileAvatar tag={myTag?.tag} email={accountEmail} size={52} className="account-avatar" />
+                  <div className="account-identity-copy">
+                    <span>{authProvider === 'circle' ? 'Circle email account' : 'Connected wallet account'}</span>
+                    <h2>{displayAccountName || 'Your Arc account'}</h2>
+                    <p>{accountEmail || (myTag?.tag ? 'Your NairaTag is connected to your Arc wallet.' : 'Claim a NairaTag to create your readable payment identity.')}</p>
+                  </div>
+                  <span className="account-network-pill"><span /> Arc Testnet</span>
+                </article>
+
+                <div className="account-stats-grid">
+                  <article className="account-stat-card"><span>USDC balance</span><strong>{usdcBalance.formatted}</strong><small>≈ ₦{(parseFloat(usdcBalance.formatted || '0') * 1485).toLocaleString('en-NG', { maximumFractionDigits: 2 })} NGN</small></article>
+                  <article className="account-stat-card"><span>Protocol Points</span><strong>{Number(userPoints || 0).toLocaleString()}</strong><small>Earned across NairaTag rewards</small></article>
+                </div>
+
+                <article className="account-wallet-card">
+                  <div className="account-wallet-heading"><div><span className="account-dashboard-eyebrow">YOUR WALLET</span><h2>{authProvider === 'circle' ? 'Circle Programmable Wallet' : 'Browser wallet'}</h2></div><span className="account-network-pill"><span /> Connected</span></div>
+                  <div className="account-wallet-address"><span>{walletAddress}</span><button type="button" className="quick-chip-btn" onClick={() => triggerCopy('profile_wallet_copy', walletAddress)}><Copy size={13} />{copiedKey === 'profile_wallet_copy' ? 'Copied' : 'Copy'}</button></div>
+                  <div className="account-dashboard-actions">
+                    <button type="button" className="btn-action-primary" onClick={() => setMainTab('pay')}><Send size={15} /> Send USDC</button>
+                    <button type="button" className="quick-chip-btn" onClick={() => { setWalletTab('overview'); setIsWalletModalOpen(true); }}><Wallet size={15} /> Wallet details</button>
+                    <button type="button" className="quick-chip-btn" onClick={() => setMainTab('rewards')}><Gift size={15} /> Rewards</button>
+                    {myTag?.tag ? <button type="button" className="quick-chip-btn" onClick={() => setIsPersonalAgentOpen(true)}><Brain size={15} /> Personal agent</button> : <button type="button" className="quick-chip-btn" onClick={() => setMainTab('claim')}><Tag size={15} /> Claim a NairaTag</button>}
+                  </div>
+                </article>
+              </>
+            ) : (
+              <article className="account-wallet-card account-profile-empty"><User size={24} /><h2>Sign in to view your profile</h2><p>Your account details and rewards will appear here after sign in.</p><button type="button" className="btn-action-primary" onClick={() => setIsConnectModalOpen(true)}>Sign in</button></article>
+            )}
+          </section>
+        )}
+
         {/* ───────────────────────────────────────────────────────────────────
             TAB 1: PAY & RESOLVE TERMINAL
             ─────────────────────────────────────────────────────────────────── */}
@@ -3246,7 +3534,7 @@ export default function App() {
             <main className="claim-page-main">
               <div className="claim-console-card">
                 {/* Active Claimed Tag Banner (Persistent Profile Display) */}
-                {myTag && (
+                {myTag?.tag && (
                   <div className="active-claimed-banner">
                     <div className="active-claimed-info">
                       <span style={{ fontSize: '15px' }}>✨</span>
@@ -3456,32 +3744,6 @@ export default function App() {
                 </div>
               )}
 
-              {/* Official Live Claim Notification Feeds (Telegram & X) */}
-              <div className="claim-social-channels-bar">
-                <a
-                  href={TELEGRAM_CHANNEL_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="claim-social-channel-chip chip-telegram"
-                  title="Live Arc Osaka Claim Alerts on Telegram"
-                >
-                  <span className="social-chip-dot pulse-telegram" />
-                  <Send size={12} />
-                  <span>Telegram Feed: <strong>{TELEGRAM_CHANNEL_HANDLE}</strong></span>
-                </a>
-                <a
-                  href={TWITTER_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="claim-social-channel-chip chip-twitter"
-                  title={`Follow ${TWITTER_HANDLE} on X`}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                  <span>Follow <strong>{TWITTER_HANDLE}</strong></span>
-                </a>
-              </div>
             </main>
 
           </div>
@@ -3542,192 +3804,87 @@ export default function App() {
               </div>
             </div>
 
-            {/* Metrics Overview Row (Compact 4-in-a-row without subtitles) */}
-            <div className="agents-stats-grid">
-              <div className="agents-stat-card">
-                <span className="agents-stat-card-label">Active Agents</span>
-                <span className="agents-stat-card-value">6</span>
-              </div>
-              <div className="agents-stat-card">
-                <span className="agents-stat-card-label">Avg Reputation</span>
-                <span className="agents-stat-card-value">98.4%</span>
-              </div>
-              <div className="agents-stat-card">
-                <span className="agents-stat-card-label">Settlement Fee</span>
-                <span className="agents-stat-card-value">0.00 USDC</span>
-              </div>
-              <div className="agents-stat-card">
-                <span className="agents-stat-card-label">Standard</span>
-                <span className="agents-stat-card-value">ERC-8004</span>
-              </div>
-            </div>
-
-            {/* ─── 1. GRID VIEW (Reference 1: Milestones) ─── */}
-            {agentsViewMode === 'grid' && (
-              <div className="agents-milestones-grid">
-                {filteredAgents.map((agent) => (
-                  <div
-                    key={agent.id}
-                    className="agent-milestone-card"
-                    onClick={() => handleOpenAgentProfile(agent)}
-                  >
-                    <span className="card-rank-tag">{agent.rank}</span>
-
-                    <div className="milestone-badge-stage">
-                      <AgentMedallion type={agent.badgeType} size={46} />
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                      <h3 className="milestone-card-title" style={{ margin: 0 }}>₦{agent.tag.toUpperCase()}</h3>
-                      <img
-                        src="/verified-badge.png"
-                        alt="Verified"
-                        style={{ width: '16px', height: '16px', objectFit: 'contain', flexShrink: 0 }}
-                        title="Verified Sovereign Agent"
-                      />
-                    </div>
-                    <div className="milestone-card-role">{agent.role}</div>
-
-                    <div className="milestone-task-status">
-                      <span>{agent.tasksDone}/{agent.totalTasks} tasks done</span>
-                    </div>
-
-                    <div className="milestone-progress-bar-wrap">
-                      <div
-                        className="milestone-progress-bar-fill"
-                        style={{ width: `${(agent.tasksDone / agent.totalTasks) * 100}%` }}
-                      />
-                    </div>
-
-                    <div className="milestone-earnings-row">
-                      <span className="milestone-earnings-label">Earnings</span>
-                      <span className="milestone-earnings-value">{agent.earnings}</span>
-                    </div>
-                  </div>
-                ))}
+            {agentDirectoryError && (
+              <div className="agent-directory-notice" role="status">
+                <span>Could not load the Arc agent registry: {agentDirectoryError}</span>
+                <button type="button" onClick={() => loadAgentDirectory()} disabled={agentDirectoryLoading}>
+                  {agentDirectoryLoading ? 'Retrying…' : 'Try again'}
+                </button>
               </div>
             )}
 
-            {/* ─── 2. LIST VIEW (Reference 3: Your Circle) ─── */}
-            {agentsViewMode === 'list' && (
-              <div className="agents-circle-list">
-                {filteredAgents.map((agent) => (
-                  <div
-                    key={agent.id}
-                    className="agent-circle-row"
-                    onClick={() => handleOpenAgentProfile(agent)}
-                  >
-                    <div className="agent-circle-left">
-                      <div className="agent-circle-avatar-wrap">
-                        <img
-                          src={agent.avatar}
-                          alt=""
-                          aria-hidden="true"
-                          className="agent-circle-avatar-img"
-                        />
-                        <div className={`agent-circle-rank ${agent.rankTop || ''}`}>
-                          {agent.rank}
-                        </div>
-                      </div>
+            {agentDirectoryLoading && chatAgents.length === 0 && (
+              <div className="agent-directory-empty" role="status">Loading agents from the Arc registry…</div>
+            )}
+            {!agentDirectoryLoading && !agentDirectoryError && chatAgents.length === 0 && (
+              <div className="agent-directory-empty" role="status">No agents have been listed yet.</div>
+            )}
 
-                      <div className="agent-circle-meta">
-                        <div className="agent-circle-name">
-                          <span>{agent.name}</span>
-                          <span className="agent-circle-tag-pill">₦{agent.tag}</span>
-                          <img
-                            src="/verified-badge.png"
-                            alt="Verified"
-                            style={{ width: '14px', height: '14px', objectFit: 'contain', flexShrink: 0 }}
-                            title="Verified Sovereign Agent"
-                          />
-                        </div>
-                        <div className="agent-circle-tagline">{agent.role}</div>
+            {/* Directory records and capability availability come from the Arc registry. */}
+            {agentsViewMode === 'grid' && (
+              <div className="agents-milestones-grid">
+                {rankedAgents.map((agent) => (
+                  <div
+                    key={agent.tag}
+                    className="agent-milestone-card agent-directory-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openDirectoryAgent(agent)}
+                    onKeyDown={(event) => handleDirectoryCardKeyDown(event, agent)}
+                    aria-label={`Open ${agent.name || agent.tag} agent profile`}
+                  >
+                    <div className="milestone-badge-stage">
+                      <div className="agent-directory-avatar-wrap">
+                        <img className="agent-circle-avatar-img" src={agent.avatar} alt="" aria-hidden="true" />
+                        <span className={`agent-directory-rank ${agent.leaderboardRank <= 3 ? `rank-top${agent.leaderboardRank}` : ''}`}>#{agent.leaderboardRank}</span>
                       </div>
                     </div>
+                    <div className="agent-directory-tag">₦{String(agent.tag || '').replace(/^[₦$@#]/, '')}</div>
+                    {agent.category && <div className="agent-directory-category">{agent.category}</div>}
+                    <div className="agent-directory-points">{agentPointsLabel(agent)}</div>
+                    <div className="agent-directory-card-earnings">
+                      <strong>{agentEarningsLabel(agent)} earned</strong>
+                    </div>
+                  </div>
+                ))}
+                {!filteredAgents.length && !agentDirectoryLoading && chatAgents.length > 0 && <div className="agent-directory-empty">No agents match this search.</div>}
+              </div>
+            )}
 
-                    <div className="agent-circle-right">
-                      <div style={{ textAlign: 'right' }}>
-                        <div className="agent-circle-metric-val" style={{ color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px' }}>
-                          <ShieldCheck size={13} color="#059669" />
-                          <span>{agent.sparks}%</span>
+            {agentsViewMode === 'list' && (
+              <div className="agents-circle-list">
+                {rankedAgents.map((agent) => (
+                  <div
+                    key={agent.tag}
+                    className="agent-circle-row agent-directory-list-row"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openDirectoryAgent(agent)}
+                    onKeyDown={(event) => handleDirectoryCardKeyDown(event, agent)}
+                    aria-label={`Open ${agent.name || agent.tag} agent profile`}
+                  >
+                    <div className="agent-circle-left">
+                      <div className="agent-circle-avatar-wrap agent-directory-avatar-wrap">
+                        <img src={agent.avatar} alt="" aria-hidden="true" className="agent-circle-avatar-img" />
+                        <span className={`agent-directory-rank ${agent.leaderboardRank <= 3 ? `rank-top${agent.leaderboardRank}` : ''}`}>#{agent.leaderboardRank}</span>
+                      </div>
+                      <div className="agent-circle-meta">
+                        <div className="agent-circle-name">
+                          <span className="agent-circle-tag-pill">₦{String(agent.tag || '').replace(/^[₦$@#]/, '')}</span>
                         </div>
-                        <div className="agent-circle-metric-lbl">Reputation</div>
                       </div>
-                      <div style={{ textAlign: 'right' }}>
-                        <div className="agent-circle-metric-val" style={{ color: '#10B981' }}>{agent.earnings}</div>
-                        <div className="agent-circle-metric-lbl">Earnings</div>
-                      </div>
+                    </div>
+                    <div className="agent-circle-right">
+                      <span className="agent-directory-points">{agentPointsLabel(agent)}</span>
+                      <span className="agent-directory-earnings">{agentEarningsLabel(agent)} earned</span>
                       <ChevronRight size={16} color="var(--privy-color-foreground-3)" />
                     </div>
                   </div>
                 ))}
+                {!filteredAgents.length && <div className="agent-directory-empty">No agents match this search.</div>}
               </div>
             )}
 
-            {/* Register Onchain Agent Accordion / Card */}
-            <div className="agents-top-bar" style={{ marginTop: '8px' }}>
-              <div className="agents-top-left">
-                <div style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--privy-color-foreground)' }}>
-                  Deploy Your Autonomous Agent
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
-                  Mint a sovereign ERC-8004 Identity NFT registered with your ₦Tag on Arc Testnet.
-                </div>
-              </div>
-              <button
-                type="button"
-                className="btn-agent-primary"
-                style={{ flex: 'none', padding: '8px 16px', fontSize: '12px' }}
-                onClick={() => setAgentSubTab(agentSubTab === 'register' ? 'lookup' : 'register')}
-              >
-                <Bot size={14} />
-                <span>{agentSubTab === 'register' ? 'Close Register' : '+ Register Agent'}</span>
-              </button>
-            </div>
-
-            {agentSubTab === 'register' && (
-              <div className="crypto-card-terminal" style={{ padding: '20px' }}>
-                <div className="token-input-box">
-                  <div className="token-input-header">
-                    <span>Agent Metadata URI</span>
-                    <button
-                      type="button"
-                      style={{ background: 'none', border: 'none', color: 'var(--privy-color-border-interactive)', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
-                      onClick={() => setNewAgentMetadataUri('https://nairatag.ng/api/agent/erc8004/$chowdeck')}
-                    >
-                      ⚡ Autofill ₦CHOWDECK
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    className="tag-text-field"
-                    style={{ fontSize: '13px', width: '100%', textTransform: 'none' }}
-                    value={newAgentMetadataUri}
-                    onChange={(e) => setNewAgentMetadataUri(e.target.value)}
-                  />
-                </div>
-
-                <div className="crypto-details-table" style={{ margin: '12px 0' }}>
-                  <div className="details-row">
-                    <span>Identity Registry</span>
-                    <span className="details-value">{shorten(ARC_ERC8004_IDENTITY_REGISTRY)}</span>
-                  </div>
-                  <div className="details-row">
-                    <span>Gas Token</span>
-                    <span className="details-value">Arc USDC (Osaka EVM)</span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  className="btn-action-primary"
-                  disabled={registeringAgent}
-                  onClick={handleRegisterAgent}
-                >
-                  {registeringAgent ? 'Minting Identity NFT on Arc...' : 'Confirm & Register Onchain'}
-                </button>
-              </div>
-            )}
           </div>
         )}
 
@@ -3753,7 +3910,50 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="task-detail-grid">
+                {selectedTask.isVoucherTask ? (
+                  <div className="task-detail-grid">
+                    <div className="task-detail-main">
+                      <article className="task-detail-panel">
+                        <h2>Task details</h2>
+                        <p>{selectedTask.description}</p>
+                        <div className="task-detail-deliverable">
+                          <strong>How to complete</strong>
+                          <span>{selectedTask.voucherTask.description}</span>
+                        </div>
+                        {selectedTask.voucherTask.url === 'rewards-referral' ? (
+                          <button type="button" className="btn-agent-secondary" onClick={() => { setRewardsInitialPage('referral'); setMainTab('rewards'); }}>
+                            <Share2 size={14} /> {selectedTask.voucherTask.actionLabel}
+                          </button>
+                        ) : (
+                          <a className="btn-agent-secondary" href={selectedTask.voucherTask.url} target="_blank" rel="noopener noreferrer">
+                            <ExternalLink size={14} /> {selectedTask.voucherTask.actionLabel}
+                          </a>
+                        )}
+                      </article>
+                      <article className="task-detail-panel task-submit-panel">
+                        <h2>Submit completion</h2>
+                        <p>After completing the task, submit it for review. Approved tasks credit Protocol Points to your wallet.</p>
+                        <button type="button" className="btn-agent-primary" onClick={() => handleClaimInHouseVoucher(selectedTask.voucherTask)} disabled={Boolean(selectedVoucherClaim)}>
+                          <CheckCircle2 size={14} />
+                          {selectedVoucherClaim ? 'Submitted for review' : 'I completed this task'}
+                        </button>
+                      </article>
+                    </div>
+                    <aside className="task-detail-sidebar">
+                      <article className="task-detail-panel task-reward-panel">
+                        <span className="task-detail-eyebrow">VOUCHER REWARD</span>
+                        <strong>+{selectedTask.points} <small>Points</small></strong>
+                        <span>Protocol Points after approval</span>
+                      </article>
+                      <article className="task-detail-panel">
+                        <h2><ShieldCheck size={16} /> Review status</h2>
+                        <div className="task-escrow-status">{selectedVoucherClaim?.status === 'approved' ? 'Approved' : selectedVoucherClaim?.status === 'rejected' ? 'Not approved' : selectedVoucherClaim ? 'Pending review' : 'Not submitted'}</div>
+                        <p>Submissions are signed by your wallet and reviewed by the NairaTag team.</p>
+                      </article>
+                    </aside>
+                  </div>
+                ) : (
+                  <div className="task-detail-grid">
                   <div className="task-detail-main">
                     <article className="task-detail-panel">
                       <h2>Task details</h2>
@@ -3777,13 +3977,32 @@ export default function App() {
                           <p>{taskProgress[selectedTask.id]?.status === 'submitted' ? 'Your work has been submitted for review.' : 'Start the task, then submit a link or describe your completed work.'}</p>
                         </div>
                         <span className={`task-progress-badge ${taskProgress[selectedTask.id]?.status || 'not-started'}`}>
-                          {taskProgress[selectedTask.id]?.status === 'submitted' ? 'In review' : taskProgress[selectedTask.id]?.status === 'in_progress' ? 'In progress' : 'Not started'}
+                          {taskProgress[selectedTask.id]?.status === 'paid' ? 'Reward paid' : taskProgress[selectedTask.id]?.status === 'submitted' ? 'In review' : taskProgress[selectedTask.id]?.status === 'in_progress' ? 'In progress' : 'Not started'}
                         </span>
                       </div>
-                      {taskProgress[selectedTask.id]?.status === 'submitted' ? (
+                      {taskProgress[selectedTask.id]?.status === 'paid' ? (
                         <div className="task-submission-saved">
                           <CheckCircle2 size={17} />
-                          <div><strong>Submission saved</strong><span>Sent to the Arc task service for bounty owner review.</span></div>
+                          <div>
+                            <strong>Task reward paid</strong>
+                            <span>The Arc task service confirms this bounty as paid.</span>
+                            <span className="task-share-actions">
+                              <a href={getTwitterTaskShareUrl({ title: selectedTask.title, rewardUSDC: selectedTask.rewardUSDC, points: selectedTask.points, userTag: myTag?.tag })} target="_blank" rel="noopener noreferrer">Share on X</a>
+                              <a href={getTelegramShareIntentUrl({ text: `I completed "${selectedTask.title}" and received its task reward on NairaTag.`, url: myTag?.tag ? getTagShareUrl(myTag.tag) : 'https://arc.nairatag.ng/#tasks' })} target="_blank" rel="noopener noreferrer">Share on Telegram</a>
+                            </span>
+                          </div>
+                        </div>
+                      ) : taskProgress[selectedTask.id]?.status === 'submitted' ? (
+                        <div className="task-submission-saved">
+                          <CheckCircle2 size={17} />
+                          <div>
+                            <strong>Submission saved</strong>
+                            <span>Sent to the Arc task service for bounty owner review.</span>
+                            <span className="task-share-actions">
+                              <a href={getTwitterTaskShareUrl({ title: selectedTask.title, rewardUSDC: selectedTask.rewardUSDC, points: selectedTask.points, userTag: myTag?.tag })} target="_blank" rel="noopener noreferrer">Share on X</a>
+                              <a href={getTelegramShareIntentUrl({ text: `I submitted "${selectedTask.title}" on NairaTag. My bounty is pending task-owner review.`, url: myTag?.tag ? getTagShareUrl(myTag.tag) : 'https://arc.nairatag.ng/#tasks' })} target="_blank" rel="noopener noreferrer">Share on Telegram</a>
+                            </span>
+                          </div>
                         </div>
                       ) : (
                         <>
@@ -3835,7 +4054,8 @@ export default function App() {
                       <MessageSquare size={15} /> Chat with task owner
                     </button>
                   </aside>
-                </div>
+                  </div>
+                )}
               </section>
             ) : (
               <>
@@ -3864,29 +4084,8 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Grid / List Switcher + Create Task Button */}
+                {/* Create Task Button */}
                 <div className="task-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: 'auto' }}>
-                  <div className="agents-view-toggle">
-                    <button
-                      type="button"
-                      className={`view-toggle-btn ${tasksViewMode === 'grid' ? 'active' : ''}`}
-                      onClick={() => setTasksViewMode('grid')}
-                      title="Grid View"
-                      aria-label="Grid View"
-                    >
-                      <LayoutGrid size={14} />
-                    </button>
-                    <button
-                      type="button"
-                      className={`view-toggle-btn ${tasksViewMode === 'list' ? 'active' : ''}`}
-                      onClick={() => setTasksViewMode('list')}
-                      title="List View"
-                      aria-label="List View"
-                    >
-                      <List size={14} />
-                    </button>
-                  </div>
-
                   <button
                     type="button"
                     className="btn-agent-primary create-task-header-btn"
@@ -3903,16 +4102,16 @@ export default function App() {
             {/* Metrics Overview Row (Compact 4-in-a-row matching Agents stats grid) */}
             <div className="agents-stats-grid">
               <div className="agents-stat-card">
-                <span className="agents-stat-card-label">Active Quests</span>
-                <span className="agents-stat-card-value">{allTasks.length}</span>
+                <span className="agents-stat-card-label">Active Tasks</span>
+                <span className="agents-stat-card-value">{allTasks.length + IN_HOUSE_TASKS.length}</span>
               </div>
               <div className="agents-stat-card">
-                <span className="agents-stat-card-label">Arc Escrow Locked</span>
-                <span className="agents-stat-card-value">$0</span>
+                <span className="agents-stat-card-label">Total Agents</span>
+                <span className="agents-stat-card-value">{chatAgents.length}</span>
               </div>
               <div className="agents-stat-card">
-                <span className="agents-stat-card-label">Settlement Fee</span>
-                <span className="agents-stat-card-value">0.00 USDC</span>
+                <span className="agents-stat-card-label">Total Earned</span>
+                <span className="agents-stat-card-value" style={{ color: '#059669' }}>{userPoints.toLocaleString()} Pts</span>
               </div>
               <div className="agents-stat-card">
                 <span className="agents-stat-card-label">Your Points</span>
@@ -3923,7 +4122,7 @@ export default function App() {
             {/* Category Filter Pills Row */}
             <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
               {[
-                { id: 'all', label: 'All Quests' },
+                { id: 'all', label: 'All Tasks' },
                 { id: 'dev', label: '⚡ Engineering' },
                 { id: 'design', label: '🎨 Design' },
                 { id: 'data', label: '📊 Data & AI' },
@@ -3942,9 +4141,7 @@ export default function App() {
               ))}
             </div>
 
-            {/* ─── 1. GRID VIEW (Milestones Design matching Agents) ─── */}
-            {tasksViewMode === 'grid' && (
-              <div className="agents-milestones-grid">
+            <div className="agents-milestones-grid">
                 {filteredTasks.length === 0 ? (
                   <div className="tasks-empty-state-card" style={{ gridColumn: '1 / -1' }}>
                     <div className="tasks-empty-badge-glow">
@@ -3963,7 +4160,7 @@ export default function App() {
                       {tasksLoading
                         ? 'Syncing Arc Escrow Bounties…'
                         : (tasksSearch || tasksFilter !== 'all')
-                          ? 'No Matching Quests Found'
+                          ? 'No Matching Tasks Found'
                           : 'No tasks available'}
                     </h3>
 
@@ -4012,7 +4209,12 @@ export default function App() {
                   </div>
                 ) : (
                   filteredTasks.map((task, idx) => {
-                    const isDone = taskProgress[task.id]?.status === 'paid';
+                    const voucherClaim = task.isVoucherTask
+                      ? inHouseVouchers.find((voucher) => voucher.taskId === task.voucherTask.id)
+                      : null;
+                    const isDone = task.isVoucherTask
+                      ? voucherClaim?.status === 'approved'
+                      : taskProgress[task.id]?.status === 'paid';
                     const rankLabel = task.rank || `#${idx + 1}`;
                     return (
                       <div
@@ -4067,142 +4269,6 @@ export default function App() {
                   })
                 )}
               </div>
-            )}
-
-            {/* ─── 2. LIST VIEW (Matching Agents Circle List) ─── */}
-            {tasksViewMode === 'list' && (
-              <div className="agents-circle-list">
-                {filteredTasks.length === 0 ? (
-                  <div className="tasks-empty-state-card">
-                    <div className="tasks-empty-badge-glow">
-                      <div className="tasks-empty-icon-wrap">
-                        {tasksLoading ? (
-                          <RefreshCw size={26} color="#5B4FFF" className="spin-anim" />
-                        ) : (tasksSearch || tasksFilter !== 'all') ? (
-                          <Search size={24} color="#5B4FFF" />
-                        ) : (
-                          <Sparkles size={26} color="#5B4FFF" />
-                        )}
-                      </div>
-                    </div>
-
-                    <h3 className="tasks-empty-title">
-                      {tasksLoading
-                        ? 'Syncing Arc Escrow Bounties…'
-                        : (tasksSearch || tasksFilter !== 'all')
-                          ? 'No Matching Quests Found'
-                          : 'No tasks available'}
-                    </h3>
-
-                    {(tasksLoading || tasksSearch || tasksFilter !== 'all') && (
-                      <p className="tasks-empty-subtitle">
-                        {tasksLoading
-                          ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
-                          : tasksSearch
-                            ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
-                            : 'There are no open bounties in this category yet. Explore other categories or post one yourself.'}
-                      </p>
-                    )}
-
-                    <div className="tasks-empty-actions">
-                      {(tasksSearch || tasksFilter !== 'all') && (
-                        <button
-                          type="button"
-                          className="btn-agent-secondary"
-                          onClick={() => { setTasksSearch(''); setTasksFilter('all'); }}
-                        >
-                          Clear Filters
-                        </button>
-                      )}
-                      {!tasksLoading && (
-                        <button
-                          type="button"
-                          className="btn-agent-primary"
-                          onClick={() => setIsPostTaskOpen(true)}
-                        >
-                          <Plus size={14} />
-                          <span>Create Task</span>
-                        </button>
-                      )}
-                      {!tasksLoading && (
-                        <button
-                          type="button"
-                          className="btn-agent-secondary"
-                          onClick={() => setTasksRefreshKey((key) => key + 1)}
-                          title="Refresh tasks list"
-                        >
-                          <RefreshCw size={13} />
-                          <span>Refresh</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  filteredTasks.map((task, idx) => {
-                    const isDone = taskProgress[task.id]?.status === 'paid';
-                    const rankLabel = task.rank || `#${idx + 1}`;
-                    const rankTopClass = idx === 0 ? 'rank-top1' : idx === 1 ? 'rank-top2' : idx === 2 ? 'rank-top3' : '';
-                    return (
-                      <div
-                        key={task.id}
-                        className="agent-circle-row"
-                        onClick={() => setSelectedTaskId(task.id)}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') setSelectedTaskId(task.id); }}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <div className="agent-circle-left">
-                          <div className="agent-circle-avatar-wrap">
-                            <img
-                              src={task.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${task.id}`}
-                              alt=""
-                              aria-hidden="true"
-                              className="agent-circle-avatar-img"
-                            />
-                            <div className={`agent-circle-rank ${rankTopClass}`}>
-                              {rankLabel}
-                            </div>
-                          </div>
-
-                          <div className="agent-circle-meta">
-                            <div className="agent-circle-name">
-                              <span>{task.title}</span>
-                              <span className="agent-circle-tag-pill">₦{task.creatorTag.replace(/^₦/, '')}</span>
-                              <img
-                                src="/verified-badge.png"
-                                alt=""
-                                aria-hidden="true"
-                                style={{ width: '14px', height: '14px', objectFit: 'contain', flexShrink: 0 }}
-                                title="Arc Escrow Verified"
-                              />
-                            </div>
-                            <div className="agent-circle-tagline">{task.deliverable}</div>
-                          </div>
-                        </div>
-
-                        <div className="agent-circle-right">
-                          <div style={{ textAlign: 'right' }}>
-                            <div className="agent-circle-metric-val" style={{ color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '3px' }}>
-                              <Sparkles size={12} color="#059669" />
-                              <span>+{task.points} Pts</span>
-                            </div>
-                            <div className="agent-circle-metric-lbl">Points</div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div className="agent-circle-metric-val" style={{ color: isDone ? '#10B981' : 'var(--primary, #0052FF)' }}>
-                              {isDone ? 'Paid' : `$${task.rewardUSDC} USDC`}
-                            </div>
-                            <div className="agent-circle-metric-lbl">Reward</div>
-                          </div>
-                          <ChevronRight size={16} color="var(--privy-color-foreground-3)" />
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
 
               </>
             )}
@@ -4217,42 +4283,55 @@ export default function App() {
             ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'chat' && (
           <div className="walley-chat-screen">
-            {/* Top Navigation Bar: Back Arrow button on mobile only (hidden on desktop) */}
-            <div className="chat-top-nav-bar mobile-only">
-              <button
+            {/* Top Navigation Bar */}
+            <div className="chat-top-nav-bar">
+              {(isChatConversationOpen || isTaskChatDraft) && <button
                 type="button"
                 className="chat-back-btn"
-                onClick={() => setMainTab('claim')}
-                aria-label="Back"
-                title="Back"
+                onClick={() => {
+                  setIsChatConversationOpen(false);
+                  setIsTaskChatDraft(false);
+                }}
+                aria-label="Back to chat home"
+                title="Back to chat home"
               >
                 <ArrowLeft size={18} />
-              </button>
+              </button>}
+              <div className="chat-top-nav-actions">
+              <button
+                type="button"
+                className="chat-history-btn"
+                onClick={handleOpenChatHistory}
+                aria-label="Open saved chat history"
+                title="Saved chats"
+              ><History size={16} /></button>
+              {walletAddress && myTag?.tag && <button
+                type="button"
+                className="chat-history-btn personal-agent-open"
+                onClick={() => setIsPersonalAgentOpen(true)}
+                aria-label="Manage your personal agent"
+                title="Manage your personal agent"
+              ><Brain size={16} /><span>My agent</span></button>}
+              </div>
             </div>
 
             {/* Main Canvas: Empty state vs Message stream */}
-            {chatMessages.length === 0 ? (
+            {!isChatConversationOpen ? (
               /* SCREEN 1: Redesigned Welcome & Quick-Action Dashboard Matching Reference */
               <div className="walley-hero-container ref-chat-layout">
-                {/* 3D Agent Mascot Character */}
+                {/* Shared NairaTag profile avatar */}
                 <div className="ref-mascot-wrapper">
-                  <img
-                    src="/agent-mascot.png"
-                    alt="NairaTag Agent"
-                    className="ref-mascot-img"
-                  />
+                  <ProfileAvatar tag={myTag?.tag} email={accountEmail} size={68} />
                 </div>
 
                 {/* Personalized Greeting */}
                 <h1 className="ref-chat-heading">
-                  {walletAddress && myTag?.tag
-                    ? `Hey ${myTag.tag.replace(/^[₦$@#]/, '')} 👋`
-                    : (walletAddress ? `Hey ${shorten(walletAddress)} 👋` : 'Hey there 👋')}
+                  {walletAddress && displayAccountName ? `Hey ${displayAccountName} 👋` : 'Hey there 👋'}
                 </h1>
 
                 {/* Friendly Subtitle */}
                 <p className="ref-chat-sub">
-                  I'm your NairaTag agent. What can I help you get done today?
+                  How can I help?
                 </p>
 
                 {/* 3x2 Quick-Action Grid */}
@@ -4263,11 +4342,8 @@ export default function App() {
                     className="ref-action-card card-tasks"
                     onClick={() => setMainTab('tasks')}
                   >
-                    <div className="ref-action-icon-circle icon-circle-tasks">
-                      <ArrowLeftRight size={14} />
-                    </div>
+                    <div className="ref-action-icon-circle icon-circle-tasks"><ClipboardCheckIcon size={16} /></div>
                     <span className="ref-action-title">Tasks</span>
-                    <span className="ref-action-sub">Earn rewards</span>
                   </button>
 
                   {/* Card 2: Swap */}
@@ -4276,63 +4352,48 @@ export default function App() {
                     className="ref-action-card card-swap"
                     onClick={() => handleSendChatPrompt('I want to swap tokens')}
                   >
-                    <div className="ref-action-icon-circle icon-circle-swap">
-                      <ArrowDownUp size={14} />
-                    </div>
+                    <div className="ref-action-icon-circle icon-circle-swap"><ChevronsLeftRightIcon size={16} /></div>
                     <span className="ref-action-title">Swap</span>
-                    <span className="ref-action-sub">Trade tokens</span>
                   </button>
 
                   {/* Card 3: Ride */}
                   <button
                     type="button"
                     className="ref-action-card card-ride"
-                    onClick={() => handleSendChatPrompt('Book a ride with @₦ride')}
+                    onClick={() => handleSendChatPrompt('Book a ride with ₦ride')}
                   >
-                    <div className="ref-action-icon-circle icon-circle-ride">
-                      <Car size={14} />
-                    </div>
-                    <span className="ref-action-title">Ride</span>
-                    <span className="ref-action-sub">Get a ride</span>
+                    <div className="ref-action-icon-circle icon-circle-ride"><CarIcon size={16} /></div>
+                    <span className="ref-action-title">₦Ride</span>
                   </button>
 
                   {/* Card 4: Food */}
                   <button
                     type="button"
                     className="ref-action-card card-food"
-                    onClick={() => handleSendChatPrompt('Order meals with @₦chowdeck')}
+                    onClick={() => handleSendChatPrompt('Order meals with ₦chowdeck')}
                   >
-                    <div className="ref-action-icon-circle icon-circle-food">
-                      <Utensils size={14} />
-                    </div>
-                    <span className="ref-action-title">Food</span>
-                    <span className="ref-action-sub">Order meals</span>
+                    <div className="ref-action-icon-circle icon-circle-food"><CookingPotIcon size={16} /></div>
+                    <span className="ref-action-title">₦Food</span>
                   </button>
 
-                  {/* Card 5: Agent */}
+                  {/* Card 5: Rewards */}
                   <button
                     type="button"
                     className="ref-action-card card-agent"
-                    onClick={() => setMainTab('agents')}
+                    onClick={() => setMainTab('rewards')}
                   >
-                    <div className="ref-action-icon-circle icon-circle-agent">
-                      <Tag size={14} />
-                    </div>
-                    <span className="ref-action-title">Agent</span>
-                    <span className="ref-action-sub">Do more</span>
+                    <div className="ref-action-icon-circle icon-circle-agent"><HandCoinsIcon size={16} /></div>
+                    <span className="ref-action-title">Rewards</span>
                   </button>
 
-                  {/* Card 6: More */}
+                  {/* Card 6: Claim */}
                   <button
                     type="button"
                     className="ref-action-card card-more"
-                    onClick={() => handleSendChatPrompt('Show all available NairaTag features and commands')}
+                    onClick={() => setMainTab('claim')}
                   >
-                    <div className="ref-action-icon-circle icon-circle-more">
-                      <MoreHorizontal size={14} />
-                    </div>
-                    <span className="ref-action-title">More</span>
-                    <span className="ref-action-sub">Coming soon</span>
+                    <div className="ref-action-icon-circle icon-circle-tasks"><TicketIcon size={16} /></div>
+                    <span className="ref-action-title">Claim</span>
                   </button>
                 </div>
               </div>
@@ -4395,26 +4456,31 @@ export default function App() {
                       {/* Text Message Bubble (if text exists) */}
                       {msg.text && (
                         <div className={`walley-msg-bubble ${msg.sender}`}>
-                          {msg.model && (
-                            <div className="walley-msg-model-tag">
-                              <Sparkles size={11} />
-                              <span>Gemini 3.5 Flash-Lite</span>
-                            </div>
-                          )}
-                          <div className="walley-msg-text-content">{msg.text}</div>
+                          <div className="walley-msg-text-content">{renderChatText(msg.text)}</div>
                           {msg.sender === 'agent' && (
                             <div className="walley-msg-speech-bar">
                               <button
                                 type="button"
                                 className={`walley-msg-speak-btn ${speakingMsgId === msg.id ? 'speaking' : ''}`}
                                 onClick={() => handleToggleSpeakMessage(msg)}
-                                title={speakingMsgId === msg.id ? "Stop voice" : "Read aloud (Voice)"}
+                                aria-label={speakingMsgId === msg.id ? "Stop voice playback" : "Play voice playback"}
                               >
                                 {speakingMsgId === msg.id ? <VolumeX size={12} /> : <Volume2 size={12} />}
-                                <span>{speakingMsgId === msg.id ? "Stop voice" : "Read aloud"}</span>
                               </button>
                             </div>
                           )}
+                        </div>
+                      )}
+
+                      {msg.sender === 'agent' && msg.toolEvents?.length > 0 && (
+                        <div className="chat-tool-events" aria-label="Tools used in this reply">
+                          {msg.toolEvents.map((event, eventIndex) => (
+                            <div className={`chat-tool-event ${event.status}`} key={`${event.key}-${eventIndex}`}>
+                              {event.status === 'completed' ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                              <span>{event.name}</span>
+                              <small>{event.status === 'completed' ? 'Verified' : event.status === 'failed' ? 'Failed' : 'Running'}</small>
+                            </div>
+                          ))}
                         </div>
                       )}
 
@@ -4441,11 +4507,14 @@ export default function App() {
                   </div>
                 ))}
 
-                {/* Processing Indicator: ":: Processing ..." */}
+                {/* Animated agent activity state */}
                 {chatIsTyping && (
                   <div className="walley-processing-row">
-                    <span className="walley-processing-dots">⠿</span>
-                    <span className="walley-processing-text">Processing ...</span>
+                    <ChatActivityIndicator
+                      status={chatActivityStep}
+                      prompt={chatActivityPrompt}
+                      agentAvatar={currentTaggedAgent?.avatar}
+                    />
                   </div>
                 )}
 
@@ -4460,13 +4529,26 @@ export default function App() {
               {isTagPopoverOpen && (
                 <div className="walley-agent-popover">
                   <div className="walley-agent-popover-header">
-                    <span>Tag Verified Agent</span>
                     <button type="button" onClick={() => setIsTagPopoverOpen(false)}>
                       <X size={14} />
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    className="walley-agent-menu-action"
+                    onClick={() => {
+                      setIsTagPopoverOpen(false);
+                      fileInputRef.current?.click();
+                    }}
+                  >
+                    <Paperclip size={15} />
+                    <span>Attach a file</span>
+                  </button>
+                  {agentDirectoryError && (
+                    <div className="walley-agent-directory-error">Agent registry unavailable. Registered agent tags cannot be selected until it responds.</div>
+                  )}
                   <div className="walley-agent-popover-list">
-                    {VERIFIED_AGENTS.map((agent) => (
+                    {chatAgents.map((agent) => (
                       <div
                         key={agent.tag}
                         className="walley-agent-item"
@@ -4475,7 +4557,10 @@ export default function App() {
                         <img src={agent.avatar} alt={agent.name} style={{ width: 22, height: 22, borderRadius: '50%' }} />
                         <div className="walley-agent-item-info">
                           <span className="walley-agent-tag">₦{agent.tag}</span>
-                          <span className="walley-agent-role">{agent.role.slice(0, 26)}...</span>
+                          <span className="walley-agent-role">{agent.role}</span>
+                          <span className="walley-agent-availability">
+                            {agent.callableTools?.length ? `${agent.callableTools.length} live tools` : 'Chat only'}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -4574,16 +4659,6 @@ export default function App() {
                     <Plus size={16} />
                   </button>
 
-                  <button
-                    type="button"
-                    className="walley-capsule-attach-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                    title="Attach File or Smart Contract (.sol, .pdf, image)"
-                    aria-label="Attach File"
-                  >
-                    <Paperclip size={15} />
-                  </button>
-
                   <input
                     type="text"
                     className="walley-capsule-input"
@@ -4655,51 +4730,36 @@ export default function App() {
                       <X size={16} />
                     </button>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '12px 0' }}>
-                    <button
-                      type="button"
-                      className="walley-prompt-pill"
-                      onClick={() => {
-                        setIsHistoryModalOpen(false);
-                        handleSendChatPrompt('I want to buy 500 airtime for someone');
-                      }}
-                    >
-                      <Phone size={14} className="pill-icon pill-icon-phone" />
-                      <span>Buy 500 airtime for someone</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="walley-prompt-pill"
-                      onClick={() => {
-                        setIsHistoryModalOpen(false);
-                        handleSendChatPrompt('Make a transfer of 10 USDC');
-                      }}
-                    >
-                      <Send size={14} className="pill-icon pill-icon-send" />
-                      <span>Transfer 10 USDC</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="walley-prompt-pill"
-                      onClick={() => {
-                        setIsHistoryModalOpen(false);
-                        handleSendChatPrompt('Pay for Dstv subscription');
-                      }}
-                    >
-                      <Tv size={14} className="pill-icon pill-icon-tv" />
-                      <span>Renew DStv subscription</span>
-                    </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '12px 0', maxHeight: '48vh', overflowY: 'auto' }}>
+                    {chatHistoryLoading && <div className="walley-history-empty">Loading saved chats…</div>}
+                    {chatHistoryError && <div className="walley-history-error">{chatHistoryError}</div>}
+                    {!chatHistoryLoading && !chatHistoryError && chatHistoryEntries.length === 0 && (
+                      <div className="walley-history-empty">No saved chats yet.</div>
+                    )}
+                    {chatHistoryEntries.map((conversation) => (
+                      <button
+                        key={conversation.id}
+                        type="button"
+                        className="walley-prompt-pill walley-history-item"
+                        onClick={() => handleLoadSavedChat(conversation)}
+                        disabled={chatHistoryLoading}
+                      >
+                        <MessageSquare size={14} />
+                        <span className="walley-history-item-copy">
+                          <strong>{conversation.title || 'Arc chat'}</strong>
+                          <small>₦{conversation.agent_tag || 'arc'} · {new Date(conversation.updated_at).toLocaleString()}</small>
+                        </span>
+                      </button>
+                    ))}
                   </div>
                   <button
                     type="button"
                     className="btn-agent-secondary"
                     style={{ width: '100%', padding: '10px' }}
-                    onClick={() => {
-                      setChatMessages([]);
-                      setIsHistoryModalOpen(false);
-                    }}
+                    onClick={handleClearSavedChatHistory}
+                    disabled={chatHistoryLoading}
                   >
-                    Clear History & Start Fresh
+                    Clear saved chats
                   </button>
                 </div>
               </div>
@@ -4747,6 +4807,8 @@ export default function App() {
                   { id: 'agents', label: 'AI Agents (ERC-8004)' },
                   { id: 'resolver', label: 'Resolver Layer' },
                   { id: 'payments', label: 'Payments & Security' },
+                  { id: 'contracts', label: 'Contracts' },
+                  { id: 'social', label: 'Social & Community' },
                 ].map((chip) => (
                   <button
                     key={chip.id}
@@ -4806,6 +4868,15 @@ export default function App() {
                           {item.answer.map((para, pIdx) => (
                             <p key={pIdx}>{para}</p>
                           ))}
+                          {item.links?.length > 0 && (
+                            <div className="faq-resource-links">
+                              {item.links.map((link) => (
+                                <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer">
+                                  {link.label}<ExternalLink size={12} />
+                                </a>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -4854,6 +4925,10 @@ export default function App() {
             userTag={myTag?.tag || ''}
             accountKey={walletAddress || ''}
             pointsBalance={userPoints}
+            earnedVouchers={inHouseVouchers}
+            onRefreshVouchers={handleRefreshVoucherClaims}
+            initialPage={rewardsInitialPage}
+            onInitialPageHandled={() => setRewardsInitialPage(null)}
             serviceError={arcRewardsError}
             usdcBalance={usdcBalance}
             onRewardState={applyArcRewardState}
@@ -4868,7 +4943,7 @@ export default function App() {
           MOBILE FIXED FOOTER MENU (MATCHING EXACT USER SCREENSHOT STYLE)
           (Hidden on Chat page per user specification)
           ─────────────────────────────────────────────────────────────────── */}
-      {mainTab !== 'chat' && (
+      {mainTab !== 'chat' && mainTab !== 'claim' && (
         <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
           {/* 1. Claim (Official Home) */}
           <button
@@ -5024,6 +5099,14 @@ export default function App() {
               </div>
             )}
 
+            {isSending && (
+              <ChatActivityIndicator
+                status={chatActivityStep}
+                prompt="USDC transfer"
+                agentAvatar={currentTaggedAgent?.avatar}
+              />
+            )}
+
             <button
               type="button"
               className="btn-action-primary"
@@ -5033,7 +5116,7 @@ export default function App() {
               {isSending ? (
                 <>
                   <RefreshCw size={15} className="animate-spin" />
-                  <span>Confirming on Arc...</span>
+                  <span>Working on your transaction…</span>
                 </>
               ) : (
                 <>
@@ -5055,11 +5138,11 @@ export default function App() {
           isConnecting={isConnecting}
           circleInput={circleInput}
           setCircleInput={setCircleInput}
+          circleOtpSent={circleOtpSent}
+          setCircleOtpSent={setCircleOtpSent}
           circleStatus={circleStatus}
-          circleInputType="text"
-          circleInputLabel="Email or NairaTag"
-          circleInputPlaceholder="Email or ₦handle"
           handleConnectCircle={handleConnectCircle}
+          handleVerifyCircle={handleVerifyCircle}
           handleConnect={handleConnect}
         />
       )}
@@ -5201,6 +5284,24 @@ export default function App() {
       {/* ───────────────────────────────────────────────────────────────────
           MODAL 3: CLAIM NAIRATAG DIALOG
           ─────────────────────────────────────────────────────────────────── */}
+      {welcomeDetails && (
+        <div className="modal-backdrop welcome-rewards-backdrop" onClick={() => setWelcomeDetails(null)}>
+          <section className="modal-dialog welcome-rewards-dialog" role="dialog" aria-modal="true" aria-labelledby="welcome-rewards-title" onClick={(event) => event.stopPropagation()}>
+            <button type="button" className="welcome-rewards-close" onClick={() => setWelcomeDetails(null)} aria-label="Close welcome message"><X size={18} /></button>
+            <div className="welcome-rewards-icon"><Sparkles size={24} /></div>
+            <p className="welcome-rewards-eyebrow">YOUR ACCOUNT IS READY</p>
+            <h2 id="welcome-rewards-title">{welcomeDetails.tag ? `Welcome, ${welcomeDetails.tag}!` : 'Welcome to NairaTag!'}</h2>
+            <p className="welcome-rewards-copy">Your Arc wallet is ready. Here are your earned Protocol Points.</p>
+            <div className="welcome-points-card">
+              <span>Protocol Points earned</span>
+              <strong>{welcomeDetails.points == null ? 'Syncing…' : Number(welcomeDetails.points).toLocaleString()}</strong>
+            </div>
+            <button type="button" className="auth-main-cta" onClick={() => setWelcomeDetails(null)}>Get started</button>
+            <button type="button" className="welcome-rewards-link" onClick={() => { setWelcomeDetails(null); setMainTab('rewards'); }}>View rewards</button>
+          </section>
+        </div>
+      )}
+
       {isClaimModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsClaimModalOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
@@ -5261,12 +5362,19 @@ export default function App() {
                 </button>
               </div>
 
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 16px' }}>
+                <a href={getAgentTwitterShareUrl({ tag: selectedAgentProfile.tag })} target="_blank" rel="noopener noreferrer" className="agent-tool-chip">Share on X</a>
+                <a href={getAgentTelegramShareUrl({ tag: selectedAgentProfile.tag })} target="_blank" rel="noopener noreferrer" className="agent-tool-chip">Telegram</a>
+                <a href={getAgentWhatsAppShareUrl({ tag: selectedAgentProfile.tag })} target="_blank" rel="noopener noreferrer" className="agent-tool-chip">WhatsApp</a>
+                <button type="button" className="agent-tool-chip" onClick={() => triggerCopy(`agent_share_${selectedAgentProfile.tag}`, getAgentShareUrl(selectedAgentProfile.tag))}>Copy profile link</button>
+              </div>
+
               <div className="agent-profile-main-row">
                 <img className="agent-profile-avatar" src={selectedAgentProfile.avatar} alt="" />
                 <div className="agent-profile-heading-copy">
                   <div className="agent-profile-name-line">
                     <h2>₦{selectedAgentProfile.tag.toUpperCase()}</h2>
-                    {selectedAgentProfile.profileType !== 'claimed-tag' && (
+                    {selectedAgentProfile.identity?.verifiedOnchain && selectedAgentProfile.identity?.erc8004AgentId && (
                       <img
                         className="agent-profile-verified-badge"
                         src="/verified-badge.png"
@@ -5279,7 +5387,7 @@ export default function App() {
                     {selectedAgentProfile.profileType === 'claimed-tag' ? 'NairaTag on Arc' : selectedAgentProfile.name}
                   </div>
                 </div>
-                {selectedAgentProfile.profileType !== 'claimed-tag' && (
+                {selectedAgentProfile.profileType !== 'claimed-tag' && selectedAgentProfile.profileType !== 'platform-agent' && (
                   <button
                     type="button"
                     className={`agent-follow-button agent-follow-button-inline ${agentFollowState.following ? 'following' : ''}`}
@@ -5297,15 +5405,19 @@ export default function App() {
               </p>
 
               <div className="agent-profile-stats">
-                <div><strong>{selectedAgentProfile.profileType === 'claimed-tag' ? '—' : agentFollowState.loading ? '…' : agentFollowState.error ? '—' : agentFollowState.followerCount}</strong><span>Followers</span></div>
-                <div><strong>{selectedAgentProfile.earnings || '—'}</strong><span>Earned</span></div>
-                <div><strong>{selectedAgentProfile.id ? `#${selectedAgentProfile.id}` : '—'}</strong><span>Agent ID</span></div>
-                <div><strong>{selectedAgentProfile.profileType === 'claimed-tag'
+                <div><strong>{selectedAgentProfile.profileType === 'claimed-tag' || selectedAgentProfile.profileType === 'platform-agent' ? '—' : agentFollowState.loading ? '…' : agentFollowState.error ? '—' : agentFollowState.followerCount}</strong><span>Followers</span></div>
+                <div><strong>{selectedAgentProfile.profileType === 'platform-agent' ? (selectedAgentProfile.callableTools?.length || 0) : selectedAgentProfile.earnings || '—'}</strong><span>{selectedAgentProfile.profileType === 'platform-agent' ? 'Enabled tools' : 'Earned'}</span></div>
+                <div><strong>{selectedAgentProfile.identity?.verifiedOnchain && selectedAgentProfile.identity?.erc8004AgentId ? `#${selectedAgentProfile.identity.erc8004AgentId}` : selectedAgentProfile.profileType === 'platform-agent' ? 'Platform' : selectedAgentProfile.id ? `#${selectedAgentProfile.id}` : '—'}</strong><span>{selectedAgentProfile.profileType === 'platform-agent' ? 'Identity' : 'Agent ID'}</span></div>
+                <div><strong>{selectedAgentProfile.profileType === 'platform-agent' ? '—' : selectedAgentProfile.profileType === 'claimed-tag'
                   ? selectedAgentProfile.profileLoading ? '…' : selectedAgentProfile.completedTaskCount ?? '—'
                   : agentProfileLiveLoading ? '…' : agentProfileLiveData?.completedTaskCount ?? '—'}</strong><span>Tasks done</span></div>
               </div>
 
-              <div className="agent-profile-detail-row">
+              {selectedAgentProfile.profileType === 'platform-agent' ? (
+                <div className="agent-profile-detail-row agent-profile-platform-tools">
+                  <div className="agent-profile-category">{selectedAgentProfile.category || 'Platform agent'}</div>
+                </div>
+              ) : <div className="agent-profile-detail-row">
                 <div className="agent-profile-category">{selectedAgentProfile.category || 'NairaTag'}</div>
                 <div className="agent-profile-owner">
                   <span>Owner</span>
@@ -5322,7 +5434,7 @@ export default function App() {
                     ><Copy size={14} /></button>
                   )}
                 </div>
-              </div>
+              </div>}
 
               <div className="agent-profile-card-actions">
                 <button
@@ -5333,10 +5445,10 @@ export default function App() {
                 ><Send size={15} /> Pay ₦{selectedAgentProfile.tag.toUpperCase()}</button>
               </div>
 
-              {selectedAgentProfile.profileType !== 'claimed-tag' && (
+              {selectedAgentProfile.identity?.verifiedOnchain && selectedAgentProfile.identity?.erc8004AgentId && (
                 <a
                   className="agent-profile-explorer-link"
-                  href={`https://erc-8004.quicknode.com/agents/arc-testnet/${selectedAgentProfile.id}`}
+                  href={`https://erc-8004.quicknode.com/agents/arc-testnet/${selectedAgentProfile.identity.erc8004AgentId}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >View agent on 8004scan <ExternalLink size={12} /></a>
@@ -5469,11 +5581,11 @@ export default function App() {
             {/* Identity Card */}
             <div style={{ marginTop: '10px', padding: '12px', background: 'var(--privy-color-background-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--privy-color-border-subtle)', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #0052ff, #00d2ff)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 900 }}>
-                {myTag ? myTag.tag?.slice(0, 1).toUpperCase() : '₦'}
+                {myTag?.tag ? myTag.tag.replace(/^[$₦]/, '').slice(0, 1).toUpperCase() : '₦'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 800 }}>{myTag ? `₦${myTag.tag}` : 'Sovereign Wallet'}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 800 }}>{displayUserTag || 'Sovereign Wallet'}</span>
                   <span className="card-net-pill">Arc Osaka</span>
                   {authProvider === 'circle' && (
                     <span className="circle-tag-pill" style={{ fontSize: '9px', padding: '1px 6px' }}>Circle W3S</span>
@@ -5584,7 +5696,7 @@ export default function App() {
                       style={{ width: '160px', height: '160px', borderRadius: '8px', border: '1px solid var(--privy-color-border-subtle)', margin: '0 auto 8px' }}
                     />
                     <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
-                      Scan to receive USDC or resolve {myTag ? `₦${myTag.tag}` : 'wallet'} on Arc Osaka EVM.
+                      Scan to receive USDC or resolve {displayUserTag || 'wallet'} on Arc Osaka EVM.
                     </div>
                   </>
                 ) : (
@@ -5686,7 +5798,17 @@ export default function App() {
           isClaimModalOpen || isWalletModalOpen || isConnectModalOpen || isSendReviewModalOpen
         )}
       />
+      <PersonalAgentPanel
+        open={isPersonalAgentOpen}
+        onClose={() => setIsPersonalAgentOpen(false)}
+        walletAddress={walletAddress}
+        tag={myTag?.tag || ''}
+      />
     </>
   );
 }
 
+export default function App() {
+  const adminPath = typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') === '/admin';
+  return adminPath ? <PlatformAgentAdminPage /> : <ArcAppShell />;
+}

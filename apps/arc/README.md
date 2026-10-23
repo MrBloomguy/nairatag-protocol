@@ -35,6 +35,17 @@ cp .env.example .env
 | `VITE_ARC_TESTNET_USDC` | Canonical USDC ERC-20 address on Arc | `0x3600000000000000000000000000000000000000` |
 | `VITE_NAIRATAG_RESOLVER_API` | Canonical identity resolution endpoint | `https://nairatag.ng/api/claims` |
 
+### Circle User-Controlled Wallets
+
+Circle login uses email OTP and creates an Arc Testnet smart-contract wallet through Circle W3S. Configure Circle's User-Controlled Wallets email authentication and SMTP settings in the Circle Console, then set:
+
+| Variable | Where it is used | Description |
+| :--- | :--- | :--- |
+| `VITE_CIRCLE_APP_ID` | Browser | Public Circle Wallet App ID from the Circle Console configurator |
+| `CIRCLE_API_KEY` | Server only | Circle Standard API key used by `/api/circle`; never expose it with a `VITE_` prefix |
+
+For local development, place these in `.env`. For Vercel, add them as project environment variables and redeploy. The Circle API key must be server-side. The Vite dev server provides the same `/api/circle` route locally.
+
 ### 3. Run Development Server
 ```bash
 npm run dev
