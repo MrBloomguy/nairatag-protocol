@@ -2798,7 +2798,6 @@ function ArcAppShell() {
           >
             <Gift size={14} />
             <span>Rewards</span>
-            <span className="nav-badge-pill" style={{ background: '#ef4444' }}>HOT</span>
           </button>
         </nav>
 
@@ -3123,7 +3122,6 @@ function ArcAppShell() {
                   <span className="mobile-nav-title">Rewards &amp; Vouchers</span>
                   <span className="mobile-nav-desc">Daily Points, USDC balance, cNGN updates &amp; referrals</span>
                 </div>
-                <span className="nav-badge-pill" style={{ background: '#ef4444' }}>HOT</span>
               </button>
 
               <button
@@ -5021,7 +5019,6 @@ function ArcAppShell() {
           >
             <div className="mobile-footer-icon-wrap">
               <Gift size={22} strokeWidth={mainTab === 'rewards' ? 2.4 : 1.8} />
-              <span className="mobile-footer-badge badge-red">HOT</span>
             </div>
             <span className="mobile-footer-label">Rewards</span>
           </button>
