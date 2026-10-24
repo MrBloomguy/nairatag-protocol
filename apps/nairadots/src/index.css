@@ -1458,49 +1458,68 @@ html[data-theme="dark"] body {
 .mobile-drawer-links {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin: 14px 0;
+  gap: 6px;
+  margin: 16px 0;
+}
+
+.mobile-nav-section-label {
+  padding: 2px 4px 5px;
+  color: var(--privy-color-foreground-2);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.mobile-nav-section-spaced {
+  margin-top: 10px;
 }
 
 .mobile-nav-link {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 13px;
   width: 100%;
-  padding: 12px 14px;
-  border-radius: 16px;
-  border: 1px solid transparent;
-  background: transparent;
+  min-height: 68px;
+  padding: 11px 13px;
+  border-radius: 15px;
+  border: 1px solid var(--privy-color-border);
+  background: var(--privy-color-background);
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s ease;
+  text-decoration: none;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
   box-sizing: border-box;
 }
 
 .mobile-nav-link:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--privy-color-background-2);
+  border-color: var(--brand-naira-border);
+  transform: translateX(2px);
 }
 
 .mobile-nav-link.active {
-  background: rgba(0, 82, 255, 0.08);
-  border-color: rgba(0, 82, 255, 0.22);
+  background: var(--brand-naira-tint);
+  border-color: var(--brand-naira-border);
+  box-shadow: inset 3px 0 0 var(--brand-naira);
 }
 
 .mobile-nav-icon-box {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.04);
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: var(--brand-naira-tint);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary, #0052FF);
+  color: var(--brand-naira);
   flex: none;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
 .mobile-nav-link.active .mobile-nav-icon-box {
-  background: var(--primary, #0052FF);
+  background: var(--brand-naira);
   color: #FFFFFF;
 }
 
@@ -1513,22 +1532,27 @@ html[data-theme="dark"] body {
 
 .mobile-nav-title {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 750;
+  line-height: 1.2;
   color: var(--privy-color-foreground);
 }
 
 .mobile-nav-desc {
-  font-size: 11px;
+  font-size: 11.5px;
+  line-height: 1.35;
   color: var(--privy-color-foreground-2);
 }
 
-.mobile-nav-active-pill {
-  font-size: 10.5px;
-  font-weight: 700;
-  padding: 3px 9px;
-  border-radius: 9999px;
-  background: var(--primary, #0052FF);
-  color: #FFFFFF;
+.mobile-nav-chevron {
+  color: var(--privy-color-foreground-3);
+  flex: none;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.mobile-nav-link:hover .mobile-nav-chevron,
+.mobile-nav-link.active .mobile-nav-chevron {
+  color: var(--brand-naira);
+  transform: translateX(2px);
 }
 
 .mobile-drawer-footer {

@@ -3067,7 +3067,6 @@ function ArcAppShell() {
                   <img src="/nairatag-logo.png" alt="NairaTag" className="brand-logo-img" />
                 </div>
                 <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--privy-color-foreground)' }}>NairaTag</span>
-                <span className="card-net-pill" style={{ fontSize: 10 }}>Arc Testnet</span>
               </div>
               <button
                 type="button"
@@ -3080,6 +3079,7 @@ function ArcAppShell() {
             </div>
 
             <div className="mobile-drawer-links">
+              <div className="mobile-nav-section-label">Your pages</div>
               <button
                 type="button"
                 className={`mobile-nav-link ${mainTab === 'claim' ? 'active' : ''}`}
@@ -3092,10 +3092,10 @@ function ArcAppShell() {
                   <Sparkles size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Claim â‚¦Tag</span>
-                  <span className="mobile-nav-desc">Mint sovereign onchain identity handle</span>
+                  <span className="mobile-nav-title">Claim a NairaTag</span>
+                  <span className="mobile-nav-desc">Choose your personal identity</span>
                 </div>
-                {mainTab === 'claim' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               <button
@@ -3110,10 +3110,10 @@ function ArcAppShell() {
                   <Briefcase size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Tasks & Bounties</span>
-                  <span className="mobile-nav-desc">Onchain tasks, milestone rewards & points</span>
+                  <span className="mobile-nav-title">Tasks &amp; bounties</span>
+                  <span className="mobile-nav-desc">Find work and track your progress</span>
                 </div>
-                {mainTab === 'tasks' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               <button
@@ -3128,10 +3128,10 @@ function ArcAppShell() {
                   <Bot size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">AI Agents 8004</span>
-                  <span className="mobile-nav-desc">Autonomous ERC-8004 reputation directory</span>
+                  <span className="mobile-nav-title">Agent directory</span>
+                  <span className="mobile-nav-desc">Discover agents on NairaDots</span>
                 </div>
-                {mainTab === 'agents' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               <button
@@ -3146,10 +3146,10 @@ function ArcAppShell() {
                   <MessageSquare size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Agent Chat</span>
-                  <span className="mobile-nav-desc">Chat with sovereign agent & call tagged bots</span>
+                  <span className="mobile-nav-title">My agent</span>
+                  <span className="mobile-nav-desc">Chat, give tasks, and review activity</span>
                 </div>
-                {mainTab === 'chat' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
               {import.meta.env.VITE_NAIRADOTS_AGENT_URL && (
                 <a
@@ -3160,13 +3160,14 @@ function ArcAppShell() {
                 >
                   <div className="mobile-nav-icon-box"><Brain size={18} /></div>
                   <div className="mobile-nav-text">
-                    <span className="mobile-nav-title">My NairaDots Agents</span>
-                    <span className="mobile-nav-desc">Create agents and run your private workspace</span>
+                    <span className="mobile-nav-title">My agents</span>
+                    <span className="mobile-nav-desc">Create and manage your agents</span>
                   </div>
-                  <ExternalLink size={14} />
+                  <ExternalLink className="mobile-nav-chevron" size={16} />
                 </a>
               )}
 
+              <div className="mobile-nav-section-label mobile-nav-section-spaced">Your activity</div>
               <button
                 type="button"
                 className={`mobile-nav-link ${mainTab === 'rewards' ? 'active' : ''}`}
@@ -3179,9 +3180,10 @@ function ArcAppShell() {
                   <Gift size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Rewards &amp; Vouchers</span>
-                  <span className="mobile-nav-desc">Daily Points, USDC balance, cNGN updates &amp; referrals</span>
+                  <span className="mobile-nav-title">Rewards</span>
+                  <span className="mobile-nav-desc">See your points, vouchers, and referrals</span>
                 </div>
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               <button
@@ -3196,10 +3198,10 @@ function ArcAppShell() {
                   <HelpCircle size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">FAQ</span>
-                  <span className="mobile-nav-desc">Answers and contract links</span>
+                  <span className="mobile-nav-title">Help &amp; FAQ</span>
+                  <span className="mobile-nav-desc">Get answers and support</span>
                 </div>
-                {mainTab === 'faq' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               {mainTab !== 'claim' && (
@@ -3215,19 +3217,16 @@ function ArcAppShell() {
                     <Search size={18} />
                   </div>
                   <div className="mobile-nav-text">
-                    <span className="mobile-nav-title">Search</span>
-                    <span className="mobile-nav-desc">Find a NairaTag or agent</span>
+                    <span className="mobile-nav-title">Search NairaDots</span>
+                    <span className="mobile-nav-desc">Find a person, tag, or agent</span>
                   </div>
+                  <ChevronRight className="mobile-nav-chevron" size={18} />
                 </button>
               )}
             </div>
 
             <div className="mobile-drawer-footer">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
-                  <span>Arc Osaka EVM Â· 5042002</span>
-                </div>
                 <button
                   type="button"
                   className="quick-chip-btn"
