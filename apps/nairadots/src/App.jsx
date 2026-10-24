@@ -5,6 +5,8 @@ import AuthConnectModal from './components/auth/AuthConnectModal';
 import ProfileAvatar from './components/ProfileAvatar';
 import ChatActivityIndicator from './components/chat/ChatActivityIndicator';
 import PersonalAgentPanel from './components/chat/PersonalAgentPanel';
+import ArcVoiceCall from './components/chat/ArcVoiceCall.jsx';
+import { useArcVoice } from './hooks/useArcVoice.js';
 import { ClipboardCheck as ClipboardCheckIcon } from 'lucide-react';
 import { ChevronsLeftRight as ChevronsLeftRightIcon } from 'lucide-react';
 import { Car as CarIcon } from 'lucide-react';
@@ -1053,10 +1055,31 @@ function ArcAppShell() {
     setChatIsTyping(false);
     setChatActivityStep('thinking');
 
-    if (options.isVoiceReply && replyText) {
+    if (options.isVoiceReply && replyText && !options.liveVoice) {
       speakText(replyText);
       setSpeakingMsgId(botReply.id);
     }
+    return { reply: replyText, botReply };
+  };
+
+  const voice = useArcVoice({
+    walletAddress,
+    onAgentPrompt: (prompt) => handleSendChatPrompt(prompt, { liveVoice: true }),
+  });
+
+  const handleStartVoiceCall = async () => {
+    if (!walletAddress) {
+      setIsConnectModalOpen(true);
+      showToast('Sign in to talk with your NairaTag agent.', 'info');
+      return;
+    }
+    const agent = currentTaggedAgent;
+    const agentTag = agent?.tag || 'arc';
+    const conversationId = activeChatConversationId || getOrCreateArcChatConversationId(walletAddress, agentTag);
+    setActiveChatConversationId(conversationId);
+    setIsChatConversationOpen(true);
+    setMainTab('chat');
+    await voice.start({ conversationId, agentTag });
   };
 
   const handleWidgetAction = (widget) => {
@@ -4357,6 +4380,14 @@ function ArcAppShell() {
               <div className="chat-top-nav-actions">
               <button
                 type="button"
+                className={`chat-history-btn arc-voice-launch ${voice.status === 'active' ? 'is-active' : ''}`}
+                onClick={handleStartVoiceCall}
+                aria-label="Start a live voice call with your agent"
+                title="Talk to your agent"
+                disabled={voice.status === 'connecting' || voice.status === 'active'}
+              ><Phone size={16} /></button>
+              <button
+                type="button"
                 className="chat-history-btn"
                 onClick={handleOpenChatHistory}
                 aria-label="Open saved chat history"
@@ -5924,6 +5955,12 @@ function ArcAppShell() {
         onClose={() => setIsPersonalAgentOpen(false)}
         walletAddress={walletAddress}
         tag={myTag?.tag || ''}
+      />
+      <ArcVoiceCall
+        voice={voice}
+        agentTag={currentTaggedAgent?.tag || 'arc'}
+        agentName={currentTaggedAgent?.name || (myTag?.tag ? `₦${myTag.tag}` : 'NairaTag Agent')}
+        accountEmail={accountEmail}
       />
     </>
   );
