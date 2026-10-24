@@ -1,0 +1,9 @@
+node_modules
+.git
+contracts
+lib
+scripts
+test
+dist
+.arc-studio
+bun.lock
