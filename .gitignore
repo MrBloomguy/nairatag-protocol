@@ -39,3 +39,11 @@ op-stack/logs/
 scratch/
 
 *.bak
+
+# App-local library copies
+apps/*/lib/
+apps/*/contracts/out/
+apps/*/contracts/cache/
+
+# OpenDots source (cloned separately)
+apps/nairadots/opendots/

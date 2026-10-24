@@ -1,0 +1,41 @@
+{
+  "name": "arc-nairatag",
+  "version": "1.0.0",
+  "description": "NairaTag Pay - Arc Mini-App: Send USDC on Arc to a name, not an address",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "vercel-build": "NODE_OPTIONS=--max-old-space-size=4096 vite build",
+    "preview": "vite preview",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "nairatag",
+    "arc",
+    "usdc",
+    "stablecoin",
+    "payments"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@circle-fin/adapter-viem-v2": "^1.19.1",
+    "@circle-fin/swap-kit": "^1.8.0",
+    "@circle-fin/w3s-pw-web-sdk": "^1.1.11",
+    "@types/canvas-confetti": "^1.9.0",
+    "canvas-confetti": "^1.9.4",
+    "lucide-react": "^1.59.0",
+    "motion": "^14.4.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "viem": "^2.57.7",
+    "@resvg/resvg-js": "^2.6.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.1.2",
+    "autoprefixer": "^10.6.1",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.4"
+  }
+}
