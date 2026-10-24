@@ -20,8 +20,8 @@ export function broadcastArcClaimToTelegram(claim) {
   return postTelegramAlert({ kind: 'claim', ...claim });
 }
 
-export function broadcastArcTaskToTelegram({ action, taskId, taskTitle, rewardUSDC, points, walletAddress, timestamp, signature }) {
-  return postTelegramAlert({ kind: 'task', action, taskId, taskTitle, rewardUSDC, points, walletAddress, timestamp, signature });
+export function broadcastArcTaskToTelegram({ action, taskId, taskTitle, rewardUSDC, points, walletAddress, timestamp, signature, deliverableHash }) {
+  return postTelegramAlert({ kind: 'task', action, taskId, taskTitle, rewardUSDC, points, walletAddress, timestamp, signature, deliverableHash });
 }
 
 export function broadcastArcPaidTaskToTelegram({ taskId, walletAddress }) {

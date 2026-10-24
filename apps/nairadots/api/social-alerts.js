@@ -48,6 +48,9 @@ function taskMessage(body) {
     `Wallet: ${body.walletAddress.toLowerCase()}`,
     `Chain: ${ARC_CHAIN_ID}`,
     `Timestamp: ${body.timestamp}`,
+    ...(body.action === 'submit' && /^[a-f\d]{64}$/i.test(String(body.deliverableHash || ''))
+      ? [`Deliverable SHA-256: ${String(body.deliverableHash).toLowerCase()}`]
+      : []),
   ].join('\n');
 }
 
@@ -131,7 +134,10 @@ function alertText(body) {
     const status = body.action === 'start' ? 'started working on' : 'submitted';
     const reward = Number(body.rewardUSDC) > 0 ? ` Potential bounty: $${Number(body.rewardUSDC)} USDC and ${Number(body.points) || 0} Protocol Points.` : '';
     const review = body.action === 'submit' ? ' Submission is pending task-owner review; no payout is confirmed yet.' : '';
-    return `NairaTag task update\n${wallet} ${status}: ${title}.${reward}${review}\nTask ID: ${cleanText(body.taskId, 90)}\nArc Testnet - https://arc.nairatag.ng/#tasks`;
+    const digest = body.action === 'submit' && /^[a-f\d]{64}$/i.test(String(body.deliverableHash || ''))
+      ? `\nDeliverable SHA-256: ${String(body.deliverableHash).toLowerCase()}`
+      : '';
+    return `NairaTag task update\n${wallet} ${status}: ${title}.${reward}${review}\nTask ID: ${cleanText(body.taskId, 90)}${digest}\nArc Testnet - https://arc.nairatag.ng/#tasks`;
   }
   if (body.kind === 'task_paid') {
     const title = cleanText(body.title || body.taskId);
@@ -203,6 +209,9 @@ export default async function handler(req, res) {
     }
     let message;
     if (body.kind === 'task' && ['start', 'submit'].includes(body.action) && /^[a-zA-Z0-9_-]{1,96}$/.test(String(body.taskId || ''))) {
+      if (body.action === 'submit' && !/^[a-f\d]{64}$/i.test(String(body.deliverableHash || ''))) {
+        return sendJson(res, 400, { error: 'A valid deliverable digest is required for this alert.' });
+      }
       await verifyWalletSignature(body, taskMessage(body));
       const taskDetails = await verifyTaskAccepted(body);
       message = alertText({ ...body, ...taskDetails });

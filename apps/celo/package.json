@@ -1,5 +1,5 @@
 {
-  "name": "arc-nairatag",
+  "name": "celo-nairatag",
   "version": "1.0.0",
   "description": "NairaTag Pay - Arc Mini-App: Send USDC on Arc to a name, not an address",
   "type": "module",

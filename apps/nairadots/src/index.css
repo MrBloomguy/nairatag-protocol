@@ -8733,3 +8733,6 @@ body:has(.main-content-wrapper.chat-mode) #root {
 .agent-directory-card-earnings { display: flex; align-items: baseline; justify-content: center; gap: 5px; color: var(--privy-color-foreground-2); font-size: 11px; }
 .agent-directory-card-earnings strong { color: var(--privy-color-foreground); font-size: 12px; }
 .agent-directory-earnings { color: var(--privy-color-foreground); font-size: 11px; font-weight: 700; white-space: nowrap; }
+.toast-pill.toast-actionable{cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.toast-pill.toast-actionable:hover{transform:translateY(-2px);border-color:var(--primary);box-shadow:0 6px 20px rgba(91,79,255,.14)!important}
+.toast-pill.toast-actionable:focus-visible{outline:2px solid var(--primary);outline-offset:3px}

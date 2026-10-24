@@ -48,6 +48,7 @@ function taskMessage(body) {
     `Wallet: ${body.walletAddress.toLowerCase()}`,
     `Chain: ${ARC_CHAIN_ID}`,
     `Timestamp: ${body.timestamp}`,
+    ...(body.action === 'submit' ? [`Deliverable SHA-256: ${body.deliverableHash}`] : []),
   ].join('\n');
 }
 
@@ -203,6 +204,9 @@ export default async function handler(req, res) {
     }
     let message;
     if (body.kind === 'task' && ['start', 'submit'].includes(body.action) && /^[a-zA-Z0-9_-]{1,96}$/.test(String(body.taskId || ''))) {
+      if (body.action === 'submit' && !/^[a-f0-9]{64}$/i.test(String(body.deliverableHash || ''))) {
+        return sendJson(res, 400, { error: 'A SHA-256 digest of the submitted work is required.' });
+      }
       await verifyWalletSignature(body, taskMessage(body));
       const taskDetails = await verifyTaskAccepted(body);
       message = alertText({ ...body, ...taskDetails });

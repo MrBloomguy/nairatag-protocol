@@ -2,20 +2,29 @@ import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 import circleHandler from './api/circle.js';
+import agentAvatarHandler from './api/agent-avatar.js';
 
 const circleApiPlugin = {
   name: 'circle-api-dev',
   configureServer(server) {
     mountCircleHandler(server);
+    mountAgentAvatarHandler(server);
   },
   configurePreviewServer(server) {
     mountCircleHandler(server);
+    mountAgentAvatarHandler(server);
   },
 };
 
 function mountCircleHandler(server) {
   server.middlewares.use('/api/circle', (req, res, next) => {
     Promise.resolve(circleHandler(req, res)).catch(next);
+  });
+}
+
+function mountAgentAvatarHandler(server) {
+  server.middlewares.use('/api/agent-avatar', (req, res, next) => {
+    Promise.resolve(agentAvatarHandler(req, res)).catch(next);
   });
 }
 
@@ -28,6 +37,10 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), circleApiPlugin],
     resolve: {
+      // This workspace shares some hoisted packages with the React 18 apps.
+      // Keep every UI package on this app's React 19 runtime to avoid
+      // "element from an older version of React" crashes in development.
+      dedupe: ['react', 'react-dom'],
       alias: [
         {
           // Circle only uses jsonwebtoken.decode() for social-login nonce checks.
@@ -39,7 +52,7 @@ export default defineConfig(({ mode }) => {
     },
     optimizeDeps: {
       noDiscovery: true,
-      include: ['react', 'react-dom/client', 'lucide-react', 'canvas-confetti', '@circle-fin/w3s-pw-web-sdk'],
+      include: ['react', 'react-dom/client', 'lucide-react', 'canvas-confetti'],
       exclude: ['viem'],
     },
     build: {

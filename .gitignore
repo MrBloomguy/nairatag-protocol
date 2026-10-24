@@ -45,5 +45,4 @@ apps/*/lib/
 apps/*/contracts/out/
 apps/*/contracts/cache/
 
-# OpenDots source (cloned separately)
-apps/nairadots/opendots/
+# OpenDots agent runtime is vendored under apps/nairadots/opendots.

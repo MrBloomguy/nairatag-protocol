@@ -7,8 +7,9 @@ import tasks from '../lib/arc/tasks.js';
 import admin from '../lib/arc/admin.js';
 import personalAgent from '../lib/arc/personal-agent.js';
 import personalAgentReconcile from '../lib/arc/personal-agent-reconcile.js';
+import userAgents from '../lib/arc/user-agents.js';
 
-const handlers = { auth, agents, chat, follows, rewards, tasks, admin, personalagent: personalAgent, memoryreconcile: personalAgentReconcile };
+const handlers = { auth, agents, useragents: userAgents, chat, follows, rewards, tasks, admin, personalagent: personalAgent, memoryreconcile: personalAgentReconcile };
 
 export default async function handler(req, res) {
   const route = String(req.query?.route || '').toLowerCase();

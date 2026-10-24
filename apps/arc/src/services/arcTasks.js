@@ -104,6 +104,7 @@ async function submitSignedAction({ action, taskId, walletAddress, deliverable, 
     `Wallet: ${walletAddress.toLowerCase()}`,
     `Chain: ${ARC_CHAIN_ID}`,
     `Timestamp: ${timestamp}`,
+    ...(action === 'submit' ? [`Deliverable SHA-256: ${await sha256Hex(deliverable.trim())}`] : []),
   ].join('\n');
   const signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });
   const payload = await readResponse(await fetch(ARC_TASKS_API, {
@@ -111,11 +112,18 @@ async function submitSignedAction({ action, taskId, walletAddress, deliverable, 
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ action, taskId, walletAddress, timestamp, signature, deliverable }),
   }));
+  const deliverableHash = action === 'submit' ? await sha256Hex(deliverable.trim()) : undefined;
   if (action === 'start' || action === 'submit') {
-    broadcastArcTaskToTelegram({ action, taskId, taskTitle, rewardUSDC, points, walletAddress, timestamp, signature })
+    broadcastArcTaskToTelegram({ action, taskId, taskTitle, rewardUSDC, points, walletAddress, timestamp, signature, deliverableHash })
       .catch((error) => console.warn('[Telegram task alert]', error.message));
   }
   return mapProgress({ [taskId]: payload.progress })[taskId];
+}
+
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 export function startArcTask({ taskId, walletAddress, taskTitle, rewardUSDC, points }) {
