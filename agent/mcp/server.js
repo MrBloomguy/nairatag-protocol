@@ -671,6 +671,58 @@ server.tool(
   ({ prompt, wallet, tag }) => call(() => museSpark.processPrompt(prompt, { wallet, tag })),
 );
 
+// 7. Arc Circle Agent Wallet Tools (Circle Agent Stack)
+server.tool(
+  'arc_agent_wallet_balance',
+  'Read autonomous agent wallet USDC balance directly on Arc Testnet or Arc Mainnet.',
+  { address: z.string().optional(), network: z.enum(['arcTestnet', 'arc']).optional() },
+  ({ address, network }) => call(() => {
+    const wallet = defaultWalletFactory.createWallet({ network: network || 'arcTestnet', address });
+    return wallet.getTokenBalance('USDC');
+  }),
+);
+
+server.tool(
+  'arc_agent_wallet_policy',
+  'Read autonomous agent spending policy, remaining daily limit, and security guardrails on Arc.',
+  { network: z.enum(['arcTestnet', 'arc']).optional() },
+  ({ network }) => call(() => {
+    const wallet = defaultWalletFactory.createWallet({ network: network || 'arcTestnet' });
+    return wallet.getSpendingPolicy();
+  }),
+);
+
+server.tool(
+  'arc_agent_wallet_set_policy',
+  'Configure spending limits for an agent wallet on Arc (requires perTx <= daily <= weekly <= monthly).',
+  {
+    perTxLimit: z.number().positive(),
+    dailyLimit: z.number().positive(),
+    weeklyLimit: z.number().positive(),
+    monthlyLimit: z.number().positive(),
+    network: z.enum(['arcTestnet', 'arc']).optional(),
+  },
+  ({ perTxLimit, dailyLimit, weeklyLimit, monthlyLimit, network }) => call(() => {
+    const wallet = defaultWalletFactory.createWallet({ network: network || 'arcTestnet' });
+    return wallet.setSpendingPolicy({ perTxLimit, dailyLimit, weeklyLimit, monthlyLimit });
+  }),
+);
+
+server.tool(
+  'arc_agent_wallet_transfer',
+  'Autonomously transfer USDC on Arc within pre-approved spending limits to a recipient address or NairaTag handle.',
+  {
+    to: z.string().min(1),
+    amount: z.number().positive(),
+    memo: z.string().optional(),
+    network: z.enum(['arcTestnet', 'arc']).optional(),
+  },
+  ({ to, amount, memo, network }) => call(() => {
+    const wallet = defaultWalletFactory.createWallet({ network: network || 'arcTestnet' });
+    return wallet.transfer({ recipient: to, amount, memo });
+  }),
+);
+
 async function serverCallFindAvailable(candidates, selectedService = service) {
   for (const candidate of candidates) {
     const availability = await selectedService.checkAvailability(candidate);

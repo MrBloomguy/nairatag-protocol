@@ -200,6 +200,82 @@ const NETWORKS = {
         type: 'native'
       }
     }
+  },
+
+  arcTestnet: {
+    chainId: 5042002,
+    name: 'Arc Testnet',
+    chain: {
+      id: 5042002,
+      name: 'Arc Testnet',
+      nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
+      rpcUrls: {
+        default: { http: [process.env.ARC_TESTNET_RPC || 'https://rpc.testnet.arc.io'] }
+      },
+      blockExplorers: {
+        default: { name: 'ArcExplorer', url: 'https://explorer.testnet.arc.io' }
+      },
+      testnet: true
+    },
+    rpcUrl: process.env.ARC_TESTNET_RPC || 'https://rpc.testnet.arc.io',
+    explorerUrl: 'https://explorer.testnet.arc.io',
+    nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
+    circleBlockchain: 'ARC-TESTNET',
+    supportsFeeCurrency: false,
+    contracts: {
+      registry: process.env.ARC_REGISTRY_ADDRESS || '0x034f64b644988406ded382ebabb5c981bd19684a',
+      resolver: process.env.ARC_RESOLVER_ADDRESS || '0xaee1af632006a5062accdb74f73930439b76efbf',
+      memo: process.env.ARC_MEMO_ADDRESS || '0x5294e9927c3306dcbadb03fe70b92e01ccede505',
+      usdc: process.env.ARC_USDC_ADDRESS || '0x3600000000000000000000000000000000000000'
+    },
+    tokens: {
+      USDC: {
+        symbol: 'USDC',
+        name: 'USD Coin',
+        address: '0x3600000000000000000000000000000000000000',
+        decimals: 6,
+        type: 'native_gas',
+        isDefaultDisplay: true
+      }
+    }
+  },
+
+  arc: {
+    chainId: 5042,
+    name: 'Arc Mainnet',
+    chain: {
+      id: 5042,
+      name: 'Arc Mainnet',
+      nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
+      rpcUrls: {
+        default: { http: [process.env.ARC_MAINNET_RPC || 'https://rpc.mainnet.arc.io'] }
+      },
+      blockExplorers: {
+        default: { name: 'ArcExplorer', url: 'https://explorer.arc.io' }
+      },
+      testnet: false
+    },
+    rpcUrl: process.env.ARC_MAINNET_RPC || 'https://rpc.mainnet.arc.io',
+    explorerUrl: 'https://explorer.arc.io',
+    nativeCurrency: { name: 'USDC', symbol: 'USDC', decimals: 6 },
+    circleBlockchain: 'ARC',
+    supportsFeeCurrency: false,
+    contracts: {
+      registry: process.env.ARC_REGISTRY_ADDRESS || '0x034f64b644988406ded382ebabb5c981bd19684a',
+      resolver: process.env.ARC_RESOLVER_ADDRESS || '0xaee1af632006a5062accdb74f73930439b76efbf',
+      memo: process.env.ARC_MEMO_ADDRESS || '0x5294e9927c3306dcbadb03fe70b92e01ccede505',
+      usdc: process.env.ARC_USDC_ADDRESS || '0x3600000000000000000000000000000000000000'
+    },
+    tokens: {
+      USDC: {
+        symbol: 'USDC',
+        name: 'USD Coin',
+        address: '0x3600000000000000000000000000000000000000',
+        decimals: 6,
+        type: 'native_gas',
+        isDefaultDisplay: true
+      }
+    }
   }
 };
 
@@ -220,11 +296,13 @@ function resolveActiveNetwork() {
 
 function getNetworkConfig(networkKey = 'celoSepolia') {
   const normalized = String(networkKey || '').toLowerCase().replace(/[-_]/g, '');
+  if (normalized === 'arctestnet' || normalized === 'arc5042002' || normalized === '5042002') return NETWORKS.arcTestnet;
+  if (normalized === 'arc' || normalized === 'arcmainnet' || normalized === '5042') return NETWORKS.arc;
   if (normalized === 'celosepolia' || normalized === '11142220' || normalized === 'default') return NETWORKS.celoSepolia;
   if (normalized === 'celo' || normalized === '42220') return NETWORKS.celo;
   if (normalized === 'local' || normalized === '901' || normalized === 'devnet') return NETWORKS.local;
   if (normalized === 'celoalfajores' || normalized === 'alfajores' || normalized === '44787') return NETWORKS.celoAlfajores;
-  throw new Error(`Unsupported network: ${networkKey}. Supported: celoSepolia, celo, local, celoAlfajores`);
+  throw new Error(`Unsupported network: ${networkKey}. Supported: arcTestnet, arc, celoSepolia, celo, local, celoAlfajores`);
 }
 
 const DEFAULT_LIMITS = {

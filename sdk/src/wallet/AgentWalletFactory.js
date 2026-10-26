@@ -6,22 +6,32 @@
 
 const { CeloAgentWallet } = require('./providers/CeloAgentWallet');
 const { MiniPayWallet } = require('./providers/MiniPayWallet');
+const { ArcCircleAgentWallet } = require('./providers/ArcCircleAgentWallet');
 
 class AgentWalletFactory {
   constructor(env = process.env) {
-    this.defaultNetwork = (env.AGENT_NETWORK || 'celo').toLowerCase();
+    this.defaultNetwork = (env.AGENT_NETWORK || 'arcTestnet').toLowerCase();
+    this.arcEnabled = env.AGENT_ARC_ENABLED !== 'false';
     this.celoEnabled = env.AGENT_CELO_ENABLED !== 'false';
     this.baseEnabled = env.AGENT_BASE_ENABLED === 'true';
     this.miniPayEnabled = env.AGENT_MINIPAY_ENABLED !== 'false';
   }
 
   createWallet(options = {}) {
-    const providerType = options.type || 'agent'; // 'agent' | 'minipay'
+    const providerType = options.type || 'agent'; // 'agent' | 'circle_agent' | 'minipay'
     const network = (options.network || this.defaultNetwork).toLowerCase();
 
     if (providerType === 'minipay') {
       if (!this.miniPayEnabled) throw new Error('MiniPay wallet provider is currently disabled by feature flag.');
       return new MiniPayWallet(options);
+    }
+
+    if (network.startsWith('arc') || providerType === 'circle_agent') {
+      if (!this.arcEnabled) throw new Error('Arc network execution is disabled.');
+      return new ArcCircleAgentWallet({
+        ...options,
+        networkKey: network.startsWith('arc') ? network : 'arcTestnet'
+      });
     }
 
     if (network.startsWith('celo')) {
@@ -35,7 +45,7 @@ class AgentWalletFactory {
       return new CeloAgentWallet({ ...options, networkKey: 'celo' });
     }
 
-    return new CeloAgentWallet(options);
+    return new ArcCircleAgentWallet(options);
   }
 }
 

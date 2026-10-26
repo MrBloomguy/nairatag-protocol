@@ -337,3 +337,26 @@ export function clearCircleSession() {
   sdkPromise = null;
 }
 
+export async function getAgentCircleSpendingPolicy(key) {
+  return circleAction('getAgentWalletPolicy', { walletAddress: key });
+}
+
+export async function setAgentCircleSpendingPolicy(key, policy) {
+  return circleAction('setAgentWalletPolicy', { walletAddress: key, policy });
+}
+
+export async function executeAgentCircleTransfer({ session, walletAddress, recipient, amount, memo = '' }) {
+  if (!session?.userToken || !session?.walletId) {
+    throw new Error('A valid Circle session with userToken and walletId is required.');
+  }
+  return circleAction('executeAgentTransfer', {
+    userToken: session.userToken,
+    walletId: session.walletId,
+    walletAddress: walletAddress || session.walletAddress,
+    recipient,
+    amount: Number(amount),
+    memo,
+  });
+}
+
+

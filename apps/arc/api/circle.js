@@ -6,6 +6,23 @@ const NAIRATAG_RESOLVER = '0xaee1af632006a5062accdb74f73930439b76efbf';
 const ARC_MEMO = '0x5294e9927c3306dcbadb03fe70b92e01ccede505';
 const MAX_BODY_BYTES = 16 * 1024;
 
+const agentPolicies = new Map();
+
+function getPolicyFor(key) {
+  const normalized = String(key || '').toLowerCase();
+  return agentPolicies.get(normalized) || {
+    perTxLimit: 25,
+    dailyLimit: 100,
+    weeklyLimit: 500,
+    monthlyLimit: 2000,
+    currency: 'USDC',
+    spentToday: 0,
+    remainingDaily: 100,
+    recipientAllowlist: [],
+    recipientBlocklist: [],
+  };
+}
+
 function sendJson(res, status, body) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -145,6 +162,84 @@ async function routeAction(action, params) {
           feeLevel: 'MEDIUM',
         },
       });
+    }
+    case 'getAgentWalletPolicy': {
+      const key = String(params.walletAddress || params.agentTag || '').trim().toLowerCase();
+      if (!key) throw Object.assign(new Error('Missing walletAddress or agentTag.'), { status: 400 });
+      return getPolicyFor(key);
+    }
+    case 'setAgentWalletPolicy': {
+      const key = String(params.walletAddress || params.agentTag || '').trim().toLowerCase();
+      if (!key) throw Object.assign(new Error('Missing walletAddress or agentTag.'), { status: 400 });
+      const rawPolicy = params.policy || {};
+      const perTx = Number(rawPolicy.perTxLimit ?? 25);
+      const daily = Number(rawPolicy.dailyLimit ?? 100);
+      const weekly = Number(rawPolicy.weeklyLimit ?? 500);
+      const monthly = Number(rawPolicy.monthlyLimit ?? 2000);
+      if (perTx <= 0 || daily <= 0 || weekly <= 0 || monthly <= 0) {
+        throw Object.assign(new Error('Spending limits must be positive numbers.'), { status: 400 });
+      }
+      if (perTx > daily || daily > weekly || weekly > monthly) {
+        throw Object.assign(new Error('Invalid limit hierarchy: perTx <= daily <= weekly <= monthly.'), { status: 400 });
+      }
+      const existing = getPolicyFor(key);
+      const updated = {
+        ...existing,
+        perTxLimit: perTx,
+        dailyLimit: daily,
+        weeklyLimit: weekly,
+        monthlyLimit: monthly,
+        recipientAllowlist: Array.isArray(rawPolicy.recipientAllowlist) ? rawPolicy.recipientAllowlist.map(a => String(a).toLowerCase()) : existing.recipientAllowlist,
+        recipientBlocklist: Array.isArray(rawPolicy.recipientBlocklist) ? rawPolicy.recipientBlocklist.map(b => String(b).toLowerCase()) : existing.recipientBlocklist,
+        remainingDaily: Math.max(0, daily - existing.spentToday)
+      };
+      agentPolicies.set(key, updated);
+      return updated;
+    }
+    case 'executeAgentTransfer': {
+      const userToken = requireText(params.userToken, 'user token', 4096);
+      const walletId = requireText(params.walletId, 'wallet id', 128);
+      const walletAddress = String(params.walletAddress || '').toLowerCase();
+      const recipient = String(params.recipient || '').trim().toLowerCase();
+      const amount = Number(params.amount);
+      if (!recipient || !/^0x[0-9a-f]{40}$/i.test(recipient)) {
+        throw Object.assign(new Error('Invalid recipient EVM address.'), { status: 400 });
+      }
+      if (!Number.isFinite(amount) || amount <= 0) {
+        throw Object.assign(new Error('Invalid transfer amount.'), { status: 400 });
+      }
+      const policyKey = walletAddress || walletId;
+      const policy = getPolicyFor(policyKey);
+      if (amount > policy.perTxLimit) {
+        throw Object.assign(new Error(`Amount ${amount} USDC exceeds per-tx limit of ${policy.perTxLimit} USDC.`), { status: 400 });
+      }
+      if (policy.spentToday + amount > policy.dailyLimit) {
+        throw Object.assign(new Error(`Daily budget exceeded. Spent: ${policy.spentToday} USDC, Attempted: ${amount} USDC, Limit: ${policy.dailyLimit} USDC.`), { status: 400 });
+      }
+      if (policy.recipientBlocklist.includes(recipient)) {
+        throw Object.assign(new Error(`Recipient ${recipient} is blocked by agent policy.`), { status: 400 });
+      }
+      if (policy.recipientAllowlist.length > 0 && !policy.recipientAllowlist.includes(recipient)) {
+        throw Object.assign(new Error(`Recipient ${recipient} is not on agent allowlist.`), { status: 400 });
+      }
+      // 6 decimals for Arc USDC
+      const amountUnits = BigInt(Math.round(amount * 1_000_000)).toString();
+      const result = await circleRequest('/user/transactions/contractExecution', {
+        method: 'POST',
+        userToken,
+        body: {
+          idempotencyKey: crypto.randomUUID(),
+          walletId,
+          contractAddress: ARC_USDC,
+          abiFunctionSignature: 'transfer(address,uint256)',
+          abiParameters: [recipient, amountUnits],
+          feeLevel: 'MEDIUM',
+        },
+      });
+      policy.spentToday += amount;
+      policy.remainingDaily = Math.max(0, policy.dailyLimit - policy.spentToday);
+      agentPolicies.set(policyKey, policy);
+      return { ok: true, ...result, amount, recipient, remainingDaily: policy.remainingDaily };
     }
     default:
       throw Object.assign(new Error('Unknown Circle action.'), { status: 400 });
