@@ -1,5 +1,5 @@
 const ARC_AGENT_FOLLOWS_API = import.meta.env.VITE_ARC_AGENT_FOLLOWS_API
-  || 'https://nairatag.ng/api/arc-follows';
+  || 'https://old.nairatag.ng/api/arc-follows';
 const ARC_CHAIN_ID = 5042002;
 
 function normalizeTag(tag) {

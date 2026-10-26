@@ -2418,16 +2418,16 @@
     }
 
     /* ================================================================
-       LAUNCHPAD â€” ZORA-STYLE DISCOVERY + DETAIL
+       LAUNCHPAD — ZORA-STYLE DISCOVERY + DETAIL
        ================================================================ */
 
     var LP_COINS = [
-      { id:'KEMI',name:'Kemi Energy',symbol:'KEMI',handle:'kemi',avatar:'K',avatarBg:'linear-gradient(135deg,#e6dcfb,#d4e5ff)',avatarColor:'#7a45e5',status:'bonding',cat:['creators','cngn'],mcap:115200,vol24:153400,holders:362,ageMin:15,paired:'cNGN',pairIcon:'â‚¦',price:0.0000115,change24:118.84,curveFilledPct:72,raised:7200,spark:[0.40,0.38,0.44,0.41,0.55,0.60,0.57,0.68,0.72,0.80,0.76,0.85,0.90,0.88,1.00] },
-      { id:'ASAKE',name:'Asake Coin',symbol:'ASAKE',handle:'asake',avatar:'A',avatarBg:'linear-gradient(135deg,#fbbf24,#d97706)',avatarColor:'#fff',status:'graduated',cat:['creators','cngn'],mcap:302400,vol24:47800,holders:891,ageMin:2880,paired:'cNGN',pairIcon:'â‚¦',price:0.0255,change24:34.20,curveFilledPct:100,raised:10000,spark:[0.30,0.35,0.38,0.50,0.62,0.70,0.68,0.75,0.80,0.78,0.85,0.88,0.92,0.95,1.00] },
-      { id:'BISI',name:'Bisi Protocol',symbol:'BISI',handle:'bisi',avatar:'B',avatarBg:'linear-gradient(135deg,#a78bfa,#7c3aed)',avatarColor:'#fff',status:'bonding',cat:['defi','infra'],mcap:44100,vol24:12300,holders:94,ageMin:45,paired:'cNGN',pairIcon:'â‚¦',price:0.0000441,change24:-8.40,curveFilledPct:31,raised:3100,spark:[1.00,0.95,0.88,0.91,0.85,0.80,0.82,0.78,0.74,0.72,0.70,0.68,0.65,0.62,0.60] },
-      { id:'WALE',name:'Wale DAO',symbol:'WALE',handle:'wale',avatar:'W',avatarBg:'linear-gradient(135deg,#10b981,#059669)',avatarColor:'#fff',status:'bonding',cat:['defi'],mcap:78600,vol24:31200,holders:213,ageMin:120,paired:'cNGN',pairIcon:'â‚¦',price:0.0000786,change24:22.10,curveFilledPct:58,raised:5800,spark:[0.50,0.52,0.55,0.58,0.60,0.65,0.70,0.72,0.75,0.78,0.82,0.85,0.88,0.92,1.00] },
-      { id:'MICHEAL',name:'Micheal Meme',symbol:'MICHEAL',handle:'micheal',avatar:'M',avatarBg:'linear-gradient(135deg,#f43f5e,#e11d48)',avatarColor:'#fff',status:'bonding',cat:['meme'],mcap:18900,vol24:5600,holders:47,ageMin:5,paired:'cNGN',pairIcon:'â‚¦',price:0.0000189,change24:287.00,curveFilledPct:12,raised:1200,spark:[0.10,0.12,0.15,0.20,0.30,0.45,0.55,0.70,0.80,0.90,0.95,0.98,1.00,0.95,0.88] },
-      { id:'LAGOS',name:'Lagos Token',symbol:'LAGOS',handle:'lagos',avatar:'L',avatarBg:'linear-gradient(135deg,#0ea5e9,#0284c7)',avatarColor:'#fff',status:'graduated',cat:['cngn','infra'],mcap:524000,vol24:88200,holders:1420,ageMin:10080,paired:'cNGN',pairIcon:'â‚¦',price:0.0524,change24:5.80,curveFilledPct:100,raised:10000,spark:[0.70,0.72,0.75,0.74,0.78,0.80,0.82,0.79,0.81,0.84,0.88,0.90,0.92,0.96,1.00] }
+      { id:'KEMI',name:'Kemi Energy',symbol:'KEMI',handle:'kemi',avatar:'K',avatarBg:'linear-gradient(135deg,#e6dcfb,#d4e5ff)',avatarColor:'#7a45e5',status:'bonding',cat:['creators','cngn'],mcap:115200,vol24:153400,holders:362,ageMin:15,paired:'cNGN',pairIcon:'₦',price:0.0000115,change24:118.84,curveFilledPct:72,raised:7200,spark:[0.40,0.38,0.44,0.41,0.55,0.60,0.57,0.68,0.72,0.80,0.76,0.85,0.90,0.88,1.00] },
+      { id:'ASAKE',name:'Asake Coin',symbol:'ASAKE',handle:'asake',avatar:'A',avatarBg:'linear-gradient(135deg,#fbbf24,#d97706)',avatarColor:'#fff',status:'graduated',cat:['creators','cngn'],mcap:302400,vol24:47800,holders:891,ageMin:2880,paired:'cNGN',pairIcon:'₦',price:0.0255,change24:34.20,curveFilledPct:100,raised:10000,spark:[0.30,0.35,0.38,0.50,0.62,0.70,0.68,0.75,0.80,0.78,0.85,0.88,0.92,0.95,1.00] },
+      { id:'BISI',name:'Bisi Protocol',symbol:'BISI',handle:'bisi',avatar:'B',avatarBg:'linear-gradient(135deg,#a78bfa,#7c3aed)',avatarColor:'#fff',status:'bonding',cat:['defi','infra'],mcap:44100,vol24:12300,holders:94,ageMin:45,paired:'cNGN',pairIcon:'₦',price:0.0000441,change24:-8.40,curveFilledPct:31,raised:3100,spark:[1.00,0.95,0.88,0.91,0.85,0.80,0.82,0.78,0.74,0.72,0.70,0.68,0.65,0.62,0.60] },
+      { id:'WALE',name:'Wale DAO',symbol:'WALE',handle:'wale',avatar:'W',avatarBg:'linear-gradient(135deg,#10b981,#059669)',avatarColor:'#fff',status:'bonding',cat:['defi'],mcap:78600,vol24:31200,holders:213,ageMin:120,paired:'cNGN',pairIcon:'₦',price:0.0000786,change24:22.10,curveFilledPct:58,raised:5800,spark:[0.50,0.52,0.55,0.58,0.60,0.65,0.70,0.72,0.75,0.78,0.82,0.85,0.88,0.92,1.00] },
+      { id:'MICHEAL',name:'Micheal Meme',symbol:'MICHEAL',handle:'micheal',avatar:'M',avatarBg:'linear-gradient(135deg,#f43f5e,#e11d48)',avatarColor:'#fff',status:'bonding',cat:['meme'],mcap:18900,vol24:5600,holders:47,ageMin:5,paired:'cNGN',pairIcon:'₦',price:0.0000189,change24:287.00,curveFilledPct:12,raised:1200,spark:[0.10,0.12,0.15,0.20,0.30,0.45,0.55,0.70,0.80,0.90,0.95,0.98,1.00,0.95,0.88] },
+      { id:'LAGOS',name:'Lagos Token',symbol:'LAGOS',handle:'lagos',avatar:'L',avatarBg:'linear-gradient(135deg,#0ea5e9,#0284c7)',avatarColor:'#fff',status:'graduated',cat:['cngn','infra'],mcap:524000,vol24:88200,holders:1420,ageMin:10080,paired:'cNGN',pairIcon:'₦',price:0.0524,change24:5.80,curveFilledPct:100,raised:10000,spark:[0.70,0.72,0.75,0.74,0.78,0.80,0.82,0.79,0.81,0.84,0.88,0.90,0.92,0.96,1.00] }
     ];
 
     var LP_SORT_KEY='mcap',LP_SORT_DIR=-1,LP_ACTIVE_CAT='all',LP_ACTIVE_TAB='new',LP_SEARCH='',LP_CURRENT_COIN=null,LP_BS_MODE='buy',LP_CHART_RANGE='6h';
@@ -2461,9 +2461,9 @@
       if(coins.length===0){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;font-size:0.85rem;">No coins match your filter</td></tr>';return;}
       tbody.innerHTML=coins.map(function(c){
         var isUp=c.change24>=0;var pct=(isUp?'+':'')+c.change24.toFixed(2)+'%';
-        var badge=c.status==='graduated'?'<span class="lp-coin-badge">âœ“ Grad</span>':'<span class="lp-coin-badge bonding">â—‰ Bonding</span>';
+        var badge=c.status==='graduated'?'<span class="lp-coin-badge">✓ Grad</span>':'<span class="lp-coin-badge bonding">â—‰ Bonding</span>';
         return '<tr onclick="lpOpenDetail(\''+c.id+'\')">' +
-          '<td class="lp-col-coin"><div class="lp-coin-cell"><div class="lp-coin-avatar" style="background:'+c.avatarBg+';color:'+c.avatarColor+';">'+c.avatar+'</div><div><div style="display:flex;align-items:center;gap:0.35rem;"><span class="lp-coin-name">'+c.name+'</span>'+badge+'</div><div class="lp-coin-ticker">'+c.symbol+'</div><div class="lp-coin-tag">â‚¦'+c.handle+'</div></div></div></td>' +
+          '<td class="lp-col-coin"><div class="lp-coin-cell"><div class="lp-coin-avatar" style="background:'+c.avatarBg+';color:'+c.avatarColor+';">'+c.avatar+'</div><div><div style="display:flex;align-items:center;gap:0.35rem;"><span class="lp-coin-name">'+c.name+'</span>'+badge+'</div><div class="lp-coin-ticker">'+c.symbol+'</div><div class="lp-coin-tag">₦'+c.handle+'</div></div></div></td>' +
           '<td class="lp-col-num"><div class="lp-num-val">'+lpFormatNum(c.mcap)+'</div></td>' +
           '<td class="lp-col-num"><div class="lp-num-val">'+lpFormatNum(c.vol24)+'</div></td>' +
           '<td class="lp-col-num"><div class="lp-num-val">'+c.holders.toLocaleString()+'</div></td>' +
@@ -2485,8 +2485,8 @@
       var av=document.getElementById('lp-detail-avatar');if(av){av.textContent=coin.avatar;av.style.background=coin.avatarBg;av.style.color=coin.avatarColor;}
       document.getElementById('lp-detail-name').textContent=coin.name;
       document.getElementById('lp-detail-ticker').textContent=coin.symbol;
-      var sEl=document.getElementById('lp-detail-status');if(sEl){sEl.textContent=coin.status==='graduated'?'âœ“ Graduated':'â—‰ Bonding';sEl.className='lp-detail-status-badge'+(coin.status==='graduated'?' graduated':'');}
-      document.getElementById('lp-detail-handle').textContent='â‚¦'+coin.handle;
+      var sEl=document.getElementById('lp-detail-status');if(sEl){sEl.textContent=coin.status==='graduated'?'✓ Graduated':'â—‰ Bonding';sEl.className='lp-detail-status-badge'+(coin.status==='graduated'?' graduated':'');}
+      document.getElementById('lp-detail-handle').textContent='₦'+coin.handle;
       document.getElementById('lp-detail-price').textContent='$'+coin.price.toFixed(7);
       var ce=document.getElementById('lp-detail-change');var up=coin.change24>=0;
       if(ce){ce.textContent=(up?'â†‘ ':'â†“ ')+Math.abs(coin.change24).toFixed(2)+'%';ce.className='lp-detail-change '+(up?'positive':'negative');}
@@ -2518,7 +2518,7 @@
       var amount=parseFloat(document.getElementById('lp-bs-amount')&&document.getElementById('lp-bs-amount').value)||0;
       var coin=LP_CURRENT_COIN;if(!coin)return;
       var rEl=document.getElementById('lp-bs-receive');
-      if(rEl){if(LP_BS_MODE==='buy'){var n=Math.floor(amount/coin.price*0.997);rEl.textContent='â‰ˆ '+n.toLocaleString()+' '+coin.symbol;}else{rEl.textContent='â‰ˆ '+(amount*coin.price*0.997).toFixed(6)+' cNGN';}}
+      if(rEl){if(LP_BS_MODE==='buy'){var n=Math.floor(amount/coin.price*0.997);rEl.textContent='≈ '+n.toLocaleString()+' '+coin.symbol;}else{rEl.textContent='≈ '+(amount*coin.price*0.997).toFixed(6)+' cNGN';}}
       var iEl=document.getElementById('lp-bs-impact');if(iEl)iEl.textContent='~'+Math.min(amount*0.03,5).toFixed(1)+'%';
       var ctaEl=document.getElementById('lp-bs-cta');if(ctaEl)ctaEl.textContent=(LP_BS_MODE==='buy'?'ðŸš€ Buy ':'ðŸ“¤ Sell ')+coin.symbol;
     }
@@ -2590,8 +2590,8 @@
       if(!name||!symbol||!handle){showToast('Fill in all fields','error');return;}
       closeLaunchModal();showToast('ðŸš€ Deploying '+symbol+' on Chain 901...','info');
       setTimeout(function(){
-        LP_COINS.unshift({id:symbol,name:name,symbol:symbol,handle:handle,avatar:symbol[0],avatarBg:'linear-gradient(135deg,#e6dcfb,#d4e5ff)',avatarColor:'#7a45e5',status:'bonding',cat:['creators','cngn'],mcap:0,vol24:0,holders:1,ageMin:0,paired:'cNGN',pairIcon:'â‚¦',price:0.00000833,change24:0,curveFilledPct:0,raised:0,spark:[0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,1.0]});
-        lpRenderTable();showToast('ðŸŽ‰ '+symbol+' (â‚¦'+handle+') launched! Bonding curve is live.','success');
+        LP_COINS.unshift({id:symbol,name:name,symbol:symbol,handle:handle,avatar:symbol[0],avatarBg:'linear-gradient(135deg,#e6dcfb,#d4e5ff)',avatarColor:'#7a45e5',status:'bonding',cat:['creators','cngn'],mcap:0,vol24:0,holders:1,ageMin:0,paired:'cNGN',pairIcon:'₦',price:0.00000833,change24:0,curveFilledPct:0,raised:0,spark:[0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,1.0]});
+        lpRenderTable();showToast('🎉 '+symbol+' (₦'+handle+') launched! Bonding curve is live.','success');
         if(document.getElementById('launch-name'))document.getElementById('launch-name').value='';
         if(document.getElementById('launch-symbol'))document.getElementById('launch-symbol').value='';
         if(document.getElementById('launch-handle'))document.getElementById('launch-handle').value='';

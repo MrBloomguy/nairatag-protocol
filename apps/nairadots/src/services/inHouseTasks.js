@@ -1,5 +1,5 @@
 const STORAGE_PREFIX = 'nairatag_inhouse_vouchers_v1';
-const CLAIM_API = import.meta.env.VITE_ARC_ADMIN_API || 'https://nairatag.ng/api/arc-admin';
+const CLAIM_API = import.meta.env.VITE_ARC_ADMIN_API || 'https://old.nairatag.ng/api/arc-admin';
 
 // Bundled voucher tasks are retired; this module only reads persisted claim history.
 export const IN_HOUSE_TASKS = [];

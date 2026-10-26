@@ -128,7 +128,7 @@
       "dest": "/api/tag?handle=$handle"
     },
     {
-      "src": "/â‚¦(?<handle>[^/]+)(/.*)?",
+      "src": "/₦(?<handle>[^/]+)(/.*)?",
       "dest": "/api/tag?handle=$handle"
     },
     {

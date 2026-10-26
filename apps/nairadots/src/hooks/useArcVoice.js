@@ -149,7 +149,7 @@ export function useArcVoice({ walletAddress, onAgentPrompt }) {
   const start = useCallback(async ({ conversationId, agentTag = 'arc' }) => {
     if (startingRef.current || status !== 'idle') return;
     if (!walletAddress) {
-      setError('Sign in to start a voice call with your agent.');
+      setError('Sign in to start voice mode with your agent.');
       return;
     }
     if (!navigator.mediaDevices?.getUserMedia || typeof WebSocket === 'undefined') {
@@ -195,7 +195,7 @@ export function useArcVoice({ walletAddress, onAgentPrompt }) {
       socket.onclose = (event) => {
         stopSetupTimer();
         if (socketRef.current === socket) {
-          if (event.code !== 1000 && statusRef.current !== 'idle') setError('The voice connection ended. Please start another call.');
+          if (event.code !== 1000 && statusRef.current !== 'idle') setError('Your voice conversation was interrupted. Try starting voice mode again.');
           stop();
         }
       };
@@ -279,7 +279,7 @@ export function useArcVoice({ walletAddress, onAgentPrompt }) {
           setPhase('speaking');
         }
         if (message.toolCallCancellation) setPhase('listening');
-        if (message.goAway) fail('This voice session is ending. Please start another call.');
+        if (message.goAway) fail('This voice session is ending. Please start voice mode again.');
       };
     } catch (voiceError) {
       const message = voiceError?.name === 'NotAllowedError'

@@ -1,0 +1,432 @@
+/* ==========================================================================
+   ChatGPT Advanced Voice Mode — Perfectly Proportioned for Desktop & Mobile
+   Refined compact fluid orb, sleek 380px centered stage, outlineless controls
+   ========================================================================== */
+
+.arc-voice-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 15000;
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  background-color: #000000;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   REFINED COMPACT STAGE (Centered on Desktop & Mobile)
+   ───────────────────────────────────────────────────────────── */
+.arc-voice-chatgpt-stage {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  height: 100%;
+  max-height: 680px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: max(16px, env(safe-area-inset-top)) 18px max(20px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  margin: 0 auto;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   1. TOP BAR
+   ───────────────────────────────────────────────────────────── */
+.arc-voice-chatgpt-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.arc-voice-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none !important;
+  outline: none !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: none !important;
+  transition: background 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.arc-voice-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  transform: scale(1.05);
+}
+
+.arc-voice-icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* Two-bar menu icon */
+.arc-voice-two-bars {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 16px;
+}
+
+.arc-voice-two-bars span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background-color: #ffffff;
+  border-radius: 2px;
+}
+
+/* Spoken Language Dropdown Popup */
+.arc-voice-settings-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 210px;
+  padding: 6px;
+  border-radius: 18px;
+  background: rgba(24, 24, 28, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: arc-popover-in 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes arc-popover-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.arc-voice-settings-header {
+  padding: 6px 10px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.arc-voice-settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12.5px;
+  font-weight: 550;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.arc-voice-settings-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff;
+}
+
+.arc-voice-settings-item.is-selected {
+  background: rgba(168, 85, 247, 0.25) !important;
+  color: #c084fc;
+  font-weight: 700;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2. CENTER STAGE (Refined, Compact ChatGPT Fluid Purple Orb)
+   ───────────────────────────────────────────────────────────── */
+.arc-voice-chatgpt-center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  margin: auto 0;
+  overflow: visible;
+}
+
+/* Fluid Orb: Scaled cleanly using vh and clamp so it never looks too big */
+.arc-voice-chatgpt-orb {
+  position: relative;
+  width: clamp(140px, 26vh, 195px);
+  height: clamp(140px, 26vh, 195px);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+}
+
+/* Outer Soft Glow Aura */
+.arc-voice-chatgpt-orb-aura {
+  position: absolute;
+  inset: -8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.3) 0%, rgba(139, 92, 246, 0.14) 45%, transparent 70%);
+  filter: blur(28px);
+  pointer-events: none;
+  opacity: 0.85;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* Inner Fluid Gradient Sphere */
+.arc-voice-chatgpt-orb-sphere {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 48%, #ffffff 0%, #f3e8ff 18%, #d8b4fe 38%, #a855f7 65%, #7c3aed 88%, #6d28d9 100%);
+  box-shadow: 0 0 45px rgba(168, 85, 247, 0.35), inset 0 0 25px rgba(255, 255, 255, 0.5);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+
+/* Soft internal lighting cloud layer */
+.arc-voice-chatgpt-orb-sphere::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 35%, rgba(255, 255, 255, 0.85) 0%, rgba(233, 213, 255, 0.4) 40%, transparent 70%);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* Dynamic State Animations */
+.phase-listening .arc-voice-chatgpt-orb-sphere {
+  animation: chatgpt-orb-breathe 3.2s infinite ease-in-out;
+}
+
+.phase-listening .arc-voice-chatgpt-orb-aura {
+  animation: chatgpt-aura-breathe 3.2s infinite ease-in-out;
+}
+
+.phase-thinking .arc-voice-chatgpt-orb-sphere {
+  animation: chatgpt-orb-spin 5s infinite linear;
+  background: radial-gradient(circle at 45% 45%, #ffffff 0%, #e0e7ff 22%, #a5b4fc 42%, #818cf8 68%, #6366f1 100%);
+  box-shadow: 0 0 55px rgba(99, 102, 241, 0.45), inset 0 0 25px rgba(255, 255, 255, 0.5);
+}
+
+.phase-speaking .arc-voice-chatgpt-orb-sphere {
+  animation: chatgpt-orb-speak 1.05s infinite alternate ease-in-out;
+  box-shadow: 0 0 65px rgba(192, 132, 252, 0.55), inset 0 0 35px rgba(255, 255, 255, 0.65);
+}
+
+.phase-speaking .arc-voice-chatgpt-orb-aura {
+  animation: chatgpt-aura-speak 1.05s infinite alternate ease-in-out;
+}
+
+.phase-muted .arc-voice-chatgpt-orb-sphere {
+  opacity: 0.45;
+  filter: grayscale(0.5);
+}
+
+.phase-muted .arc-voice-chatgpt-orb-aura {
+  opacity: 0.3;
+}
+
+@keyframes chatgpt-orb-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+
+@keyframes chatgpt-aura-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(1.08); opacity: 0.95; }
+}
+
+@keyframes chatgpt-orb-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes chatgpt-orb-speak {
+  from { transform: scale(0.975); }
+  to { transform: scale(1.045); }
+}
+
+@keyframes chatgpt-aura-speak {
+  from { transform: scale(0.97); opacity: 0.7; }
+  to { transform: scale(1.12); opacity: 0.95; }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3. BOTTOM BAR (Ask ChatGPT Pill, Mic Circle, White X Circle)
+   ───────────────────────────────────────────────────────────── */
+.arc-voice-chatgpt-bottom-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.arc-voice-chatgpt-bottombar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* "+ Ask ChatGPT" pill button */
+.arc-voice-chatgpt-input-pill {
+  flex: 1;
+  min-height: 48px;
+  border-radius: 999px;
+  border: none !important;
+  outline: none !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 450;
+  cursor: pointer;
+  box-shadow: none !important;
+  transition: background 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arc-voice-chatgpt-input-pill:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #ffffff !important;
+}
+
+.arc-voice-chatgpt-input-pill svg {
+  color: rgba(255, 255, 255, 0.75);
+  flex-shrink: 0;
+}
+
+.arc-voice-chatgpt-input-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Microphone Button (Outlineless circular) */
+.arc-voice-chatgpt-mic-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none !important;
+  outline: none !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: none !important;
+  flex-shrink: 0;
+  transition: background 0.2s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.arc-voice-chatgpt-mic-btn:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  transform: scale(1.05);
+}
+
+.arc-voice-chatgpt-mic-btn:active {
+  transform: scale(0.95);
+}
+
+/* Solid White Close Button (Outlineless circular) */
+.arc-voice-chatgpt-close-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none !important;
+  outline: none !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: none !important;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.arc-voice-chatgpt-close-btn:hover {
+  opacity: 0.92;
+  transform: scale(1.05);
+}
+
+.arc-voice-chatgpt-close-btn:active {
+  transform: scale(0.95);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   4. PREVIEW CONTROLS (Dev Only, Outlineless & Minimal)
+   ───────────────────────────────────────────────────────────── */
+.arc-voice-chatgpt-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.arc-voice-chatgpt-preview-btn {
+  border: none !important;
+  outline: none !important;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: none !important;
+  transition: all 0.15s ease;
+}
+
+.arc-voice-chatgpt-preview-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff;
+}
+
+.arc-voice-chatgpt-preview-btn.is-active {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff;
+}

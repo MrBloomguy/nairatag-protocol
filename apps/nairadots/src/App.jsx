@@ -1,6 +1,7 @@
-﻿// @ts-nocheck
+// @ts-nocheck
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import NairaTagLanding from './components/NairaTagLandingPage.jsx';
 import AuthConnectModal from './components/auth/AuthConnectModal';
 import ProfileAvatar from './components/ProfileAvatar';
 import ChatActivityIndicator from './components/chat/ChatActivityIndicator';
@@ -62,6 +63,7 @@ import {
   Zap,
   Briefcase,
   Phone,
+  AudioLines,
   Plus,
   Home,
   Users,
@@ -165,6 +167,7 @@ import {
   speakText,
   stopSpeaking,
 } from './services/arcGeminiChat.js';
+import { getAgentLanguagePreference } from './services/agentLanguage.js';
 import {
   clearArcChatHistory,
   getArcChatHistory,
@@ -215,7 +218,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <polygon points="32,7 57,53 7,53" fill="url(#emeraldGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="37" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="41.5" textAnchor="middle" fill="#064E3B" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
+        <text x="32" y="41.5" textAnchor="middle" fill="#064E3B" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
       </svg>
     );
   }
@@ -231,7 +234,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <polygon points="32,6 56,19 56,45 32,58 8,45 8,19" fill="url(#cyanGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="32" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="36.5" textAnchor="middle" fill="#0E7490" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
+        <text x="32" y="36.5" textAnchor="middle" fill="#0E7490" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
       </svg>
     );
   }
@@ -247,7 +250,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <path d="M32 5 L38 20 L54 15 L46 29 L60 38 L44 42 L46 59 L32 49 L18 59 L20 42 L4 38 L18 29 L10 15 L26 20 Z" fill="url(#magentaGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="34" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="38.5" textAnchor="middle" fill="#831843" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
+        <text x="32" y="38.5" textAnchor="middle" fill="#831843" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
       </svg>
     );
   }
@@ -263,7 +266,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <polygon points="32,6 54,16 60,38 46,56 18,56 4,38 10,16" fill="url(#goldGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="34" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="38.5" textAnchor="middle" fill="#713F12" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
+        <text x="32" y="38.5" textAnchor="middle" fill="#713F12" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
       </svg>
     );
   }
@@ -279,7 +282,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <path d="M32 6 C38 6 42 12 46 16 C50 20 56 24 56 30 C56 36 50 40 46 44 C42 48 38 54 32 54 C26 54 22 48 18 44 C14 40 8 36 8 30 C8 24 14 20 18 16 C22 12 26 6 32 6 Z" fill="url(#rubyGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="30" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="34.5" textAnchor="middle" fill="#7F1D1D" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
+        <text x="32" y="34.5" textAnchor="middle" fill="#7F1D1D" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
       </svg>
     );
   }
@@ -296,16 +299,16 @@ export function AgentMedallion({ type, size = 64 }) {
       <circle cx="32" cy="32" r="26" fill="url(#bronzeGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
       <circle cx="32" cy="32" r="18" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeDasharray="3 3" />
       <circle cx="32" cy="32" r="10" fill="#ffffff" opacity="0.92" />
-      <text x="32" y="36.5" textAnchor="middle" fill="#7C2D12" fontSize="13" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
+      <text x="32" y="36.5" textAnchor="middle" fill="#7C2D12" fontSize="13" fontWeight="900" fontFamily="sans-serif">₦</text>
     </svg>
   );
 }
 
-const CHAT_AGENT_TAG_PATTERN = /(@?â‚¦[a-z0-9_]{2,32}\b)/gi;
+const CHAT_AGENT_TAG_PATTERN = /(@?₦[a-z0-9_]{2,32}\b)/gi;
 
 function renderChatText(text) {
   return String(text || '').split(CHAT_AGENT_TAG_PATTERN).flatMap((part, index) => {
-    if (/^@?â‚¦[a-z0-9_]{2,32}$/i.test(part)) {
+    if (/^@?₦[a-z0-9_]{2,32}$/i.test(part)) {
       return [<span key={'agent-tag-' + index} className="chat-agent-mention">{part.replace(/^@/, '')}</span>];
     }
     return part.split(/(https?:\/\/[^\s<]+)/gi).flatMap((segment, segmentIndex) => {
@@ -331,9 +334,9 @@ export const FAQ_ITEMS = [
     id: 1,
     category: 'arc',
     categoryLabel: 'Arc & USDC',
-    question: 'What is a NairaTag (â‚¦Tag)?',
+    question: 'What is a NairaTag (₦Tag)?',
     answer: [
-      'A human-readable Web3 handle (like â‚¦SEGUN or â‚¦CHOWDECK) mapping directly to your Arc wallet address for instant, zero-fee USDC transfers.'
+      'A human-readable Web3 handle (like ₦SEGUN or ₦CHOWDECK) mapping directly to your Arc wallet address for instant, zero-fee USDC transfers.'
     ]
   },
   {
@@ -348,8 +351,8 @@ export const FAQ_ITEMS = [
   {
     id: 3,
     category: 'claim',
-    categoryLabel: 'Claiming â‚¦Tag',
-    question: 'How do I claim my â‚¦Tag?',
+    categoryLabel: 'Claiming ₦Tag',
+    question: 'How do I claim my ₦Tag?',
     answer: [
       'Go to the Claim tab, type your handle, and click Claim. You instantly receive your Sovereign Identity Card, Ambassador Pass, and payment QR code.'
     ]
@@ -369,7 +372,7 @@ export const FAQ_ITEMS = [
     categoryLabel: 'Resolver Layer',
     question: 'How does the onchain Resolver work?',
     answer: [
-      'The NairaTag resolver smart contract translates any â‚¦Tag to its 0x wallet address in milliseconds via a single call: resolveTag(tag).'
+      'The NairaTag resolver smart contract translates any ₦Tag to its 0x wallet address in milliseconds via a single call: resolveTag(tag).'
     ]
   },
   {
@@ -394,9 +397,9 @@ export const FAQ_ITEMS = [
     id: 8,
     category: 'resolver',
     categoryLabel: 'Resolver Layer',
-    question: 'Can apps and developers integrate â‚¦Tags?',
+    question: 'Can apps and developers integrate ₦Tags?',
     answer: [
-      'Yes. Any dApp, POS terminal, or checkout can resolve and accept â‚¦Tags via our open TypeScript SDK, Viem adapter, or Solidity contract.'
+      'Yes. Any dApp, POS terminal, or checkout can resolve and accept ₦Tags via our open TypeScript SDK, Viem adapter, or Solidity contract.'
     ]
   },
   {
@@ -627,10 +630,10 @@ function ArcAppShell() {
     setCurrentTaggedAgent(agent);
     setIsTagPopoverOpen(false);
     setChatInputText((prev) => {
-      const mentionPattern = new RegExp(`@â‚¦${agent.tag}\\b`, 'ig');
-      const clean = prev.replace(mentionPattern, `â‚¦${agent.tag}`).trim();
-      if (!clean.toLowerCase().includes(`â‚¦${agent.tag.toLowerCase()}`)) {
-        return `â‚¦${agent.tag} ${clean}`.trim();
+      const mentionPattern = new RegExp(`@₦${agent.tag}\\b`, 'ig');
+      const clean = prev.replace(mentionPattern, `₦${agent.tag}`).trim();
+      if (!clean.toLowerCase().includes(`₦${agent.tag.toLowerCase()}`)) {
+        return `₦${agent.tag} ${clean}`.trim();
       }
       return clean;
     });
@@ -640,7 +643,7 @@ function ArcAppShell() {
     setCurrentTaggedAgent(null);
   };
 
-  // â”€â”€â”€ File Attachment Handlers â”€â”€â”€
+  // ─── File Attachment Handlers ───
   const handleFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -669,7 +672,7 @@ function ArcAppShell() {
     setAttachedFile(null);
   };
 
-  // â”€â”€â”€ Microphone Speech-to-Text Recognition (Hands-Free Dictation) â”€â”€â”€
+  // ─── Microphone Speech-to-Text Recognition (Hands-Free Dictation) ───
   const toggleSpeechRecognition = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -728,7 +731,7 @@ function ArcAppShell() {
     }
   };
 
-  // â”€â”€â”€ Voice Directive Recording (Real Audio + Live Speech-to-Text) â”€â”€â”€
+  // ─── Voice Directive Recording (Real Audio + Live Speech-to-Text) ───
   const startVoiceRecording = async () => {
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -867,7 +870,7 @@ function ArcAppShell() {
     }
   };
 
-  // â”€â”€â”€ Voice Note Audio Player Play/Pause â”€â”€â”€
+  // ─── Voice Note Audio Player Play/Pause ───
   const handleTogglePlayAudio = (msgId, audioUrl) => {
     if (playingAudioId === msgId) {
       if (activeAudioPlayerRef.current) {
@@ -891,7 +894,7 @@ function ArcAppShell() {
     audio.play().catch(() => setPlayingAudioId(null));
   };
 
-  // â”€â”€â”€ Text-to-Speech Toggle on AI Messages â”€â”€â”€
+  // ─── Text-to-Speech Toggle on AI Messages ───
   const handleToggleSpeakMessage = (msg) => {
     if (speakingMsgId === msg.id) {
       stopSpeaking();
@@ -899,15 +902,18 @@ function ArcAppShell() {
       return;
     }
     stopSpeaking();
-    setSpeakingMsgId(msg.id);
-    const utterance = speakText(msg.text);
-    if (utterance) {
-      utterance.onend = () => setSpeakingMsgId(null);
-      utterance.onerror = () => setSpeakingMsgId(null);
+    const utterance = speakText(msg.text, getAgentLanguagePreference(walletAddress));
+    if (!utterance) {
+      setSpeakingMsgId(null);
+      showToast('This device has no installed voice for your selected language.', 'info');
+      return;
     }
+    setSpeakingMsgId(msg.id);
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
   };
 
-  // â”€â”€â”€ Master Chat Execution Engine (Arc Actions + Google Gemini Flash-Lite) â”€â”€â”€
+  // ─── Master Chat Execution Engine (Arc Actions + Google Gemini Flash-Lite) ───
   const handleSendChatPrompt = async (customPrompt = null, options = {}) => {
     const textToSend = (customPrompt !== null ? customPrompt : chatInputText).trim();
     const fileToSend = attachedFile;
@@ -972,13 +978,13 @@ function ArcAppShell() {
     setChatActivityStep('writing');
     try {
       if (agentResolution.kind === 'ambiguous') {
-        const options = agentResolution.agents.map((agent) => `â‚¦${agent.tag}`).join(', ');
+        const options = agentResolution.agents.map((agent) => `₦${agent.tag}`).join(', ');
         replyText = `I found more than one matching agent: ${options}. Please mention the exact NairaTag you want.`;
         replyAgentTag = 'discovery';
         replyAgentName = 'NairaTag Discovery';
         replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=nairatag-discovery';
       } else if (agentResolution.kind === 'unavailable') {
-        replyText = `â‚¦${agentResolution.tag} is not currently listed as a published agent, so I did not send your request to a runtime.`;
+        replyText = `₦${agentResolution.tag} is not currently listed as a published agent, so I did not send your request to a runtime.`;
         replyAgentTag = 'discovery';
         replyAgentName = 'NairaTag Discovery';
         replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=nairatag-discovery';
@@ -986,7 +992,7 @@ function ArcAppShell() {
         if (capabilityMatches.length) {
           replyText = `These published agents have matching callable capabilities:\n${capabilityMatches.map(({ agent, matchedTools, matchedTerms }, index) => {
             const toolNames = matchedTools.map((tool) => typeof tool === 'string' ? tool : tool.name || tool.title || tool.key || 'enabled tool').join(', ');
-            return `${index + 1}. â‚¦${agent.tag} â€” ${agent.name || agent.tag}; matching capability: ${toolNames} (${matchedTerms.join(', ')})`;
+            return `${index + 1}. ₦${agent.tag} — ${agent.name || agent.tag}; matching capability: ${toolNames} (${matchedTerms.join(', ')})`;
           }).join('\n')}\n\nMention an agent's NairaTag to continue.`;
         } else {
           replyText = 'I could not find a published agent with a matching callable tool in the current directory. No integration was invoked.';
@@ -1024,7 +1030,7 @@ function ArcAppShell() {
         if (selectedAgent) {
           replyAgentTag = selectedAgent.tag;
           replyAgentName = selectedAgent.name;
-          const isOwnTag = String(selectedAgent.tag || '').replace(/^[â‚¦$@#]/, '').toLowerCase() === String(myTag?.tag || '').replace(/^[â‚¦$@#]/, '').toLowerCase();
+          const isOwnTag = String(selectedAgent.tag || '').replace(/^[₦$@#]/, '').toLowerCase() === String(myTag?.tag || '').replace(/^[₦$@#]/, '').toLowerCase();
           const savedAvatar = isOwnTag ? getAgentOnboarding(walletAddress, myTag?.tag) : null;
           replyAvatar = savedAvatar?.avatarData || savedAvatar?.avatar || selectedAgent.avatar;
         } else {
@@ -1056,18 +1062,17 @@ function ArcAppShell() {
     setChatActivityStep('thinking');
 
     if (options.isVoiceReply && replyText && !options.liveVoice) {
-      speakText(replyText);
-      setSpeakingMsgId(botReply.id);
+      const utterance = speakText(replyText, getAgentLanguagePreference(walletAddress));
+      if (utterance) {
+        setSpeakingMsgId(botReply.id);
+        utterance.onend = () => setSpeakingMsgId(null);
+        utterance.onerror = () => setSpeakingMsgId(null);
+      }
     }
     return { reply: replyText, botReply };
   };
 
-  const voice = useArcVoice({
-    walletAddress,
-    onAgentPrompt: (prompt) => handleSendChatPrompt(prompt, { liveVoice: true }),
-  });
-
-  const handleStartVoiceCall = async () => {
+  const handleStartVoiceMode = async () => {
     if (!walletAddress) {
       setIsConnectModalOpen(true);
       showToast('Sign in to talk with your NairaTag agent.', 'info');
@@ -1267,11 +1272,11 @@ function ArcAppShell() {
     } catch {}
     return null;
   });
-  const displayUserTag = myTag?.tag ? `â‚¦${String(myTag.tag).replace(/^[$â‚¦]/, '').toUpperCase()}` : null;
+  const displayUserTag = myTag?.tag ? `₦${String(myTag.tag).replace(/^[$₦]/, '').toUpperCase()}` : null;
   const [accountEmail, setAccountEmail] = useState('');
   const accountUsername = accountEmail.includes('@') ? accountEmail.slice(0, accountEmail.indexOf('@')) : accountEmail;
-  const displayAccountName = displayUserTag || (accountUsername ? `â‚¦${accountUsername.toUpperCase()}` : null);
-  const userTag = myTag?.tag ? String(myTag.tag).replace(/^[$â‚¦]/, '').toLowerCase() : (accountUsername || 'nairatag');
+  const displayAccountName = displayUserTag || (accountUsername ? `₦${accountUsername.toUpperCase()}` : null);
+  const userTag = myTag?.tag ? String(myTag.tag).replace(/^[$₦]/, '').toLowerCase() : (accountUsername || 'nairatag');
 
   // Circle Programmable Wallet State
   const [authProvider, setAuthProvider] = useState(null); // 'circle' | 'injected'
@@ -1279,6 +1284,11 @@ function ArcAppShell() {
   const [circleInput, setCircleInput] = useState('');
   const [circleOtpSent, setCircleOtpSent] = useState(false);
   const [circleStatus, setCircleStatus] = useState('');
+
+  const voice = useArcVoice({
+    walletAddress,
+    onAgentPrompt: (prompt) => handleSendChatPrompt(prompt, { liveVoice: true }),
+  });
 
   // Modals
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
@@ -1549,10 +1559,10 @@ function ArcAppShell() {
   const [claimCardMode, setClaimCardMode] = useState('identity'); // 'identity' | 'share' | 'referral' | 'qrcode'
 
   const activeCleanTag = useMemo(() => {
-    return claimInput.replace(/^[$â‚¦]/, '').trim() || (myTag?.tag ? myTag.tag.replace(/^[$â‚¦]/, '') : 'TAG');
+    return claimInput.replace(/^[$₦]/, '').trim() || (myTag?.tag ? myTag.tag.replace(/^[$₦]/, '') : 'TAG');
   }, [claimInput, myTag]);
 
-  const claimPreviewText = claimInput.replace(/^[$â‚¦]/, '').toUpperCase() || 'Tag';
+  const claimPreviewText = claimInput.replace(/^[$₦]/, '').toUpperCase() || 'Tag';
   const claimPreviewFontSize = useMemo(() => {
     const len = claimPreviewText.length;
     if (len <= 4) return 'clamp(38px, 9.5vw, 64px)';
@@ -1566,7 +1576,7 @@ function ArcAppShell() {
 
   // Dynamic live mascot for claim input searchbar (updates in real-time as user types)
   const liveMascotProfile = useMemo(() => {
-    const clean = claimInput.replace(/^[$â‚¦]/, '').trim().toLowerCase();
+    const clean = claimInput.replace(/^[$₦]/, '').trim().toLowerCase();
     return resolveTagProfile(clean || 'nairatag', { avatarSize: 34 });
   }, [claimInput]);
 
@@ -1629,7 +1639,7 @@ function ArcAppShell() {
   useEffect(() => {
     const match = window.location.pathname.match(/^\/agent\/([^/]+)\/?$/i);
     if (!match) return;
-    const sharedTag = decodeURIComponent(match[1]).replace(/^â‚¦/, '').toLowerCase();
+    const sharedTag = decodeURIComponent(match[1]).replace(/^₦/, '').toLowerCase();
     setMainTabState('agents');
     const sharedAgent = chatAgents.find((agent) => String(agent.tag || '').toLowerCase() === sharedTag);
     if (sharedAgent) {
@@ -1640,7 +1650,7 @@ function ArcAppShell() {
     setSelectedAgentProfile({
       id: null,
       tag: sharedTag.toUpperCase(),
-      name: `â‚¦${sharedTag.toUpperCase()}`,
+      name: `₦${sharedTag.toUpperCase()}`,
       category: 'Arc agent',
       role: 'Shared Arc agent profile',
       avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(sharedTag)}`,
@@ -1695,14 +1705,14 @@ function ArcAppShell() {
 
   const agentEarningsLabel = (agent) => {
     const earnings = agentDirectoryStats[agent.tag]?.earnings ?? agent.earnings;
-    if (earnings === null || earnings === undefined || earnings === '') return agentStatsLoading ? 'â€¦' : '?';
+    if (earnings === null || earnings === undefined || earnings === '') return agentStatsLoading ? '…' : '?';
     const amount = Number(earnings);
     return `${Number.isFinite(amount) ? amount.toLocaleString(undefined, { maximumFractionDigits: 2 }) : String(earnings)} ${agent.earningsCurrency || 'USDC'}`;
   };
 
   const agentPointsLabel = (agent) => {
     const value = agentDirectoryStats[agent.tag]?.points ?? agent.points;
-    if (value === null || value === undefined || value === '') return agentStatsLoading ? 'Loading pointsâ€¦' : '? Points earned';
+    if (value === null || value === undefined || value === '') return agentStatsLoading ? 'Loading points…' : '? Points earned';
     const points = Number(value);
     return `${Number.isFinite(points) ? points.toLocaleString() : String(agent.points)} Points earned`;
   };
@@ -1718,7 +1728,7 @@ function ArcAppShell() {
   // Quick Mobile Search Handler (Tag / Agent / Address)
   const handleMobileSearch = async (val) => {
     setMobileSearchQuery(val);
-    const clean = val.trim().replace(/^[$â‚¦@#]/, '');
+    const clean = val.trim().replace(/^[$₦@#]/, '');
     if (!clean) {
       setMobileSearchResult(null);
       return;
@@ -1856,13 +1866,13 @@ function ArcAppShell() {
     }
 
     if (myTag?.tag) {
-      const clean = myTag.tag.replace(/^[$â‚¦]/, '').trim();
-      const formatted = clean ? `â‚¦${clean.charAt(0).toUpperCase() + clean.slice(1)}` : '';
+      const clean = myTag.tag.replace(/^[$₦]/, '').trim();
+      const formatted = clean ? `₦${clean.charAt(0).toUpperCase() + clean.slice(1)}` : '';
       return formatted ? `${timeGreeting}, ${formatted}!` : `${timeGreeting}!`;
     }
 
     if (accountUsername) {
-      return `${timeGreeting}, â‚¦${accountUsername}!`;
+      return `${timeGreeting}, ₦${accountUsername}!`;
     }
 
     return `${timeGreeting}!`;
@@ -2032,14 +2042,14 @@ function ArcAppShell() {
       try {
         if (isNigerianPhone) {
           const displayPhone = cleanPhone.startsWith('+') ? cleanPhone : cleanPhone.startsWith('234') ? `+${cleanPhone}` : `+234${cleanPhone.slice(1)}`;
-          const mappedTag = 'â‚¦' + (cleanPhone.slice(-4) === '5678' ? 'segun' : 'michael');
+          const mappedTag = '₦' + (cleanPhone.slice(-4) === '5678' ? 'segun' : 'michael');
           setResolution({
             loading: false,
             data: {
               success: true,
               tag: mappedTag,
               canonicalTag: mappedTag,
-              cleanTag: mappedTag.replace('â‚¦', ''),
+              cleanTag: mappedTag.replace('₦', ''),
               resolvedAddress: '0x18b6255efb9c9f0b2405086ee50a11ca47250e20',
               network: 'Arc Osaka EVM',
               isVerified: true,
@@ -2122,7 +2132,7 @@ function ArcAppShell() {
   };
 
   const handleTaskChat = (task) => {
-    setChatInputText(`Hi @â‚¦${task.creatorTag.replace(/^â‚¦/, '')}, Iâ€™m working on â€œ${task.title}â€. `);
+    setChatInputText(`Hi @₦${task.creatorTag.replace(/^₦/, '')}, I’m working on “${task.title}”. `);
     setIsTaskChatDraft(true);
     setMainTab('chat');
   };
@@ -2178,14 +2188,14 @@ function ArcAppShell() {
       id: `task_${Date.now()}`,
       title: postTaskForm.title,
       category: postTaskForm.category,
-      categoryLabel: postTaskForm.category === 'dev' ? 'âš¡ Engineering' : postTaskForm.category === 'design' ? 'ðŸŽ¨ Design' : postTaskForm.category === 'data' ? 'ðŸ“Š Data & AI' : postTaskForm.category === 'content' ? 'âœï¸ Content' : 'ðŸ§ª Testing',
+      categoryLabel: postTaskForm.category === 'dev' ? '⚡ Engineering' : postTaskForm.category === 'design' ? 'ðŸŽ¨ Design' : postTaskForm.category === 'data' ? 'ðŸ“Š Data & AI' : postTaskForm.category === 'content' ? '✍️ Content' : 'ðŸ§ª Testing',
       status: 'open',
       rewardUSDC: usdc,
-      rewardNGN: `â‚¦${(usdc * 1485).toLocaleString()}`,
+      rewardNGN: `₦${(usdc * 1485).toLocaleString()}`,
       points: Math.round(usdc * 10),
       deadline: postTaskForm.deadline || '3 days left',
       applicants: 0,
-      creatorTag: displayUserTag || 'â‚¦YOU',
+      creatorTag: displayUserTag || '₦YOU',
       escrowStatus: 'ðŸ”’ Funded in Escrow',
       description: postTaskForm.description || 'Community bounty on Arc Osaka EVM with automated milestone escrow settlement.',
       deliverable: postTaskForm.requirements || 'Public verification link, GitHub PR, or live demo.',
@@ -2335,7 +2345,7 @@ function ArcAppShell() {
         type: 'payment',
         txHash: result.txHash,
         amount: amountInput,
-        recipient: targetTag ? `â‚¦${targetTag.replace(/^[$â‚¦]/, '').toUpperCase()}` : shorten(result.recipientAddress),
+        recipient: targetTag ? `₦${targetTag.replace(/^[$₦]/, '').toUpperCase()}` : shorten(result.recipientAddress),
         explorerUrl: result.explorerUrl,
         executionTimeMs: result.executionTimeMs,
       });
@@ -2392,7 +2402,7 @@ function ArcAppShell() {
       setCelebrationDetails({
         type: 'swap',
         txHash: res.txHash,
-        amount: `${swapAmountIn} ${swapTokenIn} âž” ${swapEstimate?.amountOut || ''} ${swapTokenOut}`,
+        amount: `${swapAmountIn} ${swapTokenIn} ➔ ${swapEstimate?.amountOut || ''} ${swapTokenOut}`,
         recipient: 'Arc App Kit Swap',
         explorerUrl: `${ARC_TESTNET_CONFIG.explorerUrl}/tx/${res.txHash}`,
       });
@@ -2492,11 +2502,11 @@ function ArcAppShell() {
   };
 
   const persistArcAgentLink = (tag, owner, registration) => {
-    const cleanTag = String(tag).replace(/^[â‚¦$@#]/, '').toLowerCase();
+    const cleanTag = String(tag).replace(/^[₦$@#]/, '').toLowerCase();
     const linkedAgent = {
       id: String(registration.agentId),
       tag: cleanTag,
-      name: `â‚¦${cleanTag.toUpperCase()}`,
+      name: `₦${cleanTag.toUpperCase()}`,
       role: `NairaTag agent on Arc Â· ERC-8004 #${registration.agentId}`,
       category: 'NairaTag',
       owner,
@@ -2522,7 +2532,7 @@ function ArcAppShell() {
   };
 
   const completeArcAgentLink = async (tag, owner, retryLink = null) => {
-    const cleanTag = String(tag).replace(/^[â‚¦$@#]/, '').toLowerCase();
+    const cleanTag = String(tag).replace(/^[₦$@#]/, '').toLowerCase();
     const pending = { tag: cleanTag, owner, ...(retryLink || {}) };
     setPendingArcAgentLink(pending);
     window.localStorage.setItem('nairatag_pending_arc_agent_link_v1', JSON.stringify(pending));
@@ -2549,7 +2559,7 @@ function ArcAppShell() {
     try {
       const linkedAgent = await completeArcAgentLink(pendingArcAgentLink.tag, pendingArcAgentLink.owner, pendingArcAgentLink);
       setCelebrationDetails((current) => ({ ...current, erc8004Id: linkedAgent.id, erc8004TxHash: null, erc8004LinkError: null }));
-      showToast(`â‚¦${linkedAgent.tag.toUpperCase()} linked to ERC-8004 #${linkedAgent.id}.`, 'success', 3500);
+      showToast(`₦${linkedAgent.tag.toUpperCase()} linked to ERC-8004 #${linkedAgent.id}.`, 'success', 3500);
     } catch (error) {
       if (error.partialRegistration) {
         const pending = { ...pendingArcAgentLink, ...error.partialRegistration };
@@ -2592,7 +2602,7 @@ function ArcAppShell() {
   // added only when that exact tag has a verified agent record.
   const handleOpenRecentClaimProfile = async (activity) => {
     const rawTag = typeof activity === 'string' ? activity : activity?.tag;
-    const tag = String(rawTag || '').replace(/^[â‚¦$@#]/, '').trim().toLowerCase();
+    const tag = String(rawTag || '').replace(/^[₦$@#]/, '').trim().toLowerCase();
     if (!tag) return;
 
     const locallyLinkedAgent = arcTagAgentLinks[tag];
@@ -2629,7 +2639,7 @@ function ArcAppShell() {
       profileType: 'claimed-tag',
       id: null,
       tag,
-      name: `â‚¦${tag}`,
+      name: `₦${tag}`,
       role: 'NairaTag',
       avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
       owner: typeof activity === 'object' ? activity.owner || null : null,
@@ -2666,15 +2676,15 @@ function ArcAppShell() {
   // Pay Agent directly in USDC from profile
   const handlePayAgentFromProfile = (agent) => {
     setSelectedAgentProfile(null);
-    setRecipientInput(`â‚¦${agent.tag}`);
+    setRecipientInput(`₦${agent.tag}`);
     setMainTab('pay');
-    showToast(`Recipient pre-filled: â‚¦${agent.tag.toUpperCase()}`, 'info', 3000);
+    showToast(`Recipient pre-filled: ₦${agent.tag.toUpperCase()}`, 'info', 3000);
   };
 
   // Claim Tag Check
   const handleCheckClaim = async (val) => {
     setClaimInput(val);
-    const clean = val.replace(/^[â‚¦$@#]/, '').toUpperCase();
+    const clean = val.replace(/^[₦$@#]/, '').toUpperCase();
     if (!clean) {
       setClaimStatus(null);
       return;
@@ -2739,7 +2749,7 @@ function ArcAppShell() {
         erc8004Id: agentRegistration?.id || null,
       }).catch((broadcastErr) => console.warn('[Telegram Broadcast]', broadcastErr));
 
-      // â”€â”€ Immediately update the user's identity across the app â”€â”€
+      // ── Immediately update the user's identity across the app ──
       setMyTag({ tag: res.cleanTag, owner: walletAddress });
       try {
         localStorage.setItem('nairatag_claimed_tag_v1', JSON.stringify({ tag: res.cleanTag, owner: walletAddress }));
@@ -2766,7 +2776,7 @@ function ArcAppShell() {
         type: 'claim',
         cleanTag: res.cleanTag,
         txHash: res.txHash,
-        amount: `â‚¦${res.cleanTag.toUpperCase()}`,
+        amount: `₦${res.cleanTag.toUpperCase()}`,
         recipient: 'Sovereign Onchain Tag',
         explorerUrl: res.explorerUrl,
         erc8004Id: agentRegistration?.id || null,
@@ -2790,7 +2800,7 @@ function ArcAppShell() {
 
   return (
     <>
-      {/* â”€â”€â”€ Top Application Header (Reference-matched Layout) â”€â”€â”€ */}
+      {/* ─── Top Application Header (Reference-matched Layout) ─── */}
       <header className={`app-header ${mainTab === 'claim' ? 'claim-active' : ''}`}>
         {/* Left Side: Brand Logo Badge + Mobile Hamburger Menu */}
         <div className="app-header-left">
@@ -2819,7 +2829,7 @@ function ArcAppShell() {
             onClick={() => setMainTab('claim')}
           >
             <Sparkles size={14} />
-            <span>Claim â‚¦Tag</span>
+            <span>Claim ₦Tag</span>
           </button>
           <button
             type="button"
@@ -2933,7 +2943,7 @@ function ArcAppShell() {
                     onClick={() => setIsMoreMenuOpen(false)}
                   >
                     <Tag size={15} />
-                    <span>NairaTag Registry â†—</span>
+                    <span>NairaTag Registry ↗</span>
                   </a>
 
                   <a
@@ -2944,7 +2954,7 @@ function ArcAppShell() {
                     onClick={() => setIsMoreMenuOpen(false)}
                   >
                     <ExternalLink size={15} />
-                    <span>NairaTag Resolver â†—</span>
+                    <span>NairaTag Resolver ↗</span>
                   </a>
 
                   <a
@@ -2955,7 +2965,7 @@ function ArcAppShell() {
                     onClick={() => setIsMoreMenuOpen(false)}
                   >
                     <Bot size={15} />
-                    <span>8004scan (Arc Testnet AI Agents) â†—</span>
+                    <span>8004scan (Arc Testnet AI Agents) ↗</span>
                   </a>
 
                   <div className="more-menu-divider" />
@@ -3042,7 +3052,7 @@ function ArcAppShell() {
                     )) : (
                       <div className="notification-empty-state">
                         <Bell size={18} />
-                        <span>Youâ€™re all caught up. Reward updates and daily reminders will appear here.</span>
+                        <span>You’re all caught up. Reward updates and daily reminders will appear here.</span>
                       </div>
                     )}
                   </div>
@@ -3078,9 +3088,9 @@ function ArcAppShell() {
         </div>
       </header>
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           MOBILE NAVIGATION DRAWER (SLIDE-DOWN SHEET MATCHING REFERENCE)
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       {isMobileMenuOpen && (
         <div className="mobile-drawer-backdrop" onClick={() => setIsMobileMenuOpen(false)}>
           <div className="mobile-drawer-panel" onClick={(e) => e.stopPropagation()}>
@@ -3265,9 +3275,9 @@ function ArcAppShell() {
         </div>
       )}
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           MOBILE QUICK SEARCH MODAL (SEARCH ICON TRIGGER)
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       {isMobileSearchOpen && (
         <div className="mobile-search-backdrop" onClick={() => setIsMobileSearchOpen(false)}>
           <div className="mobile-search-dialog" onClick={(e) => e.stopPropagation()}>
@@ -3277,7 +3287,7 @@ function ArcAppShell() {
                 type="text"
                 autoFocus
                 className="mobile-search-input"
-                placeholder="Search â‚¦Tag, Agent, or 0x address..."
+                placeholder="Search ₦Tag, Agent, or 0x address..."
                 value={mobileSearchQuery}
                 onChange={(e) => handleMobileSearch(e.target.value)}
               />
@@ -3297,7 +3307,7 @@ function ArcAppShell() {
                   Popular Searches
                 </span>
                 <div className="quick-tag-suggestions" style={{ marginTop: '8px' }}>
-                  {['â‚¦chowdeck', 'â‚¦dev', 'â‚¦designer', 'â‚¦food', 'â‚¦ride', 'â‚¦escrow'].map((preset) => (
+                  {['₦chowdeck', '₦dev', '₦designer', '₦food', '₦ride', '₦escrow'].map((preset) => (
                     <button
                       key={preset}
                       type="button"
@@ -3337,7 +3347,7 @@ function ArcAppShell() {
                         </div>
                         <div className="agent-circle-name">
                           <span>{mobileSearchResult.agent.name}</span>
-                          <span className="agent-circle-tag-pill">â‚¦{mobileSearchResult.agent.tag}</span>
+                          <span className="agent-circle-tag-pill">₦{mobileSearchResult.agent.tag}</span>
                         </div>
                         <div className="agent-circle-tagline">{mobileSearchResult.agent.role}</div>
                       </div>
@@ -3348,10 +3358,10 @@ function ArcAppShell() {
                   <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--privy-color-foreground)' }}>
-                        â‚¦{mobileSearchResult.tag}
+                        ₦{mobileSearchResult.tag}
                       </div>
                       <div style={{ fontSize: '12px', color: mobileSearchResult.available ? '#059669' : '#DC2626', fontWeight: 600 }}>
-                        {mobileSearchResult.available ? 'âœ“ Available to claim' : 'âœ• Taken / Registered'}
+                        {mobileSearchResult.available ? '✓ Available to claim' : '✕ Taken / Registered'}
                       </div>
                     </div>
 
@@ -3365,7 +3375,7 @@ function ArcAppShell() {
                           setClaimInput(mobileSearchResult.tag);
                           setMainTab('claim');
                         } else {
-                          setRecipientInput(`â‚¦${mobileSearchResult.tag}`);
+                          setRecipientInput(`₦${mobileSearchResult.tag}`);
                           setMainTab('pay');
                         }
                       }}
@@ -3380,7 +3390,7 @@ function ArcAppShell() {
         </div>
       )}
 
-      {/* â”€â”€â”€ Main Application Body â”€â”€â”€ */}
+      {/* ─── Main Application Body ─── */}
       <main className={`main-content-wrapper ${mainTab === 'claim' ? 'claim-active' : ''} ${mainTab === 'chat' ? 'chat-mode' : ''}`}>
         {mainTab === 'profile' && (
           <section className="account-dashboard">
@@ -3406,7 +3416,7 @@ function ArcAppShell() {
                 </article>
 
                 <div className="account-stats-grid">
-                  <article className="account-stat-card"><span>USDC balance</span><strong>{usdcBalance.formatted}</strong><small>â‰ˆ â‚¦{(parseFloat(usdcBalance.formatted || '0') * 1485).toLocaleString('en-NG', { maximumFractionDigits: 2 })} NGN</small></article>
+                  <article className="account-stat-card"><span>USDC balance</span><strong>{usdcBalance.formatted}</strong><small>≈ ₦{(parseFloat(usdcBalance.formatted || '0') * 1485).toLocaleString('en-NG', { maximumFractionDigits: 2 })} NGN</small></article>
                   <article className="account-stat-card"><span>Protocol Points</span><strong>{Number(userPoints || 0).toLocaleString()}</strong><small>Earned across NairaTag rewards</small></article>
                 </div>
 
@@ -3427,9 +3437,9 @@ function ArcAppShell() {
           </section>
         )}
 
-        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        {/* ───────────────────────────────────────────────────────────────────
             TAB 1: PAY & RESOLVE TERMINAL
-            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'pay' && (
           <div className="terminal-layout-centered">
             <div className="crypto-card-terminal">
@@ -3448,24 +3458,24 @@ function ArcAppShell() {
                     className="quick-chip-btn"
                     onClick={() => setMainTab('claim')}
                   >
-                    + Claim â‚¦Tag
+                    + Claim ₦Tag
                   </button>
                 </div>
               </div>
 
-              {/* 1. Recipient â‚¦Tag Input Box */}
+              {/* 1. Recipient ₦Tag Input Box */}
               <div className="tag-recipient-box">
                 <div className="token-input-header">
                   <span>To</span>
                   <span style={{ color: 'var(--privy-color-border-interactive)' }}>Direct Resolve</span>
                 </div>
                 <div className="tag-input-field-wrap">
-                  <span className="tag-currency-symbol">â‚¦</span>
+                  <span className="tag-currency-symbol">₦</span>
                   <input
                     type="text"
                     className="tag-text-field"
                     placeholder="Enter name (e.g. SEGUN, FOOD)"
-                    value={recipientInput.replace(/^[$â‚¦]/, '')}
+                    value={recipientInput.replace(/^[$₦]/, '')}
                     onChange={(e) => setRecipientInput(e.target.value)}
                   />
                   {resolution.loading && <RefreshCw size={14} className="animate-spin" color="var(--privy-color-border-interactive)" />}
@@ -3479,9 +3489,9 @@ function ArcAppShell() {
                       key={tag}
                       type="button"
                       className="tag-suggestion-chip"
-                      onClick={() => setRecipientInput(`â‚¦${tag}`)}
+                      onClick={() => setRecipientInput(`₦${tag}`)}
                     >
-                      â‚¦{tag}
+                      ₦{tag}
                     </button>
                   ))}
                 </div>
@@ -3491,13 +3501,13 @@ function ArcAppShell() {
                   <div className="resolved-recipient-card">
                     <div className="resolved-left">
                       <div className="resolved-avatar">
-                        {resolution.data.tag ? resolution.data.tag.slice(1, 2) : 'â‚¦'}
+                        {resolution.data.tag ? resolution.data.tag.slice(1, 2) : '₦'}
                       </div>
                       <div>
                         <div className="resolved-title">
                           {resolution.data.tag || 'Verified Recipient'}
                           <span style={{ marginLeft: '6px', fontSize: '10px', color: 'var(--privy-color-success-dark)', fontWeight: 600 }}>
-                            â— RESOLVED
+                            ● RESOLVED
                           </span>
                         </div>
                         {resolution.data.phone && (
@@ -3575,7 +3585,7 @@ function ArcAppShell() {
                     style={{ background: 'none', border: 'none', color: 'var(--privy-color-border-interactive)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
                     onClick={() => setShowMemoField(!showMemoField)}
                   >
-                    <span>{showMemoField ? 'âˆ’ Hide Memo' : '+ Add Memo (Optional)'}</span>
+                    <span>{showMemoField ? '− Hide Memo' : '+ Add Memo (Optional)'}</span>
                   </button>
                   <span style={{ fontSize: '10px', color: 'var(--privy-color-foreground-3)' }}>0x5294...e3dc</span>
                 </div>
@@ -3605,9 +3615,9 @@ function ArcAppShell() {
           </div>
         )}
 
-        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        {/* ───────────────────────────────────────────────────────────────────
             TAB 2: CLAIM NAIRATAG IDENTITY
-            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'claim' && (
           <div className="claim-page-layout">
             {/* Left Column: Uniswap-width 480px Main Claim Console & Registrations */}
@@ -3617,10 +3627,10 @@ function ArcAppShell() {
                 {myTag?.tag && (
                   <div className="active-claimed-banner">
                     <div className="active-claimed-info">
-                      <span style={{ fontSize: '15px' }}>âœ¨</span>
+                      <span style={{ fontSize: '15px' }}>✨</span>
                       <div>
                         <div className="active-claimed-label">
-                          You own <strong>â‚¦{myTag.tag?.replace(/^[$â‚¦]/, '').toUpperCase()}</strong>
+                          You own <strong>₦{myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}</strong>
                         </div>
                         <div className="active-claimed-sub">
                           {shorten(walletAddress)} Â· Arc Testnet
@@ -3631,8 +3641,8 @@ function ArcAppShell() {
                       <button
                         type="button"
                         className="btn-claimed-action"
-                        onClick={() => triggerCopy('my_tag', `â‚¦${myTag.tag?.replace(/^[$â‚¦]/, '').toUpperCase()}`)}
-                        title="Copy â‚¦Tag"
+                        onClick={() => triggerCopy('my_tag', `₦${myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}`)}
+                        title="Copy ₦Tag"
                       >
                         {copiedKey === 'my_tag' ? 'Copied' : 'Copy'}
                       </button>
@@ -3685,7 +3695,7 @@ function ArcAppShell() {
                     }}
                     title="Click to search / edit tag"
                   >
-                    <span className="live-tag-prefix">â‚¦</span>
+                    <span className="live-tag-prefix">₦</span>
                     <span>{claimPreviewText}</span>
                   </div>
                 </div>
@@ -3700,7 +3710,7 @@ function ArcAppShell() {
                     autoComplete="off"
                     spellCheck="false"
                     aria-label="Enter your username"
-                    value={claimInput.replace(/^[$â‚¦]/, '')}
+                    value={claimInput.replace(/^[$₦]/, '')}
                     onChange={(e) => handleCheckClaim(e.target.value)}
                   />
                   <div className="claim-input-right-cluster">
@@ -3737,7 +3747,7 @@ function ArcAppShell() {
                     {/* Live Interactive Mascot right beside Ready/Available */}
                     <div
                       className="claim-live-mascot-pill"
-                      title={`â‚¦${claimInput.replace(/^[$â‚¦]/, '').toLowerCase() || 'tag'} Live Mascot (${liveMascotProfile?.palette?.name || 'Vibrant'})`}
+                      title={`₦${claimInput.replace(/^[$₦]/, '').toLowerCase() || 'tag'} Live Mascot (${liveMascotProfile?.palette?.name || 'Vibrant'})`}
                       style={{
                         backgroundColor: liveMascotProfile?.palette?.primary || '#bbf246',
                       }}
@@ -3769,7 +3779,7 @@ function ArcAppShell() {
                   {isClaiming ? (
                     <>
                       <RefreshCw size={16} className="animate-spin" />
-                      <span>Claiming your â‚¦Tagâ€¦</span>
+                      <span>Claiming your ₦Tag…</span>
                     </>
                   ) : (
                     <span>Claim</span>
@@ -3785,7 +3795,7 @@ function ArcAppShell() {
                   disabled={isRetryingArcAgentLink}
                   onClick={handleRetryArcAgentLink}
                 >
-                  {isRetryingArcAgentLink ? 'Linking to ERC-8004â€¦' : `Complete ERC-8004 link for â‚¦${pendingArcAgentLink.tag.toUpperCase()}`}
+                  {isRetryingArcAgentLink ? 'Linking to ERC-8004…' : `Complete ERC-8004 link for ₦${pendingArcAgentLink.tag.toUpperCase()}`}
                 </button>
               )}
 
@@ -3804,7 +3814,7 @@ function ArcAppShell() {
                             type="button"
                             className="reg-pill-item"
                             onClick={() => handleOpenRecentClaimProfile(item)}
-                            title={`Open â‚¦${item.tag} profile`}
+                            title={`Open ₦${item.tag} profile`}
                           >
                             <img
                               className="reg-dicebear-avatar"
@@ -3813,7 +3823,7 @@ function ArcAppShell() {
                               onError={(event) => { event.currentTarget.style.visibility = 'hidden'; }}
                             />
                             <span className="reg-pill-copy">
-                              <span className="reg-handle-tag">â‚¦{item.tag}</span>
+                              <span className="reg-handle-tag">₦{item.tag}</span>
                               <span className="reg-activity-kind">{item.activity === 'used' ? 'Used recently' : 'Just claimed'}</span>
                             </span>
                           </button>
@@ -3831,9 +3841,9 @@ function ArcAppShell() {
 
 
 
-        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        {/* ───────────────────────────────────────────────────────────────────
             TAB 3: AI AGENTS (GRID & LIST VIEW GROUNDED IN REFERENCES 1, 2, 3)
-            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'agents' && (
           <div className="agents-page-container">
             {/* Top Bar: Search and Grid/List View Toggle */}
@@ -3888,13 +3898,13 @@ function ArcAppShell() {
               <div className="agent-directory-notice" role="status">
                 <span>Could not load the Arc agent registry: {agentDirectoryError}</span>
                 <button type="button" onClick={() => loadAgentDirectory()} disabled={agentDirectoryLoading}>
-                  {agentDirectoryLoading ? 'Retryingâ€¦' : 'Try again'}
+                  {agentDirectoryLoading ? 'Retrying…' : 'Try again'}
                 </button>
               </div>
             )}
 
             {agentDirectoryLoading && chatAgents.length === 0 && (
-              <div className="agent-directory-empty" role="status">Loading agents from the Arc registryâ€¦</div>
+              <div className="agent-directory-empty" role="status">Loading agents from the Arc registry…</div>
             )}
             {!agentDirectoryLoading && !agentDirectoryError && chatAgents.length === 0 && (
               <div className="agent-directory-empty" role="status">No agents have been listed yet.</div>
@@ -3919,7 +3929,7 @@ function ArcAppShell() {
                         <span className={`agent-directory-rank ${agent.leaderboardRank <= 3 ? `rank-top${agent.leaderboardRank}` : ''}`}>#{agent.leaderboardRank}</span>
                       </div>
                     </div>
-                    <div className="agent-directory-tag">â‚¦{String(agent.tag || '').replace(/^[â‚¦$@#]/, '')}</div>
+                    <div className="agent-directory-tag">₦{String(agent.tag || '').replace(/^[₦$@#]/, '')}</div>
                     {agent.category && <div className="agent-directory-category">{agent.category}</div>}
                     <div className="agent-directory-points">{agentPointsLabel(agent)}</div>
                     <div className="agent-directory-card-earnings">
@@ -3950,7 +3960,7 @@ function ArcAppShell() {
                       </div>
                       <div className="agent-circle-meta">
                         <div className="agent-circle-name">
-                          <span className="agent-circle-tag-pill">â‚¦{String(agent.tag || '').replace(/^[â‚¦$@#]/, '')}</span>
+                          <span className="agent-circle-tag-pill">₦{String(agent.tag || '').replace(/^[₦$@#]/, '')}</span>
                         </div>
                       </div>
                     </div>
@@ -3968,9 +3978,9 @@ function ArcAppShell() {
           </div>
         )}
 
-        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        {/* ───────────────────────────────────────────────────────────────────
             TAB: TASKS & BOUNTIES (MATCHING AGENTS PAGE LAYOUT & DESIGN)
-            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'tasks' && (
           <div className="agents-page-container">
             {selectedTask ? (
@@ -3986,7 +3996,7 @@ function ArcAppShell() {
                   <div className="task-detail-heading-copy">
                     <span className="task-cat-pill active">{selectedTask.categoryLabel}</span>
                     <h1>{selectedTask.title}</h1>
-                    <p>Posted by â‚¦{selectedTask.creatorTag.replace(/^â‚¦/, '').toUpperCase()} Â· {selectedTask.deadline}</p>
+                    <p>Posted by ₦{selectedTask.creatorTag.replace(/^₦/, '').toUpperCase()} Â· {selectedTask.deadline}</p>
                   </div>
                 </div>
 
@@ -4203,10 +4213,10 @@ function ArcAppShell() {
             <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
               {[
                 { id: 'all', label: 'All Tasks' },
-                { id: 'dev', label: 'âš¡ Engineering' },
+                { id: 'dev', label: '⚡ Engineering' },
                 { id: 'design', label: 'ðŸŽ¨ Design' },
                 { id: 'data', label: 'ðŸ“Š Data & AI' },
-                { id: 'content', label: 'âœï¸ Content' },
+                { id: 'content', label: '✍️ Content' },
                 { id: 'test', label: 'ðŸ§ª Testing' },
                 { id: 'community', label: 'ðŸ“± Community' },
               ].map((cat) => (
@@ -4238,7 +4248,7 @@ function ArcAppShell() {
 
                     <h3 className="tasks-empty-title">
                       {tasksLoading
-                        ? 'Syncing Arc Escrow Bountiesâ€¦'
+                        ? 'Syncing Arc Escrow Bounties…'
                         : (tasksSearch || tasksFilter !== 'all')
                           ? 'No Matching Tasks Found'
                           : 'No tasks available'}
@@ -4247,7 +4257,7 @@ function ArcAppShell() {
                     {(tasksLoading || tasksSearch || tasksFilter !== 'all') && (
                       <p className="tasks-empty-subtitle">
                         {tasksLoading
-                          ? 'Connecting to Arc Osaka smart contracts and querying verified community milestonesâ€¦'
+                          ? 'Connecting to Arc Osaka smart contracts and querying verified community milestones…'
                           : tasksSearch
                             ? `No bounties match "${tasksSearch}". Try clearing your search or switching categories.`
                             : 'There are no open bounties in this category yet. Explore other categories or post one yourself.'}
@@ -4313,7 +4323,7 @@ function ArcAppShell() {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                          <h3 className="milestone-card-title" style={{ margin: 0 }}>â‚¦{task.creatorTag.replace(/^â‚¦/, '').toUpperCase()}</h3>
+                          <h3 className="milestone-card-title" style={{ margin: 0 }}>₦{task.creatorTag.replace(/^₦/, '').toUpperCase()}</h3>
                           <img
                             src="/verified-badge.png"
                             alt=""
@@ -4325,7 +4335,7 @@ function ArcAppShell() {
                         <div className="milestone-card-role" title={task.title}>{task.title}</div>
 
                         <div className="milestone-task-status">
-                          <span>{task.categoryLabel} â€¢ {task.deadline}</span>
+                          <span>{task.categoryLabel} • {task.deadline}</span>
                         </div>
 
                         <div className="milestone-progress-bar-wrap">
@@ -4355,12 +4365,12 @@ function ArcAppShell() {
           </div>
         )}
 
-        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        {/* ───────────────────────────────────────────────────────────────────
             TAB 4: SOVEREIGN AGENT CHAT (TAG2TAG LAYER & TASK DISPATCH)
-            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            ─────────────────────────────────────────────────────────────────── */}
+        {/* ───────────────────────────────────────────────────────────────────
             TAB 4: WALLEY-AI MINIMAL CHAT INTERFACE
-            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'chat' && (
           <div className="walley-chat-screen">
             {/* Top Navigation Bar */}
@@ -4378,14 +4388,6 @@ function ArcAppShell() {
                 <ArrowLeft size={18} />
               </button>}
               <div className="chat-top-nav-actions">
-              <button
-                type="button"
-                className={`chat-history-btn arc-voice-launch ${voice.status === 'active' ? 'is-active' : ''}`}
-                onClick={handleStartVoiceCall}
-                aria-label="Start a live voice call with your agent"
-                title="Talk to your agent"
-                disabled={voice.status === 'connecting' || voice.status === 'active'}
-              ><Phone size={16} /></button>
               <button
                 type="button"
                 className="chat-history-btn"
@@ -4448,20 +4450,20 @@ function ArcAppShell() {
                   <button
                     type="button"
                     className="ref-action-card card-ride"
-                    onClick={() => handleSendChatPrompt('Book a ride with â‚¦ride')}
+                    onClick={() => handleSendChatPrompt('Book a ride with ₦ride')}
                   >
                     <div className="ref-action-icon-circle icon-circle-ride"><CarIcon size={16} /></div>
-                    <span className="ref-action-title">â‚¦Ride</span>
+                    <span className="ref-action-title">₦Ride</span>
                   </button>
 
                   {/* Card 4: Food */}
                   <button
                     type="button"
                     className="ref-action-card card-food"
-                    onClick={() => handleSendChatPrompt('Order meals with â‚¦chowdeck')}
+                    onClick={() => handleSendChatPrompt('Order meals with ₦chowdeck')}
                   >
                     <div className="ref-action-icon-circle icon-circle-food"><CookingPotIcon size={16} /></div>
-                    <span className="ref-action-title">â‚¦Food</span>
+                    <span className="ref-action-title">₦Food</span>
                   </button>
 
                   {/* Card 5: Rewards */}
@@ -4632,6 +4634,17 @@ function ArcAppShell() {
                     <Paperclip size={15} />
                     <span>Attach a file</span>
                   </button>
+                  <button
+                    type="button"
+                    className="walley-agent-menu-action"
+                    onClick={() => {
+                      setIsTagPopoverOpen(false);
+                      toggleSpeechRecognition();
+                    }}
+                  >
+                    <Mic size={15} />
+                    <span>Dictate a message</span>
+                  </button>
                   {agentDirectoryError && (
                     <div className="walley-agent-directory-error">Agent registry unavailable. Registered agent tags cannot be selected until it responds.</div>
                   )}
@@ -4644,7 +4657,7 @@ function ArcAppShell() {
                       >
                         <img src={agent.avatar} alt={agent.name} style={{ width: 22, height: 22, borderRadius: '50%' }} />
                         <div className="walley-agent-item-info">
-                          <span className="walley-agent-tag">â‚¦{agent.tag}</span>
+                          <span className="walley-agent-tag">₦{agent.tag}</span>
                           <span className="walley-agent-role">{agent.role}</span>
                           <span className="walley-agent-availability">
                             {agent.callableTools?.length ? `${agent.callableTools.length} live tools` : 'Chat only'}
@@ -4700,7 +4713,7 @@ function ArcAppShell() {
                       {Math.floor(recordingSeconds / 60)}:{String(recordingSeconds % 60).padStart(2, '0')}
                     </span>
                     <span className="recording-hint">
-                      {voiceTranscribedText ? `â€œ${voiceTranscribedText}â€` : "Listening... speak your directive"}
+                      {voiceTranscribedText ? `“${voiceTranscribedText}”` : "Listening... speak your directive"}
                     </span>
                   </div>
 
@@ -4763,26 +4776,13 @@ function ArcAppShell() {
                   <div className="walley-capsule-actions">
                     <button
                       type="button"
-                      className={`walley-capsule-icon-btn ${isSpeechListening ? 'listening-active' : ''}`}
-                      onClick={toggleSpeechRecognition}
-                      title={isSpeechListening ? "Stop listening" : "Speak to AI (Speech-to-Text)"}
-                      aria-label={isSpeechListening ? "Stop listening" : "Speak to AI"}
+                      className={`walley-capsule-icon-btn ${voice.status === 'active' ? 'listening-active' : ''}`}
+                      onClick={handleStartVoiceMode}
+                      title="Start a voice conversation"
+                      aria-label="Start a voice conversation"
+                      disabled={voice.status === 'connecting' || voice.status === 'active'}
                     >
-                      <Mic size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      className="walley-capsule-icon-btn"
-                      onClick={startVoiceRecording}
-                      title="Record Voice Note"
-                      aria-label="Record Voice Note"
-                      style={{ padding: '4px' }}
-                    >
-                      <span className="walley-soundwave">
-                        <span />
-                        <span />
-                        <span />
-                      </span>
+                      <AudioLines size={18} />
                     </button>
                     <button
                       type="submit"
@@ -4819,7 +4819,7 @@ function ArcAppShell() {
                     </button>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', margin: '12px 0', maxHeight: '48vh', overflowY: 'auto' }}>
-                    {chatHistoryLoading && <div className="walley-history-empty">Loading saved chatsâ€¦</div>}
+                    {chatHistoryLoading && <div className="walley-history-empty">Loading saved chats…</div>}
                     {chatHistoryError && <div className="walley-history-error">{chatHistoryError}</div>}
                     {!chatHistoryLoading && !chatHistoryError && chatHistoryEntries.length === 0 && (
                       <div className="walley-history-empty">No saved chats yet.</div>
@@ -4835,7 +4835,7 @@ function ArcAppShell() {
                         <MessageSquare size={14} />
                         <span className="walley-history-item-copy">
                           <strong>{conversation.title || 'Arc chat'}</strong>
-                          <small>â‚¦{conversation.agent_tag || 'arc'} Â· {new Date(conversation.updated_at).toLocaleString()}</small>
+                          <small>₦{conversation.agent_tag || 'arc'} Â· {new Date(conversation.updated_at).toLocaleString()}</small>
                         </span>
                       </button>
                     ))}
@@ -4855,9 +4855,9 @@ function ArcAppShell() {
           </div>
         )}
 
-        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        {/* ───────────────────────────────────────────────────────────────────
             TAB 5: FAQ (PROTOCOL KNOWLEDGE BASE & ACCORDION)
-            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'faq' && (
           <div className="faq-page-container">
             {/* Hero Section */}
@@ -4891,7 +4891,7 @@ function ArcAppShell() {
                 {[
                   { id: 'all', label: 'All' },
                   { id: 'arc', label: 'Arc & USDC' },
-                  { id: 'claim', label: 'Claiming â‚¦Tag' },
+                  { id: 'claim', label: 'Claiming ₦Tag' },
                   { id: 'agents', label: 'AI Agents (ERC-8004)' },
                   { id: 'resolver', label: 'Resolver Layer' },
                   { id: 'payments', label: 'Payments & Security' },
@@ -4978,7 +4978,7 @@ function ArcAppShell() {
               <div className="faq-help-left">
                 <div className="faq-help-title">Still have questions or need assistance?</div>
                 <div className="faq-help-sub">
-                  Explore verified AI Agents on Arc Osaka EVM or claim your sovereign â‚¦Tag handle today.
+                  Explore verified AI Agents on Arc Osaka EVM or claim your sovereign ₦Tag handle today.
                 </div>
               </div>
               <div className="faq-help-actions">
@@ -4989,7 +4989,7 @@ function ArcAppShell() {
                   onClick={() => setMainTab('claim')}
                 >
                   <Sparkles size={13} />
-                  <span>Claim â‚¦Tag</span>
+                  <span>Claim ₦Tag</span>
                 </button>
                 <button
                   type="button"
@@ -5005,9 +5005,9 @@ function ArcAppShell() {
           </div>
         )}
 
-        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+        {/* ───────────────────────────────────────────────────────────────────
             TAB 6: REWARDS & VOUCHERS CENTER (GROUNDED IN USER REFERENCES)
-            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+            ─────────────────────────────────────────────────────────────────── */}
         {mainTab === 'rewards' && (
           <RewardsPage
             userTag={myTag?.tag || ''}
@@ -5027,10 +5027,10 @@ function ArcAppShell() {
 
       </main>
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           MOBILE FIXED FOOTER MENU (MATCHING EXACT USER SCREENSHOT STYLE)
           (Hidden on Chat page per user specification)
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       {mainTab !== 'chat' && mainTab !== 'claim' && (
         <nav className="mobile-footer-nav" aria-label="Mobile Navigation">
           {/* 1. Claim (Official Home) */}
@@ -5115,9 +5115,9 @@ function ArcAppShell() {
         </nav>
       )}
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           MODAL 0: TRANSACTION REVIEW STATE MODAL
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       {isSendReviewModalOpen && (
         <div className="modal-backdrop" onClick={() => !isSending && setIsSendReviewModalOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
@@ -5161,7 +5161,7 @@ function ArcAppShell() {
                   <Flame size={12} />
                   <span>Gas Token & Floor</span>
                 </span>
-                <span className="details-value">Arc USDC (18 dec) â€¢ 20 Gwei min</span>
+                <span className="details-value">Arc USDC (18 dec) • 20 Gwei min</span>
               </div>
               <div className="details-row">
                 <span className="details-label">
@@ -5203,7 +5203,7 @@ function ArcAppShell() {
               {isSending ? (
                 <>
                   <RefreshCw size={15} className="animate-spin" />
-                  <span>Working on your transactionâ€¦</span>
+                  <span>Working on your transaction…</span>
                 </>
               ) : (
                 <>
@@ -5216,9 +5216,9 @@ function ArcAppShell() {
         </div>
       )}
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           MODAL 1: CONNECT WALLET OVERLAY (CIRCLE W3S + BROWSER WALLETS)
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       {isConnectModalOpen && (
         <AuthConnectModal
           onClose={() => setIsConnectModalOpen(false)}
@@ -5334,7 +5334,7 @@ function ArcAppShell() {
                 className="quick-chip-btn"
                 style={{ textAlign: 'center', justifyContent: 'center', padding: '6px' }}
               >
-                View on ArcScan â†—
+                View on ArcScan ↗
               </a>
               {celebrationDetails.erc8004Id && (
                 <a
@@ -5344,14 +5344,14 @@ function ArcAppShell() {
                   className="quick-chip-btn"
                   style={{ textAlign: 'center', justifyContent: 'center', padding: '6px', marginTop: '6px' }}
                 >
-                  View ERC-8004 agent #{celebrationDetails.erc8004Id} â†—
+                  View ERC-8004 agent #{celebrationDetails.erc8004Id} ↗
                 </a>
               )}
               {celebrationDetails.erc8004LinkError && (
                 <div style={{ marginTop: '8px' }}>
                   <div style={{ color: 'var(--privy-color-foreground-2)', fontSize: '11px', marginBottom: '6px' }}>{celebrationDetails.erc8004LinkError}</div>
                   <button type="button" className="btn-action-primary" disabled={isRetryingArcAgentLink} onClick={handleRetryArcAgentLink}>
-                    {isRetryingArcAgentLink ? 'Linking to ERC-8004â€¦' : 'Complete ERC-8004 link'}
+                    {isRetryingArcAgentLink ? 'Linking to ERC-8004…' : 'Complete ERC-8004 link'}
                   </button>
                 </div>
               )}
@@ -5426,9 +5426,9 @@ function ArcAppShell() {
         </div>
       )}
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           MODAL 3: CLAIM NAIRATAG DIALOG
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       {welcomeDetails && (
         <div className="modal-backdrop welcome-rewards-backdrop" onClick={() => setWelcomeDetails(null)}>
           <section className="modal-dialog welcome-rewards-dialog" role="dialog" aria-modal="true" aria-labelledby="welcome-rewards-title" onClick={(event) => event.stopPropagation()}>
@@ -5451,7 +5451,7 @@ function ArcAppShell() {
         <div className="modal-backdrop" onClick={() => setIsClaimModalOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="card-header-title">Claim Free â‚¦Tag</span>
+              <span className="card-header-title">Claim Free ₦Tag</span>
               <button
                 type="button"
                 style={{ background: 'none', border: 'none', color: 'var(--privy-color-foreground-2)', cursor: 'pointer' }}
@@ -5462,7 +5462,7 @@ function ArcAppShell() {
             </div>
             <div className="tag-recipient-box">
               <div className="tag-input-field-wrap">
-                <span className="tag-currency-symbol">â‚¦</span>
+                <span className="tag-currency-symbol">₦</span>
                 <input
                   type="text"
                   className="tag-text-field"
@@ -5473,7 +5473,7 @@ function ArcAppShell() {
               </div>
               {claimStatus && (
                 <div style={{ fontSize: '11px', color: claimStatus.available ? 'var(--privy-color-success-dark)' : 'var(--privy-color-error)', fontWeight: 600 }}>
-                  {claimStatus.available ? 'âœ“ Tag is available' : `âœ• ${claimStatus.reason}`}
+                  {claimStatus.available ? '✓ Tag is available' : `✕ ${claimStatus.reason}`}
                 </div>
               )}
             </div>
@@ -5483,15 +5483,15 @@ function ArcAppShell() {
               disabled={!claimStatus?.available || isClaiming}
               onClick={handleExecuteClaim}
             >
-              {isClaiming ? 'Claiming your â‚¦Tagâ€¦' : `Claim â‚¦${(claimInput.replace(/^[$â‚¦@#]/, '') || 'Tag').toUpperCase()}`}
+              {isClaiming ? 'Claiming your ₦Tag…' : `Claim ₦${(claimInput.replace(/^[$₦@#]/, '') || 'Tag').toUpperCase()}`}
             </button>
           </div>
         </div>
       )}
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           MODAL 4: AGENT PROFILE POPUP (GROUNDED IN USER REFERENCES)
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       {selectedAgentProfile && (
         <div className="agent-modal-backdrop" onClick={() => setSelectedAgentProfile(null)}>
           <div className="agent-modal-dialog" onClick={(event) => event.stopPropagation()}>
@@ -5518,7 +5518,7 @@ function ArcAppShell() {
                 <img className="agent-profile-avatar" src={selectedAgentProfile.avatar} alt="" />
                 <div className="agent-profile-heading-copy">
                   <div className="agent-profile-name-line">
-                    <h2>â‚¦{selectedAgentProfile.tag.toUpperCase()}</h2>
+                    <h2>₦{selectedAgentProfile.tag.toUpperCase()}</h2>
                     {selectedAgentProfile.identity?.verifiedOnchain && selectedAgentProfile.identity?.erc8004AgentId && (
                       <img
                         className="agent-profile-verified-badge"
@@ -5540,7 +5540,7 @@ function ArcAppShell() {
                     disabled={agentFollowState.loading || agentFollowState.updating || String(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner || '').toLowerCase() === String(walletAddress || '').toLowerCase()}
                     aria-pressed={agentFollowState.following}
                   >
-                    {agentFollowState.loading ? 'â€¦' : agentFollowState.updating ? 'Savingâ€¦' : String(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner || '').toLowerCase() === String(walletAddress || '').toLowerCase() ? 'Your agent' : agentFollowState.following ? 'Following' : 'Follow'}
+                    {agentFollowState.loading ? '…' : agentFollowState.updating ? 'Saving…' : String(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner || '').toLowerCase() === String(walletAddress || '').toLowerCase() ? 'Your agent' : agentFollowState.following ? 'Following' : 'Follow'}
                   </button>
                 )}
               </div>
@@ -5550,12 +5550,12 @@ function ArcAppShell() {
               </p>
 
               <div className="agent-profile-stats">
-                <div><strong>{selectedAgentProfile.profileType === 'claimed-tag' || selectedAgentProfile.profileType === 'platform-agent' ? 'â€”' : agentFollowState.loading ? 'â€¦' : agentFollowState.error ? 'â€”' : agentFollowState.followerCount}</strong><span>Followers</span></div>
-                <div><strong>{selectedAgentProfile.profileType === 'platform-agent' ? (selectedAgentProfile.callableTools?.length || 0) : selectedAgentProfile.earnings || 'â€”'}</strong><span>{selectedAgentProfile.profileType === 'platform-agent' ? 'Enabled tools' : 'Earned'}</span></div>
-                <div><strong>{selectedAgentProfile.identity?.verifiedOnchain && selectedAgentProfile.identity?.erc8004AgentId ? `#${selectedAgentProfile.identity.erc8004AgentId}` : selectedAgentProfile.profileType === 'platform-agent' ? 'Platform' : selectedAgentProfile.id ? `#${selectedAgentProfile.id}` : 'â€”'}</strong><span>{selectedAgentProfile.profileType === 'platform-agent' ? 'Identity' : 'Agent ID'}</span></div>
-                <div><strong>{selectedAgentProfile.profileType === 'platform-agent' ? 'â€”' : selectedAgentProfile.profileType === 'claimed-tag'
-                  ? selectedAgentProfile.profileLoading ? 'â€¦' : selectedAgentProfile.completedTaskCount ?? 'â€”'
-                  : agentProfileLiveLoading ? 'â€¦' : agentProfileLiveData?.completedTaskCount ?? 'â€”'}</strong><span>Tasks done</span></div>
+                <div><strong>{selectedAgentProfile.profileType === 'claimed-tag' || selectedAgentProfile.profileType === 'platform-agent' ? '—' : agentFollowState.loading ? '…' : agentFollowState.error ? '—' : agentFollowState.followerCount}</strong><span>Followers</span></div>
+                <div><strong>{selectedAgentProfile.profileType === 'platform-agent' ? (selectedAgentProfile.callableTools?.length || 0) : selectedAgentProfile.earnings || '—'}</strong><span>{selectedAgentProfile.profileType === 'platform-agent' ? 'Enabled tools' : 'Earned'}</span></div>
+                <div><strong>{selectedAgentProfile.identity?.verifiedOnchain && selectedAgentProfile.identity?.erc8004AgentId ? `#${selectedAgentProfile.identity.erc8004AgentId}` : selectedAgentProfile.profileType === 'platform-agent' ? 'Platform' : selectedAgentProfile.id ? `#${selectedAgentProfile.id}` : '—'}</strong><span>{selectedAgentProfile.profileType === 'platform-agent' ? 'Identity' : 'Agent ID'}</span></div>
+                <div><strong>{selectedAgentProfile.profileType === 'platform-agent' ? '—' : selectedAgentProfile.profileType === 'claimed-tag'
+                  ? selectedAgentProfile.profileLoading ? '…' : selectedAgentProfile.completedTaskCount ?? '—'
+                  : agentProfileLiveLoading ? '…' : agentProfileLiveData?.completedTaskCount ?? '—'}</strong><span>Tasks done</span></div>
               </div>
 
               {selectedAgentProfile.profileType === 'platform-agent' ? (
@@ -5567,7 +5567,7 @@ function ArcAppShell() {
                 <div className="agent-profile-owner">
                   <span>Owner</span>
                   <strong>{selectedAgentProfile.profileType === 'claimed-tag' && selectedAgentProfile.profileLoading
-                    ? 'Loadingâ€¦'
+                    ? 'Loading…'
                     : (agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)
                       ? shorten(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)
                       : 'Unavailable'}</strong>
@@ -5587,7 +5587,7 @@ function ArcAppShell() {
                   className="agent-profile-pay-button agent-profile-pay-full"
                   disabled={selectedAgentProfile.profileType === 'claimed-tag' && (!selectedAgentProfile.owner || selectedAgentProfile.profileLoading)}
                   onClick={() => handlePayAgentFromProfile(selectedAgentProfile)}
-                ><Send size={15} /> Pay â‚¦{selectedAgentProfile.tag.toUpperCase()}</button>
+                ><Send size={15} /> Pay ₦{selectedAgentProfile.tag.toUpperCase()}</button>
               </div>
 
               {selectedAgentProfile.identity?.verifiedOnchain && selectedAgentProfile.identity?.erc8004AgentId && (
@@ -5603,9 +5603,9 @@ function ArcAppShell() {
         </div>
       )}
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           MODAL: POST BOUNTY / TASK DIALOG
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       {isPostTaskOpen && (
         <div className="modal-backdrop" onClick={() => setIsPostTaskOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
@@ -5650,10 +5650,10 @@ function ArcAppShell() {
                     value={postTaskForm.category}
                     onChange={(e) => setPostTaskForm((prev) => ({ ...prev, category: e.target.value }))}
                   >
-                    <option value="dev">âš¡ Engineering</option>
+                    <option value="dev">⚡ Engineering</option>
                     <option value="design">ðŸŽ¨ Design</option>
                     <option value="data">ðŸ“Š Data & AI</option>
-                    <option value="content">âœï¸ Content</option>
+                    <option value="content">✍️ Content</option>
                     <option value="test">ðŸ§ª Testing</option>
                   </select>
                 </div>
@@ -5672,7 +5672,7 @@ function ArcAppShell() {
                     onChange={(e) => setPostTaskForm((prev) => ({ ...prev, reward: e.target.value }))}
                   />
                   <div style={{ fontSize: '10px', color: 'var(--privy-color-foreground-2)', marginTop: '2px' }}>
-                    â‰ˆ â‚¦{((parseFloat(postTaskForm.reward) || 0) * 1485).toLocaleString()} NGN
+                    ≈ ₦{((parseFloat(postTaskForm.reward) || 0) * 1485).toLocaleString()} NGN
                   </div>
                 </div>
               </div>
@@ -5703,9 +5703,9 @@ function ArcAppShell() {
         </div>
       )}
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           MODAL: SOVEREIGN WALLET & PORTFOLIO (WITH DUAL FIAT NGN CONVERSION)
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       {isWalletModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsWalletModalOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
@@ -5726,7 +5726,7 @@ function ArcAppShell() {
             {/* Identity Card */}
             <div style={{ marginTop: '10px', padding: '12px', background: 'var(--privy-color-background-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--privy-color-border-subtle)', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #0052ff, #00d2ff)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 900 }}>
-                {myTag?.tag ? myTag.tag.replace(/^[$â‚¦]/, '').slice(0, 1).toUpperCase() : 'â‚¦'}
+                {myTag?.tag ? myTag.tag.replace(/^[$₦]/, '').slice(0, 1).toUpperCase() : '₦'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -5761,11 +5761,11 @@ function ArcAppShell() {
                 {usdcBalance.formatted} USDC
               </div>
               <div className="wallet-fx-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 10px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid #10b981', borderRadius: '12px', fontSize: '11.5px', color: '#047857', fontWeight: 700 }}>
-                <span>â‰ˆ â‚¦{(parseFloat(usdcBalance.formatted || '0') * 1485).toLocaleString('en-NG', { maximumFractionDigits: 2 })} NGN</span>
-                <span style={{ fontSize: '9.5px', opacity: 0.8 }}>@ â‚¦1,485/$</span>
+                <span>≈ ₦{(parseFloat(usdcBalance.formatted || '0') * 1485).toLocaleString('en-NG', { maximumFractionDigits: 2 })} NGN</span>
+                <span style={{ fontSize: '9.5px', opacity: 0.8 }}>@ ₦1,485/$</span>
               </div>
               <div style={{ fontSize: '11px', color: 'var(--privy-color-interactive)', fontWeight: 700, marginTop: '8px' }}>
-                âš¡ {userPoints} Protocol Points
+                ⚡ {userPoints} Protocol Points
               </div>
             </div>
 
@@ -5776,7 +5776,7 @@ function ArcAppShell() {
                 className={`agent-profile-tab-btn ${walletTab === 'overview' ? 'active' : ''}`}
                 onClick={() => setWalletTab('overview')}
               >
-                âœ¦ Overview
+                ✦ Overview
               </button>
               <button
                 type="button"
@@ -5825,7 +5825,7 @@ function ArcAppShell() {
                     style={{ flex: 1, justifyContent: 'center' }}
                   >
                     <ExternalLink size={12} />
-                    <span>ArcScan â†—</span>
+                    <span>ArcScan ↗</span>
                   </a>
                 </div>
               </div>
@@ -5836,7 +5836,7 @@ function ArcAppShell() {
                 {walletAddress ? (
                   <>
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`arc:${walletAddress}?tag=â‚¦${myTag?.tag || ''}`)}`}
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`arc:${walletAddress}?tag=₦${myTag?.tag || ''}`)}`}
                       alt="Arc Receive QR"
                       style={{ width: '160px', height: '160px', borderRadius: '8px', border: '1px solid var(--privy-color-border-subtle)', margin: '0 auto 8px' }}
                     />
@@ -5853,14 +5853,14 @@ function ArcAppShell() {
             {walletTab === 'history' && (
               <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
                 {[
-                  { tx: '0x3a9f...b112', title: 'Claim â‚¦Tag Handle', time: '10m ago', amt: '0.00 USDC', status: 'Finalized <1s' },
-                  { tx: '0x8f2d...44c1', title: 'USDC Settlement to â‚¦michael', time: '2h ago', amt: '-10.00 USDC', status: 'Finalized <1s' },
+                  { tx: '0x3a9f...b112', title: 'Claim ₦Tag Handle', time: '10m ago', amt: '0.00 USDC', status: 'Finalized <1s' },
+                  { tx: '0x8f2d...44c1', title: 'USDC Settlement to ₦michael', time: '2h ago', amt: '-10.00 USDC', status: 'Finalized <1s' },
                   { tx: '0x11ab...90aa', title: 'Bounty Quest Reward', time: '1d ago', amt: '+25.00 USDC', status: 'Finalized <1s' },
                 ].map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: 'var(--privy-color-background-surface)', borderRadius: '6px', fontSize: '11px' }}>
                     <div>
                       <div style={{ fontWeight: 700 }}>{item.title}</div>
-                      <div style={{ color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>{item.tx} â€¢ {item.time}</div>
+                      <div style={{ color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>{item.tx} • {item.time}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontWeight: 700, color: item.amt.startsWith('+') ? 'var(--privy-color-success-dark)' : 'var(--privy-color-foreground)' }}>{item.amt}</div>
@@ -5889,9 +5889,9 @@ function ArcAppShell() {
         </div>
       )}
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           FLOATING TOAST NOTIFICATION CONTAINER
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       <div className="toast-container" role="status" aria-live="polite">
         {toasts.map((toast) => (
           <div
@@ -5910,9 +5910,9 @@ function ArcAppShell() {
         ))}
       </div>
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           GLOBAL GAMIFIED REWARDS MODALS (ACCESSIBLE FROM HEADER & NOTIFICATIONS)
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       <GoldenVoucherModal
         isOpen={isGoldenVoucherOpen}
         onClose={() => setIsGoldenVoucherOpen(false)}
@@ -5935,9 +5935,9 @@ function ArcAppShell() {
         accountKey={walletAddress || ''}
       />
 
-      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+      {/* ───────────────────────────────────────────────────────────────────
           WEB PUSH & IN-APP NOTIFICATION LAYER (VAPID INTEGRATION)
-          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+          ─────────────────────────────────────────────────────────────────── */}
       <NotificationLayer
         onNavigateTab={setMainTab}
         onOpenRewards={() => {
@@ -5966,7 +5966,107 @@ function ArcAppShell() {
   );
 }
 
+function VoiceModePreviewPage() {
+  const previewStates = [
+    { phase: 'listening', inputCaption: 'Hi ₦joe, can you help me plan my day?', outputCaption: '', audioLevel: 0.22 },
+    { phase: 'thinking', inputCaption: 'Hi ₦joe, can you help me plan my day?', outputCaption: '', audioLevel: 0 },
+    { phase: 'speaking', inputCaption: '', outputCaption: 'Of course! Let’s start with the most important thing you need to get done today.', audioLevel: 0.48 },
+  ];
+  const [stateIndex, setStateIndex] = useState(0);
+  const [muted, setMuted] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+  const previewState = previewStates[stateIndex];
+
+  const setPreviewPhase = (phaseKey) => {
+    const idx = previewStates.findIndex((s) => s.phase === phaseKey);
+    if (idx !== -1) setStateIndex(idx);
+  };
+
+  const voice = {
+    status: 'active',
+    phase: previewState.phase,
+    inputCaption: previewState.inputCaption,
+    outputCaption: previewState.outputCaption,
+    audioLevel: muted ? 0 : previewState.audioLevel,
+    muted,
+    error: '',
+    toggleMute: () => setMuted((value) => !value),
+    advancePreview: () => setStateIndex((index) => (index + 1) % previewStates.length),
+    setPreviewPhase,
+    stop: () => setIsOpen(false),
+    clearError: () => {},
+  };
+
+  if (!isOpen) {
+    return (
+      <main className="arc-voice-preview-closed" style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '16px',
+        background: '#070a08',
+        color: '#f7faf5',
+        fontFamily: 'sans-serif'
+      }}>
+        <div style={{
+          width: '64px',
+          height: '64px',
+          borderRadius: '50%',
+          background: 'rgba(201, 243, 110, 0.1)',
+          border: '1px solid rgba(201, 243, 110, 0.25)',
+          display: 'grid',
+          placeItems: 'center',
+          color: '#c9f36e',
+          fontSize: '24px'
+        }}>
+          ✦
+        </div>
+        <p style={{ margin: 0, color: 'rgba(240, 246, 237, 0.7)', fontSize: '14px' }}>
+          Voice mode preview is closed.
+        </p>
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          style={{
+            minHeight: '44px',
+            padding: '0 24px',
+            borderRadius: '999px',
+            border: 'none',
+            background: '#c9f36e',
+            color: '#070a08',
+            fontSize: '13px',
+            fontWeight: '750',
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(201, 243, 110, 0.3)'
+          }}
+        >
+          Open Voice Preview
+        </button>
+      </main>
+    );
+  }
+
+  return (
+    <ArcVoiceCall
+      voice={voice}
+      agentTag="joe"
+      agentName="₦joe"
+      previewMode
+    />
+  );
+}
+
 export default function App() {
+  const isVoicePreview = import.meta.env.DEV && typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('voicePreview') === '1';
+  if (isVoicePreview) return <VoiceModePreviewPage />;
+
+  const isLandingHost = typeof window !== 'undefined'
+    && ['nairatag.ng', 'www.nairatag.ng'].includes(window.location.hostname.toLowerCase());
+  if (isLandingHost) return <NairaTagLanding />;
+
   const pathname = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
   const agentMatch = pathname.match(/^\/agent\/([a-zA-Z0-9_-]+)/i);
   const tagMatch = pathname.match(/^\/tag\/([a-zA-Z0-9_-]+)/i);

@@ -17,6 +17,6 @@
   ],
   "env": {
     "VITE_APP_NAME": "NairaDots",
-    "VITE_NAIRATAG_API_URL": "https://nairatag.ng/api"
+    "VITE_NAIRATAG_API_URL": "https://old.nairatag.ng/api"
   }
 }

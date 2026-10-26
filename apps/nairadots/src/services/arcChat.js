@@ -2,8 +2,8 @@ import { keccak256, stringToHex } from 'viem';
 import { getArcSessionToken } from './arcSession.js';
 
 const ARC_CHAIN_ID = 5042002;
-const ARC_CHAT_API = import.meta.env.VITE_ARC_CHAT_API || 'https://nairatag.ng/api/arc-chat';
-const ARC_VOICE_API = import.meta.env.VITE_ARC_VOICE_API || 'https://nairatag.ng/api/arc?route=voice';
+const ARC_CHAT_API = import.meta.env.VITE_ARC_CHAT_API || 'https://old.nairatag.ng/api/arc-chat';
+const ARC_VOICE_API = import.meta.env.VITE_ARC_VOICE_API || 'https://old.nairatag.ng/api/arc?route=voice';
 
 export function createArcChatConversationId() {
   return crypto.randomUUID();
@@ -88,7 +88,7 @@ export async function clearArcChatHistory({ walletAddress }) {
 }
 
 export async function createArcVoiceSession({ walletAddress, conversationId, agentTag = 'arc' }) {
-  if (!walletAddress) throw new Error('Sign in to start a voice call with your agent.');
+  if (!walletAddress) throw new Error('Sign in to start voice mode with your agent.');
   if (!conversationId) throw new Error('Open a conversation before starting voice.');
   const turnId = crypto.randomUUID();
   const token = getArcSessionToken(walletAddress);

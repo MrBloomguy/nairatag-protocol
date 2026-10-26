@@ -1,6 +1,6 @@
 import { getArcSessionToken } from './arcSession.js';
 
-const REWARDS_API = import.meta.env.VITE_ARC_REWARDS_API || (import.meta.env.DEV ? '/api/arc-rewards' : 'https://nairatag.ng/api/arc-rewards');
+const REWARDS_API = import.meta.env.VITE_ARC_REWARDS_API || (import.meta.env.DEV ? '/api/arc-rewards' : 'https://old.nairatag.ng/api/arc-rewards');
 
 export async function claimAgentOnboardingReward({ walletAddress, tag, step }) {
   return requestAgentOnboardingRewards({ action: 'agent_onboarding_step', walletAddress, tag, step });

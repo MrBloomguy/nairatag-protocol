@@ -1,9 +1,9 @@
 import { broadcastArcPaidTaskToTelegram, broadcastArcTaskToTelegram } from './arcSocialBroadcast.js';
-const ARC_TASKS_API = import.meta.env.VITE_ARC_TASKS_API || (import.meta.env.DEV ? '/api/arc-tasks' : 'https://nairatag.ng/api/arc-tasks');
+const ARC_TASKS_API = import.meta.env.VITE_ARC_TASKS_API || (import.meta.env.DEV ? '/api/arc-tasks' : 'https://old.nairatag.ng/api/arc-tasks');
 const ARC_CHAIN_ID = 5042002;
 
 function arcTasksUrl() {
-  const base = typeof window !== 'undefined' ? window.location.origin : 'https://nairatag.ng';
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://old.nairatag.ng';
   return new URL(ARC_TASKS_API, base);
 }
 
