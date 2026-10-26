@@ -1,10 +1,13 @@
 // @ts-nocheck
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import NairaTagLanding from './components/NairaTagLandingPage.jsx';
 import AuthConnectModal from './components/auth/AuthConnectModal';
 import ProfileAvatar from './components/ProfileAvatar';
 import ChatActivityIndicator from './components/chat/ChatActivityIndicator';
 import PersonalAgentPanel from './components/chat/PersonalAgentPanel';
+import ArcVoiceCall from './components/chat/ArcVoiceCall.jsx';
+import { useArcVoice } from './hooks/useArcVoice.js';
 import { ClipboardCheck as ClipboardCheckIcon } from 'lucide-react';
 import { ChevronsLeftRight as ChevronsLeftRightIcon } from 'lucide-react';
 import { Car as CarIcon } from 'lucide-react';
@@ -60,6 +63,7 @@ import {
   Zap,
   Briefcase,
   Phone,
+  AudioLines,
   Plus,
   Home,
   Users,
@@ -101,7 +105,7 @@ import {
   getStoredCircleSession,
   clearCircleSession,
 } from './services/circleWallet.js';
-import { clearArcSession, establishCircleArcSession, establishWalletArcSession } from './services/arcSession.js';
+import { clearArcSession, establishCircleArcSession, establishWalletArcSession, getArcSessionToken } from './services/arcSession.js';
 import {
   resolveTag,
 } from './services/nairatagResolver.js';
@@ -163,6 +167,7 @@ import {
   speakText,
   stopSpeaking,
 } from './services/arcGeminiChat.js';
+import { getAgentLanguagePreference } from './services/agentLanguage.js';
 import {
   clearArcChatHistory,
   getArcChatHistory,
@@ -178,6 +183,11 @@ import RewardsPage, { GoldenVoucherModal, LuckyWheelModal, ReferralModal } from 
 import NotificationLayer from './components/NotificationLayer.jsx';
 import { recordConfirmedPaymentSpin } from './services/wheelRewards.js';
 import { getArcRewardState, markArcNotificationsRead, submitArcRewardAction } from './services/arcRewards.js';
+import { getAgentOnboarding, updateAgentOnboarding, syncAgentOnboardingRewards } from './services/agentOnboarding.js';
+import { claimAgentOnboardingReward, getAgentOnboardingRewardState } from './services/agentOnboardingRewards.js';
+import AgentOnboardingModal from './components/AgentOnboardingModal.jsx';
+import AgentSuccessModal from './components/AgentSuccessModal.jsx';
+import { updatePersonalAgent } from './services/personalAgent.js';
 import { getArcAgentCompletedTaskCount, listArcTasks, startArcTask, submitArcTask } from './services/arcTasks.js';
 import { IN_HOUSE_TASKS, claimInHouseVoucher, getInHouseVouchers, syncInHouseVouchers } from './services/inHouseTasks.js';
 import {
@@ -731,7 +741,7 @@ function ArcAppShell() {
             id: 'sys-' + Date.now(),
             sender: 'agent',
             agentName: 'Arc Sovereign Agent',
-            text: '⚠️ Microphone recording is not supported in this browser environment.',
+            text: 'âš ï¸ Microphone recording is not supported in this browser environment.',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           }
         ]);
@@ -789,7 +799,7 @@ function ArcAppShell() {
           id: 'sys-' + Date.now(),
           sender: 'agent',
           agentName: 'Arc Sovereign Agent',
-          text: '⚠️ Microphone permission is required to record voice directives. Please enable microphone permissions in your browser settings.',
+          text: 'âš ï¸ Microphone permission is required to record voice directives. Please enable microphone permissions in your browser settings.',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
       ]);
@@ -837,7 +847,7 @@ function ArcAppShell() {
       const newVoiceMsg = {
         id: userMsgId,
         sender: 'user',
-        text: finalTranscript ? `🎙️ "${finalTranscript}"` : `Voice directive (${formatDuration})`,
+        text: finalTranscript ? `ðŸŽ™ï¸ "${finalTranscript}"` : `Voice directive (${formatDuration})`,
         transcript: finalTranscript,
         audioUrl,
         audioDuration: formatDuration,
@@ -892,18 +902,22 @@ function ArcAppShell() {
       return;
     }
     stopSpeaking();
-    setSpeakingMsgId(msg.id);
-    const utterance = speakText(msg.text);
-    if (utterance) {
-      utterance.onend = () => setSpeakingMsgId(null);
-      utterance.onerror = () => setSpeakingMsgId(null);
+    const utterance = speakText(msg.text, getAgentLanguagePreference(walletAddress));
+    if (!utterance) {
+      setSpeakingMsgId(null);
+      showToast('This device has no installed voice for your selected language.', 'info');
+      return;
     }
+    setSpeakingMsgId(msg.id);
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
   };
 
   // ─── Master Chat Execution Engine (Arc Actions + Google Gemini Flash-Lite) ───
   const handleSendChatPrompt = async (customPrompt = null, options = {}) => {
     const textToSend = (customPrompt !== null ? customPrompt : chatInputText).trim();
     const fileToSend = attachedFile;
+    const activeTaggedAgent = options.agent || currentTaggedAgent;
 
     // Must have either text or an attached file
     if (!textToSend && !fileToSend) return;
@@ -946,10 +960,10 @@ function ArcAppShell() {
     const capabilityMatches = discoveryRequest ? discoverAgentsByCapability(textToSend, chatAgents) : [];
     let replyText = '';
     let toolEvents = [];
-    let replyAgentTag = currentTaggedAgent ? currentTaggedAgent.tag : 'ArcAgent';
-    let replyAgentName = currentTaggedAgent ? currentTaggedAgent.name : 'Arc Sovereign Agent';
-    let replyAvatar = currentTaggedAgent
-      ? currentTaggedAgent.avatar
+    let replyAgentTag = activeTaggedAgent ? activeTaggedAgent.tag : 'ArcAgent';
+    let replyAgentName = activeTaggedAgent ? activeTaggedAgent.name : 'Arc Sovereign Agent';
+    let replyAvatar = activeTaggedAgent
+      ? activeTaggedAgent.avatar
       : 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
     let widget = null;
 
@@ -990,7 +1004,7 @@ function ArcAppShell() {
         const agentPrompt = fileToSend
           ? `${textToSend || 'I attached a file.'}\n\nThe attached file is ${fileToSend.name} (${fileToSend.size}); its contents are not included in this chat request.`
           : textToSend;
-        const selectedAgent = foundAgent || currentTaggedAgent;
+        const selectedAgent = foundAgent || activeTaggedAgent;
         const agentTag = selectedAgent?.tag || 'arc';
         const conversationId = getOrCreateArcChatConversationId(walletAddress, agentTag);
         setActiveChatConversationId(conversationId);
@@ -1003,15 +1017,27 @@ function ArcAppShell() {
           title: agentPrompt,
         });
         replyText = chatResult.reply;
+        if (myTag?.tag) {
+          claimAgentOnboardingReward({ walletAddress, tag: myTag.tag, step: 'firstInteraction' })
+            .then((reward) => {
+              if (reward.state) applyArcRewardState(reward.state);
+              const synced = syncAgentOnboardingRewards(walletAddress, myTag.tag, reward.onboarding);
+              if (synced) setAgentOnboarding(synced);
+            })
+            .catch((error) => showToast(`Your task is ready, but its welcome points could not sync yet: ${error.message}`, 'error', 5000));
+        }
         toolEvents = chatResult.toolEvents || [];
         if (selectedAgent) {
           replyAgentTag = selectedAgent.tag;
           replyAgentName = selectedAgent.name;
-          replyAvatar = selectedAgent.avatar;
+          const isOwnTag = String(selectedAgent.tag || '').replace(/^[₦$@#]/, '').toLowerCase() === String(myTag?.tag || '').replace(/^[₦$@#]/, '').toLowerCase();
+          const savedAvatar = isOwnTag ? getAgentOnboarding(walletAddress, myTag?.tag) : null;
+          replyAvatar = savedAvatar?.avatarData || savedAvatar?.avatar || selectedAgent.avatar;
         } else {
           replyAgentTag = chatResult.personalAgent?.tag || 'ArcAgent';
           replyAgentName = chatResult.personalAgent?.name || 'Arc Sovereign Agent';
-          replyAvatar = 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
+          const savedAvatar = myTag?.tag ? getAgentOnboarding(walletAddress, myTag.tag) : null;
+          replyAvatar = savedAvatar?.avatarData || savedAvatar?.avatar || 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
         }
       }
       widget = null;
@@ -1035,10 +1061,30 @@ function ArcAppShell() {
     setChatIsTyping(false);
     setChatActivityStep('thinking');
 
-    if (options.isVoiceReply && replyText) {
-      speakText(replyText);
-      setSpeakingMsgId(botReply.id);
+    if (options.isVoiceReply && replyText && !options.liveVoice) {
+      const utterance = speakText(replyText, getAgentLanguagePreference(walletAddress));
+      if (utterance) {
+        setSpeakingMsgId(botReply.id);
+        utterance.onend = () => setSpeakingMsgId(null);
+        utterance.onerror = () => setSpeakingMsgId(null);
+      }
     }
+    return { reply: replyText, botReply };
+  };
+
+  const handleStartVoiceMode = async () => {
+    if (!walletAddress) {
+      setIsConnectModalOpen(true);
+      showToast('Sign in to talk with your NairaTag agent.', 'info');
+      return;
+    }
+    const agent = currentTaggedAgent;
+    const agentTag = agent?.tag || 'arc';
+    const conversationId = activeChatConversationId || getOrCreateArcChatConversationId(walletAddress, agentTag);
+    setActiveChatConversationId(conversationId);
+    setIsChatConversationOpen(true);
+    setMainTab('chat');
+    await voice.start({ conversationId, agentTag });
   };
 
   const handleWidgetAction = (widget) => {
@@ -1239,16 +1285,96 @@ function ArcAppShell() {
   const [circleOtpSent, setCircleOtpSent] = useState(false);
   const [circleStatus, setCircleStatus] = useState('');
 
+  const voice = useArcVoice({
+    walletAddress,
+    onAgentPrompt: (prompt) => handleSendChatPrompt(prompt, { liveVoice: true }),
+  });
+
   // Modals
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const [authScreen, setAuthScreen] = useState('welcome'); // 'welcome' | 'create' | 'signin' | 'wallets'
   const [isSendReviewModalOpen, setIsSendReviewModalOpen] = useState(false);
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
   const [celebrationDetails, setCelebrationDetails] = useState(null);
+  const onboardingPreview = import.meta.env.DEV && typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('onboardingPreview') === '1';
+  const claimSuccessPreview = import.meta.env.DEV && typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('claimSuccessPreview') === '1';
+  const [isAgentOnboardingOpen, setIsAgentOnboardingOpen] = useState(onboardingPreview);
+  const [agentSuccessDetails, setAgentSuccessDetails] = useState(() => claimSuccessPreview ? {
+    variant: 'claimed',
+    tag: 'joe',
+    progress: { tag: 'joe', points: 20, avatar: null, avatarName: '', steps: { identity: true, avatar: false, personality: false, permissions: false, firstInteraction: false } },
+  } : null);
+  const onboardingDismissedKeyRef = React.useRef(null);
+  const [agentOnboarding, setAgentOnboarding] = useState(() => (onboardingPreview || claimSuccessPreview) ? {
+    version: 1,
+    tag: 'joe',
+    points: claimSuccessPreview ? 20 : 60,
+    completed: false,
+    avatar: null,
+    avatarName: '',
+    personality: 'friendly',
+    permissions: { memory: true },
+    steps: claimSuccessPreview
+      ? { identity: true, avatar: false, personality: false, permissions: false, firstInteraction: false }
+      : { identity: true, avatar: true, personality: true, permissions: true, firstInteraction: false },
+  } : null);
   const [welcomeDetails, setWelcomeDetails] = useState(null);
   const [isClaimModalOpen, setIsClaimModalOpen] = useState(false);
   const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
   const [walletTab, setWalletTab] = useState('overview'); // 'overview' | 'qr' | 'history'
+
+  useEffect(() => {
+    let active = true;
+    if (!walletAddress || !myTag?.tag) return () => { active = false; };
+    const saved = getAgentOnboarding(walletAddress, myTag.tag);
+    const onboardingKey = `${String(walletAddress).toLowerCase()}:${String(myTag.tag).replace(/^[₦$@#]/, '').toLowerCase()}`;
+    setAgentOnboarding(saved ? {
+      ...saved,
+      points: 0,
+      completed: false,
+      steps: { identity: false, avatar: false, personality: false, permissions: false, firstInteraction: false },
+    } : null);
+    getAgentOnboardingRewardState({ walletAddress, tag: myTag.tag })
+      .then((payload) => {
+        if (!active) return;
+        if (payload.state) applyArcRewardState(payload.state);
+        const synced = syncAgentOnboardingRewards(walletAddress, myTag.tag, payload.onboarding);
+        if (!synced) return;
+        setAgentOnboarding(synced);
+        if (!synced.completed && !synced.submittedAt && onboardingDismissedKeyRef.current !== onboardingKey) setIsAgentOnboardingOpen(true);
+      })
+      .catch((error) => {
+        if (active) setArcRewardsError(`Onboarding rewards could not sync: ${error.message}`);
+      });
+    return () => { active = false; };
+  }, [walletAddress, myTag?.tag]);
+
+  const saveAgentOnboarding = async (patch = {}, completedSteps = []) => {
+    if (!walletAddress || !myTag?.tag) return null;
+    let saved = updateAgentOnboarding(walletAddress, myTag.tag, patch);
+    setAgentOnboarding((current) => ({ ...saved, steps: current?.steps || saved.steps, points: current?.points || saved.points, completed: current?.completed || saved.completed }));
+    if (patch.personality || patch.permissions) {
+      const profile = {};
+      if (patch.personality) profile.communication_style = patch.personality === 'focused' ? 'direct' : patch.personality;
+      if (patch.permissions?.memory !== undefined) {
+        profile.memory_enabled = patch.permissions.memory;
+        profile.auto_memory_enabled = patch.permissions.memory;
+      }
+      await updatePersonalAgent({ walletAddress, tag: myTag.tag, profile });
+    }
+    // The API is idempotent by wallet, tag, and step. Always reconcile requested
+    // steps with it; a stale device cache must never suppress a real ledger claim.
+    const stepsToReward = completedSteps;
+    for (const step of stepsToReward) {
+      const reward = await claimAgentOnboardingReward({ walletAddress, tag: myTag.tag, step });
+      if (reward.state) applyArcRewardState(reward.state);
+      saved = syncAgentOnboardingRewards(walletAddress, myTag.tag, reward.onboarding) || saved;
+      setAgentOnboarding(saved);
+    }
+    return saved;
+  };
 
   useEffect(() => {
     if (isConnectModalOpen) setAuthScreen('welcome');
@@ -1629,13 +1755,47 @@ function ArcAppShell() {
   // Toast notification system
   const [toasts, setToasts] = useState([]);
 
-  const showToast = useCallback((message, type = 'info', duration = 3200) => {
+  const showToast = useCallback((message, type = 'info', duration = 3200, onAction = null) => {
     const id = Date.now() + Math.random().toString(36).substring(2, 6);
-    setToasts((prev) => [...prev.slice(-3), { id, message, type }]);
+    setToasts((prev) => [...prev.slice(-3), { id, message, type, onAction }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, duration);
   }, []);
+
+  useEffect(() => {
+    const tag = myTag?.tag;
+    const submittedAt = Number(agentOnboarding?.submittedAt);
+    if (!walletAddress || !tag || !submittedAt || agentOnboarding?.completed || isAgentOnboardingOpen) return undefined;
+    const key = `nairatag_agent_onboarding_reminder_v1:${String(walletAddress).toLowerCase()}:${String(tag).toLowerCase()}`;
+    const firstDelay = 5 * 60 * 1000;
+    const repeatDelay = 24 * 60 * 60 * 1000;
+    let timer;
+    let cancelled = false;
+    let lastReminder = 0;
+    try { lastReminder = Number(window.localStorage.getItem(key)) || 0; } catch { /* Continue with an in-memory reminder. */ }
+
+    const schedule = (delay) => {
+      timer = window.setTimeout(() => {
+        if (cancelled) return;
+        if (document.visibilityState !== 'visible') {
+          schedule(60 * 1000);
+          return;
+        }
+        const current = getAgentOnboarding(walletAddress, tag);
+        if (!current || current.completed || !current.submittedAt || isAgentOnboardingOpen) return;
+        const remaining = Math.max(0, 100 - Number(current.points || 0));
+        if (!remaining) return;
+        try { window.localStorage.setItem(key, String(Date.now())); } catch { /* The reminder still appears this session. */ }
+        showToast(`You're at ${current.points}/100 Pts. Finish your setup to earn ${remaining} more—pick up where you left off.`, 'info', 7000, () => { onboardingDismissedKeyRef.current = null; setIsAgentOnboardingOpen(true); });
+        schedule(repeatDelay);
+      }, Math.max(0, delay));
+    };
+
+    const nextAt = lastReminder ? lastReminder + repeatDelay : submittedAt + firstDelay;
+    schedule(nextAt - Date.now());
+    return () => { cancelled = true; window.clearTimeout(timer); };
+  }, [walletAddress, myTag?.tag, agentOnboarding?.submittedAt, agentOnboarding?.completed, agentOnboarding?.points, isAgentOnboardingOpen, showToast]);
 
   // Confetti explosion for Claim & Swap
   const triggerCelebrationConfetti = useCallback(() => {
@@ -1645,6 +1805,8 @@ function ArcAppShell() {
         angle: 60,
         spread: 60,
         origin: { x: 0.15, y: 0.65 },
+        zIndex: 1400,
+        disableForReducedMotion: true,
         colors: ['#0052FF', '#10B981', '#F59E0B', '#6366F1', '#EC4899', '#BBF246'],
       });
       confetti({
@@ -1652,6 +1814,8 @@ function ArcAppShell() {
         angle: 120,
         spread: 60,
         origin: { x: 0.85, y: 0.65 },
+        zIndex: 1400,
+        disableForReducedMotion: true,
         colors: ['#0052FF', '#10B981', '#F59E0B', '#6366F1', '#EC4899', '#BBF246'],
       });
     } catch (e) {
@@ -1943,7 +2107,7 @@ function ArcAppShell() {
       return;
     }
     try {
-      const progress = await startArcTask({ taskId: task.id, walletAddress, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points });
+      const progress = await startArcTask({ taskId: task.id, walletAddress, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points, sessionToken: authProvider === 'circle' ? getArcSessionToken(walletAddress) : undefined, authProvider });
       setTaskProgress((previous) => ({ ...previous, [task.id]: progress }));
       showToast(`You started: ${task.title}`, 'success');
     } catch (error) {
@@ -1958,7 +2122,7 @@ function ArcAppShell() {
       return;
     }
     try {
-      const progress = await submitArcTask({ taskId: task.id, walletAddress, deliverable: submission, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points });
+      const progress = await submitArcTask({ taskId: task.id, walletAddress, deliverable: submission, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points, sessionToken: authProvider === 'circle' ? getArcSessionToken(walletAddress) : undefined, authProvider });
       setTaskProgress((previous) => ({ ...previous, [task.id]: progress }));
       setTaskSubmissionDraft('');
       showToast('Submission saved to the Arc task service for owner review.', 'success');
@@ -1982,7 +2146,7 @@ function ArcAppShell() {
     setDailyMissionsDone((prev) => ({ ...prev, price: true }));
     setUserPoints((prev) => prev + 100);
     triggerCelebrationConfetti();
-    showToast('📊 Market Price Verified! +100 Protocol Points added to your balance.', 'success', 3500);
+    showToast('ðŸ“Š Market Price Verified! +100 Protocol Points added to your balance.', 'success', 3500);
   };
 
   const handleDailyAgentMission = () => {
@@ -1993,7 +2157,7 @@ function ArcAppShell() {
     setDailyMissionsDone((prev) => ({ ...prev, agent: true }));
     setUserPoints((prev) => prev + 150);
     triggerCelebrationConfetti();
-    showToast('🤖 Agent Mission Completed! High-gap coverage verified. +150 Points.', 'success', 3500);
+    showToast('ðŸ¤– Agent Mission Completed! High-gap coverage verified. +150 Points.', 'success', 3500);
   };
 
   const handleDailyCommodityAlert = () => {
@@ -2004,13 +2168,13 @@ function ArcAppShell() {
     setDailyMissionsDone((prev) => ({ ...prev, alert: true }));
     setUserPoints((prev) => prev + 50);
     triggerCelebrationConfetti();
-    showToast('🔔 Price Alert Set on Arc Commodities! +50 Points.', 'success', 3500);
+    showToast('ðŸ”” Price Alert Set on Arc Commodities! +50 Points.', 'success', 3500);
   };
 
   const handleInviteToEarn = () => {
     const inviteUrl = myTag?.tag ? getTagShareUrl(myTag.tag) : 'https://arc.nairatag.ng/#claim';
     triggerCopy('invite_link', inviteUrl);
-    showToast('🔗 Invite Link Copied! Share with friends to earn 10% fee rebates on Arc.', 'success', 3500);
+    showToast('ðŸ”— Invite Link Copied! Share with friends to earn 10% fee rebates on Arc.', 'success', 3500);
   };
 
   const handleCreateTask = (e) => {
@@ -2024,7 +2188,7 @@ function ArcAppShell() {
       id: `task_${Date.now()}`,
       title: postTaskForm.title,
       category: postTaskForm.category,
-      categoryLabel: postTaskForm.category === 'dev' ? '⚡ Engineering' : postTaskForm.category === 'design' ? '🎨 Design' : postTaskForm.category === 'data' ? '📊 Data & AI' : postTaskForm.category === 'content' ? '✍️ Content' : '🧪 Testing',
+      categoryLabel: postTaskForm.category === 'dev' ? '⚡ Engineering' : postTaskForm.category === 'design' ? 'ðŸŽ¨ Design' : postTaskForm.category === 'data' ? 'ðŸ“Š Data & AI' : postTaskForm.category === 'content' ? '✍️ Content' : 'ðŸ§ª Testing',
       status: 'open',
       rewardUSDC: usdc,
       rewardNGN: `₦${(usdc * 1485).toLocaleString()}`,
@@ -2032,7 +2196,7 @@ function ArcAppShell() {
       deadline: postTaskForm.deadline || '3 days left',
       applicants: 0,
       creatorTag: displayUserTag || '₦YOU',
-      escrowStatus: '🔒 Funded in Escrow',
+      escrowStatus: 'ðŸ”’ Funded in Escrow',
       description: postTaskForm.description || 'Community bounty on Arc Osaka EVM with automated milestone escrow settlement.',
       deliverable: postTaskForm.requirements || 'Public verification link, GitHub PR, or live demo.',
     };
@@ -2343,7 +2507,7 @@ function ArcAppShell() {
       id: String(registration.agentId),
       tag: cleanTag,
       name: `₦${cleanTag.toUpperCase()}`,
-      role: `NairaTag agent on Arc · ERC-8004 #${registration.agentId}`,
+      role: `NairaTag agent on Arc Â· ERC-8004 #${registration.agentId}`,
       category: 'NairaTag',
       owner,
       avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(cleanTag)}`,
@@ -2592,6 +2756,22 @@ function ArcAppShell() {
       } catch {}
 
       triggerCelebrationConfetti();
+      let onboardingProgress;
+      try { onboardingProgress = updateAgentOnboarding(walletAddress, res.cleanTag); }
+      catch (error) { showToast(error.message || 'Your tag was claimed. Setup details could not be cached on this device.', 'error', 5000); }
+      try {
+        const reward = await claimAgentOnboardingReward({ walletAddress, tag: res.cleanTag, step: 'identity' });
+        if (reward.state) applyArcRewardState(reward.state);
+        const synced = syncAgentOnboardingRewards(walletAddress, res.cleanTag, reward.onboarding);
+        if (synced) onboardingProgress = synced;
+      } catch (error) {
+        setArcRewardsError(`Tag claimed, but the onboarding reward could not sync yet: ${error.message}`);
+      }
+      setAgentOnboarding(onboardingProgress);
+      const onboardingKey = `${String(walletAddress).toLowerCase()}:${String(res.cleanTag).replace(/^[₦$@#]/, '').toLowerCase()}`;
+      onboardingDismissedKeyRef.current = onboardingKey;
+      setIsAgentOnboardingOpen(false);
+      setAgentSuccessDetails({ variant: 'claimed', tag: res.cleanTag, progress: onboardingProgress || getAgentOnboarding(walletAddress, res.cleanTag) || {} });
       setCelebrationDetails({
         type: 'claim',
         cleanTag: res.cleanTag,
@@ -2602,7 +2782,7 @@ function ArcAppShell() {
         erc8004Id: agentRegistration?.id || null,
         erc8004LinkError: agentLinkError,
       });
-      setIsCelebrationOpen(true);
+      setIsCelebrationOpen(false);
       setIsClaimModalOpen(false);
       await refreshBalance(walletAddress);
     } catch (e) {
@@ -2668,6 +2848,19 @@ function ArcAppShell() {
             <span>Agents</span>
             <span className="nav-badge-pill" style={{ background: '#7c3aed' }}>8</span>
           </button>
+          {import.meta.env.VITE_NAIRADOTS_AGENT_URL && (
+            <a
+              className="nav-tab-btn"
+              href={import.meta.env.VITE_NAIRADOTS_AGENT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open your NairaDots agent workspace"
+            >
+              <Brain size={14} />
+              <span>My Agents</span>
+              <ExternalLink size={12} />
+            </a>
+          )}
           <button
             type="button"
             className={`nav-tab-btn ${mainTab === 'chat' ? 'active' : ''}`}
@@ -2686,7 +2879,7 @@ function ArcAppShell() {
           </button>
         </nav>
 
-        {/* Right Side: Search Icon + More (···) + Connect Pill */}
+        {/* Right Side: Search Icon + More (Â·Â·Â·) + Connect Pill */}
         <div className="app-header-actions">
           {/* Search Button (Hidden on Claim page) */}
           {mainTab !== 'claim' && (
@@ -2701,7 +2894,7 @@ function ArcAppShell() {
             </button>
           )}
 
-          {/* More Button (···) */}
+          {/* More Button (Â·Â·Â·) */}
           <div className="header-more-wrapper desktop-only">
             <button
               type="button"
@@ -2907,7 +3100,6 @@ function ArcAppShell() {
                   <img src="/nairatag-logo.png" alt="NairaTag" className="brand-logo-img" />
                 </div>
                 <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--privy-color-foreground)' }}>NairaTag</span>
-                <span className="card-net-pill" style={{ fontSize: 10 }}>Arc Testnet</span>
               </div>
               <button
                 type="button"
@@ -2920,6 +3112,7 @@ function ArcAppShell() {
             </div>
 
             <div className="mobile-drawer-links">
+              <div className="mobile-nav-section-label">Your pages</div>
               <button
                 type="button"
                 className={`mobile-nav-link ${mainTab === 'claim' ? 'active' : ''}`}
@@ -2932,10 +3125,10 @@ function ArcAppShell() {
                   <Sparkles size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Claim ₦Tag</span>
-                  <span className="mobile-nav-desc">Mint sovereign onchain identity handle</span>
+                  <span className="mobile-nav-title">Claim a NairaTag</span>
+                  <span className="mobile-nav-desc">Choose your personal identity</span>
                 </div>
-                {mainTab === 'claim' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               <button
@@ -2950,10 +3143,10 @@ function ArcAppShell() {
                   <Briefcase size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Tasks & Bounties</span>
-                  <span className="mobile-nav-desc">Onchain tasks, milestone rewards & points</span>
+                  <span className="mobile-nav-title">Tasks &amp; bounties</span>
+                  <span className="mobile-nav-desc">Find work and track your progress</span>
                 </div>
-                {mainTab === 'tasks' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               <button
@@ -2968,10 +3161,10 @@ function ArcAppShell() {
                   <Bot size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">AI Agents 8004</span>
-                  <span className="mobile-nav-desc">Autonomous ERC-8004 reputation directory</span>
+                  <span className="mobile-nav-title">Agent directory</span>
+                  <span className="mobile-nav-desc">Discover agents on NairaDots</span>
                 </div>
-                {mainTab === 'agents' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               <button
@@ -2986,12 +3179,28 @@ function ArcAppShell() {
                   <MessageSquare size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Agent Chat</span>
-                  <span className="mobile-nav-desc">Chat with sovereign agent & call tagged bots</span>
+                  <span className="mobile-nav-title">My agent</span>
+                  <span className="mobile-nav-desc">Chat, give tasks, and review activity</span>
                 </div>
-                {mainTab === 'chat' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
+              {import.meta.env.VITE_NAIRADOTS_AGENT_URL && (
+                <a
+                  className="mobile-nav-link"
+                  href={import.meta.env.VITE_NAIRADOTS_AGENT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="mobile-nav-icon-box"><Brain size={18} /></div>
+                  <div className="mobile-nav-text">
+                    <span className="mobile-nav-title">My agents</span>
+                    <span className="mobile-nav-desc">Create and manage your agents</span>
+                  </div>
+                  <ExternalLink className="mobile-nav-chevron" size={16} />
+                </a>
+              )}
 
+              <div className="mobile-nav-section-label mobile-nav-section-spaced">Your activity</div>
               <button
                 type="button"
                 className={`mobile-nav-link ${mainTab === 'rewards' ? 'active' : ''}`}
@@ -3004,9 +3213,10 @@ function ArcAppShell() {
                   <Gift size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Rewards &amp; Vouchers</span>
-                  <span className="mobile-nav-desc">Daily Points, USDC balance, cNGN updates &amp; referrals</span>
+                  <span className="mobile-nav-title">Rewards</span>
+                  <span className="mobile-nav-desc">See your points, vouchers, and referrals</span>
                 </div>
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               <button
@@ -3021,10 +3231,10 @@ function ArcAppShell() {
                   <HelpCircle size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">FAQ</span>
-                  <span className="mobile-nav-desc">Answers and contract links</span>
+                  <span className="mobile-nav-title">Help &amp; FAQ</span>
+                  <span className="mobile-nav-desc">Get answers and support</span>
                 </div>
-                {mainTab === 'faq' && <span className="mobile-nav-active-pill">Active</span>}
+                <ChevronRight className="mobile-nav-chevron" size={18} />
               </button>
 
               {mainTab !== 'claim' && (
@@ -3040,19 +3250,16 @@ function ArcAppShell() {
                     <Search size={18} />
                   </div>
                   <div className="mobile-nav-text">
-                    <span className="mobile-nav-title">Search</span>
-                    <span className="mobile-nav-desc">Find a NairaTag or agent</span>
+                    <span className="mobile-nav-title">Search NairaDots</span>
+                    <span className="mobile-nav-desc">Find a person, tag, or agent</span>
                   </div>
+                  <ChevronRight className="mobile-nav-chevron" size={18} />
                 </button>
               )}
             </div>
 
             <div className="mobile-drawer-footer">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
-                  <span>Arc Osaka EVM · 5042002</span>
-                </div>
                 <button
                   type="button"
                   className="quick-chip-btn"
@@ -3136,7 +3343,7 @@ function ArcAppShell() {
                       <div className="agent-circle-meta">
                         <div className="agent-directory-list-description">
                           {agent.name && agent.name !== agent.tag ? agent.name : agent.category || agent.role}
-                          {agent.category && agent.name && agent.name !== agent.tag ? ` · ${agent.category}` : ''}
+                          {agent.category && agent.name && agent.name !== agent.tag ? ` Â· ${agent.category}` : ''}
                         </div>
                         <div className="agent-circle-name">
                           <span>{mobileSearchResult.agent.name}</span>
@@ -3426,7 +3633,7 @@ function ArcAppShell() {
                           You own <strong>₦{myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}</strong>
                         </div>
                         <div className="active-claimed-sub">
-                          {shorten(walletAddress)} · Arc Testnet
+                          {shorten(walletAddress)} Â· Arc Testnet
                         </div>
                       </div>
                     </div>
@@ -3789,7 +3996,7 @@ function ArcAppShell() {
                   <div className="task-detail-heading-copy">
                     <span className="task-cat-pill active">{selectedTask.categoryLabel}</span>
                     <h1>{selectedTask.title}</h1>
-                    <p>Posted by ₦{selectedTask.creatorTag.replace(/^₦/, '').toUpperCase()} · {selectedTask.deadline}</p>
+                    <p>Posted by ₦{selectedTask.creatorTag.replace(/^₦/, '').toUpperCase()} Â· {selectedTask.deadline}</p>
                   </div>
                 </div>
 
@@ -4007,11 +4214,11 @@ function ArcAppShell() {
               {[
                 { id: 'all', label: 'All Tasks' },
                 { id: 'dev', label: '⚡ Engineering' },
-                { id: 'design', label: '🎨 Design' },
-                { id: 'data', label: '📊 Data & AI' },
+                { id: 'design', label: 'ðŸŽ¨ Design' },
+                { id: 'data', label: 'ðŸ“Š Data & AI' },
                 { id: 'content', label: '✍️ Content' },
-                { id: 'test', label: '🧪 Testing' },
-                { id: 'community', label: '📱 Community' },
+                { id: 'test', label: 'ðŸ§ª Testing' },
+                { id: 'community', label: 'ðŸ“± Community' },
               ].map((cat) => (
                 <button
                   key={cat.id}
@@ -4209,7 +4416,7 @@ function ArcAppShell() {
 
                 {/* Personalized Greeting */}
                 <h1 className="ref-chat-heading">
-                  {walletAddress && displayAccountName ? `Hey ${displayAccountName} 👋` : 'Hey there 👋'}
+                  {walletAddress && displayAccountName ? `Hey ${displayAccountName} ðŸ‘‹` : 'Hey there ðŸ‘‹'}
                 </h1>
 
                 {/* Friendly Subtitle */}
@@ -4304,7 +4511,7 @@ function ArcAppShell() {
                               </div>
                               <div className="file-pill-meta">
                                 <span className="file-pill-title">{msg.file.name}</span>
-                                <span className="file-pill-sub">{msg.file.size} · {msg.file.extension?.toUpperCase() || 'FILE'}</span>
+                                <span className="file-pill-sub">{msg.file.size} Â· {msg.file.extension?.toUpperCase() || 'FILE'}</span>
                               </div>
                             </div>
                           )}
@@ -4426,6 +4633,17 @@ function ArcAppShell() {
                   >
                     <Paperclip size={15} />
                     <span>Attach a file</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="walley-agent-menu-action"
+                    onClick={() => {
+                      setIsTagPopoverOpen(false);
+                      toggleSpeechRecognition();
+                    }}
+                  >
+                    <Mic size={15} />
+                    <span>Dictate a message</span>
                   </button>
                   {agentDirectoryError && (
                     <div className="walley-agent-directory-error">Agent registry unavailable. Registered agent tags cannot be selected until it responds.</div>
@@ -4558,26 +4776,13 @@ function ArcAppShell() {
                   <div className="walley-capsule-actions">
                     <button
                       type="button"
-                      className={`walley-capsule-icon-btn ${isSpeechListening ? 'listening-active' : ''}`}
-                      onClick={toggleSpeechRecognition}
-                      title={isSpeechListening ? "Stop listening" : "Speak to AI (Speech-to-Text)"}
-                      aria-label={isSpeechListening ? "Stop listening" : "Speak to AI"}
+                      className={`walley-capsule-icon-btn ${voice.status === 'active' ? 'listening-active' : ''}`}
+                      onClick={handleStartVoiceMode}
+                      title="Start a voice conversation"
+                      aria-label="Start a voice conversation"
+                      disabled={voice.status === 'connecting' || voice.status === 'active'}
                     >
-                      <Mic size={18} />
-                    </button>
-                    <button
-                      type="button"
-                      className="walley-capsule-icon-btn"
-                      onClick={startVoiceRecording}
-                      title="Record Voice Note"
-                      aria-label="Record Voice Note"
-                      style={{ padding: '4px' }}
-                    >
-                      <span className="walley-soundwave">
-                        <span />
-                        <span />
-                        <span />
-                      </span>
+                      <AudioLines size={18} />
                     </button>
                     <button
                       type="submit"
@@ -4630,7 +4835,7 @@ function ArcAppShell() {
                         <MessageSquare size={14} />
                         <span className="walley-history-item-copy">
                           <strong>{conversation.title || 'Arc chat'}</strong>
-                          <small>₦{conversation.agent_tag || 'arc'} · {new Date(conversation.updated_at).toLocaleString()}</small>
+                          <small>₦{conversation.agent_tag || 'arc'} Â· {new Date(conversation.updated_at).toLocaleString()}</small>
                         </span>
                       </button>
                     ))}
@@ -5029,6 +5234,64 @@ function ArcAppShell() {
         />
       )}
 
+      {isAgentOnboardingOpen && agentOnboarding && (
+        <AgentOnboardingModal
+          tag={myTag?.tag}
+          walletAddress={walletAddress}
+          progress={agentOnboarding}
+          onUpdate={saveAgentOnboarding}
+          onClose={() => {
+            onboardingDismissedKeyRef.current = `${String(walletAddress).toLowerCase()}:${String(myTag?.tag || '').replace(/^[₦$@#]/, '').toLowerCase()}`;
+            setIsAgentOnboardingOpen(false);
+          }}
+          onComplete={({ progress }) => {
+            const completedProgress = progress || agentOnboarding;
+            setAgentOnboarding(completedProgress);
+            setIsAgentOnboardingOpen(false);
+            onboardingDismissedKeyRef.current = `${String(walletAddress).toLowerCase()}:${String(myTag?.tag || '').replace(/^[₦$@#]/, '').toLowerCase()}`;
+            setAgentSuccessDetails({ variant: 'completed', tag: myTag?.tag, progress: completedProgress || {} });
+          }}
+        />
+      )}
+
+      {agentSuccessDetails && (
+        <AgentSuccessModal
+          tag={agentSuccessDetails.tag}
+          progress={agentSuccessDetails.progress}
+          variant={agentSuccessDetails.variant}
+          onClose={() => setAgentSuccessDetails(null)}
+          onMeet={() => {
+            const success = agentSuccessDetails;
+            const cleanTag = String(success?.tag || 'agent').replace(/^[₦$@#]/, '');
+            const savedAvatar = success?.progress?.avatarData || (typeof success?.progress?.avatar === 'string' && /^(https?:|data:)/.test(success.progress.avatar) ? success.progress.avatar : null);
+            const selectedAgent = { tag: cleanTag, name: `₦${cleanTag}`, avatar: savedAvatar };
+            const introPrompt = 'Hi! Please introduce yourself and tell me how you can help me today.';
+            setCurrentTaggedAgent(selectedAgent);
+            setChatInputText('');
+            setIsChatConversationOpen(true);
+            setIsTaskChatDraft(false);
+            setAgentSuccessDetails(null);
+            setMainTab('chat');
+            handleSendChatPrompt(introPrompt, { agent: selectedAgent });
+          }}
+          onEarnRewards={() => {
+            onboardingDismissedKeyRef.current = null;
+            setAgentSuccessDetails(null);
+            setIsAgentOnboardingOpen(true);
+          }}
+          onContinue={() => {
+            const success = agentSuccessDetails;
+            setAgentSuccessDetails(null);
+            if (success.variant === 'claimed') {
+              onboardingDismissedKeyRef.current = null;
+              setIsAgentOnboardingOpen(true);
+            } else {
+              setMainTab('chat');
+            }
+          }}
+        />
+      )}
+
       {isCelebrationOpen && celebrationDetails && (
         <div className="modal-backdrop" onClick={() => setIsCelebrationOpen(false)}>
           <div className="modal-dialog celebration-sheet" onClick={(e) => e.stopPropagation()}>
@@ -5176,7 +5439,7 @@ function ArcAppShell() {
             <p className="welcome-rewards-copy">Your wallet is connected and ready to send USDC.</p>
             <div className="welcome-points-card">
               <span>Protocol Points</span>
-              <strong>{Number(welcomeDetails.points) > 0 ? `+${Number(welcomeDetails.points).toLocaleString()}` : '🎁 Free Spin Ready'}</strong>
+              <strong>{Number(welcomeDetails.points) > 0 ? `+${Number(welcomeDetails.points).toLocaleString()}` : 'ðŸŽ Free Spin Ready'}</strong>
             </div>
             <button type="button" className="auth-main-cta" onClick={() => { setWelcomeDetails(null); setMainTab('rewards'); }}>Claim Daily Rewards</button>
             <button type="button" className="welcome-rewards-link" onClick={() => setWelcomeDetails(null)}>Continue to Wallet</button>
@@ -5348,7 +5611,7 @@ function ArcAppShell() {
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '16px' }}>💼</span>
+                <span style={{ fontSize: '16px' }}>ðŸ’¼</span>
                 <span className="card-header-title">Post Milestone Bounty</span>
               </div>
               <button
@@ -5388,10 +5651,10 @@ function ArcAppShell() {
                     onChange={(e) => setPostTaskForm((prev) => ({ ...prev, category: e.target.value }))}
                   >
                     <option value="dev">⚡ Engineering</option>
-                    <option value="design">🎨 Design</option>
-                    <option value="data">📊 Data & AI</option>
+                    <option value="design">ðŸŽ¨ Design</option>
+                    <option value="data">ðŸ“Š Data & AI</option>
                     <option value="content">✍️ Content</option>
-                    <option value="test">🧪 Testing</option>
+                    <option value="test">ðŸ§ª Testing</option>
                   </select>
                 </div>
 
@@ -5429,7 +5692,7 @@ function ArcAppShell() {
               </div>
 
               <div style={{ padding: '8px 10px', background: 'rgba(0, 82, 255, 0.06)', borderRadius: '6px', border: '1px solid rgba(0, 82, 255, 0.15)', fontSize: '11px', color: 'var(--privy-color-interactive)' }}>
-                🔒 <strong>Smart Escrow:</strong> Funds are locked until milestone verification.
+                ðŸ”’ <strong>Smart Escrow:</strong> Funds are locked until milestone verification.
               </div>
 
               <button type="submit" className="btn-action-primary" style={{ marginTop: '4px' }}>
@@ -5520,14 +5783,14 @@ function ArcAppShell() {
                 className={`agent-profile-tab-btn ${walletTab === 'qr' ? 'active' : ''}`}
                 onClick={() => setWalletTab('qr')}
               >
-                📱 Receive QR
+                ðŸ“± Receive QR
               </button>
               <button
                 type="button"
                 className={`agent-profile-tab-btn ${walletTab === 'history' ? 'active' : ''}`}
                 onClick={() => setWalletTab('history')}
               >
-                📜 Ledger
+                ðŸ“œ Ledger
               </button>
             </div>
 
@@ -5631,7 +5894,14 @@ function ArcAppShell() {
           ─────────────────────────────────────────────────────────────────── */}
       <div className="toast-container" role="status" aria-live="polite">
         {toasts.map((toast) => (
-          <div key={toast.id} className={`toast-pill toast-${toast.type}`}>
+          <div
+            key={toast.id}
+            className={`toast-pill toast-${toast.type}${toast.onAction ? ' toast-actionable' : ''}`}
+            onClick={toast.onAction || undefined}
+            role={toast.onAction ? 'button' : undefined}
+            tabIndex={toast.onAction ? 0 : undefined}
+            onKeyDown={toast.onAction ? (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toast.onAction(); } } : undefined}
+          >
             {toast.type === 'success' && <CheckCircle2 size={15} color="#059669" />}
             {toast.type === 'error' && <AlertCircle size={15} color="#DC2626" />}
             {toast.type === 'info' && <Sparkles size={15} color="#0052FF" />}
@@ -5686,11 +5956,117 @@ function ArcAppShell() {
         walletAddress={walletAddress}
         tag={myTag?.tag || ''}
       />
+      <ArcVoiceCall
+        voice={voice}
+        agentTag={currentTaggedAgent?.tag || 'arc'}
+        agentName={currentTaggedAgent?.name || (myTag?.tag ? `₦${myTag.tag}` : 'NairaTag Agent')}
+        accountEmail={accountEmail}
+      />
     </>
   );
 }
 
+function VoiceModePreviewPage() {
+  const previewStates = [
+    { phase: 'listening', inputCaption: 'Hi ₦joe, can you help me plan my day?', outputCaption: '', audioLevel: 0.22 },
+    { phase: 'thinking', inputCaption: 'Hi ₦joe, can you help me plan my day?', outputCaption: '', audioLevel: 0 },
+    { phase: 'speaking', inputCaption: '', outputCaption: 'Of course! Let’s start with the most important thing you need to get done today.', audioLevel: 0.48 },
+  ];
+  const [stateIndex, setStateIndex] = useState(0);
+  const [muted, setMuted] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+  const previewState = previewStates[stateIndex];
+
+  const setPreviewPhase = (phaseKey) => {
+    const idx = previewStates.findIndex((s) => s.phase === phaseKey);
+    if (idx !== -1) setStateIndex(idx);
+  };
+
+  const voice = {
+    status: 'active',
+    phase: previewState.phase,
+    inputCaption: previewState.inputCaption,
+    outputCaption: previewState.outputCaption,
+    audioLevel: muted ? 0 : previewState.audioLevel,
+    muted,
+    error: '',
+    toggleMute: () => setMuted((value) => !value),
+    advancePreview: () => setStateIndex((index) => (index + 1) % previewStates.length),
+    setPreviewPhase,
+    stop: () => setIsOpen(false),
+    clearError: () => {},
+  };
+
+  if (!isOpen) {
+    return (
+      <main className="arc-voice-preview-closed" style={{
+        minHeight: '100dvh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '16px',
+        background: '#070a08',
+        color: '#f7faf5',
+        fontFamily: 'sans-serif'
+      }}>
+        <div style={{
+          width: '64px',
+          height: '64px',
+          borderRadius: '50%',
+          background: 'rgba(201, 243, 110, 0.1)',
+          border: '1px solid rgba(201, 243, 110, 0.25)',
+          display: 'grid',
+          placeItems: 'center',
+          color: '#c9f36e',
+          fontSize: '24px'
+        }}>
+          ✦
+        </div>
+        <p style={{ margin: 0, color: 'rgba(240, 246, 237, 0.7)', fontSize: '14px' }}>
+          Voice mode preview is closed.
+        </p>
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          style={{
+            minHeight: '44px',
+            padding: '0 24px',
+            borderRadius: '999px',
+            border: 'none',
+            background: '#c9f36e',
+            color: '#070a08',
+            fontSize: '13px',
+            fontWeight: '750',
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(201, 243, 110, 0.3)'
+          }}
+        >
+          Open Voice Preview
+        </button>
+      </main>
+    );
+  }
+
+  return (
+    <ArcVoiceCall
+      voice={voice}
+      agentTag="joe"
+      agentName="₦joe"
+      previewMode
+    />
+  );
+}
+
 export default function App() {
+  const isVoicePreview = import.meta.env.DEV && typeof window !== 'undefined'
+    && new URLSearchParams(window.location.search).get('voicePreview') === '1';
+  if (isVoicePreview) return <VoiceModePreviewPage />;
+
+  const isLandingHost = typeof window !== 'undefined'
+    && ['nairatag.ng', 'www.nairatag.ng'].includes(window.location.hostname.toLowerCase());
+  if (isLandingHost) return <NairaTagLanding />;
+
   const pathname = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
   const agentMatch = pathname.match(/^\/agent\/([a-zA-Z0-9_-]+)/i);
   const tagMatch = pathname.match(/^\/tag\/([a-zA-Z0-9_-]+)/i);
@@ -5709,3 +6085,5 @@ export default function App() {
 
   return <ArcAppShell />;
 }
+
+

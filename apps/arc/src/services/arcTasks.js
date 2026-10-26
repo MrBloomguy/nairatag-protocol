@@ -1,9 +1,9 @@
 import { broadcastArcPaidTaskToTelegram, broadcastArcTaskToTelegram } from './arcSocialBroadcast.js';
-const ARC_TASKS_API = import.meta.env.VITE_ARC_TASKS_API || (import.meta.env.DEV ? '/api/arc-tasks' : 'https://nairatag.ng/api/arc-tasks');
+const ARC_TASKS_API = import.meta.env.VITE_ARC_TASKS_API || (import.meta.env.DEV ? '/api/arc-tasks' : 'https://old.nairatag.ng/api/arc-tasks');
 const ARC_CHAIN_ID = 5042002;
 
 function arcTasksUrl() {
-  const base = typeof window !== 'undefined' ? window.location.origin : 'https://nairatag.ng';
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://old.nairatag.ng';
   return new URL(ARC_TASKS_API, base);
 }
 
@@ -42,6 +42,12 @@ async function readResponse(response) {
     throw new Error(payload.error || `Arc task service returned ${response.status}.`);
   }
   return payload;
+}
+
+async function sha256Hex(value) {
+  const bytes = new TextEncoder().encode(String(value || '').trim());
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 export async function listArcTasks(walletAddress = '') {
@@ -93,9 +99,9 @@ export async function getArcAgentTaskTotals(agentWallet) {
   return { earnings, pointsEarned };
 }
 
-async function submitSignedAction({ action, taskId, walletAddress, deliverable, taskTitle, rewardUSDC, points }) {
+async function submitSignedAction({ action, taskId, walletAddress, deliverable, taskTitle, rewardUSDC, points, sessionToken, authProvider }) {
   const provider = typeof window !== 'undefined' ? window.ethereum : null;
-  if (!provider?.request) throw new Error('A compatible wallet is required to sign this task action.');
+  const deliverableHash = action === 'submit' ? await sha256Hex(deliverable) : '';
   const timestamp = Date.now();
   const message = [
     'NairaTag Arc Tasks',
@@ -104,32 +110,34 @@ async function submitSignedAction({ action, taskId, walletAddress, deliverable, 
     `Wallet: ${walletAddress.toLowerCase()}`,
     `Chain: ${ARC_CHAIN_ID}`,
     `Timestamp: ${timestamp}`,
-    ...(action === 'submit' ? [`Deliverable SHA-256: ${await sha256Hex(deliverable.trim())}`] : []),
+    ...(action === 'submit' ? [`Deliverable SHA-256: ${deliverableHash}`] : []),
   ].join('\n');
-  const signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });
+  let signature;
+  if (authProvider === 'circle' && !sessionToken) {
+    throw new Error('Your email sign-in expired. Sign in again to continue this task.');
+  }
+  if (!sessionToken) {
+    if (!provider?.request) throw new Error('Sign in again to authorize this task action.');
+    signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });
+  }
+  const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+  if (sessionToken) headers.Authorization = `Bearer ${sessionToken}`;
   const payload = await readResponse(await fetch(ARC_TASKS_API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers,
     body: JSON.stringify({ action, taskId, walletAddress, timestamp, signature, deliverable }),
   }));
-  const deliverableHash = action === 'submit' ? await sha256Hex(deliverable.trim()) : undefined;
-  if (action === 'start' || action === 'submit') {
+  if ((action === 'start' || action === 'submit') && signature) {
     broadcastArcTaskToTelegram({ action, taskId, taskTitle, rewardUSDC, points, walletAddress, timestamp, signature, deliverableHash })
       .catch((error) => console.warn('[Telegram task alert]', error.message));
   }
   return mapProgress({ [taskId]: payload.progress })[taskId];
 }
 
-async function sha256Hex(value) {
-  const bytes = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+export function startArcTask({ taskId, walletAddress, taskTitle, rewardUSDC, points, sessionToken, authProvider }) {
+  return submitSignedAction({ action: 'start', taskId, walletAddress, taskTitle, rewardUSDC, points, sessionToken, authProvider });
 }
 
-export function startArcTask({ taskId, walletAddress, taskTitle, rewardUSDC, points }) {
-  return submitSignedAction({ action: 'start', taskId, walletAddress, taskTitle, rewardUSDC, points });
-}
-
-export function submitArcTask({ taskId, walletAddress, deliverable, taskTitle, rewardUSDC, points }) {
-  return submitSignedAction({ action: 'submit', taskId, walletAddress, deliverable, taskTitle, rewardUSDC, points });
+export function submitArcTask({ taskId, walletAddress, deliverable, taskTitle, rewardUSDC, points, sessionToken, authProvider }) {
+  return submitSignedAction({ action: 'submit', taskId, walletAddress, deliverable, taskTitle, rewardUSDC, points, sessionToken, authProvider });
 }

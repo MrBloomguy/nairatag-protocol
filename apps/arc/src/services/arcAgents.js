@@ -1,7 +1,7 @@
 import { keccak256, stringToHex } from 'viem';
 import { getEthereumProvider } from './arcPayment.js';
 
-const ARC_AGENTS_API = import.meta.env?.VITE_ARC_AGENTS_API || (import.meta.env?.DEV ? '/api/arc-agents' : 'https://nairatag.ng/api/arc-agents');
+const ARC_AGENTS_API = import.meta.env?.VITE_ARC_AGENTS_API || (import.meta.env?.DEV ? '/api/arc-agents' : 'https://old.nairatag.ng/api/arc-agents');
 
 export function mapArcAgentRecord(agent = {}) {
   const tag = String(agent.tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();

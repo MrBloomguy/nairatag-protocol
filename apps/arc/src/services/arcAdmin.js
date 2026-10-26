@@ -1,7 +1,7 @@
 import { keccak256, stringToHex } from 'viem';
 import { getEthereumProvider } from './arcPayment.js';
 
-const API = import.meta.env.VITE_ARC_ADMIN_API || 'https://nairatag.ng/api/arc-admin';
+const API = import.meta.env.VITE_ARC_ADMIN_API || 'https://old.nairatag.ng/api/arc-admin';
 
 async function sign(walletAddress, action, payload) {
   const provider = getEthereumProvider();

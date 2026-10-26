@@ -4,6 +4,7 @@ import {
   clearPersonalMemories, confirmPersonalMemory, createPersonalGoal, createPersonalMemory, deletePersonalGoal,
   deletePersonalMemory, getPersonalAgent, updatePersonalAgent, updatePersonalGoal, updatePersonalMemory,
 } from '../../services/personalAgent.js';
+import { AGENT_LANGUAGES, normalizeAgentLanguage, saveAgentLanguagePreference } from '../../services/agentLanguage.js';
 import './personal-agent.css';
 
 const EMPTY_PROFILE = { agent_name: '', communication_style: 'balanced', response_length: 'balanced', language_preference: 'auto', custom_instructions: '', personalization_enabled: true, memory_enabled: true, auto_memory_enabled: true };
@@ -25,7 +26,13 @@ export default function PersonalAgentPanel({ open, onClose, walletAddress, tag }
     setLoading(true); setError('');
     try {
       const data = await getPersonalAgent({ walletAddress, tag });
-      setProfile({ ...EMPTY_PROFILE, ...data.profile });
+      const loadedProfile = {
+        ...EMPTY_PROFILE,
+        ...data.profile,
+        language_preference: normalizeAgentLanguage(data.profile?.language_preference),
+      };
+      setProfile(loadedProfile);
+      saveAgentLanguagePreference(walletAddress, loadedProfile.language_preference);
       setMemories(data.memories || []); setGoals(data.goals || []);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
@@ -47,7 +54,10 @@ export default function PersonalAgentPanel({ open, onClose, walletAddress, tag }
   };
   const saveProfile = (event) => {
     event.preventDefault();
-    run(() => updatePersonalAgent({ walletAddress, tag, profile }), 'Your agent settings are saved.');
+    run(async () => {
+      await updatePersonalAgent({ walletAddress, tag, profile });
+      saveAgentLanguagePreference(walletAddress, profile.language_preference);
+    }, 'Your agent settings are saved.');
   };
   const addMemory = (event) => {
     event.preventDefault();
@@ -86,7 +96,7 @@ export default function PersonalAgentPanel({ open, onClose, walletAddress, tag }
             <label>Communication<select value={profile.communication_style} onChange={(e) => setProfile({ ...profile, communication_style: e.target.value })}><option value="balanced">Balanced</option><option value="direct">Direct</option><option value="friendly">Friendly</option><option value="professional">Professional</option><option value="playful">Playful</option></select></label>
             <label>Answer length<select value={profile.response_length} onChange={(e) => setProfile({ ...profile, response_length: e.target.value })}><option value="concise">Concise</option><option value="balanced">Balanced</option><option value="detailed">Detailed</option></select></label>
           </div>
-          <label>Language preference<input maxLength="48" value={profile.language_preference} placeholder="Automatic" onChange={(e) => setProfile({ ...profile, language_preference: e.target.value })} /></label>
+          <label>Language preference<select value={profile.language_preference} onChange={(e) => setProfile({ ...profile, language_preference: e.target.value })}>{AGENT_LANGUAGES.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}</select><small>This preference follows you across your NairaTag agents. Chat supports all listed languages; live voice currently supports English, Yoruba, and Hausa.</small></label>
           <label>Additional preferences<textarea maxLength="1200" rows="3" value={profile.custom_instructions} placeholder="What should your agent keep in mind when helping you?" onChange={(e) => setProfile({ ...profile, custom_instructions: e.target.value })} /><small>{profile.custom_instructions.length}/1200</small></label>
           <div className="pa-switch-row"><div><strong>Personalized replies</strong><span>Use your saved style and preferences in Arc chat.</span></div><input aria-label="Personalized replies" type="checkbox" checked={profile.personalization_enabled} onChange={(e) => setProfile({ ...profile, personalization_enabled: e.target.checked })} /></div>
           <div className="pa-switch-row"><div><strong>Use saved memories and goals</strong><span>Relevant items can help Arc chat continue your work.</span></div><input aria-label="Use saved memories and goals" type="checkbox" checked={profile.memory_enabled} onChange={(e) => setProfile({ ...profile, memory_enabled: e.target.checked })} /></div>

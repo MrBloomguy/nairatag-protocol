@@ -25,7 +25,7 @@ async function getSdk() {
     throw new Error('A Circle Wallet App ID is required. Set VITE_CIRCLE_APP_ID from the Circle Wallets Configurator; a Circle client key cannot be used as the App ID.');
   }
   if (!sdkPromise) {
-    sdkPromise = import('@circle-fin/w3s-pw-web-sdk').then(({ W3SSdk }) => {
+    sdkPromise = import('./circleWalletSdk.js').then(({ W3SSdk }) => {
       sdkInstance = new W3SSdk({ appSettings: { appId: APP_ID } }, (error, result) => {
         if (!loginCallback) return;
         const complete = loginCallback;

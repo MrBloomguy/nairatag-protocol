@@ -214,7 +214,7 @@ export const VERIFIED_AGENTS = [
     badgeType: 'emerald',
     badgeName: 'Advanced',
     owner: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦chowdeck',
+    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦chowdeck',
     rank: '#1',
     rankTop: 'rank-top1',
     status: 'Verified',
@@ -233,7 +233,7 @@ export const VERIFIED_AGENTS = [
     badgeType: 'cyan',
     badgeName: 'Serious',
     owner: '0x24252B1E40AF6366F1749845333F2E4783F415a7',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦dev',
+    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦dev',
     rank: '#2',
     rankTop: 'rank-top2',
     status: 'Verified',
@@ -252,7 +252,7 @@ export const VERIFIED_AGENTS = [
     badgeType: 'magenta',
     badgeName: 'One of a kind',
     owner: '0x71C84167F3083195655364b964742d057777CC02',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦designer',
+    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦designer',
     rank: '#3',
     rankTop: 'rank-top3',
     status: 'Verified',
@@ -271,7 +271,7 @@ export const VERIFIED_AGENTS = [
     badgeType: 'bronze',
     badgeName: 'First Steps',
     owner: '0x0000000000000000000000000000000000000001',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦food',
+    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦food',
     rank: '#4',
     rankTop: '',
     status: 'Verified',
@@ -290,7 +290,7 @@ export const VERIFIED_AGENTS = [
     badgeType: 'gold',
     badgeName: 'Professional',
     owner: '0x0000000000000000000000000000000000000002',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦ride',
+    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦ride',
     rank: '#5',
     rankTop: '',
     status: 'Verified',
@@ -309,7 +309,7 @@ export const VERIFIED_AGENTS = [
     badgeType: 'ruby',
     badgeName: 'Legend',
     owner: '0x0000000000000000000000000000000000000003',
-    metadataUri: 'https://nairatag.ng/api/agent/erc8004/₦escrow',
+    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦escrow',
     rank: '#6',
     rankTop: '',
     status: 'Verified',
@@ -685,7 +685,7 @@ export default function App() {
   const [agentDetailsLoading, setAgentDetailsLoading] = useState(false);
   const [agentDetailsError, setAgentDetailsError] = useState(null);
   const [agentReputationList, setAgentReputationList] = useState([]);
-  const [newAgentMetadataUri, setNewAgentMetadataUri] = useState('https://nairatag.ng/api/agent/erc8004/₦food');
+  const [newAgentMetadataUri, setNewAgentMetadataUri] = useState('https://old.nairatag.ng/api/agent/erc8004/₦food');
   const [registeringAgent, setRegisteringAgent] = useState(false);
   const [registeredAgentResult, setRegisteredAgentResult] = useState(null);
 
@@ -2314,7 +2314,7 @@ export default function App() {
                     <button
                       type="button"
                       style={{ background: 'none', border: 'none', color: 'var(--privy-color-border-interactive)', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
-                      onClick={() => setNewAgentMetadataUri('https://nairatag.ng/api/agent/erc8004/$chowdeck')}
+                      onClick={() => setNewAgentMetadataUri('https://old.nairatag.ng/api/agent/erc8004/$chowdeck')}
                     >
                       ⚡ Autofill ₦CHOWDECK
                     </button>
@@ -3145,7 +3145,7 @@ export default function App() {
                       className="share-btn"
                       onClick={() => {
                         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                          `Check out ₦${selectedAgentProfile.tag} on @NairaTag Arc Network! ERC-8004 Verified Agent #${selectedAgentProfile.id} 🤖 https://nairatag.ng/agent/${selectedAgentProfile.id}`
+                          `Check out ₦${selectedAgentProfile.tag} on @NairaTag Arc Network! ERC-8004 Verified Agent #${selectedAgentProfile.id} 🤖 https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`
                         )}`;
                         window.open(url, '_blank', 'noopener,noreferrer');
                       }}
@@ -3156,7 +3156,7 @@ export default function App() {
                       type="button"
                       className="share-btn"
                       onClick={() => {
-                        const url = `https://t.me/share/url?url=${encodeURIComponent(`https://nairatag.ng/agent/${selectedAgentProfile.id}`)}&text=${encodeURIComponent(`Check out ₦${selectedAgentProfile.tag} - ERC-8004 Agent on Arc`)}`;
+                        const url = `https://t.me/share/url?url=${encodeURIComponent(`https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`)}&text=${encodeURIComponent(`Check out ₦${selectedAgentProfile.tag} - ERC-8004 Agent on Arc`)}`;
                         window.open(url, '_blank', 'noopener,noreferrer');
                       }}
                     >
@@ -3166,7 +3166,7 @@ export default function App() {
                       type="button"
                       className="share-btn"
                       onClick={() => {
-                        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ₦${selectedAgentProfile.tag} on NairaTag Arc: https://nairatag.ng/agent/${selectedAgentProfile.id}`)}`;
+                        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ₦${selectedAgentProfile.tag} on NairaTag Arc: https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`)}`;
                         window.open(url, '_blank', 'noopener,noreferrer');
                       }}
                     >
@@ -3175,7 +3175,7 @@ export default function App() {
                     <button
                       type="button"
                       className="share-btn"
-                      onClick={() => triggerCopy(`share_agent_${selectedAgentProfile.id}`, `https://nairatag.ng/agent/${selectedAgentProfile.id}`)}
+                      onClick={() => triggerCopy(`share_agent_${selectedAgentProfile.id}`, `https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`)}
                     >
                       <span>{copiedKey === `share_agent_${selectedAgentProfile.id}` ? '✓ Copied Link' : '🔗 Copy Direct Link'}</span>
                     </button>
@@ -3192,12 +3192,12 @@ export default function App() {
 
                   <div className="referral-link-box">
                     <span className="referral-link-text">
-                      {`https://nairatag.ng/claim?ref=₦${selectedAgentProfile.tag}`}
+                      {`https://arc.nairatag.ng/claim?ref=₦${selectedAgentProfile.tag}`}
                     </span>
                     <button
                       type="button"
                       className="referral-copy-btn"
-                      onClick={() => triggerCopy(`refer_agent_${selectedAgentProfile.id}`, `https://nairatag.ng/claim?ref=₦${selectedAgentProfile.tag}`)}
+                      onClick={() => triggerCopy(`refer_agent_${selectedAgentProfile.id}`, `https://arc.nairatag.ng/claim?ref=₦${selectedAgentProfile.tag}`)}
                     >
                       {copiedKey === `refer_agent_${selectedAgentProfile.id}` ? '✓ Copied' : 'Copy'}
                     </button>

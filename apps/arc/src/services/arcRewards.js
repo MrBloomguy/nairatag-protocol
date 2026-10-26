@@ -1,9 +1,9 @@
 import { broadcastArcRewardToTelegram } from './arcSocialBroadcast.js';
-const ARC_REWARDS_API = import.meta.env.VITE_ARC_REWARDS_API || (import.meta.env.DEV ? '/api/arc-rewards' : 'https://nairatag.ng/api/arc-rewards');
+const ARC_REWARDS_API = import.meta.env.VITE_ARC_REWARDS_API || (import.meta.env.DEV ? '/api/arc-rewards' : 'https://old.nairatag.ng/api/arc-rewards');
 const ARC_CHAIN_ID = 5042002;
 
 function arcRewardsUrl() {
-  const base = typeof window !== 'undefined' ? window.location.origin : 'https://nairatag.ng';
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://old.nairatag.ng';
   return new URL(ARC_REWARDS_API, base);
 }
 

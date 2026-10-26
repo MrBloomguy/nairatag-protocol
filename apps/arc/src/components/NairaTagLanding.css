@@ -1,0 +1,139 @@
+.naira-landing {
+  --landing-ink: #211d1b;
+  --landing-muted: #746b66;
+  --landing-paper: #fffaf6;
+  --landing-coral: #e34f50;
+  --landing-line: #e8ded8;
+  min-height: 100vh;
+  color: var(--landing-ink);
+  background: var(--landing-paper);
+  font-family: 'GT Maru', 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+.naira-landing * { box-sizing: border-box; }
+.naira-landing a { color: inherit; text-decoration: none; }
+.naira-landing__header,
+.naira-landing__hero,
+.naira-landing__features,
+.naira-landing__identity,
+.naira-landing__footer {
+  width: min(1160px, calc(100% - 56px));
+  margin-inline: auto;
+}
+
+.naira-landing__header {
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(33, 29, 27, .09);
+}
+
+.naira-landing__brand { display: inline-flex; align-items: center; gap: 10px; font-size: 20px; font-weight: 800; letter-spacing: -.05em; }
+.naira-landing__brand img { width: 34px; height: 34px; object-fit: contain; border-radius: 9px; }
+.naira-landing__nav { display: flex; align-items: center; gap: 34px; color: #514945; font-size: 13px; font-weight: 600; }
+.naira-landing__nav a:not(.naira-landing__nav-cta):hover,
+.naira-landing__footer a:hover { color: var(--landing-coral); }
+.naira-landing__nav-cta { display: inline-flex; align-items: center; gap: 8px; color: var(--landing-ink) !important; border: 1px solid var(--landing-line); border-radius: 999px; padding: 11px 16px; background: #fff; transition: border-color .2s, transform .2s; }
+.naira-landing__nav-cta:hover { border-color: var(--landing-coral); transform: translateY(-1px); }
+
+.naira-landing__hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(360px, .78fr); gap: 84px; align-items: center; padding: 83px 0 92px; }
+.naira-landing__hero-copy { max-width: 650px; }
+.naira-landing__eyebrow { display: inline-flex; align-items: center; gap: 9px; margin-bottom: 24px; color: #796e68; font-size: 10px; font-weight: 800; letter-spacing: .13em; }
+.naira-landing__eyebrow-dot,.naira-landing__online-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--landing-coral); }
+.naira-landing__hero h1 { margin: 0; font-size: clamp(52px, 7.1vw, 86px); line-height: .99; letter-spacing: -.075em; font-weight: 800; }
+.naira-landing__hero-description { max-width: 560px; margin: 26px 0 30px; color: var(--landing-muted); font-size: clamp(16px, 1.6vw, 19px); line-height: 1.72; }
+.naira-landing__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.naira-landing__button { min-height: 50px; display: inline-flex; align-items: center; justify-content: center; gap: 11px; padding: 0 20px; border-radius: 999px; font-size: 13px; font-weight: 700; transition: transform .2s, background .2s, border-color .2s; }
+.naira-landing__button:hover { transform: translateY(-2px); }
+.naira-landing__button--primary { color: #fff !important; background: var(--landing-coral); }
+.naira-landing__button--primary:hover { background: #ce4144; }
+.naira-landing__button--secondary { border: 1px solid var(--landing-line); background: rgba(255,255,255,.72); }
+.naira-landing__button--secondary:hover { border-color: #c9bdb6; }
+.naira-landing__trust-note { display: flex; align-items: center; gap: 8px; margin-top: 20px; color: #8a817b; font-size: 11px; }
+.naira-landing__trust-note svg { color: #328c70; }
+
+.naira-landing__visual { position: relative; padding: 25px; border-radius: 28px; color: #fff; background: #1d201f; box-shadow: 0 20px 70px rgba(35, 25, 20, .12); }
+.naira-landing__visual-topline { display: flex; justify-content: space-between; align-items: center; color: #d8d3d0; font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+.naira-landing__visual-topline > span { display: inline-flex; align-items: center; gap: 8px; }
+.naira-landing__online-dot { width: 7px; height: 7px; background: #68c59a; }
+.naira-landing__visual-topline > svg { color: #f2aaa0; }
+.naira-landing__portrait-wrap { position: relative; width: 148px; height: 148px; margin: 29px auto 18px; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; display: grid; place-items: center; background: #2b2d2b; }
+.naira-landing__portrait { width: 124px; height: 124px; object-fit: contain; }
+.naira-landing__verified { position: absolute; right: 4px; bottom: 9px; width: 30px; height: 30px; object-fit: contain; }
+.naira-landing__agent-name { text-align: center; font-size: 23px; font-weight: 700; letter-spacing: -.04em; }
+.naira-landing__agent-caption { max-width: 260px; margin: 7px auto 20px; text-align: center; color: #b6b1ad; font-size: 12px; line-height: 1.6; }
+.naira-landing__quick-capabilities { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.naira-landing__quick-capabilities span { min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #ede9e6; font-size: 10px; }
+.naira-landing__quick-capabilities svg { color: #f28d83; }
+.naira-landing__chat-preview { min-height: 48px; display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 7px 11px; border-radius: 14px; color: #c7c2be; background: #292c2a; font-size: 10px; }
+.naira-landing__chat-preview > span:nth-child(2) { flex: 1; }
+.naira-landing__chat-preview > svg { color: #f28d83; }
+.naira-landing__chat-avatar { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--landing-coral); font-size: 13px; font-weight: 700; }
+
+.naira-landing__features { padding: 0 0 92px; }
+.naira-landing__section-heading { max-width: 650px; margin: 0 auto 35px; text-align: center; }
+.naira-landing__section-kicker { color: var(--landing-coral); font-size: 10px; font-weight: 800; letter-spacing: .14em; }
+.naira-landing__section-heading h2,.naira-landing__identity h2 { margin: 13px 0 10px; font-size: clamp(30px, 4vw, 43px); line-height: 1.12; letter-spacing: -.06em; }
+.naira-landing__section-heading p,.naira-landing__identity p { margin: 0; color: var(--landing-muted); font-size: 14px; line-height: 1.7; }
+.naira-landing__feature-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.naira-landing__feature { min-height: 214px; padding: 22px; border: 1px solid var(--landing-line); border-radius: 19px; background: rgba(255,255,255,.72); }
+.naira-landing__feature-icon { width: 40px; height: 40px; display: grid; place-items: center; margin-bottom: 28px; border-radius: 13px; color: #d44c4b; background: #f8e9e5; }
+.naira-landing__feature-icon--2 { color: #a06447; background: #f6eee3; }
+.naira-landing__feature-icon--3 { color: #348269; background: #e6f2ec; }
+.naira-landing__feature-icon--4 { color: #7760a4; background: #efebf7; }
+.naira-landing__feature h3 { margin: 0 0 8px; font-size: 15px; letter-spacing: -.03em; }
+.naira-landing__feature p { margin: 0; color: var(--landing-muted); font-size: 12px; line-height: 1.65; }
+
+.naira-landing__identity { display: flex; align-items: center; justify-content: space-between; gap: 36px; margin-bottom: 52px; padding: 38px 42px; border-radius: 24px; color: #fff; background: #252322; }
+.naira-landing__identity .naira-landing__section-kicker { color: #ffaaa0; }
+.naira-landing__identity h2 { margin-top: 11px; font-size: clamp(27px, 3.5vw, 38px); }
+.naira-landing__identity p { color: #c7c0bc; }
+.naira-landing__identity-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; flex: 0 0 auto; }
+.naira-landing__button--light { color: var(--landing-ink) !important; background: #fffaf6; }
+.naira-landing__button--light:hover { background: #f7e9e3; }
+.naira-landing__text-link { display: inline-flex; align-items: center; gap: 6px; color: #c7c0bc !important; font-size: 11px; }
+.naira-landing__text-link:hover { color: #fff !important; }
+
+.naira-landing__footer { min-height: 82px; display: flex; align-items: center; justify-content: space-between; border-top: 1px solid var(--landing-line); color: #8b827d; font-size: 11px; }
+.naira-landing__footer .naira-landing__brand { color: var(--landing-ink); font-size: 16px; }
+.naira-landing__footer .naira-landing__brand img { width: 27px; height: 27px; }
+.naira-landing__footer > div { display: flex; gap: 21px; }
+
+@media (max-width: 900px) {
+  .naira-landing__hero { grid-template-columns: minmax(0, 1fr) minmax(300px, .85fr); gap: 36px; padding: 67px 0 76px; }
+  .naira-landing__feature-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 680px) {
+  .naira-landing__header,.naira-landing__hero,.naira-landing__features,.naira-landing__identity,.naira-landing__footer { width: min(100% - 36px, 520px); }
+  .naira-landing__header { min-height: 72px; }
+  .naira-landing__brand { font-size: 18px; }
+  .naira-landing__brand img { width: 30px; height: 30px; }
+  .naira-landing__nav { gap: 9px; }
+  .naira-landing__nav > a:not(.naira-landing__nav-cta) { display: none; }
+  .naira-landing__nav-cta { padding: 10px 13px; font-size: 11px; }
+  .naira-landing__hero { grid-template-columns: 1fr; gap: 38px; padding: 55px 0 68px; }
+  .naira-landing__eyebrow { font-size: 8px; letter-spacing: .1em; }
+  .naira-landing__hero h1 { font-size: clamp(50px, 14vw, 70px); }
+  .naira-landing__hero-description { margin: 20px 0 23px; font-size: 15px; }
+  .naira-landing__actions { align-items: stretch; flex-direction: column; }
+  .naira-landing__button { min-height: 48px; }
+  .naira-landing__visual { width: 100%; max-width: 420px; margin-inline: auto; padding: 21px; }
+  .naira-landing__features { padding-bottom: 68px; }
+  .naira-landing__section-heading { margin-bottom: 25px; text-align: left; }
+  .naira-landing__feature-grid { gap: 10px; }
+  .naira-landing__feature { min-height: 200px; padding: 16px; }
+  .naira-landing__feature-icon { margin-bottom: 22px; }
+  .naira-landing__identity { flex-direction: column; align-items: flex-start; margin-bottom: 30px; padding: 26px 22px; }
+  .naira-landing__identity-actions { width: 100%; }
+  .naira-landing__identity-actions .naira-landing__button { width: 100%; }
+  .naira-landing__footer { min-height: 74px; flex-wrap: wrap; gap: 10px; padding: 12px 0; }
+  .naira-landing__footer > span { display: none; }
+  .naira-landing__footer > div { gap: 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .naira-landing *, .naira-landing *::before, .naira-landing *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

@@ -11,7 +11,7 @@
 
 import { isAddress, getAddress } from 'viem';
 
-const RESOLVER_API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_NAIRATAG_RESOLVER_API) || (typeof process !== 'undefined' && process.env?.VITE_NAIRATAG_RESOLVER_API) || 'https://nairatag.ng/api/claims';
+const RESOLVER_API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_NAIRATAG_RESOLVER_API) || (typeof process !== 'undefined' && process.env?.VITE_NAIRATAG_RESOLVER_API) || 'https://old.nairatag.ng/api/claims';
 const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) || 'https://bbpdupijsgdghemfpijr.supabase.co';
 
 /**
