@@ -33,8 +33,9 @@ import {
   ARC_NAIRATAG_REGISTRY_ADDRESS, 
   ARC_NAIRATAG_RESOLVER_ADDRESS, 
   ARC_USDC_ADDRESS,
-  activeArcChain 
+  arcTestnet
 } from '../config/arc.js';
+import { activeArcChain } from '../services/arcPayment.js';
 import confetti from 'canvas-confetti';
 import './public-twitter-profile.css';
 
