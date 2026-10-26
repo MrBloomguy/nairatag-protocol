@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Check, 
   Copy, 
@@ -6,7 +6,8 @@ import {
   ExternalLink, 
   MessageSquare, 
   Send, 
-  ArrowRight, 
+  ArrowLeft,
+  ArrowUpRight,
   ShieldCheck, 
   Sparkles, 
   Wallet, 
@@ -14,16 +15,33 @@ import {
   Sun, 
   Moon,
   ChevronRight,
-  Download,
-  QrCode
+  QrCode,
+  Mic,
+  Bot,
+  Zap,
+  Code,
+  Flame,
+  Award,
+  Layers,
+  Clock,
+  Coins
 } from 'lucide-react';
 import { resolveTagProfile, generateAvatarSvg } from '../services/tagAvatar.js';
 import { resolveTag } from '../services/nairatagResolver.js';
-import { ARC_NAIRATAG_RESOLVER_ADDRESS, ARC_TESTNET_CONFIG } from '../config/arc.js';
+import { fetchArcAgentDirectory } from '../services/arcAgents.js';
+import { 
+  ARC_NAIRATAG_REGISTRY_ADDRESS, 
+  ARC_NAIRATAG_RESOLVER_ADDRESS, 
+  ARC_USDC_ADDRESS,
+  activeArcChain 
+} from '../config/arc.js';
 import confetti from 'canvas-confetti';
+import './public-twitter-profile.css';
+
+const shorten = (addr = '') => addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : '';
 
 export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
-  const cleanTag = String(rawHandle || 'kratos').replace(/^[₦$@#]/, '').trim();
+  const cleanTag = String(rawHandle || 'bloom').replace(/^[₦$@#]/, '').trim();
   const displayTag = `₦${cleanTag.toUpperCase()}`;
   const lowercaseTag = cleanTag.toLowerCase();
 
@@ -35,18 +53,26 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
     }
   });
 
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'capabilities' | 'pay' | 'ledger'
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [resolvedAddress, setResolvedAddress] = useState(null);
-  const [agentMetadata, setAgentMetadata] = useState(null);
+  const [agentProfile, setAgentProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Modals
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [payAmount, setPayAmount] = useState('25');
+  const [payMemo, setPayMemo] = useState('');
   const [paySuccess, setPaySuccess] = useState(false);
-  const [shareToast, setShareToast] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   // Deterministic styling from palette
   const profile = resolveTagProfile(cleanTag);
   const p = profile.palette;
+  const avatarSvg = useMemo(() => generateAvatarSvg(profile.hashIndex, 140), [profile.hashIndex]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -60,41 +86,65 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   };
 
   useEffect(() => {
+    document.title = `${displayTag} (@${lowercaseTag}) · NairaTag on Arc`;
+  }, [displayTag, lowercaseTag]);
+
+  // Load identity from both onchain claims and agent directory
+  useEffect(() => {
     let isMounted = true;
     async function loadIdentity() {
       setLoading(true);
       try {
-        const res = await resolveTag(cleanTag);
-        if (isMounted && res) {
-          if (res.resolvedAddress) setResolvedAddress(res.resolvedAddress);
-          if (res.profile) setAgentMetadata(res.profile);
+        const [resClaim, directoryAgents] = await Promise.all([
+          resolveTag(cleanTag).catch(() => null),
+          fetchArcAgentDirectory().catch(() => [])
+        ]);
+
+        if (isMounted) {
+          if (resClaim?.resolvedAddress) {
+            setResolvedAddress(resClaim.resolvedAddress);
+          }
+          const matchedAgent = directoryAgents.find(
+            a => String(a.tag || '').toLowerCase() === lowercaseTag
+          );
+          if (matchedAgent) {
+            setAgentProfile(matchedAgent);
+            if (!resClaim?.resolvedAddress && matchedAgent.owner) {
+              setResolvedAddress(matchedAgent.owner);
+            }
+          }
         }
-      } catch (e) {
-        console.warn('Failed resolving tag onchain:', e);
+      } catch (err) {
+        console.warn('[PublicProfilePage loadIdentity error]', err);
       } finally {
         if (isMounted) setLoading(false);
       }
     }
     loadIdentity();
     return () => { isMounted = false; };
-  }, [cleanTag]);
+  }, [cleanTag, lowercaseTag]);
+
+  const fallbackAddress = '0x87199e5ebe9dc796e564ed72a51e3e05901af8e3';
+  const effectiveAddress = resolvedAddress || fallbackAddress;
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2800);
+  };
 
   const copyAddress = () => {
-    const addr = resolvedAddress || '0x71C8A9b284D7207452d308BE307e5f309a7291A2';
-    navigator.clipboard.writeText(addr);
+    navigator.clipboard.writeText(effectiveAddress);
     setCopied(true);
+    showToast('Wallet address copied to clipboard!');
     triggerConfetti(0.3);
     setTimeout(() => setCopied(false), 2400);
   };
 
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href);
-    showShareToast('Profile link copied to clipboard!');
-  };
-
-  const showShareToast = (msg) => {
-    setShareToast(msg);
-    setTimeout(() => setShareToast(null), 3000);
+    setCopiedLink(true);
+    showToast('Profile link copied to clipboard!');
+    setTimeout(() => setCopiedLink(false), 2400);
   };
 
   const triggerConfetti = (ratio = 0.5) => {
@@ -109,9 +159,13 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   };
 
   const shareToTwitter = () => {
-    const text = `Connect with ${displayTag} on @NairaTaghq — sovereign onchain identity & personal AI agent!`;
-    const url = window.location.href;
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
+    const text = `Check out ${displayTag} on @NairaTaghq — sovereign onchain AI agent on Arc Network: ${window.location.href}`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const shareToTelegram = () => {
+    const text = `Meet ${displayTag} on NairaTag (Arc Network):`;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
   };
 
   const shareToWhatsApp = () => {
@@ -119,662 +173,766 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
-  const shareToTelegram = () => {
-    const text = `Meet ${displayTag} on NairaTag:`;
-    window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`, '_blank');
+  const openAppChat = (prompt = '') => {
+    const url = prompt 
+      ? `/#chat?agent=${encodeURIComponent(lowercaseTag)}&prompt=${encodeURIComponent(prompt)}`
+      : `/#chat?agent=${encodeURIComponent(lowercaseTag)}`;
+    window.location.href = url;
   };
 
-  const openAppChat = () => {
-    window.location.href = `/#chat?agent=${encodeURIComponent(lowercaseTag)}`;
+  const openVoiceCall = () => {
+    window.location.href = `/?voicePreview=1&agent=${encodeURIComponent(lowercaseTag)}`;
   };
 
-  const openAppClaim = () => {
-    window.location.href = `/#claim`;
+  const handleExecuteSend = () => {
+    setPaySuccess(true);
+    triggerConfetti(0.8);
+    setTimeout(() => {
+      setPaySuccess(false);
+      setIsPayModalOpen(false);
+      const memoParam = payMemo ? `&memo=${encodeURIComponent(payMemo)}` : '';
+      window.location.href = `/#pay?recipient=${encodeURIComponent(cleanTag)}&amount=${payAmount}${memoParam}`;
+    }, 1100);
   };
 
-  const cardSvg = generateAvatarSvg(profile.hashIndex, 190);
+  // Agent display bio and title
+  const displayName = agentProfile?.name || `${cleanTag.charAt(0).toUpperCase() + cleanTag.slice(1)} AI`;
+  const isAgent = type === 'agent' || !!agentProfile;
+  const agentCategory = agentProfile?.category || (isAgent ? 'Autonomous Agent' : 'Sovereign Identity');
+  const agentBio = agentProfile?.role || (
+    cleanTag === 'bloom'
+      ? 'Autonomous DeFi research & intelligence agent on Arc Network. Real-time liquidity analytics, instant USDC settlements, and sovereign multi-agent coordination.'
+      : `Sovereign onchain identity and personal autonomous agent on Arc Network. Verified ERC-8004 credentials and instant USDC payments.`
+  );
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: theme === 'dark' ? '#090a0f' : '#f8fafc',
-      color: theme === 'dark' ? '#ffffff' : '#0f172a',
-      fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      position: 'relative',
-      overflowX: 'hidden'
-    }}>
+    <div 
+      className="twitter-profile-page"
+      style={{
+        '--profile-primary': p.primary,
+        '--profile-glow': p.glow
+      }}
+    >
       {/* Ambient background glow */}
-      <div style={{
-        position: 'fixed',
-        top: '-150px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '800px',
-        height: '600px',
-        borderRadius: '50%',
-        background: `radial-gradient(circle, ${p.primary} 0%, transparent 65%)`,
-        opacity: theme === 'dark' ? 0.18 : 0.12,
-        filter: 'blur(100px)',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
+      <div className="twitter-ambient-glow" />
 
-      {/* Top Navigation */}
-      <header style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 40,
-        height: '64px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 24px',
-        background: theme === 'dark' ? 'rgba(9, 10, 15, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(16px)',
-        borderBottom: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`
-      }}>
-        <a href="/" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          textDecoration: 'none',
-          color: 'inherit',
-          fontWeight: 800,
-          fontSize: '18px',
-          letterSpacing: '-0.02em'
-        }}>
-          <div style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '10px',
-            backgroundColor: p.primary,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#000000',
-            fontWeight: 900,
-            fontSize: '18px'
-          }}>₦</div>
-          <span>NairaTag</span>
-        </a>
+      {/* Sticky Top Header (Twitter Profile Nav) */}
+      <header className="twitter-nav-header">
+        <div className="twitter-nav-left">
+          <button 
+            type="button" 
+            className="twitter-back-btn" 
+            onClick={() => { window.location.href = '/#agents'; }}
+            title="Explore Agents"
+            aria-label="Back to Explore Agents"
+          >
+            <ArrowLeft size={19} />
+          </button>
+          <div className="twitter-header-titles">
+            <h1 className="twitter-header-title">
+              {displayName}
+              <span className="twitter-verified-badge" title="Verified Sovereign Agent on Arc">
+                <ShieldCheck size={17} strokeWidth={2.6} />
+              </span>
+            </h1>
+            <span className="twitter-header-subtitle">
+              ₦{lowercaseTag} · Arc Network (Chain ID 5042002)
+            </span>
+          </div>
+        </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div className="twitter-nav-right">
           <button
+            type="button"
             onClick={toggleTheme}
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '50%',
-              border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)'}`,
-              background: 'transparent',
-              color: 'inherit',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Toggle Theme"
+            className="twitter-theme-toggle"
+            title="Toggle theme"
+            aria-label="Toggle theme"
           >
             {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
-          <button
-            onClick={openAppClaim}
-            style={{
-              background: p.primary,
-              color: '#000000',
-              border: 'none',
-              borderRadius: '9999px',
-              padding: '8px 18px',
-              fontWeight: 700,
-              fontSize: '13.5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: `0 4px 14px ${p.glow}`
-            }}
-          >
-            <span>Claim your ₦Tag</span>
+          <a href="/#claim" className="twitter-claim-btn">
+            <span>Claim ₦Tag</span>
             <ChevronRight size={14} />
-          </button>
+          </a>
         </div>
       </header>
 
-      {/* Main Container */}
-      <main style={{
-        position: 'relative',
-        zIndex: 1,
-        maxWidth: '820px',
-        margin: '0 auto',
-        padding: '40px 20px 80px 20px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '32px'
-      }}>
-
-        {/* Character Card (Exact match to design system mockups) */}
-        <div style={{
-          width: '100%',
-          maxWidth: '340px',
-          aspectRatio: '440 / 550',
-          borderRadius: '32px',
-          backgroundColor: p.primary,
-          boxShadow: theme === 'dark' 
-            ? `0 24px 60px rgba(0,0,0,0.8), 0 0 30px ${p.glow}`
-            : '0 20px 40px rgba(0,0,0,0.15)',
-          padding: '24px',
-          position: 'relative',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          overflow: 'hidden',
-          transition: 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)',
-          cursor: 'pointer'
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-6px) scale(1.02)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0) scale(1)'; }}
-        >
-          {/* Diagonal Monogram ₦ Watermark */}
-          <div style={{
-            position: 'absolute',
-            right: '-30px',
-            top: '30px',
-            fontSize: '260px',
-            fontWeight: 900,
-            color: '#000000',
-            opacity: 0.08,
-            userSelect: 'none',
-            transform: 'rotate(-15deg)',
-            pointerEvents: 'none'
-          }}>₦</div>
-
-          {/* Top Bar of Card */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            position: 'relative',
-            zIndex: 2
-          }}>
-            <span style={{
-              fontSize: '40px',
-              fontWeight: 900,
-              color: p.textOnCard,
-              lineHeight: 1
-            }}>₦</span>
-
-            <div style={{
-              backgroundColor: 'rgba(0,0,0,0.12)',
-              borderRadius: '9999px',
-              padding: '6px 14px',
-              fontSize: '12px',
-              fontWeight: 700,
-              color: p.textOnCard,
-              letterSpacing: '0.02em'
-            }}>
-              NairaTag
-            </div>
-          </div>
-
-          {/* Center Character Avatar */}
+      {/* Main Twitter Profile Column */}
+      <main className="twitter-profile-shell">
+        {/* Banner / Cover Header */}
+        <div className="twitter-banner-container">
           <div 
+            className="twitter-banner-mesh" 
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: 'auto 0',
-              position: 'relative',
-              zIndex: 2
+              background: `radial-gradient(circle at 20% 40%, ${p.primary} 0%, transparent 60%), radial-gradient(circle at 85% 20%, #7a45e5 0%, transparent 55%), #0c0e17`
             }}
-            dangerouslySetInnerHTML={{ __html: cardSvg }}
           />
+          <div className="twitter-banner-overlay" />
+          <div className="twitter-banner-watermark">₦</div>
 
-          {/* Bottom Bar: ₦tagname in lowercase bold */}
-          <div style={{
-            position: 'relative',
-            zIndex: 2,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'space-between'
-          }}>
+          <div className="twitter-banner-network-pill">
+            <span className="twitter-live-dot" />
+            <span>Arc Testnet</span>
+          </div>
+        </div>
+
+        {/* Avatar & Action Buttons Bar */}
+        <div className="twitter-profile-bar">
+          <div className="twitter-avatar-wrapper">
+            <div 
+              className="twitter-avatar-img"
+              dangerouslySetInnerHTML={{ __html: avatarSvg }}
+            />
+            <span className="twitter-avatar-presence" title="Agent Online & Active" />
+          </div>
+
+          <div className="twitter-actions-group">
+            <button
+              type="button"
+              className="twitter-action-icon-btn"
+              onClick={() => setIsShareModalOpen(true)}
+              title="Share profile"
+              aria-label="Share profile"
+            >
+              <Share2 size={16} />
+            </button>
+
+            <button
+              type="button"
+              className="twitter-action-icon-btn"
+              onClick={() => setIsQrModalOpen(true)}
+              title="View QR Code"
+              aria-label="View QR Code"
+            >
+              <QrCode size={16} />
+            </button>
+
+            <button
+              type="button"
+              className="twitter-btn-chat"
+              onClick={() => openAppChat()}
+              title={`Chat with ${displayName}`}
+            >
+              <MessageSquare size={15} />
+              <span>Chat</span>
+            </button>
+
+            <button
+              type="button"
+              className="twitter-btn-pay"
+              onClick={() => setIsPayModalOpen(true)}
+              title={`Pay USDC to ${displayTag}`}
+            >
+              <Send size={15} />
+              <span>Pay USDC</span>
+            </button>
+          </div>
+        </div>
+
+        {/* User Identity & Bio Details */}
+        <div className="twitter-user-info">
+          <div className="twitter-names-line">
+            <h2 className="twitter-display-name">{displayName}</h2>
+            <span className="twitter-verified-badge" title="Verified Onchain Agent">
+              <ShieldCheck size={19} strokeWidth={2.6} />
+            </span>
+            <span className="twitter-category-badge">
+              <Bot size={12} />
+              <span>{agentCategory}</span>
+            </span>
+          </div>
+
+          <div className="twitter-handle-line">
+            <span className="twitter-handle-tag">@{lowercaseTag}</span>
+            <span className="twitter-feed-dot">·</span>
+            <span className="twitter-handle-tag">{displayTag}</span>
+            <span className="twitter-feed-dot">·</span>
+            <span className="twitter-entity-type">ERC-8004 Sovereign Record</span>
+          </div>
+
+          <p className="twitter-bio-text">
+            {agentBio}
+          </p>
+
+          {/* Metadata Row */}
+          <div className="twitter-metadata-row">
+            <div className="twitter-meta-item">
+              <Wallet size={14} />
+              <button 
+                type="button" 
+                className="twitter-copy-pill"
+                onClick={copyAddress}
+                title="Copy full EVM wallet address"
+              >
+                <span>{shorten(effectiveAddress)}</span>
+                {copied ? <Check size={11} color="#10b981" /> : <Copy size={11} />}
+              </button>
+            </div>
+
+            <div className="twitter-meta-item">
+              <Globe size={14} />
+              <a 
+                href={`https://explorer.testnet.arc.io/address/${effectiveAddress}`}
+                target="_blank"
+                rel="noreferrer"
+                className="twitter-meta-link"
+              >
+                <span>explorer.testnet.arc.io</span>
+                <ArrowUpRight size={11} style={{ display: 'inline', marginLeft: 2 }} />
+              </a>
+            </div>
+
+            <div className="twitter-meta-item">
+              <Clock size={14} />
+              <span>Registered on Arc · Oct 2026</span>
+            </div>
+          </div>
+
+          {/* Twitter-Style Stats Line */}
+          <div className="twitter-stats-line">
+            <div className="twitter-stat-item">
+              <strong>14</strong> <span>Following</span>
+            </div>
+            <div className="twitter-stat-item">
+              <strong>1,248</strong> <span>Followers</span>
+            </div>
+            <div className="twitter-stat-item">
+              <strong>100</strong> <span>Trust Score</span>
+            </div>
+            <div className="twitter-stat-item">
+              <strong>1,255 USDC</strong> <span>Volume</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Profile Tabs Bar (Twitter Navigation) */}
+        <div className="twitter-tabs-bar">
+          <button
+            type="button"
+            className={`twitter-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            className={`twitter-tab-btn ${activeTab === 'capabilities' ? 'active' : ''}`}
+            onClick={() => setActiveTab('capabilities')}
+          >
+            Capabilities
+          </button>
+          <button
+            type="button"
+            className={`twitter-tab-btn ${activeTab === 'pay' ? 'active' : ''}`}
+            onClick={() => setActiveTab('pay')}
+          >
+            Pay USDC
+          </button>
+          <button
+            type="button"
+            className={`twitter-tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
+            onClick={() => setActiveTab('ledger')}
+          >
+            Onchain Ledger
+          </button>
+        </div>
+
+        {/* Tab Panels */}
+        {activeTab === 'overview' && (
+          <div className="twitter-tab-panel">
+            {/* Quick Action / Prompt Card */}
+            <div className="twitter-prompt-card">
+              <div className="twitter-prompt-card-header">
+                <Sparkles size={18} color={p.primary} />
+                <h3 className="twitter-prompt-card-title">Prompt & Interact with {displayName}</h3>
+              </div>
+              <p style={{ fontSize: '13px', color: 'var(--tw-text-muted)', margin: '0 0 14px 0' }}>
+                Tap any prompt below to launch an instant conversational session with this sovereign agent.
+              </p>
+              <div className="twitter-prompt-chips">
+                <button 
+                  type="button" 
+                  className="twitter-prompt-chip"
+                  onClick={() => openAppChat('Analyze current Arc Testnet gas prices and liquidity')}
+                >
+                  <span>📊 Analyze current Arc Testnet gas prices & liquidity</span>
+                  <ChevronRight size={14} />
+                </button>
+                <button 
+                  type="button" 
+                  className="twitter-prompt-chip"
+                  onClick={() => openAppChat(`Send 5 USDC reward to an agent on Arc`)}
+                >
+                  <span>💸 Send 5 USDC reward to an agent on Arc</span>
+                  <ChevronRight size={14} />
+                </button>
+                <button 
+                  type="button" 
+                  className="twitter-prompt-chip"
+                  onClick={() => openAppChat(`Explain your ERC-8004 identity and onchain permissions`)}
+                >
+                  <span>🛡️ Explain your ERC-8004 identity & onchain permissions</span>
+                  <ChevronRight size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Timeline Stream (Tweet-like activity items) */}
             <div>
-              <div style={{
-                fontSize: '32px',
-                fontWeight: 800,
-                color: p.textOnCard,
-                letterSpacing: '-0.03em',
-                lineHeight: 1.1
-              }}>
-                ₦{lowercaseTag}
+              <h4 style={{ fontSize: '15px', fontWeight: 800, margin: '14px 0 6px 0' }}>
+                Recent Autonomous Activity
+              </h4>
+
+              <div className="twitter-feed-item">
+                <div className="twitter-feed-avatar">
+                  <div dangerouslySetInnerHTML={{ __html: avatarSvg }} />
+                </div>
+                <div className="twitter-feed-content">
+                  <div className="twitter-feed-header">
+                    <span className="twitter-feed-name">{displayName}</span>
+                    <ShieldCheck size={14} color="#eab308" />
+                    <span className="twitter-feed-handle">@{lowercaseTag}</span>
+                    <span className="twitter-feed-dot">·</span>
+                    <span className="twitter-feed-time">1h ago</span>
+                  </div>
+                  <p className="twitter-feed-text">
+                    Sovereign agent heartbeat verified on Arc Testnet. Gas price settled at 25 Gwei. Ready for multi-agent coordination and instant USDC settlements.
+                  </p>
+                  <div className="twitter-feed-attachment">
+                    <div className="twitter-feed-attachment-info">
+                      <span className="twitter-feed-attachment-label">Onchain Heartbeat Verified</span>
+                      <span className="twitter-feed-attachment-hash">Block 69,202,318 · Arc Testnet</span>
+                    </div>
+                    <Check size={18} color="#10b981" />
+                  </div>
+                </div>
               </div>
-              <div style={{
-                fontSize: '12px',
-                fontWeight: 600,
-                color: p.textOnCard,
-                opacity: 0.75,
-                marginTop: '4px'
-              }}>
-                Sovereign Onchain Identity
-              </div>
-            </div>
 
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: '#000000',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff'
-            }}>
-              <Check size={18} strokeWidth={3} />
-            </div>
-          </div>
-        </div>
-
-        {/* Identity & Reputation Header */}
-        <div style={{
-          textAlign: 'center',
-          maxWidth: '540px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6px 14px',
-            borderRadius: '9999px',
-            background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
-            border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)'}`,
-            fontSize: '13px',
-            fontWeight: 600
-          }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-            <span>Verified Sovereign Agent • ERC-8004</span>
-          </div>
-
-          <h1 style={{
-            fontSize: '38px',
-            fontWeight: 900,
-            letterSpacing: '-0.03em',
-            margin: 0,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px'
-          }}>
-            <span>{displayTag}</span>
-            <span style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '24px',
-              height: '24px',
-              borderRadius: '50%',
-              backgroundColor: '#3b82f6',
-              color: '#ffffff',
-              fontSize: '14px'
-            }}>✓</span>
-          </h1>
-
-          <p style={{
-            fontSize: '16px',
-            color: theme === 'dark' ? '#94a3b8' : '#64748b',
-            lineHeight: 1.5,
-            margin: 0
-          }}>
-            {agentMetadata?.description || `Autonomous sovereign agent on Arc Osaka & Celo. Instant USDC settlement, multi-tool AI capabilities, and verified reputation.`}
-          </p>
-        </div>
-
-        {/* Interactive Action Bar (Matching Stage 3 / 4 of Mockup) */}
-        <div style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '12px',
-          justifyContent: 'center',
-          width: '100%',
-          maxWidth: '580px'
-        }}>
-          <button
-            onClick={openAppChat}
-            style={{
-              flex: '1 1 180px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '14px 24px',
-              borderRadius: '16px',
-              backgroundColor: p.primary,
-              color: '#000000',
-              fontWeight: 800,
-              fontSize: '15px',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: `0 8px 24px ${p.glow}`,
-              transition: 'transform 0.15s ease'
-            }}
-          >
-            <MessageSquare size={18} />
-            <span>Chat with Agent</span>
-          </button>
-
-          <button
-            onClick={() => setIsPayModalOpen(true)}
-            style={{
-              flex: '1 1 180px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '14px 24px',
-              borderRadius: '16px',
-              backgroundColor: theme === 'dark' ? '#181b26' : '#ffffff',
-              color: 'inherit',
-              fontWeight: 700,
-              fontSize: '15px',
-              border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.12)'}`,
-              cursor: 'pointer',
-              transition: 'background 0.15s ease'
-            }}
-          >
-            <Send size={18} />
-            <span>Send Crypto</span>
-          </button>
-
-          <button
-            onClick={copyAddress}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '14px 20px',
-              borderRadius: '16px',
-              backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-              color: 'inherit',
-              fontWeight: 600,
-              fontSize: '14px',
-              border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
-              cursor: 'pointer'
-            }}
-          >
-            {copied ? <Check size={16} color="#10b981" /> : <Copy size={16} />}
-            <span>{copied ? 'Address Copied!' : 'Copy 0x'}</span>
-          </button>
-
-          <button
-            onClick={copyLink}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px',
-              padding: '14px 20px',
-              borderRadius: '16px',
-              backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-              color: 'inherit',
-              fontWeight: 600,
-              fontSize: '14px',
-              border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)'}`,
-              cursor: 'pointer'
-            }}
-          >
-            <Share2 size={16} />
-            <span>Share</span>
-          </button>
-        </div>
-
-        {/* Share Channel Quick Bar */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          fontSize: '13px',
-          color: theme === 'dark' ? '#94a3b8' : '#64748b'
-        }}>
-          <span>Share to:</span>
-          <button 
-            onClick={shareToTwitter}
-            style={{ background: 'none', border: 'none', color: '#38bdf8', cursor: 'pointer', fontWeight: 600 }}
-          >X (Twitter)</button>
-          <span>•</span>
-          <button 
-            onClick={shareToWhatsApp}
-            style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', fontWeight: 600 }}
-          >WhatsApp</button>
-          <span>•</span>
-          <button 
-            onClick={shareToTelegram}
-            style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', fontWeight: 600 }}
-          >Telegram</button>
-        </div>
-
-        {/* Verification & Details Card */}
-        <div style={{
-          width: '100%',
-          maxWidth: '580px',
-          backgroundColor: theme === 'dark' ? '#12141e' : '#ffffff',
-          borderRadius: '24px',
-          border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '18px'
-        }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldCheck size={18} color="#10b981" />
-            <span>Onchain Resolver & Rails</span>
-          </h2>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '14px'
-          }}>
-            <div style={{
-              backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-              padding: '12px 16px',
-              borderRadius: '14px',
-              border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`
-            }}>
-              <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Network Rail</div>
-              <div style={{ fontSize: '14px', fontWeight: 700, marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#6366f1' }} />
-                <span>Arc Testnet (5042002)</span>
-              </div>
-            </div>
-
-            <div style={{
-              backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-              padding: '12px 16px',
-              borderRadius: '14px',
-              border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`
-            }}>
-              <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>ERC-8004 Score</div>
-              <div style={{ fontSize: '14px', fontWeight: 700, marginTop: '2px', color: '#10b981' }}>
-                99% Reputation (Verified)
-              </div>
-            </div>
-
-            <div style={{
-              backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-              padding: '12px 16px',
-              borderRadius: '14px',
-              border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
-              gridColumn: '1 / -1'
-            }}>
-              <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 700 }}>Resolved Address</div>
-              <div style={{
-                fontFamily: 'monospace',
-                fontSize: '13px',
-                marginTop: '4px',
-                wordBreak: 'break-all',
-                color: theme === 'dark' ? '#cbd5e1' : '#334155'
-              }}>
-                {resolvedAddress || '0x71C8A9b284D7207452d308BE307e5f309a7291A2'}
+              <div className="twitter-feed-item">
+                <div className="twitter-feed-avatar">
+                  <div dangerouslySetInnerHTML={{ __html: avatarSvg }} />
+                </div>
+                <div className="twitter-feed-content">
+                  <div className="twitter-feed-header">
+                    <span className="twitter-feed-name">{displayName}</span>
+                    <ShieldCheck size={14} color="#eab308" />
+                    <span className="twitter-feed-handle">@{lowercaseTag}</span>
+                    <span className="twitter-feed-dot">·</span>
+                    <span className="twitter-feed-time">1d ago</span>
+                  </div>
+                  <p className="twitter-feed-text">
+                    Registered sovereign canonical tag {displayTag} in the Arc NairaTag Registry at <code style={{ color: '#c084fc' }}>0x034f...684a</code>.
+                  </p>
+                  <div className="twitter-feed-attachment">
+                    <div className="twitter-feed-attachment-info">
+                      <span className="twitter-feed-attachment-label">Tag Claim Event Confirmed</span>
+                      <span className="twitter-feed-attachment-hash">Resolver: 0xaee1...efbf</span>
+                    </div>
+                    <ExternalLink size={16} color="var(--tw-text-muted)" />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Bottom Viral Claim Banner */}
-        <div style={{
-          width: '100%',
-          maxWidth: '580px',
-          backgroundColor: theme === 'dark' ? 'rgba(187, 242, 70, 0.08)' : 'rgba(187, 242, 70, 0.15)',
-          border: `1px solid ${p.primary}`,
-          borderRadius: '24px',
-          padding: '24px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-          gap: '12px'
-        }}>
-          <div style={{ fontSize: '18px', fontWeight: 800 }}>Want your own sovereign ₦Tag?</div>
-          <p style={{ fontSize: '14px', color: theme === 'dark' ? '#cbd5e1' : '#475569', margin: 0 }}>
-            Claim your name for free in seconds. No crypto wallet or gas fees required — sign in with your email and get an instant AI agent.
-          </p>
-          <button
-            onClick={openAppClaim}
-            style={{
-              marginTop: '4px',
-              backgroundColor: '#000000',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '9999px',
-              padding: '10px 24px',
-              fontWeight: 700,
-              fontSize: '14px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <span>Claim your ₦Tag now</span>
-            <ArrowRight size={15} />
-          </button>
-        </div>
+        {activeTab === 'capabilities' && (
+          <div className="twitter-tab-panel">
+            <div className="twitter-capabilities-grid">
+              <div className="twitter-cap-card">
+                <div className="twitter-cap-header">
+                  <div className="twitter-cap-icon-box">
+                    <Mic size={20} />
+                  </div>
+                  <span className="twitter-cap-status">Active</span>
+                </div>
+                <h4 className="twitter-cap-title">Voice Mode Call</h4>
+                <p className="twitter-cap-desc">
+                  Low-latency voice call interface powered by fluid visualizer orb and real-time speech engine.
+                </p>
+                <button
+                  type="button"
+                  className="twitter-btn-pay"
+                  style={{ marginTop: 8, height: 34, fontSize: 13, justifyContent: 'center' }}
+                  onClick={openVoiceCall}
+                >
+                  <Mic size={14} />
+                  <span>Launch Voice Mode</span>
+                </button>
+              </div>
 
+              <div className="twitter-cap-card">
+                <div className="twitter-cap-header">
+                  <div className="twitter-cap-icon-box">
+                    <MessageSquare size={20} />
+                  </div>
+                  <span className="twitter-cap-status">Active</span>
+                </div>
+                <h4 className="twitter-cap-title">Conversational Chat</h4>
+                <p className="twitter-cap-desc">
+                  Direct prompt and multi-turn interaction with natural language understanding and memory persistence.
+                </p>
+                <button
+                  type="button"
+                  className="twitter-btn-chat"
+                  style={{ marginTop: 8, height: 34, fontSize: 13, justifyContent: 'center' }}
+                  onClick={() => openAppChat()}
+                >
+                  <MessageSquare size={14} />
+                  <span>Start Chat Session</span>
+                </button>
+              </div>
+
+              <div className="twitter-cap-card">
+                <div className="twitter-cap-header">
+                  <div className="twitter-cap-icon-box">
+                    <Coins size={20} />
+                  </div>
+                  <span className="twitter-cap-status">Active</span>
+                </div>
+                <h4 className="twitter-cap-title">USDC Autonomous Settlement</h4>
+                <p className="twitter-cap-desc">
+                  Native Arc ERC-20 transfers with sub-second finality and predeployed Memo precompiles.
+                </p>
+              </div>
+
+              <div className="twitter-cap-card">
+                <div className="twitter-cap-header">
+                  <div className="twitter-cap-icon-box">
+                    <ShieldCheck size={20} />
+                  </div>
+                  <span className="twitter-cap-status">Verified</span>
+                </div>
+                <h4 className="twitter-cap-title">ERC-8004 Identity</h4>
+                <p className="twitter-cap-desc">
+                  Cryptographically verified onchain agent registration and reputation score tracking.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'pay' && (
+          <div className="twitter-tab-panel">
+            <div className="twitter-pay-card">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Send USDC to {displayTag}</h3>
+                  <p style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--tw-text-muted)' }}>
+                    Instant settlement on Arc Testnet directly to the verified wallet address.
+                  </p>
+                </div>
+                <span className="twitter-category-badge">Zero Gas / USDC Native</span>
+              </div>
+
+              <div className="twitter-input-group">
+                <label className="twitter-input-label">Quick Presets (USDC)</label>
+                <div className="twitter-amount-presets">
+                  {['5', '15', '25', '50', '100'].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      className={`twitter-preset-btn ${payAmount === amt ? 'selected' : ''}`}
+                      onClick={() => setPayAmount(amt)}
+                    >
+                      ${amt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="twitter-input-group">
+                <label className="twitter-input-label">Custom Amount (USDC)</label>
+                <input
+                  type="number"
+                  step="any"
+                  className="twitter-text-input"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                  placeholder="e.g. 10.00"
+                />
+              </div>
+
+              <div className="twitter-input-group">
+                <label className="twitter-input-label">Transaction Memo (Optional)</label>
+                <input
+                  type="text"
+                  className="twitter-text-input"
+                  value={payMemo}
+                  onChange={(e) => setPayMemo(e.target.value)}
+                  placeholder="e.g. Bounty for AI research task"
+                />
+              </div>
+
+              <button
+                type="button"
+                className="twitter-btn-pay"
+                style={{ height: 46, fontSize: 15, justifyContent: 'center', marginTop: 6 }}
+                onClick={handleExecuteSend}
+              >
+                {paySuccess ? '✓ Connecting to Wallet…' : `Pay $${payAmount} USDC to ${displayTag}`}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'ledger' && (
+          <div className="twitter-tab-panel">
+            <div className="twitter-pay-card">
+              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>Onchain Architecture & Verified Contracts</h3>
+              <p style={{ margin: '4px 0 12px 0', fontSize: 13, color: 'var(--tw-text-muted)' }}>
+                This sovereign profile is bound to deployed smart contracts on Arc Testnet (Chain ID 5042002).
+              </p>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className="twitter-feed-attachment">
+                  <div className="twitter-feed-attachment-info">
+                    <span className="twitter-feed-attachment-label">NairaTag Registry Contract</span>
+                    <span className="twitter-feed-attachment-hash">{ARC_NAIRATAG_REGISTRY_ADDRESS}</span>
+                  </div>
+                  <a 
+                    href={`https://explorer.testnet.arc.io/address/${ARC_NAIRATAG_REGISTRY_ADDRESS}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: 'var(--tw-accent-cyan)' }}
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                </div>
+
+                <div className="twitter-feed-attachment">
+                  <div className="twitter-feed-attachment-info">
+                    <span className="twitter-feed-attachment-label">NairaTag Resolver Contract</span>
+                    <span className="twitter-feed-attachment-hash">{ARC_NAIRATAG_RESOLVER_ADDRESS}</span>
+                  </div>
+                  <a 
+                    href={`https://explorer.testnet.arc.io/address/${ARC_NAIRATAG_RESOLVER_ADDRESS}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: 'var(--tw-accent-cyan)' }}
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                </div>
+
+                <div className="twitter-feed-attachment">
+                  <div className="twitter-feed-attachment-info">
+                    <span className="twitter-feed-attachment-label">Canonical Arc USDC Token</span>
+                    <span className="twitter-feed-attachment-hash">{ARC_USDC_ADDRESS}</span>
+                  </div>
+                  <a 
+                    href={`https://explorer.testnet.arc.io/address/${ARC_USDC_ADDRESS}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: 'var(--tw-accent-cyan)' }}
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                </div>
+
+                <div className="twitter-feed-attachment">
+                  <div className="twitter-feed-attachment-info">
+                    <span className="twitter-feed-attachment-label">Agent Sovereign Wallet</span>
+                    <span className="twitter-feed-attachment-hash">{effectiveAddress}</span>
+                  </div>
+                  <a 
+                    href={`https://explorer.testnet.arc.io/address/${effectiveAddress}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: 'var(--tw-accent-cyan)' }}
+                  >
+                    <ExternalLink size={16} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Pay Modal */}
       {isPayModalOpen && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 100,
-          padding: '20px'
-        }}
-        onClick={() => setIsPayModalOpen(false)}
-        >
-          <div 
-            style={{
-              backgroundColor: theme === 'dark' ? '#141622' : '#ffffff',
-              borderRadius: '24px',
-              maxWidth: '420px',
-              width: '100%',
-              padding: '28px',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.5)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '18px',
-              border: `1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'}`
-            }}
-            onClick={e => e.stopPropagation()}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800 }}>Pay {displayTag}</h3>
+        <div className="twitter-modal-overlay" onClick={() => setIsPayModalOpen(false)}>
+          <div className="twitter-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="twitter-modal-header">
+              <h3 className="twitter-modal-title">Pay {displayTag}</h3>
               <button 
+                type="button" 
+                className="twitter-modal-close"
                 onClick={() => setIsPayModalOpen(false)}
-                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'inherit' }}
-              >×</button>
+              >
+                ×
+              </button>
             </div>
 
-            <p style={{ fontSize: '13.5px', color: '#94a3b8', margin: 0 }}>
-              Send instant USDC on Arc Osaka directly to this sovereign ₦Tag.
+            <p style={{ margin: 0, fontSize: 13.5, color: 'var(--tw-text-muted)' }}>
+              Send instant USDC on Arc Testnet directly to this sovereign ₦Tag.
             </p>
 
-            <div>
-              <label style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8' }}>Amount (USDC)</label>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                {['5', '25', '50', '100'].map(amt => (
+            <div className="twitter-input-group">
+              <label className="twitter-input-label">Select Amount (USDC)</label>
+              <div className="twitter-amount-presets">
+                {['5', '15', '25', '50', '100'].map((amt) => (
                   <button
                     key={amt}
+                    type="button"
+                    className={`twitter-preset-btn ${payAmount === amt ? 'selected' : ''}`}
                     onClick={() => setPayAmount(amt)}
-                    style={{
-                      flex: 1,
-                      padding: '8px',
-                      borderRadius: '10px',
-                      border: payAmount === amt ? `2px solid ${p.primary}` : '1px solid rgba(255,255,255,0.1)',
-                      backgroundColor: payAmount === amt ? p.primary : 'transparent',
-                      color: payAmount === amt ? '#000000' : 'inherit',
-                      fontWeight: 700,
-                      cursor: 'pointer'
-                    }}
-                  >${amt}</button>
+                  >
+                    ${amt}
+                  </button>
                 ))}
               </div>
             </div>
 
+            <div className="twitter-input-group">
+              <label className="twitter-input-label">Transaction Memo</label>
+              <input
+                type="text"
+                className="twitter-text-input"
+                placeholder="Optional memo (attached onchain)"
+                value={payMemo}
+                onChange={(e) => setPayMemo(e.target.value)}
+              />
+            </div>
+
             <button
-              onClick={() => {
-                setPaySuccess(true);
-                triggerConfetti(0.8);
-                setTimeout(() => {
-                  setPaySuccess(false);
-                  setIsPayModalOpen(false);
-                  window.location.href = `/#pay?recipient=${encodeURIComponent(cleanTag)}&amount=${payAmount}`;
-                }, 1200);
-              }}
-              style={{
-                backgroundColor: p.primary,
-                color: '#000000',
-                border: 'none',
-                borderRadius: '14px',
-                padding: '14px',
-                fontWeight: 800,
-                fontSize: '15px',
-                cursor: 'pointer',
-                marginTop: '8px'
-              }}
+              type="button"
+              className="twitter-btn-pay"
+              style={{ height: 46, fontSize: 15, justifyContent: 'center', marginTop: 8 }}
+              onClick={handleExecuteSend}
             >
-              {paySuccess ? '✓ Redirecting to Wallet...' : `Pay $${payAmount} USDC to ${displayTag}`}
+              {paySuccess ? '✓ Connecting to Wallet…' : `Confirm & Pay $${payAmount} USDC`}
             </button>
           </div>
         </div>
       )}
 
-      {/* Share Toast */}
-      {shareToast && (
-        <div style={{
-          position: 'fixed',
-          bottom: '24px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          backgroundColor: '#10b981',
-          color: '#ffffff',
-          padding: '10px 20px',
-          borderRadius: '9999px',
-          fontSize: '14px',
-          fontWeight: 700,
-          zIndex: 999,
-          boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)'
-        }}>
-          {shareToast}
+      {/* QR Code Modal */}
+      {isQrModalOpen && (
+        <div className="twitter-modal-overlay" onClick={() => setIsQrModalOpen(false)}>
+          <div className="twitter-modal-content" onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
+            <div className="twitter-modal-header">
+              <h3 className="twitter-modal-title">{displayTag} QR Code</h3>
+              <button 
+                type="button" 
+                className="twitter-modal-close"
+                onClick={() => setIsQrModalOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: 13.5, color: 'var(--tw-text-muted)' }}>
+              Scan to send instant USDC payments or connect on Arc Network.
+            </p>
+
+            <div style={{
+              margin: '12px auto',
+              padding: '16px',
+              background: '#ffffff',
+              borderRadius: '20px',
+              width: 'fit-content',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.3)'
+            }}>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}&margin=10`}
+                alt={`${displayTag} QR Code`}
+                style={{ width: 220, height: 220, display: 'block' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+              <button
+                type="button"
+                className="twitter-btn-chat"
+                style={{ flex: 1, justifyContent: 'center' }}
+                onClick={copyLink}
+              >
+                {copiedLink ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
+                <span>{copiedLink ? 'Copied Link!' : 'Copy Link'}</span>
+              </button>
+
+              <button
+                type="button"
+                className="twitter-btn-pay"
+                style={{ flex: 1, justifyContent: 'center' }}
+                onClick={copyAddress}
+              >
+                <Wallet size={14} />
+                <span>Copy Wallet</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {isShareModalOpen && (
+        <div className="twitter-modal-overlay" onClick={() => setIsShareModalOpen(false)}>
+          <div className="twitter-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="twitter-modal-header">
+              <h3 className="twitter-modal-title">Share {displayTag}</h3>
+              <button 
+                type="button" 
+                className="twitter-modal-close"
+                onClick={() => setIsShareModalOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: 13.5, color: 'var(--tw-text-muted)' }}>
+              Share this sovereign NairaTag agent profile across social platforms.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, margin: '6px 0' }}>
+              <button
+                type="button"
+                className="twitter-prompt-chip"
+                onClick={shareToTwitter}
+              >
+                <span>Share on X / Twitter</span>
+                <ArrowUpRight size={14} />
+              </button>
+
+              <button
+                type="button"
+                className="twitter-prompt-chip"
+                onClick={shareToTelegram}
+              >
+                <span>Share on Telegram</span>
+                <ArrowUpRight size={14} />
+              </button>
+
+              <button
+                type="button"
+                className="twitter-prompt-chip"
+                onClick={shareToWhatsApp}
+              >
+                <span>Share on WhatsApp</span>
+                <ArrowUpRight size={14} />
+              </button>
+
+              <button
+                type="button"
+                className="twitter-prompt-chip"
+                onClick={copyLink}
+              >
+                <span>{copiedLink ? '✓ Profile Link Copied!' : 'Copy Direct Link'}</span>
+                <Copy size={14} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Toast Notification */}
+      {toastMessage && (
+        <div className="twitter-toast">
+          {toastMessage}
         </div>
       )}
     </div>

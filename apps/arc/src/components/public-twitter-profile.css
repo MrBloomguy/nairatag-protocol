@@ -1,0 +1,1028 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+   NAIRATAG SOVEREIGN IDENTITY — TWITTER / X STYLE PUBLIC PROFILE DESIGN SYSTEM
+   Tailored for Arc Network & Sovereign Autonomous Agents
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --tw-bg: #07080d;
+  --tw-surface: #0f1118;
+  --tw-surface-hover: #161924;
+  --tw-card: #13151f;
+  --tw-border: rgba(255, 255, 255, 0.08);
+  --tw-border-strong: rgba(255, 255, 255, 0.16);
+  --tw-text: #f8fafc;
+  --tw-text-muted: #8b949e;
+  --tw-text-dim: #6e7681;
+  --tw-accent-cyan: #00d4ff;
+  --tw-accent-purple: #7a45e5;
+  --tw-accent-emerald: #10b981;
+  --tw-verified-gold: #eab308;
+}
+
+[data-theme="light"] {
+  --tw-bg: #f8fafc;
+  --tw-surface: #ffffff;
+  --tw-surface-hover: #f1f5f9;
+  --tw-card: #ffffff;
+  --tw-border: rgba(0, 0, 0, 0.08);
+  --tw-border-strong: rgba(0, 0, 0, 0.15);
+  --tw-text: #0f172a;
+  --tw-text-muted: #475569;
+  --tw-text-dim: #94a3b8;
+  --tw-accent-cyan: #0284c7;
+  --tw-accent-purple: #6d28d9;
+  --tw-accent-emerald: #059669;
+  --tw-verified-gold: #ca8a04;
+}
+
+.twitter-profile-page {
+  min-height: 100vh;
+  background-color: var(--tw-bg);
+  color: var(--tw-text);
+  font-family: 'GT Maru', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+  padding-bottom: 90px;
+}
+
+/* Background Atmospheric Ambient Glow */
+.twitter-ambient-glow {
+  position: fixed;
+  top: -160px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--profile-glow, rgba(122, 69, 229, 0.22)) 0%, transparent 68%);
+  opacity: 0.7;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Sticky Top Bar (Twitter Profile Header) */
+.twitter-nav-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px;
+  background: rgba(7, 8, 13, 0.88);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--tw-border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme="light"] .twitter-nav-header {
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.twitter-nav-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.twitter-back-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--tw-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.twitter-back-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: scale(1.05);
+}
+
+[data-theme="light"] .twitter-back-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.twitter-header-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.twitter-header-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.twitter-header-subtitle {
+  font-size: 12px;
+  color: var(--tw-text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.twitter-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.twitter-theme-toggle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--tw-border);
+  background: transparent;
+  color: var(--tw-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.twitter-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.twitter-claim-btn {
+  background: var(--profile-primary, #7a45e5);
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 750;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.twitter-claim-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* Main Profile Shell (Twitter Column Layout) */
+.twitter-profile-shell {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  border-left: 1px solid var(--tw-border);
+  border-right: 1px solid var(--tw-border);
+  background: var(--tw-bg);
+  min-height: calc(100vh - 60px);
+}
+
+/* Banner / Cover Header */
+.twitter-banner-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 1;
+  min-height: 170px;
+  max-height: 220px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #181926 0%, #0d0f17 100%);
+}
+
+.twitter-banner-mesh {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.85;
+}
+
+.twitter-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.6) 100%);
+}
+
+.twitter-banner-watermark {
+  position: absolute;
+  right: 18px;
+  bottom: -28px;
+  font-size: 170px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.05);
+  user-select: none;
+  pointer-events: none;
+  transform: rotate(-10deg);
+  line-height: 1;
+}
+
+.twitter-banner-network-pill {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  background: rgba(7, 8, 13, 0.75);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #f1f5f9;
+  letter-spacing: 0.02em;
+}
+
+.twitter-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: twitter-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes twitter-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.85); }
+}
+
+/* Avatar & Actions Row (Twitter Style) */
+.twitter-profile-bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 20px;
+  position: relative;
+  margin-top: -65px;
+  margin-bottom: 14px;
+}
+
+.twitter-avatar-wrapper {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 4px solid var(--tw-bg);
+  background: var(--tw-surface);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.twitter-avatar-wrapper:hover {
+  transform: scale(1.02);
+}
+
+.twitter-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.twitter-avatar-presence {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #10b981;
+  border: 3px solid var(--tw-bg);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+}
+
+.twitter-actions-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.twitter-action-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--tw-border-strong);
+  background: transparent;
+  color: var(--tw-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.twitter-action-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .twitter-action-icon-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.twitter-btn-chat {
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 9999px;
+  border: 1px solid var(--tw-border-strong);
+  background: var(--tw-surface);
+  color: var(--tw-text);
+  font-size: 13.5px;
+  font-weight: 750;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.twitter-btn-chat:hover {
+  background: var(--tw-surface-hover);
+  border-color: var(--profile-primary, #7a45e5);
+  color: var(--profile-primary, #7a45e5);
+  transform: translateY(-1px);
+}
+
+.twitter-btn-pay {
+  height: 38px;
+  padding: 0 20px;
+  border-radius: 9999px;
+  border: none;
+  background: var(--profile-primary, #7a45e5);
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 4px 16px var(--profile-glow, rgba(122, 69, 229, 0.35));
+}
+
+.twitter-btn-pay:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px var(--profile-glow, rgba(122, 69, 229, 0.45));
+}
+
+/* User Identity & Bio Details (Twitter Style) */
+.twitter-user-info {
+  padding: 0 20px 18px 20px;
+}
+
+.twitter-names-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.twitter-display-name {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  margin: 0;
+  color: var(--tw-text);
+  line-height: 1.2;
+}
+
+.twitter-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tw-verified-gold);
+  filter: drop-shadow(0 0 6px rgba(234, 179, 8, 0.35));
+}
+
+.twitter-category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  background: rgba(122, 69, 229, 0.16);
+  border: 1px solid rgba(122, 69, 229, 0.3);
+  font-size: 11px;
+  font-weight: 700;
+  color: #c084fc;
+}
+
+.twitter-handle-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  margin-bottom: 12px;
+}
+
+.twitter-handle-tag {
+  font-size: 14.5px;
+  color: var(--tw-text-muted);
+  font-weight: 600;
+}
+
+.twitter-entity-type {
+  font-size: 12px;
+  color: var(--tw-text-dim);
+}
+
+.twitter-bio-text {
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--tw-text);
+  margin: 0 0 14px 0;
+}
+
+/* Metadata Items Grid */
+.twitter-metadata-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--tw-text-muted);
+  margin-bottom: 16px;
+}
+
+.twitter-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.twitter-meta-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.twitter-meta-link:hover {
+  color: var(--profile-primary, #7a45e5);
+  text-decoration: underline;
+}
+
+.twitter-copy-pill {
+  border: none;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--tw-text-muted);
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.twitter-copy-pill:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--tw-text);
+}
+
+/* Stats / Social Proof Counters */
+.twitter-stats-line {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 13.5px;
+  color: var(--tw-text-muted);
+  padding-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.twitter-stat-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.twitter-stat-item strong {
+  color: var(--tw-text);
+  font-weight: 800;
+}
+
+/* Tabs Navigation Strip (Twitter Profile Tabs) */
+.twitter-tabs-bar {
+  display: flex;
+  border-bottom: 1px solid var(--tw-border);
+  position: sticky;
+  top: 60px;
+  z-index: 40;
+  background: rgba(7, 8, 13, 0.94);
+  backdrop-filter: blur(14px);
+}
+
+[data-theme="light"] .twitter-tabs-bar {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.twitter-tab-btn {
+  flex: 1;
+  text-align: center;
+  padding: 15px 12px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--tw-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.twitter-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tw-text);
+}
+
+.twitter-tab-btn.active {
+  color: var(--tw-text);
+  font-weight: 800;
+}
+
+.twitter-tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 54px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--profile-primary, #7a45e5);
+  box-shadow: 0 0 10px var(--profile-glow, rgba(122, 69, 229, 0.6));
+}
+
+/* Tab Panels Container */
+.twitter-tab-panel {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Quick Prompt & Chat Card (Interactive Feature) */
+.twitter-prompt-card {
+  background: var(--tw-surface);
+  border: 1px solid var(--tw-border);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.twitter-prompt-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.twitter-prompt-card-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.twitter-prompt-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.twitter-prompt-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--tw-border);
+  border-radius: 14px;
+  color: var(--tw-text);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.twitter-prompt-chip:hover {
+  background: var(--tw-surface-hover);
+  border-color: var(--profile-primary, #7a45e5);
+  color: var(--profile-primary, #7a45e5);
+  transform: translateX(3px);
+}
+
+/* Timeline Activity Stream (Tweet-like items) */
+.twitter-feed-item {
+  display: flex;
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--tw-border);
+}
+
+.twitter-feed-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--tw-surface);
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid var(--tw-border);
+}
+
+.twitter-feed-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.twitter-feed-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.twitter-feed-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.twitter-feed-name {
+  font-weight: 800;
+  color: var(--tw-text);
+}
+
+.twitter-feed-handle {
+  color: var(--tw-text-muted);
+}
+
+.twitter-feed-dot {
+  color: var(--tw-text-dim);
+}
+
+.twitter-feed-time {
+  color: var(--tw-text-muted);
+  font-size: 13px;
+}
+
+.twitter-feed-text {
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--tw-text);
+  margin: 0 0 10px 0;
+}
+
+.twitter-feed-attachment {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--tw-border);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.twitter-feed-attachment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.twitter-feed-attachment-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #10b981;
+}
+
+.twitter-feed-attachment-hash {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: var(--tw-text-muted);
+}
+
+/* Capabilities & Tools Grid */
+.twitter-capabilities-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.twitter-cap-card {
+  background: var(--tw-surface);
+  border: 1px solid var(--tw-border);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.twitter-cap-card:hover {
+  border-color: var(--tw-border-strong);
+  transform: translateY(-2px);
+}
+
+.twitter-cap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.twitter-cap-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(122, 69, 229, 0.16);
+  color: #c084fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.twitter-cap-status {
+  font-size: 11px;
+  font-weight: 750;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  background: rgba(16, 185, 129, 0.14);
+  color: #10b981;
+}
+
+.twitter-cap-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 4px 0 0 0;
+}
+
+.twitter-cap-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--tw-text-muted);
+  margin: 0;
+}
+
+/* Quick Pay & Transfer Card */
+.twitter-pay-card {
+  background: var(--tw-surface);
+  border: 1px solid var(--tw-border);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.twitter-amount-presets {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.twitter-preset-btn {
+  flex: 1;
+  min-width: 65px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--tw-border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tw-text);
+  font-weight: 750;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.twitter-preset-btn:hover {
+  border-color: var(--profile-primary, #7a45e5);
+}
+
+.twitter-preset-btn.selected {
+  background: var(--profile-primary, #7a45e5);
+  border-color: var(--profile-primary, #7a45e5);
+  color: #ffffff;
+  box-shadow: 0 2px 10px var(--profile-glow, rgba(122, 69, 229, 0.4));
+}
+
+.twitter-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.twitter-input-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--tw-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.twitter-text-input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--tw-border);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--tw-text);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.twitter-text-input:focus {
+  border-color: var(--profile-primary, #7a45e5);
+}
+
+/* Modals */
+.twitter-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: twitter-fade-in 0.18s ease-out;
+}
+
+@keyframes twitter-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.twitter-modal-content {
+  background: var(--tw-surface);
+  border: 1px solid var(--tw-border-strong);
+  border-radius: 28px;
+  max-width: 440px;
+  width: 100%;
+  padding: 28px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  animation: twitter-scale-up 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes twitter-scale-up {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.twitter-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.twitter-modal-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 850;
+}
+
+.twitter-modal-close {
+  background: transparent;
+  border: none;
+  color: var(--tw-text-muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.twitter-modal-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--tw-text);
+}
+
+/* Toast */
+.twitter-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10b981;
+  color: #ffffff;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 750;
+  z-index: 200;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.45);
+  animation: twitter-toast-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes twitter-toast-pop {
+  from { transform: translate(-50%, 15px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+/* Responsive Queries for Mobile Devices */
+@media (max-width: 640px) {
+  .twitter-profile-shell {
+    border-left: none;
+    border-right: none;
+  }
+  
+  .twitter-banner-container {
+    min-height: 140px;
+    max-height: 160px;
+  }
+
+  .twitter-profile-bar {
+    margin-top: -50px;
+    padding: 0 16px;
+  }
+
+  .twitter-avatar-wrapper {
+    width: 96px;
+    height: 96px;
+    border-width: 3px;
+  }
+
+  .twitter-user-info {
+    padding: 0 16px 14px 16px;
+  }
+
+  .twitter-display-name {
+    font-size: 19px;
+  }
+
+  .twitter-actions-group {
+    gap: 8px;
+  }
+
+  .twitter-btn-pay, .twitter-btn-chat {
+    height: 34px;
+    font-size: 12.5px;
+    padding: 0 14px;
+  }
+
+  .twitter-action-icon-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .twitter-tabs-bar {
+    top: 60px;
+  }
+
+  .twitter-tab-btn {
+    font-size: 13px;
+    padding: 12px 6px;
+  }
+
+  .twitter-tab-panel {
+    padding: 16px;
+  }
+}
