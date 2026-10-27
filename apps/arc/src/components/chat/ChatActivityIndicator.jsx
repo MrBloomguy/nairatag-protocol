@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { getOriginalAgentLogo } from '../../services/arcAgents.js';
 
-const DEFAULT_AGENT_AVATAR = 'https://api.dicebear.com/7.x/identicon/svg?seed=gemini-flash';
+const DEFAULT_AGENT_AVATAR = '/agents/bloom.png';
 const INTENTS = [
   {
     id: 'food',
@@ -70,8 +71,7 @@ export default function ChatActivityIndicator({ status = 'thinking', prompt = ''
     [prompt],
   );
   const [phaseIndex, setPhaseIndex] = useState(0);
-  const taggedAgent = AGENT_AVATARS.find(({ tag }) => prompt.toLowerCase().includes(`₦${tag}`));
-  const avatar = agentAvatar || taggedAgent?.avatar || intent.avatar;
+  const avatar = agentAvatar || (prompt.includes('@') || prompt.includes('₦') ? getOriginalAgentLogo(prompt) : null) || intent.avatar;
   const isLiveAction = Object.prototype.hasOwnProperty.call(STATUS_COPY, status);
   const label = isLiveAction ? STATUS_COPY[status] : intent.phases[phaseIndex];
 

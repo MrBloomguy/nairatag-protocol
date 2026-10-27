@@ -7613,6 +7613,37 @@ body:has(.main-content-wrapper.chat-mode) #root {
   color: #BBF246;
 }
 
+.ref-action-agent-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.walley-msg-agent-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+}
+
+.walley-msg-agent-avatar {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.walley-msg-agent-name {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--privy-color-foreground, #111827);
+  letter-spacing: -0.1px;
+}
+
 .ref-action-title {
   font-size: 11.5px;
   font-weight: 700;

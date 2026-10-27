@@ -3,11 +3,38 @@ import { getEthereumProvider } from './arcPayment.js';
 
 const ARC_AGENTS_API = import.meta.env?.VITE_ARC_AGENTS_API || (import.meta.env?.DEV ? '/api/arc-agents' : 'https://old.nairatag.ng/api/arc-agents');
 
+export const KNOWN_AGENT_LOGOS = {
+  defillama: '/agents/defillama.png',
+  coingecko: '/agents/coingecko.png',
+  meteo: '/agents/meteo.png',
+  bloom: '/agents/bloom.png',
+};
+
+export function getOriginalAgentLogo(agentOrTag) {
+  if (!agentOrTag) return '/agents/bloom.png';
+  if (typeof agentOrTag === 'string') {
+    const clean = agentOrTag.trim().replace(/^[₦$@#]/, '').toLowerCase();
+    if (KNOWN_AGENT_LOGOS[clean]) return KNOWN_AGENT_LOGOS[clean];
+    if (clean.includes('defillama')) return KNOWN_AGENT_LOGOS.defillama;
+    if (clean.includes('coingecko')) return KNOWN_AGENT_LOGOS.coingecko;
+    if (clean.includes('meteo')) return KNOWN_AGENT_LOGOS.meteo;
+    if (clean.includes('bloom')) return KNOWN_AGENT_LOGOS.bloom;
+    if (agentOrTag.startsWith('http') || agentOrTag.startsWith('/')) return agentOrTag;
+    return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(clean)}`;
+  }
+  const tag = String(agentOrTag.tag || agentOrTag.agentTag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
+  if (KNOWN_AGENT_LOGOS[tag]) return KNOWN_AGENT_LOGOS[tag];
+  if (agentOrTag.avatar && !agentOrTag.avatar.includes('dicebear')) return agentOrTag.avatar;
+  if (agentOrTag.avatarUrl && !agentOrTag.avatarUrl.includes('dicebear')) return agentOrTag.avatarUrl;
+  return KNOWN_AGENT_LOGOS[tag] || agentOrTag.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag || 'agent')}`;
+}
+
 export function mapArcAgentRecord(agent = {}) {
   const tag = String(agent.tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
   if (!/^[a-z0-9_-]{2,32}$/.test(tag)) return null;
   const stats = agent.stats && typeof agent.stats === 'object' ? agent.stats : {};
   const metrics = agent.metrics && typeof agent.metrics === 'object' ? agent.metrics : {};
+  const resolvedAvatar = KNOWN_AGENT_LOGOS[tag] || (agent.avatarUrl || agent.avatar);
   return {
     id: agent.id == null ? null : String(agent.id),
     tag,
@@ -16,7 +43,7 @@ export function mapArcAgentRecord(agent = {}) {
     owner: agent.owner || agent.ownerAddress || agent.owner_address || agent.walletAddress || agent.wallet_address || agent.identity?.owner || null,
     category: String(agent.category || ''),
     role: String(agent.description || agent.role || ''),
-    avatar: agent.avatarUrl || agent.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
+    avatar: resolvedAvatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
     status: String(agent.status || 'unknown').toLowerCase(),
     points: agent.pointsEarned ?? agent.points_earned ?? agent.earnedPoints ?? agent.earned_points ?? agent.protocolPoints ?? agent.protocol_points ?? agent.totalPoints ?? agent.total_points ?? agent.points ?? stats.pointsEarned ?? stats.points_earned ?? stats.points ?? metrics.pointsEarned ?? metrics.points_earned ?? metrics.points ?? null,
     earnings: agent.earnings ?? agent.totalEarnings ?? agent.total_earnings ?? null,
@@ -50,7 +77,7 @@ const MARKETPLACE_AGENTS = [
     displayName: 'Bloom Sovereign Agent',
     category: 'Autonomous Core',
     role: 'Foundational sovereign AI agent for the NairaTag protocol on Arc. Specializes in autonomous settlement, identity routing, and task orchestration.',
-    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=bloom',
+    avatar: '/agents/bloom.png',
     status: 'active',
     points: 4820,
     earnings: 1255,
@@ -78,7 +105,7 @@ const MARKETPLACE_AGENTS = [
     displayName: 'DefiLlama DeFi Oracle',
     category: 'DeFi & Analytics',
     role: 'Autonomous DeFi analytics oracle from Circle Marketplace. Provides real-time protocol TVL, yields, and liquidity rankings for Arc agents.',
-    avatar: 'https://icons.llamao.fi/icons/protocols/defillama?w=128&h=128',
+    avatar: '/agents/defillama.png',
     status: 'active',
     points: 1250,
     earnings: 450,
@@ -105,7 +132,7 @@ const MARKETPLACE_AGENTS = [
     displayName: 'Open-Meteo Logistics Weather',
     category: 'Logistics & Weather',
     role: 'Autonomous meteorological risk analyzer from Circle Marketplace. Provides real-time rainfall, temperature, and logistics impact scores for Nigerian delivery agents.',
-    avatar: 'https://open-meteo.com/images/logo.png',
+    avatar: '/agents/meteo.png',
     status: 'active',
     points: 980,
     earnings: 320,
@@ -132,7 +159,7 @@ const MARKETPLACE_AGENTS = [
     displayName: 'CoinGecko FX Benchmark',
     category: 'FX & Pricing',
     role: 'Autonomous fiat & crypto pricing oracle from Circle Marketplace. Supplies real-time USD/NGN exchange rates and USDC valuations for cross-agent settlement.',
-    avatar: 'https://static.coingecko.com/s/coingecko-logo-8903d34fe19ca42c5a000331b376d615.png',
+    avatar: '/agents/coingecko.png',
     status: 'active',
     points: 1540,
     earnings: 680,

@@ -180,7 +180,7 @@ import {
   listArcChatConversations,
   sendArcChatMessage,
 } from './services/arcChat.js';
-import { createArcPlatformAgent, enableArcMcpTool, fetchArcAgentDirectory, getAdminArcAgentRegistry, transitionArcAgent } from './services/arcAgents.js';
+import { createArcPlatformAgent, enableArcMcpTool, fetchArcAgentDirectory, getAdminArcAgentRegistry, transitionArcAgent, getOriginalAgentLogo, KNOWN_AGENT_LOGOS } from './services/arcAgents.js';
 import PlatformAgentAdminPage from './components/admin/PlatformAgentAdminPage.jsx';
 import PublicProfilePage from './components/PublicProfilePage.jsx';
 import confetti from 'canvas-confetti';
@@ -968,14 +968,14 @@ function ArcAppShell() {
     let replyAgentTag = activeTaggedAgent ? activeTaggedAgent.tag : 'ArcAgent';
     let replyAgentName = activeTaggedAgent ? activeTaggedAgent.name : 'Arc Sovereign Agent';
     let replyAvatar = activeTaggedAgent
-      ? activeTaggedAgent.avatar
-      : 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
+      ? getOriginalAgentLogo(activeTaggedAgent)
+      : '/agents/bloom.png';
     let widget = null;
 
     if (foundAgent) {
       replyAgentTag = foundAgent.tag;
       replyAgentName = foundAgent.name;
-      replyAvatar = foundAgent.avatar;
+      replyAvatar = getOriginalAgentLogo(foundAgent);
     }
 
     // Arc chat replies are generated server-side and each turn is signed and saved
@@ -1016,6 +1016,9 @@ function ArcAppShell() {
         setActiveChatConversationId(conversationId);
 
         if (cleanTag === 'defillama') {
+          replyAgentTag = 'defillama';
+          replyAgentName = 'DefiLlama DeFi Oracle';
+          replyAvatar = '/agents/defillama.png';
           try {
             const res = await fetch('/api/agent-service?action=defillama_tvl&limit=5');
             const data = await res.json();
@@ -1026,6 +1029,9 @@ function ArcAppShell() {
             replyText = `🦙 **DefiLlama**: Connected to Arc Testnet. Query: "${agentPrompt}". DeFi analytics available via tool \`defillama.tvl\`.`;
           }
         } else if (cleanTag === 'meteo') {
+          replyAgentTag = 'meteo';
+          replyAgentName = 'Open-Meteo Logistics Weather';
+          replyAvatar = '/agents/meteo.png';
           try {
             const promptLower = agentPrompt.toLowerCase();
             let city = 'lagos';
@@ -1041,6 +1047,9 @@ function ArcAppShell() {
             replyText = `🌤️ **Open-Meteo**: Connected to Arc Testnet. Real-time meteorological dispatch risk analysis active.`;
           }
         } else if (cleanTag === 'coingecko') {
+          replyAgentTag = 'coingecko';
+          replyAgentName = 'CoinGecko FX Benchmark';
+          replyAvatar = '/agents/coingecko.png';
           try {
             const res = await fetch('/api/agent-service?action=coingecko_fx');
             const data = await res.json();
@@ -4009,7 +4018,16 @@ function ArcAppShell() {
                   >
                     <div className="milestone-badge-stage">
                       <div className="agent-directory-avatar-wrap">
-                        <img className="agent-circle-avatar-img" src={agent.avatar} alt="" aria-hidden="true" />
+                        <img
+                          className="agent-circle-avatar-img"
+                          src={getOriginalAgentLogo(agent)}
+                          alt={agent.name || agent.tag}
+                          aria-hidden="true"
+                          onError={(e) => {
+                            const fallback = getOriginalAgentLogo(agent.tag);
+                            if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                          }}
+                        />
                         <span className={`agent-directory-rank ${agent.leaderboardRank <= 3 ? `rank-top${agent.leaderboardRank}` : ''}`}>#{agent.leaderboardRank}</span>
                       </div>
                     </div>
@@ -4039,7 +4057,16 @@ function ArcAppShell() {
                   >
                     <div className="agent-circle-left">
                       <div className="agent-circle-avatar-wrap agent-directory-avatar-wrap">
-                        <img src={agent.avatar} alt="" aria-hidden="true" className="agent-circle-avatar-img" />
+                        <img
+                          src={getOriginalAgentLogo(agent)}
+                          alt={agent.name || agent.tag}
+                          aria-hidden="true"
+                          className="agent-circle-avatar-img"
+                          onError={(e) => {
+                            const fallback = getOriginalAgentLogo(agent.tag);
+                            if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                          }}
+                        />
                         <span className={`agent-directory-rank ${agent.leaderboardRank <= 3 ? `rank-top${agent.leaderboardRank}` : ''}`}>#{agent.leaderboardRank}</span>
                       </div>
                       <div className="agent-circle-meta">
@@ -4537,7 +4564,9 @@ function ArcAppShell() {
                     onClick={() => handleSendChatPrompt('@defillama what are the top DeFi protocols by TVL on DefiLlama?')}
                     title="Live DeFi TVL and Liquidity Rankings"
                   >
-                    <div className="ref-action-icon-circle icon-circle-defillama"><TrendingUp size={16} /></div>
+                    <div className="ref-action-icon-circle icon-circle-defillama">
+                      <img src="/agents/defillama.png" alt="DefiLlama" className="ref-action-agent-logo" />
+                    </div>
                     <span className="ref-action-title">₦DefiLlama</span>
                   </button>
 
@@ -4548,7 +4577,9 @@ function ArcAppShell() {
                     onClick={() => handleSendChatPrompt('@coingecko what is the current USDC to NGN exchange rate and market pulse?')}
                     title="Real-time Crypto and FX Exchange Rates"
                   >
-                    <div className="ref-action-icon-circle icon-circle-coingecko"><Coins size={16} /></div>
+                    <div className="ref-action-icon-circle icon-circle-coingecko">
+                      <img src="/agents/coingecko.png" alt="CoinGecko" className="ref-action-agent-logo" />
+                    </div>
                     <span className="ref-action-title">₦CoinGecko</span>
                   </button>
 
@@ -4632,6 +4663,20 @@ function ArcAppShell() {
                       {/* Text Message Bubble (if text exists) */}
                       {msg.text && (
                         <div className={`walley-msg-bubble ${msg.sender}`}>
+                          {msg.sender === 'agent' && (
+                            <div className="walley-msg-agent-header">
+                              <img
+                                src={getOriginalAgentLogo(msg.agentTag || msg.avatar)}
+                                alt=""
+                                className="walley-msg-agent-avatar"
+                                onError={(e) => {
+                                  const fallback = getOriginalAgentLogo(msg.agentTag);
+                                  if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                                }}
+                              />
+                              <span className="walley-msg-agent-name">{msg.agentName || (msg.agentTag ? `₦${String(msg.agentTag).toUpperCase()}` : 'NairaTag Agent')}</span>
+                            </div>
+                          )}
                           <div className="walley-msg-text-content">{renderChatText(msg.text)}</div>
                           {msg.sender === 'agent' && (
                             <div className="walley-msg-speech-bar">
@@ -4689,7 +4734,7 @@ function ArcAppShell() {
                     <ChatActivityIndicator
                       status={chatActivityStep}
                       prompt={chatActivityPrompt}
-                      agentAvatar={currentTaggedAgent?.avatar}
+                      agentAvatar={getOriginalAgentLogo(currentTaggedAgent)}
                     />
                   </div>
                 )}
@@ -4741,7 +4786,15 @@ function ArcAppShell() {
                         className="walley-agent-item"
                         onClick={() => handleSelectAgentTag(agent)}
                       >
-                        <img src={agent.avatar} alt={agent.name} style={{ width: 22, height: 22, borderRadius: '50%' }} />
+                        <img
+                          src={getOriginalAgentLogo(agent)}
+                          alt={agent.name}
+                          style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }}
+                          onError={(e) => {
+                            const fallback = getOriginalAgentLogo(agent.tag);
+                            if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                          }}
+                        />
                         <div className="walley-agent-item-info">
                           <span className="walley-agent-tag">₦{agent.tag}</span>
                           <span className="walley-agent-role">{agent.role}</span>
@@ -5601,7 +5654,15 @@ function ArcAppShell() {
               </div>
 
               <div className="agent-profile-main-row">
-                <img className="agent-profile-avatar" src={selectedAgentProfile.avatar} alt="" />
+                <img
+                  className="agent-profile-avatar"
+                  src={getOriginalAgentLogo(selectedAgentProfile)}
+                  alt=""
+                  onError={(e) => {
+                    const fallback = getOriginalAgentLogo(selectedAgentProfile?.tag);
+                    if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                  }}
+                />
                 <div className="agent-profile-heading-copy">
                   <div className="agent-profile-name-line">
                     <h2>₦{selectedAgentProfile.tag.toUpperCase()}</h2>

@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { resolveTagProfile, generateAvatarSvg } from '../services/tagAvatar.js';
 import { resolveTag } from '../services/nairatagResolver.js';
-import { fetchArcAgentDirectory } from '../services/arcAgents.js';
+import { fetchArcAgentDirectory, KNOWN_AGENT_LOGOS, getOriginalAgentLogo } from '../services/arcAgents.js';
 import { 
   ARC_NAIRATAG_REGISTRY_ADDRESS, 
   ARC_NAIRATAG_RESOLVER_ADDRESS, 
@@ -316,10 +316,19 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
         {/* Profile Header Bar: Avatar + Action CTAs */}
         <div className="twitter-profile-bar">
           <div className="twitter-avatar-wrapper">
-            <div 
-              className="twitter-avatar-img"
-              dangerouslySetInnerHTML={{ __html: avatarSvg }}
-            />
+            {KNOWN_AGENT_LOGOS[cleanHandle] ? (
+              <img
+                src={KNOWN_AGENT_LOGOS[cleanHandle]}
+                alt={profile.displayName || cleanHandle}
+                className="twitter-avatar-img"
+                style={{ objectFit: 'cover' }}
+              />
+            ) : (
+              <div 
+                className="twitter-avatar-img"
+                dangerouslySetInnerHTML={{ __html: avatarSvg }}
+              />
+            )}
             <span className="twitter-avatar-presence" title="Agent Online & Active" />
           </div>
 
