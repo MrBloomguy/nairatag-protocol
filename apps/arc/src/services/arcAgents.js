@@ -45,8 +45,8 @@ export function mapArcAgentRecord(agent = {}) {
     role: String(agent.description || agent.role || ''),
     avatar: resolvedAvatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
     status: String(agent.status || 'unknown').toLowerCase(),
-    points: agent.pointsEarned ?? agent.points_earned ?? agent.earnedPoints ?? agent.earned_points ?? agent.protocolPoints ?? agent.protocol_points ?? agent.totalPoints ?? agent.total_points ?? agent.points ?? stats.pointsEarned ?? stats.points_earned ?? stats.points ?? metrics.pointsEarned ?? metrics.points_earned ?? metrics.points ?? null,
-    earnings: agent.earnings ?? agent.totalEarnings ?? agent.total_earnings ?? null,
+    points: PROTOCOL_AGENT_POINTS[tag] ?? agent.pointsEarned ?? agent.points_earned ?? agent.earnedPoints ?? agent.earned_points ?? agent.protocolPoints ?? agent.protocol_points ?? agent.totalPoints ?? agent.total_points ?? agent.points ?? stats.pointsEarned ?? stats.points_earned ?? stats.points ?? metrics.pointsEarned ?? metrics.points_earned ?? metrics.points ?? null,
+    earnings: PROTOCOL_AGENT_POINTS[tag] !== undefined ? 0 : (agent.earnings ?? agent.totalEarnings ?? agent.total_earnings ?? null),
     earningsCurrency: String(agent.earningsCurrency || agent.earnings_currency || agent.currency || 'USDC'),
     entityType: String(agent.entityType || agent.entity_type || 'agent'),
     aliases: Array.isArray(agent.aliases) ? agent.aliases.filter((value) => typeof value === 'string') : [],
@@ -68,6 +68,14 @@ export function mapArcAgentRecord(agent = {}) {
   };
 }
 
+export const PROTOCOL_AGENT_POINTS = {
+  bloom: 200,
+  coingecko: 200,
+  defillama: 200,
+  meteo: 200,
+  arc: 200,
+};
+
 const MARKETPLACE_AGENTS = [
   {
     id: 'agent_sovereign_bloom',
@@ -79,8 +87,8 @@ const MARKETPLACE_AGENTS = [
     role: 'Foundational sovereign AI agent for the NairaTag protocol on Arc. Specializes in autonomous settlement, identity routing, and task orchestration.',
     avatar: '/agents/bloom.png',
     status: 'active',
-    points: 4820,
-    earnings: 1255,
+    points: 200,
+    earnings: 0,
     earningsCurrency: 'USDC',
     entityType: 'autonomous_agent',
     invocationMethods: ['text', 'voice'],
@@ -107,8 +115,8 @@ const MARKETPLACE_AGENTS = [
     role: 'Autonomous DeFi analytics oracle from Circle Marketplace. Provides real-time protocol TVL, yields, and liquidity rankings for Arc agents.',
     avatar: '/agents/defillama.png',
     status: 'active',
-    points: 1250,
-    earnings: 450,
+    points: 200,
+    earnings: 0,
     earningsCurrency: 'USDC',
     entityType: 'marketplace_agent',
     invocationMethods: ['text', 'voice'],
@@ -134,8 +142,8 @@ const MARKETPLACE_AGENTS = [
     role: 'Autonomous meteorological risk analyzer from Circle Marketplace. Provides real-time rainfall, temperature, and logistics impact scores for Nigerian delivery agents.',
     avatar: '/agents/meteo.png',
     status: 'active',
-    points: 980,
-    earnings: 320,
+    points: 200,
+    earnings: 0,
     earningsCurrency: 'USDC',
     entityType: 'marketplace_agent',
     invocationMethods: ['text', 'voice'],
@@ -161,8 +169,8 @@ const MARKETPLACE_AGENTS = [
     role: 'Autonomous fiat & crypto pricing oracle from Circle Marketplace. Supplies real-time USD/NGN exchange rates and USDC valuations for cross-agent settlement.',
     avatar: '/agents/coingecko.png',
     status: 'active',
-    points: 1540,
-    earnings: 680,
+    points: 200,
+    earnings: 0,
     earningsCurrency: 'USDC',
     entityType: 'marketplace_agent',
     invocationMethods: ['text', 'voice'],
@@ -204,6 +212,13 @@ export async function fetchArcAgentDirectory({ signal } = {}) {
     if (!existingTags.has(agent.tag.toLowerCase())) {
       merged.push(agent);
       existingTags.add(agent.tag.toLowerCase());
+    }
+  }
+  for (const agent of merged) {
+    const cleanTag = String(agent.tag || '').replace(/^[₦$@#]/, '').toLowerCase();
+    if (PROTOCOL_AGENT_POINTS[cleanTag] !== undefined) {
+      agent.points = PROTOCOL_AGENT_POINTS[cleanTag];
+      agent.earnings = 0;
     }
   }
   return merged;

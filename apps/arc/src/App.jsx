@@ -1749,6 +1749,12 @@ function ArcAppShell() {
   }, [agentsSearchQuery, chatAgents]);
 
   const rankedAgents = useMemo(() => {
+    const pointAmount = (agent) => {
+      const pts = agentDirectoryStats[agent.tag]?.points ?? agent.points;
+      if (typeof pts === 'number') return Number.isFinite(pts) ? pts : 0;
+      const parsed = Number(String(pts ?? '').replace(/[^0-9.-]/g, ''));
+      return Number.isFinite(parsed) ? parsed : 0;
+    };
     const earningAmount = (agent) => {
       const earnings = agentDirectoryStats[agent.tag]?.earnings ?? agent.earnings;
       if (typeof earnings === 'number') return Number.isFinite(earnings) ? earnings : 0;
@@ -1756,22 +1762,22 @@ function ArcAppShell() {
       return Number.isFinite(parsed) ? parsed : 0;
     };
     return [...filteredAgents]
-      .sort((a, b) => earningAmount(b) - earningAmount(a) || chatAgents.indexOf(a) - chatAgents.indexOf(b))
+      .sort((a, b) => earningAmount(b) - earningAmount(a) || pointAmount(b) - pointAmount(a) || chatAgents.indexOf(a) - chatAgents.indexOf(b))
       .map((agent, index) => ({ ...agent, leaderboardRank: index + 1 }));
   }, [filteredAgents, chatAgents, agentDirectoryStats]);
 
   const agentEarningsLabel = (agent) => {
     const earnings = agentDirectoryStats[agent.tag]?.earnings ?? agent.earnings;
-    if (earnings === null || earnings === undefined || earnings === '') return agentStatsLoading ? '…' : '?';
+    if (earnings === null || earnings === undefined || earnings === '') return '0 USDC';
     const amount = Number(earnings);
-    return `${Number.isFinite(amount) ? amount.toLocaleString(undefined, { maximumFractionDigits: 2 }) : String(earnings)} ${agent.earningsCurrency || 'USDC'}`;
+    return `${Number.isFinite(amount) ? amount.toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0'} ${agent.earningsCurrency || 'USDC'}`;
   };
 
   const agentPointsLabel = (agent) => {
     const value = agentDirectoryStats[agent.tag]?.points ?? agent.points;
-    if (value === null || value === undefined || value === '') return agentStatsLoading ? 'Loading points…' : '? Points earned';
+    if (value === null || value === undefined || value === '') return '200 Points earned';
     const points = Number(value);
-    return `${Number.isFinite(points) ? points.toLocaleString() : String(agent.points)} Points earned`;
+    return `${Number.isFinite(points) ? points.toLocaleString() : '200'} Points earned`;
   };
 
   // Mobile Navigation & Header State (Matching reference)
@@ -5750,7 +5756,7 @@ function ArcAppShell() {
 
               <div className="agent-profile-stats">
                 <div><strong>{selectedAgentProfile.profileType === 'claimed-tag' || selectedAgentProfile.profileType === 'platform-agent' ? '—' : agentFollowState.loading ? '…' : agentFollowState.error ? '—' : agentFollowState.followerCount}</strong><span>Followers</span></div>
-                <div><strong>{selectedAgentProfile.profileType === 'platform-agent' ? (selectedAgentProfile.callableTools?.length || 0) : selectedAgentProfile.earnings || '—'}</strong><span>{selectedAgentProfile.profileType === 'platform-agent' ? 'Enabled tools' : 'Earned'}</span></div>
+                <div><strong>{selectedAgentProfile.profileType === 'platform-agent' ? (selectedAgentProfile.callableTools?.length || 0) : `${selectedAgentProfile.earnings ?? 0} USDC`}</strong><span>{selectedAgentProfile.profileType === 'platform-agent' ? 'Enabled tools' : 'Earned'}</span></div>
                 <div><strong>{selectedAgentProfile.identity?.verifiedOnchain && selectedAgentProfile.identity?.erc8004AgentId ? `#${selectedAgentProfile.identity.erc8004AgentId}` : selectedAgentProfile.profileType === 'platform-agent' ? 'Platform' : selectedAgentProfile.id ? `#${selectedAgentProfile.id}` : '—'}</strong><span>{selectedAgentProfile.profileType === 'platform-agent' ? 'Identity' : 'Agent ID'}</span></div>
                 <div><strong>{selectedAgentProfile.profileType === 'platform-agent' ? '—' : selectedAgentProfile.profileType === 'claimed-tag'
                   ? selectedAgentProfile.profileLoading ? '…' : selectedAgentProfile.completedTaskCount ?? '—'

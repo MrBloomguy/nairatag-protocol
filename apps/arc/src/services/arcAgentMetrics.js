@@ -2,6 +2,7 @@ import { isAddress } from 'viem';
 import { getArcAgentTaskTotals } from './arcTasks.js';
 import { getArcRewardState } from './arcRewards.js';
 import { getAgentDetails } from './erc8004Service.js';
+import { PROTOCOL_AGENT_POINTS } from './arcAgents.js';
 
 function numericValue(value) {
   if (value === null || value === undefined || value === '') return null;
@@ -10,6 +11,9 @@ function numericValue(value) {
 }
 
 export async function fetchArcAgentMetrics(agent) {
+  const cleanTag = String(agent.tag || '').replace(/^[₦$@#]/, '').toLowerCase();
+  const seedPoints = PROTOCOL_AGENT_POINTS?.[cleanTag] ?? 200;
+
   let owner = agent.owner || agent.identity?.owner || null;
   if (!isAddress(String(owner || '')) && agent.identity?.verifiedOnchain && agent.identity?.erc8004AgentId) {
     try {
@@ -22,8 +26,8 @@ export async function fetchArcAgentMetrics(agent) {
   if (!isAddress(String(owner || ''))) {
     return {
       owner: null,
-      earnings: numericValue(agent.earnings),
-      points: numericValue(agent.points),
+      earnings: 0,
+      points: seedPoints,
     };
   }
 
@@ -36,7 +40,7 @@ export async function fetchArcAgentMetrics(agent) {
 
   return {
     owner,
-    earnings: numericValue(agent.earnings) ?? numericValue(taskTotals?.earnings),
-    points: numericValue(agent.points) ?? rewardPoints ?? numericValue(taskTotals?.pointsEarned),
+    earnings: numericValue(taskTotals?.earnings) ?? 0,
+    points: rewardPoints ? Math.max(rewardPoints, seedPoints) : (numericValue(agent.points) ?? seedPoints),
   };
 }
