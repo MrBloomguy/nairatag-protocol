@@ -3654,8 +3654,117 @@ body:has(.agent-modal-backdrop) {
 .agent-follow-button-inline { flex: 0 0 auto; min-width: 78px; min-height: 38px; margin: 0 0 5px auto; padding-inline: 14px; border-radius: 999px; background: var(--privy-color-foreground); color: var(--surface1, #fff); border-color: var(--privy-color-foreground); }
 .agent-follow-button-inline.following { background: transparent; color: var(--privy-color-foreground); border-color: var(--border-color, rgba(0,0,0,.16)); }
 .agent-follow-button:disabled { cursor: default; opacity: 0.7; }
-.agent-follow-error { color: var(--privy-color-error, #dc2626); font-size: 10.5px; line-height: 1.4; }
-.agent-profile-pay-button { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border: none; border-radius: 12px; background: var(--primary, #0052FF); color: #fff; font: 800 12px var(--font-maru), sans-serif; cursor: pointer; }
+.agent-profile-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.agent-profile-social-bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.agent-social-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--privy-color-border, rgba(0, 0, 0, 0.12));
+  background: var(--surface2, #F3F4F6);
+  color: var(--privy-color-foreground, #111827);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+.agent-social-btn:hover {
+  transform: translateY(-1.5px);
+  background: var(--surface3, #E5E7EB);
+  color: var(--primary, #0052FF);
+}
+.agent-social-x:hover {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+.agent-social-telegram:hover {
+  background: #229ED9;
+  color: #fff;
+  border-color: #229ED9;
+}
+.agent-social-whatsapp:hover {
+  background: #25D366;
+  color: #fff;
+  border-color: #25D366;
+}
+[data-theme="dark"] .agent-social-btn {
+  background: #23252E;
+  border-color: #343640;
+  color: #F3F4F6;
+}
+[data-theme="dark"] .agent-social-btn:hover {
+  background: #2A2D37;
+}
+[data-theme="dark"] .agent-social-x:hover {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+}
+.agent-profile-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+}
+.agent-profile-pay-button {
+  flex: 1;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: none;
+  border-radius: 12px;
+  background: var(--primary, #0052FF);
+  color: #fff;
+  font: 800 12.5px var(--font-maru), sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.agent-profile-pay-button:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+.agent-profile-chat-button {
+  flex: 1;
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--privy-color-border, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  background: var(--surface2, #F3F4F6);
+  color: var(--privy-color-foreground, #111827);
+  font: 800 12.5px var(--font-maru), sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.agent-profile-chat-button:hover {
+  background: var(--surface3, #E5E7EB);
+  transform: translateY(-1px);
+}
+[data-theme="dark"] .agent-profile-chat-button {
+  background: #23252E;
+  border-color: #343640;
+  color: #F3F4F6;
+}
+[data-theme="dark"] .agent-profile-chat-button:hover {
+  background: #2A2D37;
+}
 .agent-profile-pay-full { width: 100%; }
 .agent-profile-explorer-link { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 10px; color: var(--privy-color-foreground-2); text-decoration: none; font-size: 10.5px; font-weight: 650; }
 .agent-profile-explorer-link:hover { color: var(--primary, #0052FF); }

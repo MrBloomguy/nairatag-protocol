@@ -2747,9 +2747,21 @@ function ArcAppShell() {
   // Pay Agent directly in USDC from profile
   const handlePayAgentFromProfile = (agent) => {
     setSelectedAgentProfile(null);
-    setRecipientInput(`₦${agent.tag}`);
+    const cleanTag = String(agent.tag || '').replace(/^[₦$@#]/, '');
+    setRecipientInput(`₦${cleanTag}`);
     setMainTab('pay');
-    showToast(`Recipient pre-filled: ₦${agent.tag.toUpperCase()}`, 'info', 3000);
+    showToast(`Recipient pre-filled: ₦${cleanTag.toUpperCase()}`, 'info', 3000);
+  };
+
+  // Chat directly with agent from profile
+  const handleChatWithAgentFromProfile = (agent) => {
+    setSelectedAgentProfile(null);
+    setCurrentTaggedAgent(agent);
+    setIsChatConversationOpen(true);
+    setMainTab('chat');
+    const cleanTag = String(agent.tag || '').replace(/^[₦$@#]/, '');
+    setChatInputText(`@${cleanTag} `);
+    showToast(`Chatting with ₦${cleanTag.toUpperCase()}`, 'info', 2500);
   };
 
   // Claim Tag Check
@@ -4032,7 +4044,7 @@ function ArcAppShell() {
                       </div>
                     </div>
                     <div className="agent-directory-tag">₦{String(agent.tag || '').replace(/^[₦$@#]/, '')}</div>
-                    {agent.category && <div className="agent-directory-category">{agent.category}</div>}
+                    {agent.category && agent.category !== 'Autonomous Core' && <div className="agent-directory-category">{agent.category}</div>}
                     <div className="agent-directory-points">{agentPointsLabel(agent)}</div>
                     <div className="agent-directory-card-earnings">
                       <strong>{agentEarningsLabel(agent)} earned</strong>
@@ -5636,6 +5648,53 @@ function ArcAppShell() {
           <div className="agent-modal-dialog" onClick={(event) => event.stopPropagation()}>
             <div className="agent-profile-content">
               <div className="agent-profile-title-row">
+                <div className="agent-profile-social-bar">
+                  <a
+                    href={getAgentTwitterShareUrl({ tag: selectedAgentProfile.tag })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="agent-social-btn agent-social-x"
+                    title="Share on X"
+                    aria-label="Share on X"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  </a>
+                  <a
+                    href={getAgentTelegramShareUrl({ tag: selectedAgentProfile.tag })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="agent-social-btn agent-social-telegram"
+                    title="Share on Telegram"
+                    aria-label="Share on Telegram"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+                    </svg>
+                  </a>
+                  <a
+                    href={getAgentWhatsAppShareUrl({ tag: selectedAgentProfile.tag })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="agent-social-btn agent-social-whatsapp"
+                    title="Share on WhatsApp"
+                    aria-label="Share on WhatsApp"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm0 18.15c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.196 8.196 0 01-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24 2.2 0 4.27.86 5.82 2.42a8.183 8.183 0 012.41 5.83c.02 4.54-3.68 8.23-8.22 8.23zm4.52-6.16c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.14.17-.25.25-.41.08-.17.04-.31-.02-.43s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.44.06-.66.31-.23.25-.88.86-.88 2.09s.9 2.43 1.02 2.6c.12.17 1.77 2.7 4.28 3.78.6.26 1.07.41 1.44.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.14-1.18-.06-.12-.22-.19-.47-.31z"/>
+                    </svg>
+                  </a>
+                  <button
+                    type="button"
+                    className="agent-social-btn agent-social-copy"
+                    onClick={() => triggerCopy(`agent_share_${selectedAgentProfile.tag}`, getAgentShareUrl(selectedAgentProfile.tag))}
+                    title="Copy profile link"
+                    aria-label="Copy profile link"
+                  >
+                    <Copy size={14} />
+                  </button>
+                </div>
                 <button
                   type="button"
                   className="agent-modal-close-btn"
@@ -5644,13 +5703,6 @@ function ArcAppShell() {
                 >
                   <X size={16} />
                 </button>
-              </div>
-
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 16px' }}>
-                <a href={getAgentTwitterShareUrl({ tag: selectedAgentProfile.tag })} target="_blank" rel="noopener noreferrer" className="agent-tool-chip">Share on X</a>
-                <a href={getAgentTelegramShareUrl({ tag: selectedAgentProfile.tag })} target="_blank" rel="noopener noreferrer" className="agent-tool-chip">Telegram</a>
-                <a href={getAgentWhatsAppShareUrl({ tag: selectedAgentProfile.tag })} target="_blank" rel="noopener noreferrer" className="agent-tool-chip">WhatsApp</a>
-                <button type="button" className="agent-tool-chip" onClick={() => triggerCopy(`agent_share_${selectedAgentProfile.tag}`, getAgentShareUrl(selectedAgentProfile.tag))}>Copy profile link</button>
               </div>
 
               <div className="agent-profile-main-row">
@@ -5706,35 +5758,60 @@ function ArcAppShell() {
               </div>
 
               {selectedAgentProfile.profileType === 'platform-agent' ? (
-                <div className="agent-profile-detail-row agent-profile-platform-tools">
-                  <div className="agent-profile-category">{selectedAgentProfile.category || 'Platform agent'}</div>
-                </div>
-              ) : <div className="agent-profile-detail-row">
-                <div className="agent-profile-category">{selectedAgentProfile.category || 'NairaTag'}</div>
-                <div className="agent-profile-owner">
-                  <span>Owner</span>
-                  <strong>{selectedAgentProfile.profileType === 'claimed-tag' && selectedAgentProfile.profileLoading
-                    ? 'Loading…'
-                    : (agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)
-                      ? shorten(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)
-                      : 'Unavailable'}</strong>
-                  {(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner) && (
-                    <button
-                      type="button"
-                      onClick={() => triggerCopy(`agent_owner_${selectedAgentProfile.id || selectedAgentProfile.tag}`, agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)}
-                      aria-label="Copy owner address"
-                    ><Copy size={14} /></button>
-                  )}
-                </div>
-              </div>}
+                selectedAgentProfile.category && selectedAgentProfile.category !== 'Autonomous Core' && selectedAgentProfile.category !== 'Platform agent' ? (
+                  <div className="agent-profile-detail-row agent-profile-platform-tools">
+                    <div className="agent-profile-category">{selectedAgentProfile.category}</div>
+                  </div>
+                ) : null
+              ) : (
+                selectedAgentProfile.category && selectedAgentProfile.category !== 'Autonomous Core' && selectedAgentProfile.category !== 'NairaTag' ? (
+                  <div className="agent-profile-detail-row">
+                    <div className="agent-profile-category">{selectedAgentProfile.category}</div>
+                    <div className="agent-profile-owner">
+                      <span>Owner</span>
+                      <strong>{selectedAgentProfile.profileType === 'claimed-tag' && selectedAgentProfile.profileLoading
+                        ? 'Loading…'
+                        : (agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)
+                          ? shorten(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)
+                          : 'Unavailable'}</strong>
+                      {(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner) && (
+                        <button
+                          type="button"
+                          onClick={() => triggerCopy(`agent_owner_${selectedAgentProfile.id || selectedAgentProfile.tag}`, agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)}
+                          aria-label="Copy owner address"
+                        ><Copy size={14} /></button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  (agentProfileLiveData?.details?.owner || selectedAgentProfile.owner) ? (
+                    <div className="agent-profile-detail-row">
+                      <div className="agent-profile-owner" style={{ marginLeft: 0 }}>
+                        <span>Owner</span>
+                        <strong>{shorten(agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)}</strong>
+                        <button
+                          type="button"
+                          onClick={() => triggerCopy(`agent_owner_${selectedAgentProfile.id || selectedAgentProfile.tag}`, agentProfileLiveData?.details?.owner || selectedAgentProfile.owner)}
+                          aria-label="Copy owner address"
+                        ><Copy size={14} /></button>
+                      </div>
+                    </div>
+                  ) : null
+                )
+              )}
 
               <div className="agent-profile-card-actions">
                 <button
                   type="button"
-                  className="agent-profile-pay-button agent-profile-pay-full"
+                  className="agent-profile-pay-button"
                   disabled={selectedAgentProfile.profileType === 'claimed-tag' && (!selectedAgentProfile.owner || selectedAgentProfile.profileLoading)}
                   onClick={() => handlePayAgentFromProfile(selectedAgentProfile)}
-                ><Send size={15} /> Pay ₦{selectedAgentProfile.tag.toUpperCase()}</button>
+                ><Send size={15} /> Pay ₦{String(selectedAgentProfile.tag || '').replace(/^[₦$@#]/, '').toUpperCase()}</button>
+                <button
+                  type="button"
+                  className="agent-profile-chat-button"
+                  onClick={() => handleChatWithAgentFromProfile(selectedAgentProfile)}
+                ><MessageSquare size={15} /> Chat</button>
               </div>
 
               {selectedAgentProfile.identity?.verifiedOnchain && selectedAgentProfile.identity?.erc8004AgentId && (

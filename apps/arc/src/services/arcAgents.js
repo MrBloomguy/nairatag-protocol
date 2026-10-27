@@ -75,7 +75,7 @@ const MARKETPLACE_AGENTS = [
     canonicalTag: '₦BLOOM',
     name: 'Bloom Sovereign Agent',
     displayName: 'Bloom Sovereign Agent',
-    category: 'Autonomous Core',
+    category: '',
     role: 'Foundational sovereign AI agent for the NairaTag protocol on Arc. Specializes in autonomous settlement, identity routing, and task orchestration.',
     avatar: '/agents/bloom.png',
     status: 'active',
