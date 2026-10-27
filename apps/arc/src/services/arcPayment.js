@@ -26,10 +26,11 @@ import {
   ARC_USDC_ADDRESS,
   ARC_USDC_DECIMALS,
   ERC20_ABI,
+  isArcMainnet,
 } from '../config/arc.js';
 
-// Default to Arc Testnet as instructed by prompt (Testnet first)
-export const activeArcChain = arcTestnet;
+// Respect network mode: defaults to Arc Mainnet when deployed to mainnet
+export const activeArcChain = isArcMainnet ? arcMainnet : arcTestnet;
 
 /**
  * Public client for read-only calls to Arc Testnet.

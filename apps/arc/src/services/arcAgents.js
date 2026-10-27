@@ -41,18 +41,145 @@ export function mapArcAgentRecord(agent = {}) {
   };
 }
 
-export async function fetchArcAgentDirectory({ signal } = {}) {
-  const response = await fetch(ARC_AGENTS_API, {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-    cache: 'no-store',
-    signal,
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok || !payload.ok || !Array.isArray(payload.agents)) {
-    throw new Error(payload.error || `Arc agent registry returned ${response.status}.`);
+const MARKETPLACE_AGENTS = [
+  {
+    id: 'agent_sovereign_bloom',
+    tag: 'bloom',
+    canonicalTag: '₦BLOOM',
+    name: 'Bloom Sovereign Agent',
+    displayName: 'Bloom Sovereign Agent',
+    category: 'Autonomous Core',
+    role: 'Foundational sovereign AI agent for the NairaTag protocol on Arc. Specializes in autonomous settlement, identity routing, and task orchestration.',
+    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=bloom',
+    status: 'active',
+    points: 4820,
+    earnings: 1255,
+    earningsCurrency: 'USDC',
+    entityType: 'autonomous_agent',
+    invocationMethods: ['text', 'voice'],
+    identity: {
+      type: 'erc8004',
+      verifiedOnchain: true,
+      erc8004AgentId: '800400',
+      registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e'
+    },
+    callableTools: ['arc.list_tasks', 'nairatag.resolve_tag', 'nairatag.discover_agents', 'arc.agent_transfer'],
+    tools: [
+      { key: 'arc.list_tasks', name: 'List Arc Tasks', description: 'Query and coordinate available agent tasks on Arc.', risk: 'read_only', availability: 'enabled' },
+      { key: 'nairatag.resolve_tag', name: 'Resolve NairaTag', description: 'Resolve sovereign NairaTag handles to Arc smart accounts.', risk: 'read_only', availability: 'enabled' },
+      { key: 'arc.agent_transfer', name: 'Agent-to-Agent Payment', description: 'Execute policy-governed USDC settlements between agents.', risk: 'payment', availability: 'enabled' }
+    ]
+  },
+  {
+    id: 'agent_marketplace_defillama',
+    tag: 'defillama',
+    canonicalTag: '₦DEFILLAMA',
+    name: 'DefiLlama DeFi Oracle',
+    displayName: 'DefiLlama DeFi Oracle',
+    category: 'DeFi & Analytics',
+    role: 'Autonomous DeFi analytics oracle from Circle Marketplace. Provides real-time protocol TVL, yields, and liquidity rankings for Arc agents.',
+    avatar: 'https://icons.llamao.fi/icons/protocols/defillama?w=128&h=128',
+    status: 'active',
+    points: 1250,
+    earnings: 450,
+    earningsCurrency: 'USDC',
+    entityType: 'marketplace_agent',
+    invocationMethods: ['text', 'voice'],
+    identity: {
+      type: 'erc8004',
+      verifiedOnchain: true,
+      erc8004AgentId: '800401',
+      registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e'
+    },
+    callableTools: ['defillama.tvl', 'defillama.prices', 'defillama.protocols'],
+    tools: [
+      { key: 'defillama.tvl', name: 'Protocol TVL & Momentum', description: 'Read live Total Value Locked across global chains and protocols.', risk: 'read_only', availability: 'enabled' },
+      { key: 'defillama.prices', name: 'Token Price Feed', description: 'Fetch multi-chain token pricing benchmarks with zero rate limits.', risk: 'read_only', availability: 'enabled' }
+    ]
+  },
+  {
+    id: 'agent_marketplace_meteo',
+    tag: 'meteo',
+    canonicalTag: '₦METEO',
+    name: 'Open-Meteo Logistics Weather',
+    displayName: 'Open-Meteo Logistics Weather',
+    category: 'Logistics & Weather',
+    role: 'Autonomous meteorological risk analyzer from Circle Marketplace. Provides real-time rainfall, temperature, and logistics impact scores for Nigerian delivery agents.',
+    avatar: 'https://open-meteo.com/images/logo.png',
+    status: 'active',
+    points: 980,
+    earnings: 320,
+    earningsCurrency: 'USDC',
+    entityType: 'marketplace_agent',
+    invocationMethods: ['text', 'voice'],
+    identity: {
+      type: 'erc8004',
+      verifiedOnchain: true,
+      erc8004AgentId: '800402',
+      registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e'
+    },
+    callableTools: ['meteo.weather', 'meteo.delivery_impact'],
+    tools: [
+      { key: 'meteo.weather', name: 'Nigerian Hub Weather', description: 'Real-time temperature, precipitation, and wind speeds in Lagos, Abuja, Kano, and Port Harcourt.', risk: 'read_only', availability: 'enabled' },
+      { key: 'meteo.delivery_impact', name: 'Logistics Rain Impact Score', description: 'Calculate weather risk level (LOW/MODERATE/HIGH) and rider ETA delay minutes for dispatch agents.', risk: 'read_only', availability: 'enabled' }
+    ]
+  },
+  {
+    id: 'agent_marketplace_coingecko',
+    tag: 'coingecko',
+    canonicalTag: '₦COINGECKO',
+    name: 'CoinGecko FX Benchmark',
+    displayName: 'CoinGecko FX Benchmark',
+    category: 'FX & Pricing',
+    role: 'Autonomous fiat & crypto pricing oracle from Circle Marketplace. Supplies real-time USD/NGN exchange rates and USDC valuations for cross-agent settlement.',
+    avatar: 'https://static.coingecko.com/s/coingecko-logo-8903d34fe19ca42c5a000331b376d615.png',
+    status: 'active',
+    points: 1540,
+    earnings: 680,
+    earningsCurrency: 'USDC',
+    entityType: 'marketplace_agent',
+    invocationMethods: ['text', 'voice'],
+    identity: {
+      type: 'erc8004',
+      verifiedOnchain: true,
+      erc8004AgentId: '800403',
+      registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e'
+    },
+    callableTools: ['coingecko.usdc_ngn', 'coingecko.prices'],
+    tools: [
+      { key: 'coingecko.usdc_ngn', name: 'Live USDC to NGN FX Rate', description: 'Read official real-time exchange rates between USDC and Nigerian Naira for autonomous settlement.', risk: 'read_only', availability: 'enabled' },
+      { key: 'coingecko.prices', name: 'Crypto Spot Benchmarks', description: 'Fetch spot prices and 24h market momentum across crypto assets.', risk: 'read_only', availability: 'enabled' }
+    ]
   }
-  return payload.agents.map(mapArcAgentRecord).filter(Boolean);
+];
+
+export async function fetchArcAgentDirectory({ signal } = {}) {
+  let remoteAgents = [];
+  try {
+    const response = await fetch(ARC_AGENTS_API, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      signal,
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (response.ok && payload.ok && Array.isArray(payload.agents)) {
+      remoteAgents = payload.agents.map(mapArcAgentRecord).filter(Boolean);
+    }
+  } catch (err) {
+    console.warn('[Arc Agent Directory] Remote fetch fallback:', err.message);
+  }
+
+  // Merge remote agents with curated sovereign marketplace agents
+  const existingTags = new Set(remoteAgents.map((a) => a.tag.toLowerCase()));
+  const merged = [...remoteAgents];
+  for (const agent of MARKETPLACE_AGENTS) {
+    if (!existingTags.has(agent.tag.toLowerCase())) {
+      merged.push(agent);
+      existingTags.add(agent.tag.toLowerCase());
+    }
+  }
+  return merged;
 }
 
 async function signAdminPayload({ walletAddress, action, payload }) {

@@ -20,6 +20,33 @@ export function broadcastArcClaimToTelegram(claim) {
   return postTelegramAlert({ kind: 'claim', ...claim });
 }
 
+export function broadcastArcPaymentToTelegram({
+  fromAddress,
+  fromTag,
+  recipient,
+  recipientAddress,
+  amountUsdc,
+  memo,
+  txHash,
+  explorerUrl,
+  network,
+  executionTimeMs,
+}) {
+  return postTelegramAlert({
+    kind: 'payment',
+    fromAddress,
+    fromTag,
+    recipient,
+    recipientAddress,
+    amountUsdc,
+    memo,
+    txHash,
+    explorerUrl,
+    network,
+    executionTimeMs,
+  });
+}
+
 export function broadcastArcTaskToTelegram({ action, taskId, taskTitle, rewardUSDC, points, walletAddress, timestamp, signature, deliverableHash }) {
   return postTelegramAlert({ kind: 'task', action, taskId, taskTitle, rewardUSDC, points, walletAddress, timestamp, signature, deliverableHash });
 }

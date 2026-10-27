@@ -15,6 +15,11 @@ const celoSepoliaDeployment = require('../../deployments/nairatag-celo-sepolia.j
 const { defaultWalletFactory } = require('../../sdk/src/wallet/AgentWalletFactory');
 const { defaultTaskEngine } = require('../../sdk/src/wallet/tasks');
 const { defaultActivityStore } = require('../../sdk/src/wallet/activity');
+const {
+  defaultDefiLlamaAgent,
+  defaultOpenMeteoAgent,
+  defaultCoinGeckoAgent
+} = require('../../sdk/src/services/marketplaceAgents');
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -720,6 +725,56 @@ server.tool(
   ({ to, amount, memo, network }) => call(() => {
     const wallet = defaultWalletFactory.createWallet({ network: network || 'arcTestnet' });
     return wallet.transfer({ recipient: to, amount, memo });
+  }),
+);
+
+server.tool(
+  'defillama_analytics',
+  'Query live DeFi TVL, yields, and protocol liquidity rankings for Arc agents (via @defillama / ₦DEFILLAMA).',
+  {
+    limit: z.number().int().min(1).max(50).optional(),
+    category: z.string().optional(),
+    coins: z.array(z.string()).optional(),
+  },
+  ({ limit, category, coins }) => call(async () => {
+    if (coins && coins.length) {
+      return defaultDefiLlamaAgent.getPrices(coins);
+    }
+    return defaultDefiLlamaAgent.getTopProtocols({ limit: limit || 10, category });
+  }),
+);
+
+server.tool(
+  'meteo_weather_impact',
+  'Get real-time weather, rainfall risk, and logistics ETA delay scores for Nigerian delivery agents (via @meteo / ₦METEO).',
+  {
+    city: z.string().default('lagos'),
+    analysisType: z.enum(['logistics_impact', 'current_weather']).default('logistics_impact'),
+  },
+  ({ city, analysisType }) => call(async () => {
+    if (analysisType === 'current_weather') {
+      return defaultOpenMeteoAgent.getCurrentWeather(city);
+    }
+    return defaultOpenMeteoAgent.getDeliveryRainImpact(city);
+  }),
+);
+
+server.tool(
+  'coingecko_fx_rates',
+  'Query live real-time USD/NGN and USDC exchange rates and crypto benchmark valuations (via @coingecko / ₦COINGECKO).',
+  {
+    ids: z.string().optional(),
+    vsCurrencies: z.string().optional(),
+    rateOnly: z.boolean().optional(),
+  },
+  ({ ids, vsCurrencies, rateOnly }) => call(async () => {
+    if (rateOnly) {
+      return defaultCoinGeckoAgent.getUsdcNgnRate();
+    }
+    return defaultCoinGeckoAgent.getPrices({
+      ids: ids || 'usd-coin,celo,ethereum',
+      vsCurrencies: vsCurrencies || 'usd,ngn',
+    });
   }),
 );
 

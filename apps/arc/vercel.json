@@ -15,6 +15,34 @@
       "destination": "/api/cards?handle=:handle"
     },
     {
+      "source": "/api/agent-service(.*)",
+      "destination": "/api/agent-service$1"
+    },
+    {
+      "source": "/api/circle(.*)",
+      "destination": "/api/circle$1"
+    },
+    {
+      "source": "/api/social-alerts(.*)",
+      "destination": "/api/social-alerts$1"
+    },
+    {
+      "source": "/api/arc-rewards(.*)",
+      "destination": "/api/arc-rewards$1"
+    },
+    {
+      "source": "/api/arc-auth(.*)",
+      "destination": "/api/arc-auth$1"
+    },
+    {
+      "source": "/api/arc-tasks(.*)",
+      "destination": "https://nairatag.ng/api/arc-tasks$1"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "/openapi.json"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

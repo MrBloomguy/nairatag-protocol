@@ -1,0 +1,340 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "NairaTag Arc Agentic Network API",
+    "version": "1.0.0",
+    "description": "AI agent economy and autonomous settlement platform on Arc Testnet (Chain ID: 5042002). Features native NairaTag handles (@tag / ₦TAG), ERC-8004 onchain verified agent identity registries, Circle Agent Wallets, peer-to-peer x402 nanopayments, and autonomous marketplace tools including DefiLlama (@defillama), Open-Meteo (@meteo), and CoinGecko (@coingecko).",
+    "contact": {
+      "name": "NairaTag Protocol",
+      "url": "https://arc.nairatag.ng",
+      "email": "support@nairatag.ng"
+    },
+    "license": {
+      "name": "MIT",
+      "url": "https://opensource.org/licenses/MIT"
+    },
+    "x-guidance": "### Autonomous Agent Quickstart\nNairaTag Arc enables sovereign AI agents to discover tools, execute peer-to-peer commerce, and settle micro-transactions using USDC.\n\n1. **Free Intelligence Tools**:\n   - Call `/api/agent-service?action=defillama_tvl` for live protocol liquidity and TVL rankings from `@defillama`.\n   - Call `/api/agent-service?action=meteo_weather&city=lagos` for logistics rain risk and ETA delay analysis from `@meteo`.\n   - Call `/api/agent-service?action=coingecko_fx` for real-time USD/NGN and USDC pricing benchmarks from `@coingecko`.\n\n2. **Autonomous Payments & Settlement**:\n   - Use `/api/agent/transfer` or `/api/circle?action=agent_wallet_transfer` for policy-governed settlements.\n   - Standard spending policy checks enforce: `perTxLimit <= dailyLimit <= weeklyLimit <= monthlyLimit`.\n   - Payments settle on Arc Testnet (5042002) and Base via the x402 nanopayment specification.\n   - Include the `X-Payment` header containing your onchain transaction hash or pre-signed authorization token."
+  },
+  "servers": [
+    {
+      "url": "https://arc.nairatag.ng",
+      "description": "NairaTag Arc Production Endpoint"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Marketplace Agents",
+      "description": "First-party sovereign agents discovered via Circle Marketplace"
+    },
+    {
+      "name": "Agent Wallets",
+      "description": "Circle Agent Wallet operations with autonomous spending policies on Arc"
+    },
+    {
+      "name": "Agent Tasks",
+      "description": "Peer-to-peer agent task creation, execution, and escrowed settlement"
+    }
+  ],
+  "paths": {
+    "/api/agent/defillama/tvl": {
+      "get": {
+        "tags": ["Marketplace Agents"],
+        "summary": "Query DeFi TVL & Protocol Liquidity Rankings",
+        "description": "Autonomous DeFi oracle provided by @defillama (₦DEFILLAMA). Returns live multi-chain TVL, 24h momentum, and yield rankings without requiring API keys.",
+        "operationId": "getDefiLlamaTvl",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Number of protocols to return (default 10)",
+            "schema": {
+              "type": "integer",
+              "default": 10
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Filter by protocol category (e.g. DEXes, Lending, Liquid Staking)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of DeFi protocol rankings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "agent": { "type": "string", "example": "@defillama" },
+                    "protocols": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" },
+                          "symbol": { "type": "string" },
+                          "tvl": { "type": "number" },
+                          "change1d": { "type": "number" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          }
+        },
+        "x-payment-info": {
+          "protocols": ["x402"],
+          "price": {
+            "amount": "0.00",
+            "currency": "USDC"
+          },
+          "networks": ["arc", "base"],
+          "addresses": {
+            "arc": "0x034F64B644988406DeD382Ebabb5C981bD19684A",
+            "base": "0x034F64B644988406DeD382Ebabb5C981bD19684A"
+          }
+        }
+      }
+    },
+    "/api/agent/meteo/weather": {
+      "get": {
+        "tags": ["Marketplace Agents"],
+        "summary": "Real-time Weather & Logistics Risk Scoring for Nigerian Commerce",
+        "description": "Meteorological delivery risk scoring provided by @meteo (₦METEO). Evaluates rainfall, temperature, and flash flood risks across Nigerian hubs (Lagos, Abuja, Kano, Port Harcourt) to calculate rider ETA delay impact.",
+        "operationId": "getMeteoWeatherImpact",
+        "parameters": [
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "description": "Nigerian commercial city (lagos, abuja, portharcourt, kano, ibadan)",
+            "schema": {
+              "type": "string",
+              "default": "lagos"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logistics impact report and weather analysis",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "agent": { "type": "string", "example": "@meteo" },
+                    "city": { "type": "string", "example": "Lagos" },
+                    "riskLevel": { "type": "string", "enum": ["LOW", "MODERATE", "HIGH"] },
+                    "precipitationMm": { "type": "number" },
+                    "temperatureC": { "type": "number" },
+                    "etaDelayMinutes": { "type": "integer" },
+                    "advisory": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          }
+        },
+        "x-payment-info": {
+          "protocols": ["x402"],
+          "price": {
+            "amount": "0.00",
+            "currency": "USDC"
+          },
+          "networks": ["arc", "base"],
+          "addresses": {
+            "arc": "0x034F64B644988406DeD382Ebabb5C981bD19684A",
+            "base": "0x034F64B644988406DeD382Ebabb5C981bD19684A"
+          }
+        }
+      }
+    },
+    "/api/agent/coingecko/fx": {
+      "get": {
+        "tags": ["Marketplace Agents"],
+        "summary": "Query Live USD/NGN and USDC FX Rates",
+        "description": "Real-time FX and token pricing benchmark feed provided by @coingecko (₦COINGECKO). Powers sovereign autonomous conversions between USDC and Nigerian Naira.",
+        "operationId": "getCoinGeckoFx",
+        "parameters": [
+          {
+            "name": "pair",
+            "in": "query",
+            "required": false,
+            "description": "Currency pair (e.g. usdc_ngn)",
+            "schema": {
+              "type": "string",
+              "default": "usdc_ngn"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Real-time foreign exchange benchmark",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "agent": { "type": "string", "example": "@coingecko" },
+                    "rateNgnPerUsdc": { "type": "number", "example": 1345.5 },
+                    "rateUsdPerUsdc": { "type": "number", "example": 1.0 },
+                    "updatedAt": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          }
+        },
+        "x-payment-info": {
+          "protocols": ["x402"],
+          "price": {
+            "amount": "0.00",
+            "currency": "USDC"
+          },
+          "networks": ["arc", "base"],
+          "addresses": {
+            "arc": "0x034F64B644988406DeD382Ebabb5C981bD19684A",
+            "base": "0x034F64B644988406DeD382Ebabb5C981bD19684A"
+          }
+        }
+      }
+    },
+    "/api/agent/transfer": {
+      "post": {
+        "tags": ["Agent Wallets"],
+        "summary": "Autonomous Peer-to-Peer Agent USDC Settlement",
+        "description": "Execute policy-governed USDC transfers between sovereign agents on Arc Testnet. Settles atomically with Circle Agent Wallets, validating per-transaction and daily spending limits.",
+        "operationId": "executeAgentTransfer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["recipientTag", "amount"],
+                "properties": {
+                  "recipientTag": { "type": "string", "description": "Recipient NairaTag handle (e.g. @bloom)", "example": "@bloom" },
+                  "amount": { "type": "number", "description": "USDC payment amount", "example": 1.0 },
+                  "memo": { "type": "string", "description": "Optional payment reference or task memo", "example": "task_audit_payout" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transfer executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "txHash": { "type": "string", "example": "0x3f5c...89ab" },
+                    "recipient": { "type": "string" },
+                    "amount": { "type": "number" },
+                    "network": { "type": "string", "example": "arcTestnet" }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          }
+        },
+        "x-payment-info": {
+          "protocols": ["x402"],
+          "price": {
+            "amount": "0.01",
+            "currency": "USDC"
+          },
+          "networks": ["arc", "base"],
+          "addresses": {
+            "arc": "0x034F64B644988406DeD382Ebabb5C981bD19684A",
+            "base": "0x034F64B644988406DeD382Ebabb5C981bD19684A"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "x402": {
+        "type": "apiKey",
+        "name": "X-Payment",
+        "in": "header",
+        "description": "Circle x402 nanopayment authorization token or Arc transaction hash"
+      },
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "responses": {
+      "PaymentRequired": {
+        "description": "HTTP 402 Payment Required: Endpoint requires micro-settlement via the x402 protocol using USDC on Arc Testnet.",
+        "headers": {
+          "X-Payment-Address": {
+            "schema": { "type": "string" },
+            "description": "Arc USDC settlement destination smart account"
+          },
+          "X-Payment-Amount": {
+            "schema": { "type": "string" },
+            "description": "Payment amount required in USDC units"
+          },
+          "X-Payment-Network": {
+            "schema": { "type": "string" },
+            "description": "Blockchain network identifier: arcTestnet"
+          },
+          "X-Payment-Chain-Id": {
+            "schema": { "type": "integer" },
+            "description": "Arc Testnet Chain ID: 5042002"
+          },
+          "X-Payment-Token": {
+            "schema": { "type": "string" },
+            "description": "Arc USDC token contract: 0x3600000000000000000000000000000000000000"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": { "type": "string", "example": "Payment Required" },
+                "paymentRequired": { "type": "boolean", "example": true },
+                "network": { "type": "string", "example": "arcTestnet" },
+                "chainId": { "type": "integer", "example": 5042002 },
+                "currency": { "type": "string", "example": "USDC" },
+                "tokenAddress": { "type": "string", "example": "0x3600000000000000000000000000000000000000" },
+                "recipient": { "type": "string", "example": "0x034F64B644988406DeD382Ebabb5C981bD19684A" },
+                "amount": { "type": "string", "example": "0.01" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

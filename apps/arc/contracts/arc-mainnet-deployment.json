@@ -1,0 +1,18 @@
+{
+  "network": "arc-mainnet",
+  "chainId": 5042,
+  "deployedAt": "2026-10-26T18:06:35.041Z",
+  "deployer": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+  "contracts": {
+    "NairaTagRegistry": {
+      "address": "0xb3a2d06ead0a889485a844a63be309c4df4b17b3",
+      "txHash": "0x229fa24c198123b7d7a40fbd0085a13a7baa93f41334e876aae1892b5e22e365",
+      "block": "28004913"
+    },
+    "NairaTagResolver": {
+      "address": "0xf46dc708be8391090b83fb9a5d54c4a568bd64f3",
+      "txHash": "0x1090dbd75d9e2e0a57ee5ad6d205fcf649eaa8df25912c551402074cca119981",
+      "block": "28004917"
+    }
+  }
+}

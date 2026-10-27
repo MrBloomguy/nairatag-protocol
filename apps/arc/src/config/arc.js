@@ -73,11 +73,20 @@ export const ARC_USDC_ADDRESS = '0x3600000000000000000000000000000000000000';
 export const ARC_USDC_DECIMALS = 6;
 
 /**
- * Deployed Canonical NairaTag Contracts on Arc Testnet (Chain ID 5042002)
- * Verified via Arc Studio CLI deployment & forge build.
+ * Deployed Canonical NairaTag Contracts
+ * - Arc Mainnet (Chain ID 5042): Deployed and verified onchain
+ * - Arc Testnet (Chain ID 5042002): Verified via Arc Studio CLI
  */
-export const ARC_NAIRATAG_REGISTRY_ADDRESS = '0x034f64b644988406ded382ebabb5c981bd19684a';
-export const ARC_NAIRATAG_RESOLVER_ADDRESS = '0xaee1af632006a5062accdb74f73930439b76efbf';
+export const ARC_MAINNET_REGISTRY_ADDRESS = '0xb3a2d06ead0a889485a844a63be309c4df4b17b3';
+export const ARC_MAINNET_RESOLVER_ADDRESS = '0xf46dc708be8391090b83fb9a5d54c4a568bd64f3';
+
+export const ARC_TESTNET_REGISTRY_ADDRESS = '0x034f64b644988406ded382ebabb5c981bd19684a';
+export const ARC_TESTNET_RESOLVER_ADDRESS = '0xaee1af632006a5062accdb74f73930439b76efbf';
+
+export const isArcMainnet = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_ARC_NETWORK) || 'mainnet') === 'mainnet';
+
+export const ARC_NAIRATAG_REGISTRY_ADDRESS = isArcMainnet ? ARC_MAINNET_REGISTRY_ADDRESS : ARC_TESTNET_REGISTRY_ADDRESS;
+export const ARC_NAIRATAG_RESOLVER_ADDRESS = isArcMainnet ? ARC_MAINNET_RESOLVER_ADDRESS : ARC_TESTNET_RESOLVER_ADDRESS;
 
 /**
  * Arc Protocol Constants & Predeployed Infrastructure

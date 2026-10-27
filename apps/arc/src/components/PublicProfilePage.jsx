@@ -16,14 +16,10 @@ import {
   Moon,
   ChevronRight,
   QrCode,
-  Mic,
   Bot,
   Zap,
   Code,
-  Flame,
-  Award,
   Layers,
-  Clock,
   Coins
 } from 'lucide-react';
 import { resolveTagProfile, generateAvatarSvg } from '../services/tagAvatar.js';
@@ -33,13 +29,72 @@ import {
   ARC_NAIRATAG_REGISTRY_ADDRESS, 
   ARC_NAIRATAG_RESOLVER_ADDRESS, 
   ARC_USDC_ADDRESS,
-  arcTestnet
+  ARC_ERC8004_IDENTITY_REGISTRY,
+  ARC_ERC8004_REPUTATION_REGISTRY
 } from '../config/arc.js';
-import { activeArcChain } from '../services/arcPayment.js';
 import confetti from 'canvas-confetti';
 import './public-twitter-profile.css';
 
 const shorten = (addr = '') => addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : '';
+
+// Helper for contextual prompts and tools per agent
+const getAgentSpec = (handle = '') => {
+  const h = String(handle).toLowerCase().replace(/^[₦$@#]/, '');
+  if (h === 'defillama') {
+    return {
+      prompts: [
+        { label: '📊 Top 5 protocols by TVL on DefiLlama', query: '@defillama what are top 5 protocols by TVL?' },
+        { label: '💎 Compare AAVE vs Uniswap TVL', query: '@defillama compare Aave and Uniswap TVL' },
+        { label: '🌐 Global DeFi TVL breakdown', query: '@defillama what is the total global DeFi TVL?' }
+      ],
+      tools: [
+        { name: 'defillama.tvl', desc: 'Real-time protocol TVL & chain rankings', badge: 'Live API', query: '@defillama get TVL rankings' },
+        { name: 'defillama.coins', desc: 'Token prices & liquidity pool stats', badge: 'Oracle', query: '@defillama check stablecoin liquidity' },
+        { name: 'arc.usdc_settlement', desc: 'Instant peer-to-peer USDC payments', badge: 'Onchain', query: 'Send 5 USDC reward to @defillama' }
+      ]
+    };
+  }
+  if (h === 'meteo') {
+    return {
+      prompts: [
+        { label: '🌤️ Lagos weather & dispatch risk score', query: '@meteo what is Lagos weather and delivery risk?' },
+        { label: '🌧️ Abuja precipitation and ETA delay impact', query: '@meteo Abuja rain and ETA delay forecast' },
+        { label: '🚚 Kano transit logistics weather check', query: '@meteo Kano road conditions and temperature' }
+      ],
+      tools: [
+        { name: 'meteo.delivery_impact', desc: 'Precipitation & dispatch delay scoring', badge: 'Live Forecast', query: '@meteo check delivery delay index' },
+        { name: 'meteo.route_risk', desc: 'Logistics road condition alerts for NG cities', badge: 'Realtime', query: '@meteo check road risk in Lagos' },
+        { name: 'arc.usdc_settlement', desc: 'Instant automated driver / agent dispatch payouts', badge: 'Onchain', query: 'Send 5 USDC to @meteo' }
+      ]
+    };
+  }
+  if (h === 'coingecko') {
+    return {
+      prompts: [
+        { label: '💱 Live USDC to NGN market exchange rate', query: '@coingecko what is current USDC NGN exchange rate?' },
+        { label: '📈 BTC & ETH 24h market momentum', query: '@coingecko Bitcoin and Ethereum price momentum' },
+        { label: '📊 Arc Testnet USDC peg & FX valuation', query: '@coingecko USDC peg and parallel FX spread' }
+      ],
+      tools: [
+        { name: 'coingecko.usdc_ngn', desc: 'Real-time USDC/NGN and USD/NGN FX quotes', badge: 'Live FX', query: '@coingecko get USDC/NGN rate' },
+        { name: 'coingecko.market_pulse', desc: 'Crypto market 24h volume & momentum', badge: 'Oracle', query: '@coingecko market pulse' },
+        { name: 'arc.usdc_settlement', desc: 'Micro-settlements on Arc Testnet', badge: 'Onchain', query: 'Send 5 USDC to @coingecko' }
+      ]
+    };
+  }
+  return {
+    prompts: [
+      { label: '⚡ Arc gas fees & liquidity overview', query: 'Analyze current Arc Testnet gas prices and liquidity' },
+      { label: `💸 Send 5 USDC to ₦${h.toUpperCase()}`, query: `Send 5 USDC reward to @${h} on Arc` },
+      { label: '🛡️ Verify ERC-8004 sovereign registry record', query: `Explain ERC-8004 identity for @${h}` }
+    ],
+    tools: [
+      { name: 'arc.usdc_settlement', desc: 'Zero-gas native USDC transfers on Arc', badge: 'Instant', query: `Send 10 USDC to @${h}` },
+      { name: 'arc.voice_mode', desc: 'Voice call interface with low latency speech orb', badge: 'Voice', query: `Start voice session with @${h}` },
+      { name: 'arc.erc8004_identity', desc: 'Onchain agent credential & reputation registry', badge: 'Verified', query: `Inspect ERC-8004 identity @${h}` }
+    ]
+  };
+};
 
 export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   const cleanTag = String(rawHandle || 'bloom').replace(/^[₦$@#]/, '').trim();
@@ -54,7 +109,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
     }
   });
 
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'capabilities' | 'pay' | 'ledger'
+  const [activeTab, setActiveTab] = useState('tools'); // 'tools' | 'pay' | 'onchain'
   const [copied, setCopied] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [resolvedAddress, setResolvedAddress] = useState(null);
@@ -70,10 +125,10 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   const [paySuccess, setPaySuccess] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Deterministic styling from palette
   const profile = resolveTagProfile(cleanTag);
   const p = profile.palette;
-  const avatarSvg = useMemo(() => generateAvatarSvg(profile.hashIndex, 140), [profile.hashIndex]);
+  const avatarSvg = useMemo(() => generateAvatarSvg(profile.hashIndex, 120), [profile.hashIndex]);
+  const spec = useMemo(() => getAgentSpec(cleanTag), [cleanTag]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -90,7 +145,6 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
     document.title = `${displayTag} (@${lowercaseTag}) · NairaTag on Arc`;
   }, [displayTag, lowercaseTag]);
 
-  // Load identity from both onchain claims and agent directory
   useEffect(() => {
     let isMounted = true;
     async function loadIdentity() {
@@ -181,10 +235,6 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
     window.location.href = url;
   };
 
-  const openVoiceCall = () => {
-    window.location.href = `/?voicePreview=1&agent=${encodeURIComponent(lowercaseTag)}`;
-  };
-
   const handleExecuteSend = () => {
     setPaySuccess(true);
     triggerConfetti(0.8);
@@ -196,14 +246,13 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
     }, 1100);
   };
 
-  // Agent display bio and title
   const displayName = agentProfile?.name || `${cleanTag.charAt(0).toUpperCase() + cleanTag.slice(1)} AI`;
   const isAgent = type === 'agent' || !!agentProfile;
   const agentCategory = agentProfile?.category || (isAgent ? 'Autonomous Agent' : 'Sovereign Identity');
   const agentBio = agentProfile?.role || (
     cleanTag === 'bloom'
-      ? 'Autonomous DeFi research & intelligence agent on Arc Network. Real-time liquidity analytics, instant USDC settlements, and sovereign multi-agent coordination.'
-      : `Sovereign onchain identity and personal autonomous agent on Arc Network. Verified ERC-8004 credentials and instant USDC payments.`
+      ? 'Autonomous DeFi research & intelligence agent on Arc Network. Real-time liquidity analytics and instant USDC settlements.'
+      : `Sovereign onchain identity and personal autonomous agent on Arc Network. Verified ERC-8004 credentials.`
   );
 
   return (
@@ -214,10 +263,9 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
         '--profile-glow': p.glow
       }}
     >
-      {/* Ambient background glow */}
       <div className="twitter-ambient-glow" />
 
-      {/* Sticky Top Header (Twitter Profile Nav) */}
+      {/* Top Navigation */}
       <header className="twitter-nav-header">
         <div className="twitter-nav-left">
           <button 
@@ -233,11 +281,11 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             <h1 className="twitter-header-title">
               {displayName}
               <span className="twitter-verified-badge" title="Verified Sovereign Agent on Arc">
-                <ShieldCheck size={17} strokeWidth={2.6} />
+                <ShieldCheck size={16} strokeWidth={2.6} />
               </span>
             </h1>
             <span className="twitter-header-subtitle">
-              ₦{lowercaseTag} · Arc Network (Chain ID 5042002)
+              ₦{lowercaseTag} · Arc Testnet
             </span>
           </div>
         </div>
@@ -260,26 +308,12 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
         </div>
       </header>
 
-      {/* Main Twitter Profile Column */}
+      {/* Main Profile Shell */}
       <main className="twitter-profile-shell">
-        {/* Banner / Cover Header */}
-        <div className="twitter-banner-container">
-          <div 
-            className="twitter-banner-mesh" 
-            style={{
-              background: `radial-gradient(circle at 20% 40%, ${p.primary} 0%, transparent 60%), radial-gradient(circle at 85% 20%, #7a45e5 0%, transparent 55%), #0c0e17`
-            }}
-          />
-          <div className="twitter-banner-overlay" />
-          <div className="twitter-banner-watermark">₦</div>
+        {/* Subtle accent border at top instead of bulky banner */}
+        <div className="profile-top-accent" />
 
-          <div className="twitter-banner-network-pill">
-            <span className="twitter-live-dot" />
-            <span>Arc Testnet</span>
-          </div>
-        </div>
-
-        {/* Avatar & Action Buttons Bar */}
+        {/* Profile Header Bar: Avatar + Action CTAs */}
         <div className="twitter-profile-bar">
           <div className="twitter-avatar-wrapper">
             <div 
@@ -332,12 +366,12 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           </div>
         </div>
 
-        {/* User Identity & Bio Details */}
+        {/* Identity & Bio */}
         <div className="twitter-user-info">
           <div className="twitter-names-line">
             <h2 className="twitter-display-name">{displayName}</h2>
             <span className="twitter-verified-badge" title="Verified Onchain Agent">
-              <ShieldCheck size={19} strokeWidth={2.6} />
+              <ShieldCheck size={18} strokeWidth={2.6} />
             </span>
             <span className="twitter-category-badge">
               <Bot size={12} />
@@ -348,7 +382,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           <div className="twitter-handle-line">
             <span className="twitter-handle-tag">@{lowercaseTag}</span>
             <span className="twitter-feed-dot">·</span>
-            <span className="twitter-handle-tag">{displayTag}</span>
+            <span className="twitter-handle-tag" style={{ color: 'var(--profile-primary, #7a45e5)' }}>{displayTag}</span>
             <span className="twitter-feed-dot">·</span>
             <span className="twitter-entity-type">ERC-8004 Sovereign Record</span>
           </div>
@@ -357,15 +391,15 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             {agentBio}
           </p>
 
-          {/* Metadata Row */}
+          {/* Compact Metadata Row */}
           <div className="twitter-metadata-row">
             <div className="twitter-meta-item">
-              <Wallet size={14} />
+              <Wallet size={13} />
               <button 
                 type="button" 
                 className="twitter-copy-pill"
                 onClick={copyAddress}
-                title="Copy full EVM wallet address"
+                title="Copy EVM wallet address"
               >
                 <span>{shorten(effectiveAddress)}</span>
                 {copied ? <Check size={11} color="#10b981" /> : <Copy size={11} />}
@@ -373,56 +407,46 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             </div>
 
             <div className="twitter-meta-item">
-              <Globe size={14} />
+              <ShieldCheck size={13} color="#10b981" />
               <a 
-                href={`https://explorer.testnet.arc.io/address/${effectiveAddress}`}
+                href={`https://explorer.testnet.arc.io/token/${ARC_ERC8004_IDENTITY_REGISTRY}`}
                 target="_blank"
                 rel="noreferrer"
                 className="twitter-meta-link"
               >
-                <span>explorer.testnet.arc.io</span>
-                <ArrowUpRight size={11} style={{ display: 'inline', marginLeft: 2 }} />
+                <span style={{ color: '#10b981', fontWeight: 650 }}>ERC-8004 Verified</span>
+                <ArrowUpRight size={11} style={{ marginLeft: 2 }} />
               </a>
             </div>
 
             <div className="twitter-meta-item">
-              <Clock size={14} />
-              <span>Registered on Arc · Oct 2026</span>
+              <Globe size={13} />
+              <span style={{ color: 'var(--tw-text-muted)' }}>Arc Testnet (5042002)</span>
             </div>
           </div>
 
-          {/* Twitter-Style Stats Line */}
+          {/* Twitter-Style Compact Stats */}
           <div className="twitter-stats-line">
             <div className="twitter-stat-item">
-              <strong>14</strong> <span>Following</span>
+              <strong>100/100</strong> <span>Trust Score</span>
             </div>
             <div className="twitter-stat-item">
-              <strong>1,248</strong> <span>Followers</span>
+              <strong>$1,255</strong> <span>USDC Vol</span>
             </div>
             <div className="twitter-stat-item">
-              <strong>100</strong> <span>Trust Score</span>
-            </div>
-            <div className="twitter-stat-item">
-              <strong>1,255 USDC</strong> <span>Volume</span>
+              <strong>Live</strong> <span>Autonomous</span>
             </div>
           </div>
         </div>
 
-        {/* Profile Tabs Bar (Twitter Navigation) */}
+        {/* Streamlined Profile Tabs Bar */}
         <div className="twitter-tabs-bar">
           <button
             type="button"
-            className={`twitter-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
+            className={`twitter-tab-btn ${activeTab === 'tools' ? 'active' : ''}`}
+            onClick={() => setActiveTab('tools')}
           >
-            Overview
-          </button>
-          <button
-            type="button"
-            className={`twitter-tab-btn ${activeTab === 'capabilities' ? 'active' : ''}`}
-            onClick={() => setActiveTab('capabilities')}
-          >
-            Capabilities
+            Prompts & Tools
           </button>
           <button
             type="button"
@@ -433,199 +457,80 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           </button>
           <button
             type="button"
-            className={`twitter-tab-btn ${activeTab === 'ledger' ? 'active' : ''}`}
-            onClick={() => setActiveTab('ledger')}
+            className={`twitter-tab-btn ${activeTab === 'onchain' ? 'active' : ''}`}
+            onClick={() => setActiveTab('onchain')}
           >
-            Onchain Ledger
+            ERC-8004 Specs
           </button>
         </div>
 
-        {/* Tab Panels */}
-        {activeTab === 'overview' && (
+        {/* Tab 1: Prompts & Tools */}
+        {activeTab === 'tools' && (
           <div className="twitter-tab-panel">
-            {/* Quick Action / Prompt Card */}
-            <div className="twitter-prompt-card">
-              <div className="twitter-prompt-card-header">
-                <Sparkles size={18} color={p.primary} />
-                <h3 className="twitter-prompt-card-title">Prompt & Interact with {displayName}</h3>
+            {/* Quick Action Prompt Chips */}
+            <div className="twitter-card-clean">
+              <div className="twitter-card-clean-header">
+                <Sparkles size={16} color={p.primary} />
+                <h3 className="twitter-card-clean-title">Quick Prompts</h3>
               </div>
-              <p style={{ fontSize: '13px', color: 'var(--tw-text-muted)', margin: '0 0 14px 0' }}>
-                Tap any prompt below to launch an instant conversational session with this sovereign agent.
-              </p>
               <div className="twitter-prompt-chips">
-                <button 
-                  type="button" 
-                  className="twitter-prompt-chip"
-                  onClick={() => openAppChat('Analyze current Arc Testnet gas prices and liquidity')}
-                >
-                  <span>📊 Analyze current Arc Testnet gas prices & liquidity</span>
-                  <ChevronRight size={14} />
-                </button>
-                <button 
-                  type="button" 
-                  className="twitter-prompt-chip"
-                  onClick={() => openAppChat(`Send 5 USDC reward to an agent on Arc`)}
-                >
-                  <span>💸 Send 5 USDC reward to an agent on Arc</span>
-                  <ChevronRight size={14} />
-                </button>
-                <button 
-                  type="button" 
-                  className="twitter-prompt-chip"
-                  onClick={() => openAppChat(`Explain your ERC-8004 identity and onchain permissions`)}
-                >
-                  <span>🛡️ Explain your ERC-8004 identity & onchain permissions</span>
-                  <ChevronRight size={14} />
-                </button>
+                {spec.prompts.map((item, idx) => (
+                  <button 
+                    key={idx}
+                    type="button" 
+                    className="twitter-prompt-chip"
+                    onClick={() => openAppChat(item.query)}
+                  >
+                    <span>{item.label}</span>
+                    <ChevronRight size={14} />
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Timeline Stream (Tweet-like activity items) */}
-            <div>
-              <h4 style={{ fontSize: '15px', fontWeight: 800, margin: '14px 0 6px 0' }}>
-                Recent Autonomous Activity
-              </h4>
-
-              <div className="twitter-feed-item">
-                <div className="twitter-feed-avatar">
-                  <div dangerouslySetInnerHTML={{ __html: avatarSvg }} />
-                </div>
-                <div className="twitter-feed-content">
-                  <div className="twitter-feed-header">
-                    <span className="twitter-feed-name">{displayName}</span>
-                    <ShieldCheck size={14} color="#eab308" />
-                    <span className="twitter-feed-handle">@{lowercaseTag}</span>
-                    <span className="twitter-feed-dot">·</span>
-                    <span className="twitter-feed-time">1h ago</span>
-                  </div>
-                  <p className="twitter-feed-text">
-                    Sovereign agent heartbeat verified on Arc Testnet. Gas price settled at 25 Gwei. Ready for multi-agent coordination and instant USDC settlements.
-                  </p>
-                  <div className="twitter-feed-attachment">
-                    <div className="twitter-feed-attachment-info">
-                      <span className="twitter-feed-attachment-label">Onchain Heartbeat Verified</span>
-                      <span className="twitter-feed-attachment-hash">Block 69,202,318 · Arc Testnet</span>
-                    </div>
-                    <Check size={18} color="#10b981" />
-                  </div>
-                </div>
+            {/* Active Agent Capabilities / Tools */}
+            <div className="twitter-card-clean" style={{ marginTop: 14 }}>
+              <div className="twitter-card-clean-header">
+                <Zap size={16} color="#10b981" />
+                <h3 className="twitter-card-clean-title">Autonomous Capabilities</h3>
               </div>
-
-              <div className="twitter-feed-item">
-                <div className="twitter-feed-avatar">
-                  <div dangerouslySetInnerHTML={{ __html: avatarSvg }} />
-                </div>
-                <div className="twitter-feed-content">
-                  <div className="twitter-feed-header">
-                    <span className="twitter-feed-name">{displayName}</span>
-                    <ShieldCheck size={14} color="#eab308" />
-                    <span className="twitter-feed-handle">@{lowercaseTag}</span>
-                    <span className="twitter-feed-dot">·</span>
-                    <span className="twitter-feed-time">1d ago</span>
-                  </div>
-                  <p className="twitter-feed-text">
-                    Registered sovereign canonical tag {displayTag} in the Arc NairaTag Registry at <code style={{ color: '#c084fc' }}>0x034f...684a</code>.
-                  </p>
-                  <div className="twitter-feed-attachment">
-                    <div className="twitter-feed-attachment-info">
-                      <span className="twitter-feed-attachment-label">Tag Claim Event Confirmed</span>
-                      <span className="twitter-feed-attachment-hash">Resolver: 0xaee1...efbf</span>
+              <div className="twitter-clean-tools-list">
+                {spec.tools.map((t, idx) => (
+                  <div key={idx} className="twitter-clean-tool-row">
+                    <div className="twitter-clean-tool-left">
+                      <div className="twitter-clean-tool-head">
+                        <code className="twitter-clean-tool-name">{t.name}</code>
+                        <span className="twitter-clean-tool-badge">{t.badge}</span>
+                      </div>
+                      <p className="twitter-clean-tool-desc">{t.desc}</p>
                     </div>
-                    <ExternalLink size={16} color="var(--tw-text-muted)" />
+                    <button
+                      type="button"
+                      className="twitter-clean-tool-run-btn"
+                      onClick={() => openAppChat(t.query)}
+                    >
+                      <span>Run</span>
+                      <ChevronRight size={13} />
+                    </button>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'capabilities' && (
-          <div className="twitter-tab-panel">
-            <div className="twitter-capabilities-grid">
-              <div className="twitter-cap-card">
-                <div className="twitter-cap-header">
-                  <div className="twitter-cap-icon-box">
-                    <Mic size={20} />
-                  </div>
-                  <span className="twitter-cap-status">Active</span>
-                </div>
-                <h4 className="twitter-cap-title">Voice Mode Call</h4>
-                <p className="twitter-cap-desc">
-                  Low-latency voice call interface powered by fluid visualizer orb and real-time speech engine.
-                </p>
-                <button
-                  type="button"
-                  className="twitter-btn-pay"
-                  style={{ marginTop: 8, height: 34, fontSize: 13, justifyContent: 'center' }}
-                  onClick={openVoiceCall}
-                >
-                  <Mic size={14} />
-                  <span>Launch Voice Mode</span>
-                </button>
-              </div>
-
-              <div className="twitter-cap-card">
-                <div className="twitter-cap-header">
-                  <div className="twitter-cap-icon-box">
-                    <MessageSquare size={20} />
-                  </div>
-                  <span className="twitter-cap-status">Active</span>
-                </div>
-                <h4 className="twitter-cap-title">Conversational Chat</h4>
-                <p className="twitter-cap-desc">
-                  Direct prompt and multi-turn interaction with natural language understanding and memory persistence.
-                </p>
-                <button
-                  type="button"
-                  className="twitter-btn-chat"
-                  style={{ marginTop: 8, height: 34, fontSize: 13, justifyContent: 'center' }}
-                  onClick={() => openAppChat()}
-                >
-                  <MessageSquare size={14} />
-                  <span>Start Chat Session</span>
-                </button>
-              </div>
-
-              <div className="twitter-cap-card">
-                <div className="twitter-cap-header">
-                  <div className="twitter-cap-icon-box">
-                    <Coins size={20} />
-                  </div>
-                  <span className="twitter-cap-status">Active</span>
-                </div>
-                <h4 className="twitter-cap-title">USDC Autonomous Settlement</h4>
-                <p className="twitter-cap-desc">
-                  Native Arc ERC-20 transfers with sub-second finality and predeployed Memo precompiles.
-                </p>
-              </div>
-
-              <div className="twitter-cap-card">
-                <div className="twitter-cap-header">
-                  <div className="twitter-cap-icon-box">
-                    <ShieldCheck size={20} />
-                  </div>
-                  <span className="twitter-cap-status">Verified</span>
-                </div>
-                <h4 className="twitter-cap-title">ERC-8004 Identity</h4>
-                <p className="twitter-cap-desc">
-                  Cryptographically verified onchain agent registration and reputation score tracking.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
+        {/* Tab 2: Pay USDC */}
         {activeTab === 'pay' && (
           <div className="twitter-tab-panel">
             <div className="twitter-pay-card">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>Send USDC to {displayTag}</h3>
-                  <p style={{ margin: '4px 0 0 0', fontSize: 13, color: 'var(--tw-text-muted)' }}>
-                    Instant settlement on Arc Testnet directly to the verified wallet address.
-                  </p>
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Send USDC to {displayTag}</h3>
+                  <span style={{ fontSize: 12.5, color: 'var(--tw-text-muted)' }}>
+                    Arc Testnet · Instant Peer Settlement
+                  </span>
                 </div>
-                <span className="twitter-category-badge">Zero Gas / USDC Native</span>
+                <span className="twitter-category-badge">Zero Gas</span>
               </div>
 
               <div className="twitter-input-group">
@@ -657,20 +562,20 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               </div>
 
               <div className="twitter-input-group">
-                <label className="twitter-input-label">Transaction Memo (Optional)</label>
+                <label className="twitter-input-label">Memo (Optional)</label>
                 <input
                   type="text"
                   className="twitter-text-input"
                   value={payMemo}
                   onChange={(e) => setPayMemo(e.target.value)}
-                  placeholder="e.g. Bounty for AI research task"
+                  placeholder="e.g. Payment for API query"
                 />
               </div>
 
               <button
                 type="button"
                 className="twitter-btn-pay"
-                style={{ height: 46, fontSize: 15, justifyContent: 'center', marginTop: 6 }}
+                style={{ height: 44, fontSize: 14.5, justifyContent: 'center', marginTop: 8 }}
                 onClick={handleExecuteSend}
               >
                 {paySuccess ? '✓ Connecting to Wallet…' : `Pay $${payAmount} USDC to ${displayTag}`}
@@ -679,73 +584,65 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           </div>
         )}
 
-        {activeTab === 'ledger' && (
+        {/* Tab 3: ERC-8004 Specs */}
+        {activeTab === 'onchain' && (
           <div className="twitter-tab-panel">
-            <div className="twitter-pay-card">
-              <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800 }}>Onchain Architecture & Verified Contracts</h3>
-              <p style={{ margin: '4px 0 12px 0', fontSize: 13, color: 'var(--tw-text-muted)' }}>
-                This sovereign profile is bound to deployed smart contracts on Arc Testnet (Chain ID 5042002).
-              </p>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div className="twitter-feed-attachment">
-                  <div className="twitter-feed-attachment-info">
-                    <span className="twitter-feed-attachment-label">NairaTag Registry Contract</span>
-                    <span className="twitter-feed-attachment-hash">{ARC_NAIRATAG_REGISTRY_ADDRESS}</span>
-                  </div>
+            <div className="twitter-card-clean">
+              <div className="twitter-card-clean-header">
+                <ShieldCheck size={16} color="#10b981" />
+                <h3 className="twitter-card-clean-title">ERC-8004 Sovereign Credentials</h3>
+              </div>
+              <div className="twitter-specs-list">
+                <div className="twitter-spec-item">
+                  <span className="twitter-spec-label">Agent Identity Registry</span>
                   <a 
-                    href={`https://explorer.testnet.arc.io/address/${ARC_NAIRATAG_REGISTRY_ADDRESS}`}
+                    href={`https://explorer.testnet.arc.io/token/${ARC_ERC8004_IDENTITY_REGISTRY}`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: 'var(--tw-accent-cyan)' }}
+                    className="twitter-spec-value"
                   >
-                    <ExternalLink size={16} />
+                    <span>{shorten(ARC_ERC8004_IDENTITY_REGISTRY)}</span>
+                    <ExternalLink size={12} />
                   </a>
                 </div>
 
-                <div className="twitter-feed-attachment">
-                  <div className="twitter-feed-attachment-info">
-                    <span className="twitter-feed-attachment-label">NairaTag Resolver Contract</span>
-                    <span className="twitter-feed-attachment-hash">{ARC_NAIRATAG_RESOLVER_ADDRESS}</span>
-                  </div>
+                <div className="twitter-spec-item">
+                  <span className="twitter-spec-label">Reputation Registry</span>
                   <a 
-                    href={`https://explorer.testnet.arc.io/address/${ARC_NAIRATAG_RESOLVER_ADDRESS}`}
+                    href={`https://explorer.testnet.arc.io/address/${ARC_ERC8004_REPUTATION_REGISTRY}`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: 'var(--tw-accent-cyan)' }}
+                    className="twitter-spec-value"
                   >
-                    <ExternalLink size={16} />
+                    <span>{shorten(ARC_ERC8004_REPUTATION_REGISTRY)}</span>
+                    <ExternalLink size={12} />
                   </a>
                 </div>
 
-                <div className="twitter-feed-attachment">
-                  <div className="twitter-feed-attachment-info">
-                    <span className="twitter-feed-attachment-label">Canonical Arc USDC Token</span>
-                    <span className="twitter-feed-attachment-hash">{ARC_USDC_ADDRESS}</span>
-                  </div>
+                <div className="twitter-spec-item">
+                  <span className="twitter-spec-label">Native Settlement Token</span>
                   <a 
                     href={`https://explorer.testnet.arc.io/address/${ARC_USDC_ADDRESS}`}
                     target="_blank"
                     rel="noreferrer"
-                    style={{ color: 'var(--tw-accent-cyan)' }}
+                    className="twitter-spec-value"
                   >
-                    <ExternalLink size={16} />
+                    <span>USDC ({shorten(ARC_USDC_ADDRESS)})</span>
+                    <ExternalLink size={12} />
                   </a>
                 </div>
 
-                <div className="twitter-feed-attachment">
-                  <div className="twitter-feed-attachment-info">
-                    <span className="twitter-feed-attachment-label">Agent Sovereign Wallet</span>
-                    <span className="twitter-feed-attachment-hash">{effectiveAddress}</span>
-                  </div>
-                  <a 
-                    href={`https://explorer.testnet.arc.io/address/${effectiveAddress}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: 'var(--tw-accent-cyan)' }}
+                <div className="twitter-spec-item">
+                  <span className="twitter-spec-label">Sovereign Agent Wallet</span>
+                  <button 
+                    type="button" 
+                    className="twitter-spec-value" 
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    onClick={copyAddress}
                   >
-                    <ExternalLink size={16} />
-                  </a>
+                    <span>{shorten(effectiveAddress)}</span>
+                    {copied ? <Check size={12} color="#10b981" /> : <Copy size={12} />}
+                  </button>
                 </div>
               </div>
             </div>
@@ -768,7 +665,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               </button>
             </div>
 
-            <p style={{ margin: 0, fontSize: 13.5, color: 'var(--tw-text-muted)' }}>
+            <p style={{ margin: '0 0 12px 0', fontSize: 13, color: 'var(--tw-text-muted)' }}>
               Send instant USDC on Arc Testnet directly to this sovereign ₦Tag.
             </p>
 
@@ -793,7 +690,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               <input
                 type="text"
                 className="twitter-text-input"
-                placeholder="Optional memo (attached onchain)"
+                placeholder="Optional memo"
                 value={payMemo}
                 onChange={(e) => setPayMemo(e.target.value)}
               />
@@ -802,7 +699,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             <button
               type="button"
               className="twitter-btn-pay"
-              style={{ height: 46, fontSize: 15, justifyContent: 'center', marginTop: 8 }}
+              style={{ height: 44, fontSize: 14.5, justifyContent: 'center', marginTop: 8 }}
               onClick={handleExecuteSend}
             >
               {paySuccess ? '✓ Connecting to Wallet…' : `Confirm & Pay $${payAmount} USDC`}
@@ -826,10 +723,6 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               </button>
             </div>
 
-            <p style={{ margin: 0, fontSize: 13.5, color: 'var(--tw-text-muted)' }}>
-              Scan to send instant USDC payments or connect on Arc Network.
-            </p>
-
             <div style={{
               margin: '12px auto',
               padding: '16px',
@@ -839,9 +732,9 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               boxShadow: '0 8px 30px rgba(0,0,0,0.3)'
             }}>
               <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(window.location.href)}&margin=10`}
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}&margin=10`}
                 alt={`${displayTag} QR Code`}
-                style={{ width: 220, height: 220, display: 'block' }}
+                style={{ width: 200, height: 200, display: 'block' }}
               />
             </div>
 
@@ -884,10 +777,6 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 ×
               </button>
             </div>
-
-            <p style={{ margin: 0, fontSize: 13.5, color: 'var(--tw-text-muted)' }}>
-              Share this sovereign NairaTag agent profile across social platforms.
-            </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, margin: '6px 0' }}>
               <button

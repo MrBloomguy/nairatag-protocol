@@ -7590,11 +7590,17 @@ body:has(.main-content-wrapper.chat-mode) #root {
 .icon-circle-swap {
   color: #A855F7;
 }
-.icon-circle-ride {
-  color: #3B82F6;
+.icon-circle-defillama {
+  color: #00D4FF;
 }
-.icon-circle-food {
-  color: #F97316;
+.icon-circle-coingecko {
+  color: #F59E0B;
+}
+[data-theme="dark"] .icon-circle-defillama {
+  color: #38BDF8;
+}
+[data-theme="dark"] .icon-circle-coingecko {
+  color: #FBBF24;
 }
 .icon-circle-agent {
   color: #8B5CF6;

@@ -143,11 +143,17 @@ function alertText(body) {
     return `NairaTag voucher claim\n${wallet} reported completing: ${task.title}.\nVoucher: ${task.reward}\nSelf-reported task claim - https://arc.nairatag.ng/#rewards`;
   }
   if (body.kind === 'reward') {
+    if (body.action === 'referral_signup') {
+      const friendClean = cleanText(body.tag || '', 32).replace(/^[₦$@#]/, '').trim().toUpperCase();
+      const referrerClean = cleanText(body.referrerTag || '', 32).replace(/^[₦$@#]/, '').trim().toUpperCase();
+      const friendDisplay = friendClean ? `₦${friendClean}` : wallet;
+      const referrerDisplay = referrerClean ? `₦${referrerClean}` : '₦COMMUNITY';
+      return `🎉 CONGRATULATIONS : ${friendDisplay} joined with ${referrerDisplay}. 100 Points rewarded.\n\nArc Network · https://arc.nairatag.ng/#rewards`;
+    }
     const messages = {
       daily_claim: 'claimed a daily Protocol Points reward.',
       spin: 'won a Protocol Points spin reward.',
       payment_confirmed: 'earned a reward spin after a confirmed Arc payment.',
-      referral_signup: `reached a referral milestone for ${cleanText(body.referrerTag, 32)}.`,
     };
     if (!messages[body.action]) throw new Error('This reward action cannot be announced.');
     return `NairaTag reward update\n${wallet} ${messages[body.action]}\nNairaTag Rewards - https://arc.nairatag.ng/#rewards`;

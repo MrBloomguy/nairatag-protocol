@@ -240,9 +240,38 @@ async function broadcastClaimOnChain(cleanTag) {
       args: [`₦${cleanTag}`]
     });
     return hash;
-  } catch (err) {
-    console.warn('[Celo Relayer Broadcast]', err.message || err);
     return null;
+  }
+}
+
+async function broadcastClaimToTelegram({ tag, cleanTag, walletAddress, network, txHash }) {
+  const token = process.env.TELEGRAM_BOT_TOKEN || '8663138070:AAElmwCbB-vjoYXe3w__zqCxOUT5URIBMNk';
+  const channel = process.env.TELEGRAM_CHANNEL_ID || '-1003984230029';
+  if (!token) return;
+  try {
+    const explorerBase = /celo/i.test(network) ? 'https://celoscan.io/tx/' : 'https://explorer.arc.io/tx/';
+    const explorerUrl = txHash ? `${explorerBase}${txHash}` : null;
+    const shortWallet = walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : '';
+    const cleanUpper = String(cleanTag || tag || '').replace(/^[$₦@#]/, '').toUpperCase();
+    const text = [
+      `🎉 NEW NAIRATAG CLAIMED ON ${String(network || 'BLOCKCHAIN').toUpperCase()}`,
+      '',
+      `Tag: ₦${cleanUpper}`,
+      `Owner: ${walletAddress} (${shortWallet})`,
+      `Network: ${network || 'NairaTag Network'}`,
+      ...(txHash ? [`Transaction: ${txHash}`] : []),
+      ...(explorerUrl ? [`Explorer: ${explorerUrl}`] : []),
+      '',
+      'Claim your sovereign NairaTag: https://nairatag.ng/hub/claim.html'
+    ].join('\n');
+
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: channel, text, disable_web_page_preview: false })
+    });
+  } catch (err) {
+    console.warn('[Telegram Broadcast Warning]', err.message);
   }
 }
 
@@ -370,6 +399,14 @@ export async function registerClaim({
     verifiedClaims.unshift(newClaim);
     walletToClaim.set(normalizedWallet, newClaim);
     tagToClaim.set(clean, newClaim);
+
+    broadcastClaimToTelegram({
+      tag: '₦' + clean,
+      cleanTag: clean,
+      walletAddress: normalizedWallet,
+      network: network || 'Celo Sepolia',
+      txHash: finalTx
+    }).catch(() => {});
 
     return newClaim;
   } finally {
