@@ -10,7 +10,7 @@ import '../voice/ArcVoiceExperience.css';
 export default function ArcVoiceCall({
   voice,
   agentTag = 'arc',
-  agentName = 'ChatGPT',
+  agentName = 'NairaTag',
   accountEmail = '',
   walletAddress = '',
   previewMode = false,

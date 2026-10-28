@@ -480,17 +480,31 @@ try {
     patchProvider(existingProvider);
   }
 
-  // Case 2: provider set later (wallet extensions inject asynchronously)
-  let _eth: EIP1193Provider | undefined = existingProvider;
-  Object.defineProperty(window, 'ethereum', {
-    configurable: true,
-    enumerable: true,
-    get() { return _eth; },
-    set(v: EIP1193Provider | undefined) {
-      _eth = v;
-      patchProvider(v);
-    },
-  });
+  // Case 2: provider set later (safe property guard to prevent collision with wallet extensions)
+  try {
+    const desc = Object.getOwnPropertyDescriptor(window, 'ethereum');
+    if (!desc || desc.configurable) {
+      let _eth: EIP1193Provider | undefined = existingProvider;
+      Object.defineProperty(window, 'ethereum', {
+        configurable: true,
+        enumerable: true,
+        get() { return _eth; },
+        set(v: EIP1193Provider | undefined) {
+          _eth = v;
+          patchProvider(v);
+        },
+      });
+    }
+  } catch {
+    // Ignore if window.ethereum was defined as non-configurable by an injected extension
+  }
+
+  // Standard wallet injection event fallback
+  try {
+    window.addEventListener('ethereum#initialized', () => {
+      patchProvider(getEthereum());
+    }, { once: true });
+  } catch {}
 
   // Case 3: EIP-6963 multi-provider discovery
   window.addEventListener('eip6963:announceProvider', ((e: EIP6963AnnounceProviderEvent) => {

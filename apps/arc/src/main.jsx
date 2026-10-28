@@ -19,3 +19,12 @@ setTimeout(() => {
     setTimeout(() => splash.remove(), 450);
   }
 }, 450);
+
+// Register Service Worker for PWA installation & background sync
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.debug('[PWA] Service worker registration:', err);
+    });
+  });
+}

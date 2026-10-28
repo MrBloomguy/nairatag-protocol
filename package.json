@@ -8,6 +8,8 @@
     "apps/*"
   ],
   "scripts": {
+    "dev": "node static-server.js",
+    "start": "node static-server.js",
     "test": "node --max-old-space-size=4096 --test packages/celotags-protocol/test/*.test.js && node test/nairatag-celo-registry.test.cjs && node test/celo-testnet-smoke.test.cjs",
     "test:contracts": "cd contracts && forge test --match-contract CeloTagsRegistryTest",
     "build:metal": "npx esbuild hub/metal-init.jsx --bundle --minify --format=esm --outfile=hub/metal-bundle.js",

@@ -1,0 +1,522 @@
+/* ==========================================================================
+   REDESIGNED SOCIAL PROFILE & SETTINGS
+   Inspired by Reference Image 1 (TikTok-style Profile) & Image 2 (Grouped Settings)
+   ========================================================================== */
+
+.social-profile-root {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 16px 80px;
+  min-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Top App Header Bar ─── */
+.profile-nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 4px 16px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-color, #0C0D0E);
+  z-index: 20;
+}
+
+.profile-nav-back-btn,
+.profile-nav-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-color, #ffffff);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-nav-back-btn:active,
+.profile-nav-icon-btn:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.profile-nav-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--text-color, #ffffff);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Profile Header (Matching Reference Image 1) ─── */
+.profile-hero-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 10px 0 20px;
+}
+
+.profile-avatar-wrapper {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.profile-avatar-ring {
+  padding: 3px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #BBF246, #0052FF, #8B5CF6);
+  display: inline-flex;
+  box-shadow: 0 8px 24px rgba(187, 242, 70, 0.2);
+}
+
+.profile-avatar-inner {
+  border-radius: 50%;
+  background: #121316;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-handle-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.profile-handle-text {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: #ffffff;
+}
+
+.profile-verified-badge {
+  color: #0052FF;
+  display: inline-flex;
+  align-items: center;
+  filter: drop-shadow(0 2px 6px rgba(0, 82, 255, 0.4));
+}
+
+/* ─── 3-Column Stats Row (Matching Reference Image 1) ─── */
+.profile-stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 20px;
+  width: 100%;
+}
+
+.profile-stat-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: inherit;
+  padding: 0;
+}
+
+.profile-stat-value {
+  font-size: 19px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.3px;
+}
+
+.profile-stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+/* ─── Action Buttons (Primary CTA + Secondary Pills) ─── */
+.profile-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 380px;
+  margin-bottom: 18px;
+}
+
+.profile-btn-primary {
+  flex: 1;
+  height: 44px;
+  border-radius: 999px;
+  background: #BBF246;
+  color: #0C0D0E;
+  font-size: 14px;
+  font-weight: 750;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(187, 242, 70, 0.25);
+  transition: all 0.15s ease;
+}
+
+.profile-btn-primary:active {
+  transform: scale(0.97);
+  background: #aadb3e;
+}
+
+.profile-btn-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-btn-icon:active {
+  transform: scale(0.95);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Bio & Network Badge ─── */
+.profile-bio-text {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.72);
+  max-width: 360px;
+  line-height: 1.45;
+  margin: 0 auto 12px;
+}
+
+.profile-link-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #BBF246;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.profile-link-pill:hover {
+  background: rgba(187, 242, 70, 0.12);
+}
+
+/* ─── Visual Segmented Tabs Bar (Matching Reference Image 1) ─── */
+.profile-social-tabs {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 14px;
+}
+
+.profile-social-tab-btn {
+  flex: 1;
+  padding: 12px 0;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.profile-social-tab-btn.active {
+  color: #ffffff;
+  border-bottom-color: #ffffff;
+}
+
+/* ─── Tab Content Panels ─── */
+.profile-panel-container {
+  padding-top: 18px;
+  width: 100%;
+}
+
+/* ─── Assets Grid (Tab 1) ─── */
+.profile-assets-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.profile-asset-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.profile-asset-card:active {
+  transform: scale(0.98);
+}
+
+.profile-asset-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.profile-asset-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.profile-asset-name {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.profile-asset-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.4px;
+}
+
+.profile-asset-sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 4px;
+}
+
+/* ─── Grouped Settings Page (Matching Reference Image 2) ─── */
+.settings-view-root {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.settings-profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.settings-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-profile-name {
+  font-size: 16px;
+  font-weight: 750;
+  color: #ffffff;
+  margin: 0 0 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-profile-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.settings-edit-link {
+  font-size: 12px;
+  color: #0052FF;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* Group Sections */
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.settings-group-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0 8px;
+}
+
+.settings-group-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.settings-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.settings-item-row:last-child {
+  border-bottom: none;
+}
+
+.settings-item-row:active {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.settings-item-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.settings-item-icon {
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+}
+
+.settings-item-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.settings-signout-row {
+  color: #EF4444 !important;
+}
+
+.settings-signout-row .settings-item-left,
+.settings-signout-row .settings-item-icon {
+  color: #EF4444 !important;
+}
+
+/* Light Theme Overrides */
+[data-theme="light"] .social-profile-root {
+  color: #111827;
+}
+
+[data-theme="light"] .profile-nav-header {
+  background: #ffffff;
+}
+
+[data-theme="light"] .profile-nav-back-btn,
+[data-theme="light"] .profile-nav-icon-btn {
+  background: #F3F4F6;
+  border-color: #E5E7EB;
+  color: #111827;
+}
+
+[data-theme="light"] .profile-nav-title,
+[data-theme="light"] .profile-handle-text,
+[data-theme="light"] .profile-stat-value,
+[data-theme="light"] .profile-asset-val,
+[data-theme="light"] .settings-profile-name,
+[data-theme="light"] .settings-item-left {
+  color: #111827;
+}
+
+[data-theme="light"] .profile-stat-label,
+[data-theme="light"] .profile-bio-text,
+[data-theme="light"] .settings-group-title,
+[data-theme="light"] .settings-item-right {
+  color: #6B7280;
+}
+
+[data-theme="light"] .profile-avatar-inner {
+  background: #F3F4F6;
+}
+
+[data-theme="light"] .profile-btn-icon {
+  background: #F3F4F6;
+  border-color: #E5E7EB;
+  color: #111827;
+}
+
+[data-theme="light"] .profile-social-tabs {
+  border-bottom-color: #E5E7EB;
+}
+
+[data-theme="light"] .profile-social-tab-btn {
+  color: #9CA3AF;
+}
+
+[data-theme="light"] .profile-social-tab-btn.active {
+  color: #111827;
+  border-bottom-color: #111827;
+}
+
+[data-theme="light"] .profile-asset-card,
+[data-theme="light"] .settings-profile-card,
+[data-theme="light"] .settings-group-card {
+  background: #F9FAFB;
+  border-color: #E5E7EB;
+}
+
+[data-theme="light"] .settings-item-row {
+  border-bottom-color: #F3F4F6;
+}
+

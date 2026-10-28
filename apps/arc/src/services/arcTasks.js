@@ -248,9 +248,6 @@ async function submitSignedAction({ action, taskId, walletAddress, deliverable, 
     ...(action === 'submit' ? [`Deliverable SHA-256: ${deliverableHash}`] : []),
   ].join('\n');
   let signature = '0x';
-  if (authProvider === 'circle' && !sessionToken) {
-    throw new Error('Your email sign-in expired. Sign in again to continue this task.');
-  }
   if (!sessionToken && provider?.request) {
     try {
       signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });

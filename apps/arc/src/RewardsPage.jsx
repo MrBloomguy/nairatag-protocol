@@ -242,7 +242,7 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
   const spinTheWheel = async () => {
     if (isSpinning || isSpinPending || isCongratsOpen) return;
     if (!accountKey) {
-      setSpinMessage('Connect your wallet to save spins and Protocol Points.');
+      setSpinMessage('Sign in to save spins and Protocol Points.');
       onRequestConnect?.();
       return;
     }
@@ -324,13 +324,11 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
         </div>
 
         <div className="wheel-heading">
-          <span className="wheel-heading-eyebrow">AMAZING AWARDS · ARC TESTNET</span>
           <h1 className="wheel-main-title">Spin &amp; Win</h1>
-          <p>Every spin wins Protocol Points. No entry fee.</p>
         </div>
 
         <div className="wheel-spin-condition-pill">
-          <Sparkles size={14} />
+          <Sparkles size={11} />
           <span>One free spin daily · A confirmed Arc USDC payment earns one more</span>
         </div>
 
@@ -406,7 +404,7 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
           {/* Center hub and fixed pointer */}
           <div className="wheel-center-hub" aria-hidden="true">
             <div className="wheel-pointer-needle" />
-            <span className="wheel-hub-text">ARC</span>
+            <span className="wheel-hub-text">Spin</span>
           </div>
         </div>
 
@@ -417,7 +415,7 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
           onClick={spinTheWheel}
           disabled={isSpinning || isSpinPending || isCongratsOpen || (Boolean(accountKey) && spinStats.available <= 0)}
         >
-          {isSpinPending ? 'Securing spin…' : isSpinning ? 'Spinning…' : !accountKey ? 'Connect wallet to spin' : spinStats.available > 0 ? `Spin now · ${spinStats.available} available` : 'No spins left today'}
+          {isSpinPending ? 'Securing spin…' : isSpinning ? 'Spinning…' : !accountKey ? 'Sign in to spin' : spinStats.available > 0 ? `Spin now · ${spinStats.available} available` : 'No spins left today'}
         </button>
         <p className="wheel-spin-feedback" aria-live="polite">{spinMessage}</p>
 
@@ -445,10 +443,7 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
             </div>
           </div>
 
-          <div className="wheel-info-note">
-            <Info size={12} />
-            <span>One free spin daily · one confirmed Arc payment unlocks one bonus · two spins max</span>
-          </div>
+
         </div>
 
         {/* Rules Dialog */}
@@ -556,7 +551,7 @@ export function ReferralModal({ isOpen, onClose, userTag = '', accountKey = '', 
     if (!inviteCode) {
       sendNotificationAlert({
         title: 'Claim your NairaTag first',
-        body: 'Connect your wallet and claim a NairaTag to create your personal referral link.',
+        body: 'Sign in and claim a NairaTag to create your personal referral link.',
         type: 'info',
         actionLabel: 'Got it',
       });
@@ -601,19 +596,7 @@ export function ReferralModal({ isOpen, onClose, userTag = '', accountKey = '', 
           <span className="referral-nav-title">Refer Friends</span>
         </div>
 
-        {/* Title */}
-        <h2 className="referral-title">
-          Invite with your NairaTag<br />
-          and earn <span className="referral-highlight-amount">Protocol Points</span>
-        </h2>
 
-        {/* Group illustration / badge */}
-        <div className="referral-friends-banner">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '38px' }}>👥</span>
-            <span style={{ fontSize: '32px' }}>🪙</span>
-          </div>
-        </div>
 
         {/* Main White Card */}
         <div className="referral-white-card">
@@ -642,27 +625,23 @@ export function ReferralModal({ isOpen, onClose, userTag = '', accountKey = '', 
             <ShieldCheck size={13} color="#00c988" />
             <span>Points are credited to both accounts after each eligible milestone.</span>
           </div>
-          <p className="referral-ledger-note">{referralError || 'Referral milestones are verified on Arc and saved to your rewards account.'}</p>
+          {referralError ? <p className="referral-ledger-note">{referralError}</p> : null}
 
-          {/* Share CTA */}
-          <button
-            type="button"
-            className="referral-share-cta-btn"
-            onClick={handleCopy}
-          >
-            {copied ? 'Link copied' : 'Share your NairaTag invite'}
-          </button>
-
-          {/* Invitation Code Box */}
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: 6 }}>Your referral code</div>
-            <div className="referral-invite-code-box">
-              <span className="referral-code-pill">{inviteCode || 'Claim a NairaTag to activate'}</span>
-              <button type="button" className="referral-copy-btn" onClick={handleCopy} disabled={!inviteCode}>
-                {copied ? <Check size={14} /> : <Copy size={14} />}
-                <span>{copied ? 'Copied' : 'Copy'}</span>
-              </button>
+          {/* Unified Referral Code & Share CTA */}
+          <div className="referral-unified-box">
+            <div className="referral-unified-info">
+              <span className="referral-unified-label">Your referral code</span>
+              <span className="referral-unified-code">{inviteCode ? `₦${inviteCode}` : 'Claim a NairaTag to activate'}</span>
             </div>
+            <button
+              type="button"
+              className="referral-unified-btn"
+              onClick={handleCopy}
+              disabled={!inviteCode}
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
           </div>
         </div>
 
@@ -675,7 +654,6 @@ export function ReferralModal({ isOpen, onClose, userTag = '', accountKey = '', 
               </div>
               <div>
                 <div className="referral-task-title">Friend claims a NairaTag</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>Both accounts are rewarded</div>
               </div>
             </div>
             <div className="referral-task-reward">
@@ -691,7 +669,6 @@ export function ReferralModal({ isOpen, onClose, userTag = '', accountKey = '', 
               </div>
               <div>
                 <div className="referral-task-title">Friend completes first USDC payment</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>After the Arc transaction confirms</div>
               </div>
             </div>
             <div className="referral-task-reward">
@@ -707,7 +684,6 @@ export function ReferralModal({ isOpen, onClose, userTag = '', accountKey = '', 
               </div>
               <div>
                 <div className="referral-task-title">USDC &amp; cNGN reward options</div>
-                <div style={{ fontSize: '11px', color: '#6b7280' }}>Stablecoin payouts activate with a funded payout service</div>
               </div>
             </div>
             <div className="referral-task-reward">
@@ -842,11 +818,13 @@ function DailyStreakModal({ isOpen, onClose, status, onClaim, presentation = 'mo
         >
           {status.claimedToday ? 'Claimed Today' : claiming ? 'Claiming…' : `Claim ${status.reward} Points`}
         </button>
-        <p className="streak-claim-feedback" aria-live="polite">
-          {claimedAmount
-            ? `${claimedAmount} Protocol Points were added to your rewards balance.`
-            : claimError || 'Claim once per day to grow your Protocol Points balance.'}
-        </p>
+        {(claimedAmount || claimError) && (
+          <p className="streak-claim-feedback" aria-live="polite">
+            {claimedAmount
+              ? `${claimedAmount} Protocol Points were added to your rewards balance.`
+              : claimError}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -906,9 +884,9 @@ export default function RewardsPage({
   const dailyStreakStatus = getDailyStreakStatus(dailyStreak, todayKey);
 
   const handleDailyStreakClaim = async () => {
-    if (!accountKey || !/^0x[a-f\d]{40}$/i.test(accountKey)) {
+    if (!accountKey) {
       onRequestConnect?.();
-      throw new Error('Connect your Arc wallet before claiming your daily streak.');
+      throw new Error('Sign in to claim your daily streak.');
     }
     const { result, state } = await submitArcRewardAction({ action: 'daily_claim', walletAddress: accountKey });
     const reward = Number(result.points);

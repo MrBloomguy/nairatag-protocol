@@ -22,12 +22,12 @@ self.addEventListener('push', (event) => {
     }
   } else {
     data = {
-      title: '🎁 New Arc Reward Ready!',
-      body: 'You have a new voucher and cashback opportunity waiting on Arc Osaka.',
+      title: '🎁 New Reward Ready!',
+      body: 'You have a new voucher and cashback opportunity waiting.',
     };
   }
 
-  const title = data.title || 'NairaTag • Arc Osaka';
+  const title = data.title || 'NairaTag';
   const options = {
     body: data.body || 'Sub-second payment settlement and reward notification.',
     icon: data.icon || '/nairatag-logo.png',

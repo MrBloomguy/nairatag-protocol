@@ -61,17 +61,21 @@ export function broadcastArcRewardToTelegram(proof) {
 
 export async function broadcastArcVoucherClaimToTelegram({ taskId, walletAddress }) {
   const provider = typeof window !== 'undefined' ? window.ethereum : null;
-  if (!provider?.request) throw new Error('A compatible wallet is required to sign this voucher alert.');
   const timestamp = Date.now();
-  const message = [
-    'NairaTag Social Alerts',
-    'Action: voucher_claimed',
-    `Task: ${taskId}`,
-    `Wallet: ${walletAddress.toLowerCase()}`,
-    'Chain: 5042002',
-    `Timestamp: ${timestamp}`,
-  ].join('\n');
-  const signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });
+  let signature = null;
+  if (provider?.request) {
+    const message = [
+      'NairaTag Social Alerts',
+      'Action: voucher_claimed',
+      `Task: ${taskId}`,
+      `Wallet: ${walletAddress.toLowerCase()}`,
+      'Chain: 5042002',
+      `Timestamp: ${timestamp}`,
+    ].join('\n');
+    try {
+      signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });
+    } catch {}
+  }
   return postTelegramAlert({ kind: 'voucher', taskId, walletAddress, timestamp, signature });
 }
 

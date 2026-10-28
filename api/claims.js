@@ -240,6 +240,8 @@ async function broadcastClaimOnChain(cleanTag) {
       args: [`₦${cleanTag}`]
     });
     return hash;
+  } catch (err) {
+    console.error('Failed to broadcast claim on-chain:', err.message);
     return null;
   }
 }

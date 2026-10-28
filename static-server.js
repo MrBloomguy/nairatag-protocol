@@ -16,7 +16,7 @@ import hubApiHandler from './api/hub-api.js';
 import pointsHandler from './api/points.js';
 import celotagsHandler from './api/celotags.js';
 
-const PORT = 8088;
+const PORT = process.env.PORT || 8088;
 const ROOT = __dirname;
 
 const MIME = {

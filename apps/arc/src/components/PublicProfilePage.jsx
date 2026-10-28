@@ -1,18 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Check, 
-  Copy, 
-  Share2, 
-  ExternalLink, 
-  MessageSquare, 
-  Send, 
+import {
+  Check,
+  Copy,
+  Share2,
+  ExternalLink,
+  MessageSquare,
+  Send,
   ArrowLeft,
   ArrowUpRight,
-  ShieldCheck, 
-  Sparkles, 
-  Wallet, 
-  Globe, 
-  Sun, 
+  ShieldCheck,
+  Sparkles,
+  Wallet,
+  Globe,
+  Sun,
   Moon,
   ChevronRight,
   QrCode,
@@ -25,9 +25,9 @@ import {
 import { resolveTagProfile, generateAvatarSvg } from '../services/tagAvatar.js';
 import { resolveTag } from '../services/nairatagResolver.js';
 import { fetchArcAgentDirectory, KNOWN_AGENT_LOGOS, getOriginalAgentLogo } from '../services/arcAgents.js';
-import { 
-  ARC_NAIRATAG_REGISTRY_ADDRESS, 
-  ARC_NAIRATAG_RESOLVER_ADDRESS, 
+import {
+  ARC_NAIRATAG_REGISTRY_ADDRESS,
+  ARC_NAIRATAG_RESOLVER_ADDRESS,
   ARC_USDC_ADDRESS,
   ARC_ERC8004_IDENTITY_REGISTRY,
   ARC_ERC8004_REPUTATION_REGISTRY
@@ -134,7 +134,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
     document.documentElement.setAttribute('data-theme', theme);
     try {
       localStorage.setItem('nairatag-theme', theme);
-    } catch {}
+    } catch { }
   }, [theme]);
 
   const toggleTheme = () => {
@@ -210,7 +210,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
         origin: { y: 0.7 },
         colors: [p.primary, '#ffffff', '#10b981']
       });
-    } catch {}
+    } catch { }
   };
 
   const shareToTwitter = () => {
@@ -229,7 +229,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   };
 
   const openAppChat = (prompt = '') => {
-    const url = prompt 
+    const url = prompt
       ? `/#chat?agent=${encodeURIComponent(lowercaseTag)}&prompt=${encodeURIComponent(prompt)}`
       : `/#chat?agent=${encodeURIComponent(lowercaseTag)}`;
     window.location.href = url;
@@ -248,7 +248,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
 
   const displayName = agentProfile?.name || `${cleanTag.charAt(0).toUpperCase() + cleanTag.slice(1)} AI`;
   const isAgent = type === 'agent' || !!agentProfile;
-  const agentCategory = agentProfile?.category || (isAgent ? 'Autonomous Agent' : 'Sovereign Identity');
+  const agentCategory = agentProfile?.category || (isAgent ? 'Autonomous Agent' : 'NairaTag Identity');
   const agentBio = agentProfile?.role || (
     cleanTag === 'bloom'
       ? 'Autonomous DeFi research & intelligence agent on Arc Network. Real-time liquidity analytics and instant USDC settlements.'
@@ -256,7 +256,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   );
 
   return (
-    <div 
+    <div
       className="twitter-profile-page"
       style={{
         '--profile-primary': p.primary,
@@ -268,9 +268,9 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
       {/* Top Navigation */}
       <header className="twitter-nav-header">
         <div className="twitter-nav-left">
-          <button 
-            type="button" 
-            className="twitter-back-btn" 
+          <button
+            type="button"
+            className="twitter-back-btn"
             onClick={() => { window.location.href = '/#agents'; }}
             title="Explore Agents"
             aria-label="Back to Explore Agents"
@@ -280,7 +280,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           <div className="twitter-header-titles">
             <h1 className="twitter-header-title">
               {displayName}
-              <span className="twitter-verified-badge" title="Verified Sovereign Agent on Arc">
+              <span className="twitter-verified-badge" title="Verified NairaTag on Arc">
                 <ShieldCheck size={16} strokeWidth={2.6} />
               </span>
             </h1>
@@ -324,7 +324,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 style={{ objectFit: 'cover' }}
               />
             ) : (
-              <div 
+              <div
                 className="twitter-avatar-img"
                 dangerouslySetInnerHTML={{ __html: avatarSvg }}
               />
@@ -347,7 +347,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               type="button"
               className="twitter-action-icon-btn"
               onClick={() => setIsQrModalOpen(true)}
-              title="View QR Code"
+              title="QR Code"
               aria-label="View QR Code"
             >
               <QrCode size={16} />
@@ -393,7 +393,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             <span className="twitter-feed-dot">·</span>
             <span className="twitter-handle-tag" style={{ color: 'var(--profile-primary, #7a45e5)' }}>{displayTag}</span>
             <span className="twitter-feed-dot">·</span>
-            <span className="twitter-entity-type">ERC-8004 Sovereign Record</span>
+            <span className="twitter-entity-type">ERC-8004 Verified Record</span>
           </div>
 
           <p className="twitter-bio-text">
@@ -404,8 +404,8 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           <div className="twitter-metadata-row">
             <div className="twitter-meta-item">
               <Wallet size={13} />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="twitter-copy-pill"
                 onClick={copyAddress}
                 title="Copy EVM wallet address"
@@ -417,7 +417,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
 
             <div className="twitter-meta-item">
               <ShieldCheck size={13} color="#10b981" />
-              <a 
+              <a
                 href={`https://explorer.testnet.arc.io/token/${ARC_ERC8004_IDENTITY_REGISTRY}`}
                 target="_blank"
                 rel="noreferrer"
@@ -484,9 +484,9 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               </div>
               <div className="twitter-prompt-chips">
                 {spec.prompts.map((item, idx) => (
-                  <button 
+                  <button
                     key={idx}
-                    type="button" 
+                    type="button"
                     className="twitter-prompt-chip"
                     onClick={() => openAppChat(item.query)}
                   >
@@ -599,12 +599,12 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             <div className="twitter-card-clean">
               <div className="twitter-card-clean-header">
                 <ShieldCheck size={16} color="#10b981" />
-                <h3 className="twitter-card-clean-title">ERC-8004 Sovereign Credentials</h3>
+                <h3 className="twitter-card-clean-title">ERC-8004 Verified Credentials</h3>
               </div>
               <div className="twitter-specs-list">
                 <div className="twitter-spec-item">
                   <span className="twitter-spec-label">Agent Identity Registry</span>
-                  <a 
+                  <a
                     href={`https://explorer.testnet.arc.io/token/${ARC_ERC8004_IDENTITY_REGISTRY}`}
                     target="_blank"
                     rel="noreferrer"
@@ -617,7 +617,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
 
                 <div className="twitter-spec-item">
                   <span className="twitter-spec-label">Reputation Registry</span>
-                  <a 
+                  <a
                     href={`https://explorer.testnet.arc.io/address/${ARC_ERC8004_REPUTATION_REGISTRY}`}
                     target="_blank"
                     rel="noreferrer"
@@ -630,7 +630,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
 
                 <div className="twitter-spec-item">
                   <span className="twitter-spec-label">Native Settlement Token</span>
-                  <a 
+                  <a
                     href={`https://explorer.testnet.arc.io/address/${ARC_USDC_ADDRESS}`}
                     target="_blank"
                     rel="noreferrer"
@@ -642,10 +642,10 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 </div>
 
                 <div className="twitter-spec-item">
-                  <span className="twitter-spec-label">Sovereign Agent Wallet</span>
-                  <button 
-                    type="button" 
-                    className="twitter-spec-value" 
+                  <span className="twitter-spec-label">Agent Smart Account</span>
+                  <button
+                    type="button"
+                    className="twitter-spec-value"
                     style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                     onClick={copyAddress}
                   >
@@ -665,8 +665,8 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           <div className="twitter-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="twitter-modal-header">
               <h3 className="twitter-modal-title">Pay {displayTag}</h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="twitter-modal-close"
                 onClick={() => setIsPayModalOpen(false)}
               >
@@ -675,7 +675,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             </div>
 
             <p style={{ margin: '0 0 12px 0', fontSize: 13, color: 'var(--tw-text-muted)' }}>
-              Send instant USDC on Arc Testnet directly to this sovereign ₦Tag.
+              Send instant USDC on Arc Testnet directly to this ₦Tag.
             </p>
 
             <div className="twitter-input-group">
@@ -723,8 +723,8 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           <div className="twitter-modal-content" onClick={(e) => e.stopPropagation()} style={{ textAlign: 'center' }}>
             <div className="twitter-modal-header">
               <h3 className="twitter-modal-title">{displayTag} QR Code</h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="twitter-modal-close"
                 onClick={() => setIsQrModalOpen(false)}
               >
@@ -740,7 +740,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               width: 'fit-content',
               boxShadow: '0 8px 30px rgba(0,0,0,0.3)'
             }}>
-              <img 
+              <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(window.location.href)}&margin=10`}
                 alt={`${displayTag} QR Code`}
                 style={{ width: 200, height: 200, display: 'block' }}
@@ -778,8 +778,8 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           <div className="twitter-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="twitter-modal-header">
               <h3 className="twitter-modal-title">Share {displayTag}</h3>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 className="twitter-modal-close"
                 onClick={() => setIsShareModalOpen(false)}
               >

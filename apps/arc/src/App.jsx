@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import NairaTagLanding from './components/NairaTagLandingPage.jsx';
 import AuthConnectModal from './components/auth/AuthConnectModal';
 import ProfileAvatar from './components/ProfileAvatar';
+import RedesignedProfilePage from './components/profile/RedesignedProfilePage.jsx';
 import ChatActivityIndicator from './components/chat/ChatActivityIndicator';
 import PersonalAgentPanel from './components/chat/PersonalAgentPanel';
 import ArcVoiceCall from './components/chat/ArcVoiceCall.jsx';
@@ -745,7 +746,7 @@ function ArcAppShell() {
           {
             id: 'sys-' + Date.now(),
             sender: 'agent',
-            agentName: 'Arc Sovereign Agent',
+            agentName: 'NairaTag',
             text: 'âš ï¸ Microphone recording is not supported in this browser environment.',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           }
@@ -803,7 +804,7 @@ function ArcAppShell() {
         {
           id: 'sys-' + Date.now(),
           sender: 'agent',
-          agentName: 'Arc Sovereign Agent',
+          agentName: 'NairaTag',
           text: 'âš ï¸ Microphone permission is required to record voice directives. Please enable microphone permissions in your browser settings.',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
@@ -852,7 +853,7 @@ function ArcAppShell() {
       const newVoiceMsg = {
         id: userMsgId,
         sender: 'user',
-        text: finalTranscript ? `ðŸŽ™ï¸ "${finalTranscript}"` : `Voice directive (${formatDuration})`,
+        text: finalTranscript ? `🎙️ï¸ "${finalTranscript}"` : `Voice directive (${formatDuration})`,
         transcript: finalTranscript,
         audioUrl,
         audioDuration: formatDuration,
@@ -928,7 +929,7 @@ function ArcAppShell() {
     if (!textToSend && !fileToSend) return;
     if (!walletAddress) {
       setIsConnectModalOpen(true);
-      showToast('Connect an Arc wallet to start a saved chat.', 'info');
+      showToast('Sign in or connect a wallet to start a saved chat.', 'info');
       return;
     }
 
@@ -966,7 +967,7 @@ function ArcAppShell() {
     let replyText = '';
     let toolEvents = [];
     let replyAgentTag = activeTaggedAgent ? activeTaggedAgent.tag : 'ArcAgent';
-    let replyAgentName = activeTaggedAgent ? activeTaggedAgent.name : 'Arc Sovereign Agent';
+    let replyAgentName = activeTaggedAgent ? activeTaggedAgent.name : 'NairaTag';
     let replyAvatar = activeTaggedAgent
       ? getOriginalAgentLogo(activeTaggedAgent)
       : '/agents/bloom.png';
@@ -1023,7 +1024,7 @@ function ArcAppShell() {
             const res = await fetch('/api/agent-service?action=defillama_tvl&limit=5');
             const data = await res.json();
             const top = (data.protocols || []).slice(0, 5).map((p, i) => `${i + 1}. **${p.name}** (${p.symbol || 'DeFi'}): $${(p.tvl / 1e9).toFixed(2)}B TVL (24h: ${p.change1d ? p.change1d.toFixed(2) : '0'}%)`).join('\n');
-            replyText = `🦙 **DefiLlama DeFi Oracle** (₦DEFILLAMA)\n\nLive Total Value Locked (TVL) & protocol liquidity rankings from Circle Marketplace:\n\n${top}\n\n*Verified onchain on Arc Testnet via ERC-8004 Registry.*`;
+            replyText = `**Top DeFi Protocols (TVL)**\n\n${top}`;
             toolEvents = [{ tool: 'defillama.tvl', status: 'success', summary: 'Fetched live multi-chain TVL rankings' }];
           } catch (e) {
             replyText = `🦙 **DefiLlama**: Connected to Arc Testnet. Query: "${agentPrompt}". DeFi analytics available via tool \`defillama.tvl\`.`;
@@ -1041,7 +1042,7 @@ function ArcAppShell() {
             else if (promptLower.includes('port harcourt') || promptLower.includes('ph')) city = 'portharcourt';
             const res = await fetch(`/api/agent-service?action=meteo_weather&city=${city}`);
             const data = await res.json();
-            replyText = `🌤️ **Open-Meteo Logistics Weather** (₦METEO)\n\n**City**: ${data.city || 'Lagos'}, Nigeria\n- **Temperature**: ${data.temperatureC}°C\n- **Precipitation**: ${data.precipitationMm} mm\n- **Wind Speed**: ${data.windSpeedKmH} km/h\n- **Logistics Delivery Risk**: **${data.riskLevel}**\n- **Advisory**: ${data.advisory}\n\n*Live weather intelligence for delivery agents on Arc.*`;
+            replyText = `**Weather in ${data.city || "Lagos"}**: ${data.temperatureC}°C · ${data.windSpeedKmH} km/h wind · Risk: **${data.riskLevel}**`;
             toolEvents = [{ tool: 'meteo.delivery_impact', status: 'success', summary: `Calculated ${data.riskLevel} delivery risk for ${data.city}` }];
           } catch (e) {
             replyText = `🌤️ **Open-Meteo**: Connected to Arc Testnet. Real-time meteorological dispatch risk analysis active.`;
@@ -1053,13 +1054,13 @@ function ArcAppShell() {
           try {
             const res = await fetch('/api/agent-service?action=coingecko_fx');
             const data = await res.json();
-            replyText = `🦎 **CoinGecko FX Benchmark** (₦COINGECKO)\n\nLive real-time foreign exchange and cryptocurrency valuations from Circle Marketplace:\n\n- **1 USDC**: **₦${Number(data.rateNgnPerUsdc || 1345).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** (${data.change24hNgn ? data.change24hNgn.toFixed(2) : '0'}% 24h)\n- **1 USDC**: $${Number(data.rateUsdPerUsdc || 1).toFixed(4)} USD\n- **Settlement Chain**: Arc Testnet (5042002)\n\n*Cryptographically timestamped for autonomous agent payouts.*`;
+            replyText = `**USDC Market Rate**\n• 1 USDC = **₦${Number(data.rateNgnPerUsdc || 1345).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}** (${data.change24hNgn ? (data.change24hNgn > 0 ? "+" : "") + data.change24hNgn.toFixed(1) : "0"}% 24h)\n• 1 USDC = $1.00 USD`;
             toolEvents = [{ tool: 'coingecko.usdc_ngn', status: 'success', summary: `Fetched live exchange rate: ₦${data.rateNgnPerUsdc} / USDC` }];
           } catch (e) {
             replyText = `🦎 **CoinGecko**: Connected to Arc Testnet. Real-time FX exchange feed ready.`;
           }
         } else if (agentPrompt.toLowerCase().includes('swap')) {
-          replyText = `🔄 **Arc Decentralized Swap**\n\nInstant token swaps on **Arc Testnet** (Chain ID: 5042002) with native USDC settlement.\n\n- **Source Asset**: USDC (\`0x3600000000000000000000000000000000000000\`)\n- **Available Pairs**: USDC / WETH, USDC / NGN-Stable, USDC / ARC\n- **Network Fee**: Zero Gas (Arc Sponsored)\n- **Execution Finality**: < 1 second\n\n*Specify the amount you'd like to swap (e.g. "Swap 20 USDC to WETH") or send directly to any agent via their ₦Tag!*`;
+          replyText = `**Instant Swap on Arc**\nZero gas fee. Pairs: USDC ⇄ EURC, USDC ⇄ cirBTC. What amount would you like to swap?`;
           toolEvents = [{ tool: 'arc.swap_quote', status: 'success', summary: 'Checked Arc decentralized liquidity pools' }];
         } else {
           const chatResult = await sendArcChatMessage({
@@ -1092,7 +1093,7 @@ function ArcAppShell() {
           replyAvatar = savedAvatar?.avatarData || savedAvatar?.avatar || selectedAgent.avatar;
         } else {
           replyAgentTag = 'ArcAgent';
-          replyAgentName = 'Arc Sovereign Agent';
+          replyAgentName = 'NairaTag';
           const savedAvatar = myTag?.tag ? getAgentOnboarding(walletAddress, myTag.tag) : null;
           replyAvatar = savedAvatar?.avatarData || savedAvatar?.avatar || 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
         }
@@ -1187,7 +1188,7 @@ function ArcAppShell() {
           id: message.id,
           sender: isAgent ? 'agent' : 'user',
           agentTag: isAgent ? (agent?.tag || 'ArcAgent') : undefined,
-          agentName: isAgent ? (agent?.name || 'Arc Sovereign Agent') : undefined,
+          agentName: isAgent ? (agent?.name || 'NairaTag') : undefined,
           avatar: isAgent ? (agent?.avatar || 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent') : undefined,
           text: message.content,
           time: new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -1958,20 +1959,48 @@ function ArcAppShell() {
     }
   }, []);
 
-  // Auto-restore Circle session on mount
+  // Auto-restore session on mount (Circle email or Injected EVM wallet)
   useEffect(() => {
-    try {
-      const stored = getStoredCircleSession();
-      if (stored && stored.walletAddress) {
-        setWalletAddress(stored.walletAddress);
-        setAuthProvider('circle');
-        setCircleSession(stored);
-        setIsArcNetwork(true);
-        refreshBalance(stored.walletAddress);
+    let cancelled = false;
+    const restoreSession = async () => {
+      try {
+        const stored = getStoredCircleSession();
+        if (stored && stored.walletAddress) {
+          if (cancelled) return;
+          setWalletAddress(stored.walletAddress);
+          setAuthProvider('circle');
+          setCircleSession(stored);
+          setIsArcNetwork(true);
+          const savedEmail = window.localStorage.getItem('nairatag_account_email') || stored.email;
+          if (savedEmail) setAccountEmail(savedEmail);
+          refreshBalance(stored.walletAddress);
+          return;
+        }
+
+        const authMode = window.localStorage.getItem('nairatag_auth_provider');
+        if (authMode === 'injected' && typeof window !== 'undefined' && window.ethereum?.request) {
+          const accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(() => []);
+          if (accounts && accounts[0] && !cancelled) {
+            const addr = accounts[0];
+            setWalletAddress(addr);
+            setAuthProvider('injected');
+            window.localStorage.setItem('nairatag_auth_provider', 'injected');
+            window.localStorage.setItem('nairatag_last_wallet', addr);
+            const netChainId = await window.ethereum.request({ method: 'eth_chainId' }).catch(() => null);
+            if (netChainId) {
+              const numId = parseInt(netChainId, 16);
+              setChainId(numId);
+              setIsArcNetwork(numId === activeArcChain.id);
+            }
+            refreshBalance(addr);
+          }
+        }
+      } catch (e) {
+        console.warn('[App] Restoring session error:', e);
       }
-    } catch (e) {
-      console.warn('[App] Restoring Circle session note:', e);
-    }
+    };
+    restoreSession();
+    return () => { cancelled = true; };
   }, [refreshBalance]);
 
   // Connect via Circle Programmable Wallet (Web3 Services)
@@ -2003,6 +2032,8 @@ function ArcAppShell() {
       const login = await verifyCircleEmailOtp();
       const res = await connectCircleWallet(login, ({ message }) => setCircleStatus(message));
       setAccountEmail(circleInput.trim().toLowerCase());
+      window.localStorage.setItem('nairatag_auth_provider', 'circle');
+      window.localStorage.setItem('nairatag_account_email', circleInput.trim().toLowerCase());
       setWalletAddress(res.walletAddress);
       setAuthProvider('circle');
       setCircleSession(res);
@@ -2039,6 +2070,11 @@ function ArcAppShell() {
       clearCircleSession();
     }
     clearArcSession();
+    try {
+      window.localStorage.removeItem('nairatag_auth_provider');
+      window.localStorage.removeItem('nairatag_account_email');
+      window.localStorage.removeItem('nairatag_last_wallet');
+    } catch {}
     setWalletAddress(null);
     setAuthProvider(null);
     setCircleSession(null);
@@ -2137,7 +2173,7 @@ function ArcAppShell() {
 
   const handleClaimInHouseVoucher = async (task) => {
     if (!walletAddress) {
-      showToast('Connect your wallet to claim this voucher.', 'info');
+      showToast('Sign in or connect a wallet to claim this voucher.', 'info');
       setIsConnectModalOpen(true);
       return;
     }
@@ -2165,7 +2201,7 @@ function ArcAppShell() {
 
   const handleStartTask = async (task) => {
     if (!walletAddress) {
-      showToast('Connect your wallet before starting a bounty.', 'info');
+      showToast('Sign in or connect a wallet before starting a bounty.', 'info');
       setIsConnectModalOpen(true);
       return;
     }
@@ -2209,7 +2245,7 @@ function ArcAppShell() {
     setDailyMissionsDone((prev) => ({ ...prev, price: true }));
     setUserPoints((prev) => prev + 100);
     triggerCelebrationConfetti();
-    showToast('ðŸ“Š Market Price Verified! +100 Protocol Points added to your balance.', 'success', 3500);
+    showToast('📊 Market Price Verified! +100 Protocol Points added to your balance.', 'success', 3500);
   };
 
   const handleDailyAgentMission = () => {
@@ -2220,7 +2256,7 @@ function ArcAppShell() {
     setDailyMissionsDone((prev) => ({ ...prev, agent: true }));
     setUserPoints((prev) => prev + 150);
     triggerCelebrationConfetti();
-    showToast('ðŸ¤– Agent Mission Completed! High-gap coverage verified. +150 Points.', 'success', 3500);
+    showToast('🤖 Agent Mission Completed! High-gap coverage verified. +150 Points.', 'success', 3500);
   };
 
   const handleDailyCommodityAlert = () => {
@@ -2231,13 +2267,13 @@ function ArcAppShell() {
     setDailyMissionsDone((prev) => ({ ...prev, alert: true }));
     setUserPoints((prev) => prev + 50);
     triggerCelebrationConfetti();
-    showToast('ðŸ”” Price Alert Set on Arc Commodities! +50 Points.', 'success', 3500);
+    showToast('🔔 Price Alert Set on Arc Commodities! +50 Points.', 'success', 3500);
   };
 
   const handleInviteToEarn = () => {
     const inviteUrl = myTag?.tag ? getTagShareUrl(myTag.tag) : 'https://arc.nairatag.ng/#claim';
     triggerCopy('invite_link', inviteUrl);
-    showToast('ðŸ”— Invite Link Copied! Share with friends to earn 10% fee rebates on Arc.', 'success', 3500);
+    showToast('🔗 Invite Link Copied! Share with friends to earn 10% fee rebates on Arc.', 'success', 3500);
   };
 
   const handleCreateTask = (e) => {
@@ -2251,7 +2287,7 @@ function ArcAppShell() {
       id: `task_${Date.now()}`,
       title: postTaskForm.title,
       category: postTaskForm.category,
-      categoryLabel: postTaskForm.category === 'dev' ? '⚡ Engineering' : postTaskForm.category === 'design' ? 'ðŸŽ¨ Design' : postTaskForm.category === 'data' ? 'ðŸ“Š Data & AI' : postTaskForm.category === 'content' ? '✍️ Content' : 'ðŸ§ª Testing',
+      categoryLabel: postTaskForm.category === 'dev' ? '⚡ Engineering' : postTaskForm.category === 'design' ? '🎨 Design' : postTaskForm.category === 'data' ? '📊 Data & AI' : postTaskForm.category === 'content' ? '✍️ Content' : '🧪 Testing',
       status: 'open',
       rewardUSDC: usdc,
       rewardNGN: `₦${(usdc * 1485).toLocaleString()}`,
@@ -2259,7 +2295,7 @@ function ArcAppShell() {
       deadline: postTaskForm.deadline || '3 days left',
       applicants: 0,
       creatorTag: displayUserTag || '₦YOU',
-      escrowStatus: 'ðŸ”’ Funded in Escrow',
+      escrowStatus: '🔒 Funded in Escrow',
       description: postTaskForm.description || 'Community bounty on Arc Osaka EVM with automated milestone escrow settlement.',
       deliverable: postTaskForm.requirements || 'Public verification link, GitHub PR, or live demo.',
     };
@@ -2283,7 +2319,7 @@ function ArcAppShell() {
     if (!text) return;
     if (!walletAddress) {
       setIsConnectModalOpen(true);
-      showToast('Connect an Arc wallet to start a saved agent chat.', 'info');
+      showToast('Sign in or connect a wallet to chat with this agent.', 'info');
       return;
     }
     const currentMsgs = agentChatMessages[agentId] || [];
@@ -2459,8 +2495,7 @@ function ArcAppShell() {
       return;
     }
     if (authProvider === 'circle') {
-      showToast('Circle wallet swaps are not available yet. Connect an external EVM wallet to swap.', 'error', 4500);
-      return;
+      // Circle wallet swaps allowed
     }
     setSwapExecuting(true);
     try {
@@ -2957,7 +2992,7 @@ function ArcAppShell() {
           >
             <Bot size={14} />
             <span>Agents</span>
-            <span className="nav-badge-pill" style={{ background: '#7c3aed' }}>8</span>
+            <span className="nav-badge-pill" style={{ background: '#7c3aed' }}>{chatAgents.length}</span>
           </button>
           {import.meta.env.VITE_NAIRADOTS_AGENT_URL && (
             <a
@@ -3504,48 +3539,26 @@ function ArcAppShell() {
       {/* ─── Main Application Body ─── */}
       <main className={`main-content-wrapper ${mainTab === 'claim' ? 'claim-active' : ''} ${mainTab === 'chat' ? 'chat-mode' : ''}`}>
         {mainTab === 'profile' && (
-          <section className="account-dashboard">
-            <div className="account-dashboard-heading">
-              <div>
-                <span className="account-dashboard-eyebrow">ACCOUNT</span>
-                <h1>Profile dashboard</h1>
-                <p>Your NairaTag identity, Arc wallet, and rewards in one place.</p>
-              </div>
-              <button type="button" className="quick-chip-btn" onClick={() => setMainTab('chat')}><ArrowLeft size={14} /> Back to chat</button>
-            </div>
-
-            {walletAddress ? (
-              <>
-                <article className="account-identity-card">
-                  <ProfileAvatar tag={myTag?.tag} email={accountEmail} size={52} className="account-avatar" />
-                  <div className="account-identity-copy">
-                    <span>{authProvider === 'circle' ? 'Circle email account' : 'Connected wallet account'}</span>
-                    <h2>{displayAccountName || 'Your Arc account'}</h2>
-                    <p>{accountEmail || (myTag?.tag ? 'Your NairaTag is connected to your Arc wallet.' : 'Claim a NairaTag to create your readable payment identity.')}</p>
-                  </div>
-                  <span className="account-network-pill"><span /> Arc Testnet</span>
-                </article>
-
-                <div className="account-stats-grid">
-                  <article className="account-stat-card"><span>USDC balance</span><strong>{usdcBalance.formatted}</strong><small>≈ ₦{(parseFloat(usdcBalance.formatted || '0') * 1485).toLocaleString('en-NG', { maximumFractionDigits: 2 })} NGN</small></article>
-                  <article className="account-stat-card"><span>Protocol Points</span><strong>{Number(userPoints || 0).toLocaleString()}</strong><small>Earned across NairaTag rewards</small></article>
-                </div>
-
-                <article className="account-wallet-card">
-                  <div className="account-wallet-heading"><div><span className="account-dashboard-eyebrow">YOUR WALLET</span><h2>{authProvider === 'circle' ? 'Circle Programmable Wallet' : 'Browser wallet'}</h2></div><span className="account-network-pill"><span /> Connected</span></div>
-                  <div className="account-wallet-address"><span>{walletAddress}</span><button type="button" className="quick-chip-btn" onClick={() => triggerCopy('profile_wallet_copy', walletAddress)}><Copy size={13} />{copiedKey === 'profile_wallet_copy' ? 'Copied' : 'Copy'}</button></div>
-                  <div className="account-dashboard-actions">
-                    <button type="button" className="btn-action-primary" onClick={() => setMainTab('pay')}><Send size={15} /> Send USDC</button>
-                    <button type="button" className="quick-chip-btn" onClick={() => { setWalletTab('overview'); setIsWalletModalOpen(true); }}><Wallet size={15} /> Wallet details</button>
-                    <button type="button" className="quick-chip-btn" onClick={() => setMainTab('rewards')}><Gift size={15} /> Rewards</button>
-                    {myTag?.tag ? <button type="button" className="quick-chip-btn" onClick={() => setIsPersonalAgentOpen(true)}><Brain size={15} /> Personal agent</button> : <button type="button" className="quick-chip-btn" onClick={() => setMainTab('claim')}><Tag size={15} /> Claim a NairaTag</button>}
-                  </div>
-                </article>
-              </>
-            ) : (
-              <article className="account-wallet-card account-profile-empty"><User size={24} /><h2>Sign in to view your profile</h2><p>Your account details and rewards will appear here after sign in.</p><button type="button" className="btn-action-primary" onClick={() => setIsConnectModalOpen(true)}>Sign in</button></article>
-            )}
-          </section>
+          <RedesignedProfilePage
+            walletAddress={walletAddress}
+            authProvider={authProvider}
+            accountEmail={accountEmail}
+            displayAccountName={displayAccountName}
+            myTag={myTag}
+            usdcBalance={usdcBalance}
+            userPoints={userPoints}
+            onSendUsdc={() => setMainTab('pay')}
+            onClaimTag={() => setMainTab('claim')}
+            onOpenRewards={() => setMainTab('rewards')}
+            onOpenPersonalAgent={() => setIsPersonalAgentOpen(true)}
+            onOpenNotifications={() => setIsNotificationOpen(true)}
+            onDisconnect={handleDisconnect}
+            onRequestConnect={() => setIsConnectModalOpen(true)}
+            onBackToChat={() => setMainTab('chat')}
+            recentArcTags={recentArcTags}
+            theme={theme}
+            toggleTheme={toggleTheme}
+          />
         )}
 
         {/* ───────────────────────────────────────────────────────────────────
@@ -4343,11 +4356,11 @@ function ArcAppShell() {
               {[
                 { id: 'all', label: 'All Tasks' },
                 { id: 'dev', label: '⚡ Engineering' },
-                { id: 'design', label: 'ðŸŽ¨ Design' },
-                { id: 'data', label: 'ðŸ“Š Data & AI' },
+                { id: 'design', label: '🎨 Design' },
+                { id: 'data', label: '📊 Data & AI' },
                 { id: 'content', label: '✍️ Content' },
-                { id: 'test', label: 'ðŸ§ª Testing' },
-                { id: 'community', label: 'ðŸ“± Community' },
+                { id: 'test', label: '🧪 Testing' },
+                { id: 'community', label: '📱 Community' },
               ].map((cat) => (
                 <button
                   key={cat.id}
@@ -5237,7 +5250,7 @@ function ArcAppShell() {
           >
             <div className="mobile-footer-icon-wrap">
               <Users size={22} strokeWidth={mainTab === 'agents' ? 2.4 : 1.8} />
-              <span className="mobile-footer-badge badge-purple">8</span>
+              <span className="mobile-footer-badge badge-purple">{chatAgents.length}</span>
             </div>
             <span className="mobile-footer-label">Agents</span>
           </button>
@@ -5596,7 +5609,7 @@ function ArcAppShell() {
             <p className="welcome-rewards-copy">Your wallet is connected and ready to send USDC.</p>
             <div className="welcome-points-card">
               <span>Protocol Points</span>
-              <strong>{Number(welcomeDetails.points) > 0 ? `+${Number(welcomeDetails.points).toLocaleString()}` : 'ðŸŽ Free Spin Ready'}</strong>
+              <strong>{Number(welcomeDetails.points) > 0 ? `+${Number(welcomeDetails.points).toLocaleString()}` : '🎁 Free Spin Ready'}</strong>
             </div>
             <button type="button" className="auth-main-cta" onClick={() => { setWelcomeDetails(null); setMainTab('rewards'); }}>Claim Daily Rewards</button>
             <button type="button" className="welcome-rewards-link" onClick={() => setWelcomeDetails(null)}>Continue to Wallet</button>
@@ -5841,7 +5854,7 @@ function ArcAppShell() {
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '16px' }}>ðŸ’¼</span>
+                <span style={{ fontSize: '16px' }}>💼</span>
                 <span className="card-header-title">Post Milestone Bounty</span>
               </div>
               <button
@@ -5881,10 +5894,10 @@ function ArcAppShell() {
                     onChange={(e) => setPostTaskForm((prev) => ({ ...prev, category: e.target.value }))}
                   >
                     <option value="dev">⚡ Engineering</option>
-                    <option value="design">ðŸŽ¨ Design</option>
-                    <option value="data">ðŸ“Š Data & AI</option>
+                    <option value="design">🎨 Design</option>
+                    <option value="data">📊 Data & AI</option>
                     <option value="content">✍️ Content</option>
-                    <option value="test">ðŸ§ª Testing</option>
+                    <option value="test">🧪 Testing</option>
                   </select>
                 </div>
 
@@ -5922,7 +5935,7 @@ function ArcAppShell() {
               </div>
 
               <div style={{ padding: '8px 10px', background: 'rgba(0, 82, 255, 0.06)', borderRadius: '6px', border: '1px solid rgba(0, 82, 255, 0.15)', fontSize: '11px', color: 'var(--privy-color-interactive)' }}>
-                ðŸ”’ <strong>Smart Escrow:</strong> Funds are locked until milestone verification.
+                🔒 <strong>Smart Escrow:</strong> Funds are locked until milestone verification.
               </div>
 
               <button type="submit" className="btn-action-primary" style={{ marginTop: '4px' }}>
@@ -6013,14 +6026,14 @@ function ArcAppShell() {
                 className={`agent-profile-tab-btn ${walletTab === 'qr' ? 'active' : ''}`}
                 onClick={() => setWalletTab('qr')}
               >
-                ðŸ“± Receive QR
+                📱 Receive QR
               </button>
               <button
                 type="button"
                 className={`agent-profile-tab-btn ${walletTab === 'history' ? 'active' : ''}`}
                 onClick={() => setWalletTab('history')}
               >
-                ðŸ“œ Ledger
+                📜 Ledger
               </button>
             </div>
 
@@ -6075,7 +6088,7 @@ function ArcAppShell() {
                     </div>
                   </>
                 ) : (
-                  <div style={{ fontSize: '12px', padding: '16px' }}>Please connect wallet to view QR code.</div>
+                  <div style={{ fontSize: '12px', padding: '16px' }}>Please sign in or connect a wallet to view QR code.</div>
                 )}
               </div>
             )}
