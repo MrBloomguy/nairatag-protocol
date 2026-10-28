@@ -122,7 +122,7 @@ async function verifyTagClaim(body) {
   }
   const cleanTagStr = String(body.tag || '').trim().replace(/^[$₦@#]/, '').toLowerCase();
 
-  const isMainnet = (body.network && /mainnet/i.test(body.network)) || body.chainId === 5042;
+  const isMainnet = body.chainId === 5042002 || (body.network && /testnet/i.test(body.network)) ? false : true;
   const primaryNet = isMainnet ? NETWORKS.mainnet : NETWORKS.testnet;
   let verifiedResult = null;
 

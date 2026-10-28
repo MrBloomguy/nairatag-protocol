@@ -358,7 +358,7 @@ export default function PlatformAgentAdminPage() {
           <div className="admin-footer-status">
             <span className="admin-pulse-dot" />
             <div>
-              <strong>Arc Testnet · 5042002</strong>
+              <strong>Arc Mainnet · 5042</strong>
               <span>{walletAddress ? 'Admin data loaded on demand' : 'Connect an authorized admin wallet'}</span>
             </div>
           </div>

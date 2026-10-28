@@ -7,8 +7,8 @@ export interface CircleWalletSession extends CircleLoginSession {
   walletAddress: string;
   walletId: string;
   authProvider: 'circle';
-  blockchain: 'ARC-TESTNET';
-  chainId: 5042002;
+  blockchain: 'ARC' | 'ARC-TESTNET';
+  chainId: 5042 | 5042002;
 }
 
 export function requestCircleEmailOtp(email: string): Promise<{ email: string }>;

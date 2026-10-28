@@ -45,10 +45,10 @@ export const ARC_SUPPORTED_SWAP_TOKENS = [
 // App Kit Crosschain Target Chains
 export const APP_KIT_CROSSCHAINS = [
   {
-    chain: "Arc_Testnet",
-    name: "Arc Testnet",
-    chainId: 5042002,
-    badge: "Native Osaka",
+    chain: "Arc",
+    name: "Arc Mainnet",
+    chainId: 5042,
+    badge: "Native Gas",
   },
   {
     chain: "Base_Sepolia",
@@ -86,8 +86,8 @@ export async function estimateAppKitSwap({
   tokenIn,
   tokenOut,
   amountIn,
-  fromChain = "Arc_Testnet",
-  toChain = "Arc_Testnet",
+  fromChain = "Arc",
+  toChain = "Arc",
   slippageBps = 100, // 1%
 }) {
   if (!amountIn || parseFloat(amountIn) <= 0) {
@@ -161,8 +161,8 @@ export async function executeAppKitSwap({
   tokenIn,
   tokenOut,
   amountIn,
-  fromChain = "Arc_Testnet",
-  toChain = "Arc_Testnet",
+  fromChain = "Arc",
+  toChain = "Arc",
   recipientAddress,
   onStepUpdate = () => {},
 }) {
@@ -192,7 +192,7 @@ export async function executeAppKitSwap({
     step: "signing",
     message: isCrossChain
       ? `Initiating CCTP Crosschain Swap from ${fromChain} to ${toChain}...`
-      : `Submitting swap transaction on Arc Testnet (USDC sub-second finality)...`,
+      : `Submitting swap transaction on Arc Mainnet (USDC sub-second finality)...`,
   });
 
   const kit = await getSwapKit();
@@ -214,7 +214,7 @@ export async function executeAppKitSwap({
       };
 
       const result = await kit.swap(swapParams);
-      onStepUpdate({ step: "complete", message: "Swap confirmed on Arc Testnet!" });
+      onStepUpdate({ step: "complete", message: "Swap confirmed on Arc Mainnet!" });
       return {
         success: true,
         txHash: result.txHash || "0x" + Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join(""),
@@ -222,7 +222,7 @@ export async function executeAppKitSwap({
         tokenIn,
         tokenOut,
         status: "COMPLETED",
-        blockExplorerUrl: `https://explorer.testnet.arc.io/tx/${result.txHash || ""}`,
+        blockExplorerUrl: `https://explorer.arc.io/tx/${result.txHash || ""}`,
       };
     } catch (kitError) {
       console.warn("Kit swap failed or rejected, checking reason:", kitError);
@@ -246,10 +246,10 @@ export function getUnifiedBalanceSummary(arcUsdcBalance = "0.00") {
     totalUnifiedUsdc: (arcBal + baseBal + arbBal).toFixed(2),
     chains: [
       {
-        name: "Arc Testnet (Native Gas)",
+        name: "Arc Mainnet (Native Gas)",
         symbol: "USDC",
         amount: arcBal.toFixed(4),
-        domain: 5042002,
+        domain: 5042,
         active: true,
       },
       {

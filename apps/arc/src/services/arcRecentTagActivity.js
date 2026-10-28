@@ -29,7 +29,7 @@ export async function getRecentArcTagActivity(limit = 12) {
       fromBlock: latestBlock > 2500n ? latestBlock - 2500n : 0n,
       toBlock: latestBlock,
     }),
-    fetch(`https://explorer.testnet.arc.io/api/v2/tokens/${ARC_USDC_ADDRESS}/transfers`, {
+    fetch(`https://explorer.arc.io/api/v2/tokens/${ARC_USDC_ADDRESS}/transfers`, {
       headers: { Accept: 'application/json' },
     }),
   ]);

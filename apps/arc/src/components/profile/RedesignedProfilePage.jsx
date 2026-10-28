@@ -252,7 +252,7 @@ export default function RedesignedProfilePage({
               </button>
 
               <a
-                href={`https://explorer.testnet.arc.io/address/${walletAddress}`}
+                href={`https://explorer.arc.io/address/${walletAddress}`}
                 target="_blank"
                 rel="noreferrer"
                 className="settings-item-row"
@@ -263,7 +263,7 @@ export default function RedesignedProfilePage({
                   <span>Arc Explorer</span>
                 </div>
                 <div className="settings-item-right">
-                  <span>Testnet (5042002)</span>
+                  <span>Mainnet (5042)</span>
                   <ExternalLink size={14} />
                 </div>
               </a>
@@ -369,13 +369,13 @@ export default function RedesignedProfilePage({
         </p>
 
         <a
-          href={`https://explorer.testnet.arc.io/address/${walletAddress}`}
+          href={`https://explorer.arc.io/address/${walletAddress}`}
           target="_blank"
           rel="noreferrer"
           className="profile-link-pill"
         >
           <Globe size={12} />
-          <span>arc.nairatag.ng · Arc Testnet</span>
+          <span>arc.nairatag.ng · Arc Mainnet</span>
         </a>
       </div>
 

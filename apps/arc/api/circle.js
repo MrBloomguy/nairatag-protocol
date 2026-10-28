@@ -1,8 +1,12 @@
 const CIRCLE_BASE_URL = 'https://api.circle.com/v1/w3s';
-const ARC_TESTNET = 'ARC-TESTNET';
+const ARC_MAINNET = 'ARC';
 const ARC_USDC = '0x3600000000000000000000000000000000000000';
-const NAIRATAG_REGISTRY = '0x034f64b644988406ded382ebabb5c981bd19684a';
-const NAIRATAG_RESOLVER = '0xaee1af632006a5062accdb74f73930439b76efbf';
+const NAIRATAG_MAINNET_REGISTRY = '0xb3a2d06ead0a889485a844a63be309c4df4b17b3';
+const NAIRATAG_MAINNET_RESOLVER = '0xf46dc708be8391090b83fb9a5d54c4a568bd64f3';
+const NAIRATAG_TESTNET_REGISTRY = '0x034f64b644988406ded382ebabb5c981bd19684a';
+const NAIRATAG_TESTNET_RESOLVER = '0xaee1af632006a5062accdb74f73930439b76efbf';
+const NAIRATAG_REGISTRY = NAIRATAG_MAINNET_REGISTRY;
+const NAIRATAG_RESOLVER = NAIRATAG_MAINNET_RESOLVER;
 const ARC_MEMO = '0x5294e9927c3306dcbadb03fe70b92e01ccede505';
 const MAX_BODY_BYTES = 16 * 1024;
 
@@ -107,7 +111,7 @@ async function routeAction(action, params) {
         body: {
           idempotencyKey: crypto.randomUUID(),
           accountType: 'SCA',
-          blockchains: [ARC_TESTNET],
+          blockchains: [ARC_MAINNET],
         },
       });
     }
@@ -136,11 +140,11 @@ async function routeAction(action, params) {
         && /^0x[0-9a-f]{40}$/i.test(String(args[0]))
         && String(args[0]).toLowerCase() !== '0x0000000000000000000000000000000000000000'
         && /^\d+$/.test(String(args[1]));
-      const isTagClaim = contractAddress === NAIRATAG_REGISTRY && signature === 'claim(string,address)'
+      const isTagClaim = (contractAddress === NAIRATAG_MAINNET_REGISTRY || contractAddress === NAIRATAG_TESTNET_REGISTRY) && signature === 'claim(string,address)'
         && Array.isArray(args) && args.length === 2
         && /^[a-z0-9][a-z0-9_]{1,30}[a-z0-9]$/.test(String(args[0]))
         && !String(args[0]).includes('__')
-        && String(args[1]).toLowerCase() === NAIRATAG_RESOLVER;
+        && (String(args[1]).toLowerCase() === NAIRATAG_MAINNET_RESOLVER || String(args[1]).toLowerCase() === NAIRATAG_TESTNET_RESOLVER);
       const isMemoTransfer = contractAddress === ARC_MEMO && signature === 'memo(address,bytes,bytes32,bytes)'
         && Array.isArray(args) && args.length === 4
         && String(args[0]).toLowerCase() === ARC_USDC
@@ -156,7 +160,7 @@ async function routeAction(action, params) {
         body: {
           idempotencyKey: crypto.randomUUID(),
           walletId,
-          contractAddress: isUsdcTransfer ? ARC_USDC : isTagClaim ? NAIRATAG_REGISTRY : ARC_MEMO,
+          contractAddress: isUsdcTransfer ? ARC_USDC : isTagClaim ? contractAddress : ARC_MEMO,
           abiFunctionSignature: signature,
           abiParameters: args.map((value) => String(value)),
           feeLevel: 'MEDIUM',

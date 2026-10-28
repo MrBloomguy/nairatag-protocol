@@ -20,6 +20,8 @@ import {
 } from 'viem';
 import {
   arcTestnet,
+  arcMainnet,
+  isArcMainnet,
   ARC_ERC8004_IDENTITY_REGISTRY,
   ARC_ERC8004_REPUTATION_REGISTRY,
   ARC_ERC8004_VALIDATION_REGISTRY,
@@ -27,10 +29,10 @@ import {
   ERC8004_REPUTATION_ABI,
   ERC8004_VALIDATION_ABI,
 } from '../config/arc.js';
-import { getEthereumProvider, switchOrAddArcNetwork } from './arcPayment.js';
+import { getEthereumProvider, switchOrAddArcNetwork, activeArcChain } from './arcPayment.js';
 
 export const publicClient = createPublicClient({
-  chain: arcTestnet,
+  chain: activeArcChain,
   transport: http(),
 });
 
@@ -93,7 +95,8 @@ export async function getAgentDetails(agentId) {
 export async function findArcAgentForTag(rawTag, ownerAddress) {
   if (!ownerAddress || !isAddress(ownerAddress)) return null;
   const tag = String(rawTag || '').replace(/^[₦$@#]/, '').trim().toLowerCase();
-  const url = new URL(`https://explorer.testnet.arc.io/api/v2/tokens/${ARC_ERC8004_IDENTITY_REGISTRY}/instances`);
+  const explorerApiBase = activeArcChain.id === 5042 ? 'https://explorer.arc.io' : 'https://explorer.testnet.arc.io';
+  const url = new URL(`${explorerApiBase}/api/v2/tokens/${ARC_ERC8004_IDENTITY_REGISTRY}/instances`);
   url.searchParams.set('holder_address_hash', getAddress(ownerAddress));
   const response = await fetch(url, { headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`ArcScan agent lookup returned ${response.status}.`);
@@ -141,10 +144,10 @@ export function buildNairaTagAgentMetadataUri(rawTag, agentId = null) {
     active: true,
     registrations: agentId === null ? [] : [{
       agentId: Number(agentId),
-      agentRegistry: `eip155:${arcTestnet.id}:${ARC_ERC8004_IDENTITY_REGISTRY.toLowerCase()}`,
+      agentRegistry: `eip155:${activeArcChain.id}:${ARC_ERC8004_IDENTITY_REGISTRY.toLowerCase()}`,
     }],
     supportedTrust: [],
-    nairatag: { tag: canonicalTag, chainId: 5042002, registry: ARC_NAIRATAG_REGISTRY_ADDRESS },
+    nairatag: { tag: canonicalTag, chainId: activeArcChain.id, registry: ARC_NAIRATAG_REGISTRY_ADDRESS },
   };
   const bytes = new TextEncoder().encode(JSON.stringify(metadata));
   let binary = '';
@@ -158,8 +161,8 @@ export async function updateArcAgentRegistrationUri({ fromAddress, agentId, meta
   const provider = getEthereumProvider();
   if (!provider) throw new Error('No EVM wallet provider detected.');
   const chainId = Number.parseInt(await provider.request({ method: 'eth_chainId' }), 16);
-  if (chainId !== arcTestnet.id) await switchOrAddArcNetwork();
-  const walletClient = createWalletClient({ chain: arcTestnet, transport: custom(provider) });
+  if (chainId !== activeArcChain.id) await switchOrAddArcNetwork();
+  const walletClient = createWalletClient({ chain: activeArcChain, transport: custom(provider) });
   const hash = await walletClient.writeContract({
     account: getAddress(fromAddress),
     address: ARC_ERC8004_IDENTITY_REGISTRY,
@@ -169,7 +172,7 @@ export async function updateArcAgentRegistrationUri({ fromAddress, agentId, meta
   });
   const receipt = await publicClient.waitForTransactionReceipt({ hash, confirmations: 1, timeout: 30000 });
   if (receipt.status !== 'success') throw new Error(`ERC-8004 tag link update failed. Transaction: ${hash}`);
-  return { txHash: hash, receipt, metadataURI, explorerUrl: `${arcTestnet.blockExplorers.default.url}/tx/${hash}` };
+  return { txHash: hash, receipt, metadataURI, explorerUrl: `${activeArcChain.blockExplorers.default.url}/tx/${hash}` };
 }
 
 /** Register a NairaTag agent, then attach the final self-referencing ERC-8004 file. */
@@ -276,10 +279,10 @@ export async function registerAiAgent({ fromAddress, metadataURI }) {
   const provider = getEthereumProvider();
   if (!provider) throw new Error('No EVM wallet provider detected.');
   const chainId = Number.parseInt(await provider.request({ method: 'eth_chainId' }), 16);
-  if (chainId !== arcTestnet.id) await switchOrAddArcNetwork();
+  if (chainId !== activeArcChain.id) await switchOrAddArcNetwork();
 
   const walletClient = createWalletClient({
-    chain: arcTestnet,
+    chain: activeArcChain,
     transport: custom(provider),
   });
 
@@ -325,7 +328,7 @@ export async function registerAiAgent({ fromAddress, metadataURI }) {
     receipt,
     agentId: assignedId,
     metadataURI: cleanURI,
-    explorerUrl: `${arcTestnet.blockExplorers.default.url}/tx/${txHash}`,
+    explorerUrl: `${activeArcChain.blockExplorers.default.url}/tx/${txHash}`,
   };
 }
 
@@ -348,7 +351,7 @@ export async function recordAgentFeedback({ fromAddress, agentId, score, tag, co
   if (!provider) throw new Error('No EVM wallet provider detected.');
 
   const walletClient = createWalletClient({
-    chain: arcTestnet,
+    chain: activeArcChain,
     transport: custom(provider),
   });
 
@@ -375,6 +378,6 @@ export async function recordAgentFeedback({ fromAddress, agentId, score, tag, co
     txHash,
     score: Number(scoreInt),
     tag: cleanTag,
-    explorerUrl: `${arcTestnet.blockExplorers.default.url}/tx/${txHash}`,
+    explorerUrl: `${activeArcChain.blockExplorers.default.url}/tx/${txHash}`,
   };
 }

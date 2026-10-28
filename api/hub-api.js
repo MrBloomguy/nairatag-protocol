@@ -120,7 +120,7 @@ export default async function handler(req, res) {
     try {
       const { data, error } = await supabase.from('arc_tasks')
         .select('id, title, description, category, reward_usdc, reward_token, status, assigned_agent_tag, deliverable, deadline_label, created_at')
-        .eq('chain_id', 5042002).eq('status', 'open').order('created_at', { ascending: false });
+        .in('chain_id', [5042, 5042002]).eq('status', 'open').order('created_at', { ascending: false });
       if (error) throw error;
       const bounties = (data || []).map((task) => ({
         id: task.id, title: task.title, description: task.description, category: task.category,

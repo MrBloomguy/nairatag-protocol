@@ -412,11 +412,11 @@ export const FAQ_ITEMS = [
     categoryLabel: 'Contracts',
     question: 'Where can I find the NairaTag smart contracts?',
     answer: [
-      'The NairaTag Registry and Resolver are deployed on Arc Testnet (Chain ID 5042002). You can inspect each contract and its onchain activity in the Arc Explorer.'
+      'The NairaTag Registry and Resolver are deployed on Arc Mainnet (Chain ID 5042). You can inspect each contract and its onchain activity in the Arc Explorer.'
     ],
     links: [
-      { label: 'NairaTag Registry', url: 'https://explorer.testnet.arc.io/address/0x034f64b644988406ded382ebabb5c981bd19684a' },
-      { label: 'NairaTag Resolver', url: 'https://explorer.testnet.arc.io/address/0xaee1af632006a5062accdb74f73930439b76efbf' },
+      { label: 'NairaTag Registry', url: 'https://explorer.arc.io/address/0xb3a2d06ead0a889485a844a63be309c4df4b17b3' },
+      { label: 'NairaTag Resolver', url: 'https://explorer.arc.io/address/0xf46dc708be8391090b83fb9a5d54c4a568bd64f3' },
     ]
   },
   {
@@ -1684,7 +1684,7 @@ function ArcAppShell() {
   const [swapTokenIn, setSwapTokenIn] = useState('USDC');
   const [swapTokenOut, setSwapTokenOut] = useState('EURC');
   const [swapAmountIn, setSwapAmountIn] = useState('10.00');
-  const [swapTargetChain, setSwapTargetChain] = useState('Arc_Testnet');
+  const [swapTargetChain, setSwapTargetChain] = useState('Arc');
   const [swapEstimate, setSwapEstimate] = useState(null);
   const [swapEstimating, setSwapEstimating] = useState(false);
   const [swapExecuting, setSwapExecuting] = useState(false);
@@ -2397,7 +2397,7 @@ function ArcAppShell() {
           tokenIn: swapTokenIn,
           tokenOut: swapTokenOut,
           amountIn: swapAmountIn,
-          fromChain: 'Arc_Testnet',
+          fromChain: 'Arc',
           toChain: swapTargetChain,
         });
         setSwapEstimate(quote);
@@ -2543,7 +2543,7 @@ function ArcAppShell() {
         tokenIn: swapTokenIn,
         tokenOut: swapTokenOut,
         amountIn: swapAmountIn,
-        fromChain: 'Arc_Testnet',
+        fromChain: 'Arc',
         toChain: swapTargetChain,
       });
 
@@ -2553,7 +2553,7 @@ function ArcAppShell() {
         txHash: res.txHash,
         amount: `${swapAmountIn} ${swapTokenIn} ➔ ${swapEstimate?.amountOut || ''} ${swapTokenOut}`,
         recipient: 'Arc App Kit Swap',
-        explorerUrl: `${ARC_TESTNET_CONFIG.explorerUrl}/tx/${res.txHash}`,
+        explorerUrl: `https://explorer.arc.io/tx/${res.txHash}`,
       });
       setIsCelebrationOpen(true);
       refreshBalance(walletAddress);
@@ -3119,7 +3119,7 @@ function ArcAppShell() {
                   </button>
 
                   <a
-                    href={`https://explorer.testnet.arc.io/address/${ARC_NAIRATAG_REGISTRY_ADDRESS}`}
+                    href={`https://explorer.arc.io/address/${ARC_NAIRATAG_REGISTRY_ADDRESS}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="more-menu-item"
@@ -3130,7 +3130,7 @@ function ArcAppShell() {
                   </a>
 
                   <a
-                    href={`https://explorer.testnet.arc.io/address/${ARC_NAIRATAG_RESOLVER_ADDRESS}`}
+                    href={`https://explorer.arc.io/address/${ARC_NAIRATAG_RESOLVER_ADDRESS}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="more-menu-item"
@@ -3155,7 +3155,7 @@ function ArcAppShell() {
 
                   <div className="more-menu-meta">
                     <span className="more-menu-dot" />
-                    <span>Arc Osaka EVM (5042002)</span>
+                    <span>Arc Osaka EVM (5042)</span>
                   </div>
                 </div>
               </>
@@ -3794,7 +3794,7 @@ function ArcAppShell() {
                           You own <strong>₦{myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}</strong>
                         </div>
                         <div className="active-claimed-sub">
-                          {shorten(walletAddress)} Â· Arc Testnet
+                          {shorten(walletAddress)} · Arc Mainnet
                         </div>
                       </div>
                     </div>
@@ -5337,14 +5337,14 @@ function ArcAppShell() {
                   <Cpu size={12} />
                   <span>Settlement Network</span>
                 </span>
-                <span className="details-value">Arc Testnet (Chain ID 5042002)</span>
+                <span className="details-value">Arc Mainnet (Chain ID 5042)</span>
               </div>
               <div className="details-row">
                 <span className="details-label">
                   <ShieldCheck size={12} />
                   <span>Tag Resolver Contract</span>
                 </span>
-                <span className="details-value">{shorten(ARC_TESTNET_CONFIG.contracts.nairatagResolver)}</span>
+                <span className="details-value">{shorten(ARC_NAIRATAG_RESOLVER_ADDRESS)}</span>
               </div>
               <div className="details-row">
                 <span className="details-label">
@@ -6117,7 +6117,7 @@ function ArcAppShell() {
                     <span>Refresh Balance</span>
                   </button>
                   <a
-                    href="https://explorer.testnet.arc.io"
+                    href="https://explorer.arc.io"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="quick-chip-btn"

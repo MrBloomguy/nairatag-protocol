@@ -89,7 +89,7 @@ export async function getArcTagForWallet(walletAddress) {
     if (result) {
       const record = result.record;
       const tag = record.canonical || record[3] || '';
-      if (tag) return { hasTag: true, tag: `₦${tag}`, cleanTag: tag, network: 'Arc Testnet', claimedAt: Number(record.registeredAt ?? record[2] ?? 0n) * 1000 };
+      if (tag) return { hasTag: true, tag: `₦${tag}`, cleanTag: tag, network: 'Arc Mainnet', claimedAt: Number(record.registeredAt ?? record[2] ?? 0n) * 1000 };
     }
   } catch (error) {
     console.warn('[getArcTagForWallet onchain check]', error.shortMessage || error.message);
@@ -101,7 +101,7 @@ export async function getArcTagForWallet(walletAddress) {
       const norm = String(walletAddress).toLowerCase();
       const match = Object.values(localClaims).find(item => String(item.owner).toLowerCase() === norm);
       if (match) {
-        return { hasTag: true, tag: `₦${match.tag}`, cleanTag: match.tag, network: 'Arc Testnet', claimedAt: match.claimedAt || Date.now() };
+        return { hasTag: true, tag: `₦${match.tag}`, cleanTag: match.tag, network: 'Arc Mainnet', claimedAt: match.claimedAt || Date.now() };
       }
     } catch {}
   }

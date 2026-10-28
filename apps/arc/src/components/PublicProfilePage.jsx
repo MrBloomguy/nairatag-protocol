@@ -73,18 +73,18 @@ const getAgentSpec = (handle = '') => {
       prompts: [
         { label: '💱 Live USDC to NGN market exchange rate', query: '@coingecko what is current USDC NGN exchange rate?' },
         { label: '📈 BTC & ETH 24h market momentum', query: '@coingecko Bitcoin and Ethereum price momentum' },
-        { label: '📊 Arc Testnet USDC peg & FX valuation', query: '@coingecko USDC peg and parallel FX spread' }
+        { label: '📊 Arc USDC peg & FX valuation', query: '@coingecko USDC peg and parallel FX spread' }
       ],
       tools: [
         { name: 'coingecko.usdc_ngn', desc: 'Real-time USDC/NGN and USD/NGN FX quotes', badge: 'Live FX', query: '@coingecko get USDC/NGN rate' },
         { name: 'coingecko.market_pulse', desc: 'Crypto market 24h volume & momentum', badge: 'Oracle', query: '@coingecko market pulse' },
-        { name: 'arc.usdc_settlement', desc: 'Micro-settlements on Arc Testnet', badge: 'Onchain', query: 'Send 5 USDC to @coingecko' }
+        { name: 'arc.usdc_settlement', desc: 'Micro-settlements on Arc Mainnet', badge: 'Onchain', query: 'Send 5 USDC to @coingecko' }
       ]
     };
   }
   return {
     prompts: [
-      { label: '⚡ Arc gas fees & liquidity overview', query: 'Analyze current Arc Testnet gas prices and liquidity' },
+      { label: '⚡ Arc gas fees & liquidity overview', query: 'Analyze current Arc Mainnet gas prices and liquidity' },
       { label: `💸 Send 5 USDC to ₦${h.toUpperCase()}`, query: `Send 5 USDC reward to @${h} on Arc` },
       { label: '🛡️ Verify ERC-8004 sovereign registry record', query: `Explain ERC-8004 identity for @${h}` }
     ],
@@ -285,7 +285,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               </span>
             </h1>
             <span className="twitter-header-subtitle">
-              ₦{lowercaseTag} · Arc Testnet
+              ₦{lowercaseTag} · Arc Mainnet
             </span>
           </div>
         </div>
@@ -418,7 +418,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             <div className="twitter-meta-item">
               <ShieldCheck size={13} color="#10b981" />
               <a
-                href={`https://explorer.testnet.arc.io/token/${ARC_ERC8004_IDENTITY_REGISTRY}`}
+                href={`https://explorer.arc.io/token/${ARC_ERC8004_IDENTITY_REGISTRY}`}
                 target="_blank"
                 rel="noreferrer"
                 className="twitter-meta-link"
@@ -430,7 +430,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
 
             <div className="twitter-meta-item">
               <Globe size={13} />
-              <span style={{ color: 'var(--tw-text-muted)' }}>Arc Testnet (5042002)</span>
+              <span style={{ color: 'var(--tw-text-muted)' }}>Arc Mainnet (5042)</span>
             </div>
           </div>
 
@@ -536,7 +536,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 <div>
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Send USDC to {displayTag}</h3>
                   <span style={{ fontSize: 12.5, color: 'var(--tw-text-muted)' }}>
-                    Arc Testnet · Instant Peer Settlement
+                    Arc Mainnet · Instant Peer Settlement
                   </span>
                 </div>
                 <span className="twitter-category-badge">Zero Gas</span>
@@ -605,7 +605,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 <div className="twitter-spec-item">
                   <span className="twitter-spec-label">Agent Identity Registry</span>
                   <a
-                    href={`https://explorer.testnet.arc.io/token/${ARC_ERC8004_IDENTITY_REGISTRY}`}
+                    href={`https://explorer.arc.io/token/${ARC_ERC8004_IDENTITY_REGISTRY}`}
                     target="_blank"
                     rel="noreferrer"
                     className="twitter-spec-value"
@@ -618,7 +618,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 <div className="twitter-spec-item">
                   <span className="twitter-spec-label">Reputation Registry</span>
                   <a
-                    href={`https://explorer.testnet.arc.io/address/${ARC_ERC8004_REPUTATION_REGISTRY}`}
+                    href={`https://explorer.arc.io/address/${ARC_ERC8004_REPUTATION_REGISTRY}`}
                     target="_blank"
                     rel="noreferrer"
                     className="twitter-spec-value"
@@ -631,7 +631,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 <div className="twitter-spec-item">
                   <span className="twitter-spec-label">Native Settlement Token</span>
                   <a
-                    href={`https://explorer.testnet.arc.io/address/${ARC_USDC_ADDRESS}`}
+                    href={`https://explorer.arc.io/address/${ARC_USDC_ADDRESS}`}
                     target="_blank"
                     rel="noreferrer"
                     className="twitter-spec-value"
@@ -675,7 +675,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             </div>
 
             <p style={{ margin: '0 0 12px 0', fontSize: 13, color: 'var(--tw-text-muted)' }}>
-              Send instant USDC on Arc Testnet directly to this ₦Tag.
+              Send instant USDC on Arc Mainnet directly to this ₦Tag.
             </p>
 
             <div className="twitter-input-group">

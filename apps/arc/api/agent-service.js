@@ -22,10 +22,10 @@ export default async function handler(req, res) {
   }
 
   // Set standard x402 payment headers for Arc agent economy
-  res.setHeader('X-Payment-Address', '0x034F64B644988406DeD382Ebabb5C981bD19684A');
+  res.setHeader('X-Payment-Address', '0xb3a2d06ead0a889485a844a63be309c4df4b17b3');
   res.setHeader('X-Payment-Amount', '0.01');
-  res.setHeader('X-Payment-Network', 'arcTestnet');
-  res.setHeader('X-Payment-Chain-Id', '5042002');
+  res.setHeader('X-Payment-Network', 'arc');
+  res.setHeader('X-Payment-Chain-Id', '5042');
   res.setHeader('X-Payment-Token', '0x3600000000000000000000000000000000000000');
 
   const action = String(req.query?.action || req.body?.action || '').toLowerCase();
@@ -36,11 +36,11 @@ export default async function handler(req, res) {
       error: 'Payment Required',
       paymentRequired: true,
       protocol: 'x402',
-      network: 'arcTestnet',
-      chainId: 5042002,
+      network: 'arc',
+      chainId: 5042,
       currency: 'USDC',
       tokenAddress: '0x3600000000000000000000000000000000000000',
-      recipient: '0x034F64B644988406DeD382Ebabb5C981bD19684A',
+      recipient: '0xb3a2d06ead0a889485a844a63be309c4df4b17b3',
       amount: '0.01'
     });
   }
@@ -143,8 +143,8 @@ export default async function handler(req, res) {
       ],
       x402: {
         supported: true,
-        network: 'arcTestnet',
-        chainId: 5042002,
+        network: 'arc',
+        chainId: 5042,
         currency: 'USDC',
         tokenAddress: '0x3600000000000000000000000000000000000000'
       }

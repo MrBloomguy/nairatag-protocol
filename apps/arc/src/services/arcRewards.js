@@ -2,7 +2,7 @@ import { broadcastArcRewardToTelegram } from './arcSocialBroadcast.js';
 import { getArcSessionToken } from './arcSession.js';
 
 const ARC_REWARDS_API = import.meta.env.VITE_ARC_REWARDS_API || (import.meta.env.DEV ? '/api/arc-rewards' : 'https://nairatag.ng/api/arc-rewards');
-const ARC_CHAIN_ID = 5042002;
+const ARC_CHAIN_ID = 5042;
 
 function arcRewardsUrl() {
   const base = typeof window !== 'undefined' ? window.location.origin : 'https://nairatag.ng';

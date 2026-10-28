@@ -1,7 +1,7 @@
 import { isAddress, recoverMessageAddress } from 'viem';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 
-const ARC_CHAIN_ID = 5042002;
+const ARC_CHAIN_ID = 5042;
 const MAX_AGE_MS = 5 * 60_000;
 const SESSION_TTL_MS = 12 * 60 * 60_000;
 
@@ -57,7 +57,7 @@ async function authorize(body) {
   if (!Number.isSafeInteger(fields.timestamp) || Math.abs(Date.now() - fields.timestamp) > MAX_AGE_MS) {
     throw Object.assign(new Error('The request expired. Please try again.'), { status: 401 });
   }
-  if (fields.chainId !== ARC_CHAIN_ID) throw Object.assign(new Error('Switch to Arc Testnet and try again.'), { status: 400 });
+  if (fields.chainId !== ARC_CHAIN_ID && fields.chainId !== 5042002) throw Object.assign(new Error('Switch to Arc Mainnet and try again.'), { status: 400 });
   if (!/^0x[a-f\d]{130}$/i.test(String(body.signature || ''))) throw Object.assign(new Error('A wallet signature is required.'), { status: 401 });
   const recovered = await recoverMessageAddress({ message: authMessage(fields), signature: body.signature });
   if (recovered.toLowerCase() !== fields.walletAddress) throw Object.assign(new Error('The signature does not match this wallet.'), { status: 401 });

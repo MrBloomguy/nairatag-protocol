@@ -7,6 +7,7 @@ import {
   ARC_USDC_ADDRESS,
   ARC_USDC_DECIMALS,
   ERC20_ABI,
+  isArcMainnet,
 } from '../config/arc.js';
 import { getUsdcBalance, publicClient } from './arcPayment.js';
 
@@ -154,10 +155,11 @@ async function waitForCircleChallenge(userToken, challengeId, onStatusUpdate) {
 
 async function loadArcWallet(userToken, onStatusUpdate) {
   const maxAttempts = 16;
+  const expectedChain = isArcMainnet ? 'ARC' : 'ARC-TESTNET';
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const result = await circleAction('listWallets', { userToken });
     const wallets = result.wallets || [];
-    const wallet = wallets.find((item) => item.blockchain === 'ARC-TESTNET');
+    const wallet = wallets.find((item) => item.blockchain === expectedChain || item.blockchain === 'ARC' || item.blockchain === 'ARC-TESTNET') || wallets[0];
     if (wallet?.id && wallet?.address) return wallet;
     if (attempt < maxAttempts - 1) {
       notifyStatus(onStatusUpdate, 'wallets', 'Your Arc wallet is being prepared...');
@@ -173,7 +175,7 @@ export async function connectCircleWallet(login, onStatusUpdate = () => {}) {
   const session = { ...login };
   let wallet;
   let isNewWallet = true;
-  notifyStatus(onStatusUpdate, 'initialize', 'Setting up your Circle wallet on Arc Testnet...');
+  notifyStatus(onStatusUpdate, 'initialize', `Setting up your Circle wallet on Arc ${isArcMainnet ? 'Mainnet' : 'Testnet'}...`);
   try {
     const initialized = await circleAction('initializeUser', { userToken: session.userToken });
     notifyStatus(onStatusUpdate, 'create', 'Creating your Circle wallet...');
@@ -207,8 +209,8 @@ export async function connectCircleWallet(login, onStatusUpdate = () => {}) {
     isNewWallet,
     walletId: wallet.id,
     authProvider: 'circle',
-    blockchain: 'ARC-TESTNET',
-    chainId: 5042002,
+    blockchain: isArcMainnet ? 'ARC' : 'ARC-TESTNET',
+    chainId: isArcMainnet ? 5042 : 5042002,
     balance,
   };
   saveCircleSession(fullSession);
@@ -236,10 +238,11 @@ export async function executeCircleContract({ session, contractAddress, abiFunct
     throw new Error('Circle authorized the request but did not return a transaction hash. Check the Circle transaction activity before retrying.');
   }
   notifyStatus(onStatusUpdate, 'confirming', 'Waiting for Arc confirmation...');
+  const explorerBase = isArcMainnet ? 'https://explorer.arc.io' : 'https://explorer.testnet.arc.io';
   return {
     txHash,
     hash: txHash,
-    explorerUrl: `https://explorer.testnet.arc.io/tx/${txHash}`,
+    explorerUrl: `${explorerBase}/tx/${txHash}`,
     from: walletAddress,
     executionTimeMs: 0,
   };
@@ -342,7 +345,7 @@ export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
       cleanTag,
       tag: cleanTag,
       owner: getAddress(walletAddress),
-      explorerUrl: `https://explorer.testnet.arc.io/tx/${syntheticHash}`,
+      explorerUrl: `${isArcMainnet ? 'https://explorer.arc.io' : 'https://explorer.testnet.arc.io'}/tx/${syntheticHash}`,
     };
   }
 }

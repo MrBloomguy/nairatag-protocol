@@ -1408,7 +1408,7 @@ export default function App() {
 
                   <div className="more-menu-meta">
                     <span className="more-menu-dot" />
-                    <span>Arc Osaka EVM (5042002)</span>
+                    <span>Arc Osaka EVM (5042)</span>
                   </div>
                 </div>
               </>
@@ -2750,7 +2750,7 @@ export default function App() {
                   <Cpu size={12} />
                   <span>Settlement Network</span>
                 </span>
-                <span className="details-value">Arc Testnet (Chain ID 5042002)</span>
+                <span className="details-value">Arc Mainnet (Chain ID 5042)</span>
               </div>
               <div className="details-row">
                 <span className="details-label">

@@ -1,7 +1,7 @@
 import { keccak256, stringToHex } from 'viem';
 import { getArcSessionToken } from './arcSession.js';
 
-const ARC_CHAIN_ID = 5042002;
+const ARC_CHAIN_ID = 5042;
 const ARC_CHAT_API = import.meta.env.VITE_ARC_CHAT_API || 'https://old.nairatag.ng/api/arc-chat';
 const ARC_VOICE_API = import.meta.env.VITE_ARC_VOICE_API || 'https://old.nairatag.ng/api/arc?route=voice';
 
