@@ -20,5 +20,18 @@
       "block": "28377554",
       "deployedAt": "2026-10-28T22:35:10.841Z"
     }
+  },
+  "officialAgents": {
+    "nairatag": {
+      "tag": "nairatag",
+      "canonicalTag": "₦NAIRATAG",
+      "owner": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+      "nodeHash": "0x44e39f7d0c916fe1be55ac17a3748f3df5fda5be09e7f85b592043c37cce4afb",
+      "claimTxHash": "0x51d9daafb3ad6afd2492bf38ac317314a808c69fd19b2da8e7d384b7fde800b2",
+      "resolverSetAddrTxHash": "0x85236ad1bda7e4e818e6f59c3a6a18f50421cff1e68d15786415a664983999e1",
+      "resolverSetTextTxHash": "0xa5531ec41d0e4c7411bc67ca416b6d6b86193a533737c0a13c8cb0daffc6ba14",
+      "block": "28383417",
+      "claimedAt": "2026-10-28T23:24:50.000Z"
+    }
   }
 }

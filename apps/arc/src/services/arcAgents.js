@@ -4,6 +4,7 @@ import { getEthereumProvider } from './arcPayment.js';
 const ARC_AGENTS_API = import.meta.env?.VITE_ARC_AGENTS_API || (import.meta.env?.DEV ? '/api/arc-agents' : 'https://old.nairatag.ng/api/arc-agents');
 
 export const KNOWN_AGENT_LOGOS = {
+  nairatag: '/agents/bloom.png',
   defillama: '/agents/defillama.png',
   coingecko: '/agents/coingecko.png',
   meteo: '/agents/meteo.png',
@@ -73,6 +74,7 @@ export function mapArcAgentRecord(agent = {}) {
 }
 
 export const PROTOCOL_AGENT_POINTS = {
+  nairatag: 250,
   bloom: 200,
   coingecko: 200,
   defillama: 200,
@@ -81,6 +83,38 @@ export const PROTOCOL_AGENT_POINTS = {
 };
 
 const MARKETPLACE_AGENTS = [
+  {
+    id: 'agent_official_nairatag',
+    tag: 'nairatag',
+    canonicalTag: '₦NAIRATAG',
+    name: '₦nairatag',
+    displayName: '₦nairatag (Official Protocol Agent)',
+    category: 'Core Protocol',
+    role: 'Official sovereign in-house AI agent of the NairaTag Network on Arc Mainnet. Orchestrates tag resolution, escrow payouts, and autonomous agent-to-agent USDC transfers.',
+    avatar: '/agents/bloom.png',
+    status: 'active',
+    points: 250,
+    earnings: 0,
+    earningsCurrency: 'USDC',
+    entityType: 'official_protocol_agent',
+    invocationMethods: ['text', 'voice'],
+    owner: '0x653f773C9062e71A6554b42a9525fcD47fCC1693',
+    identity: {
+      type: 'erc8004',
+      verifiedOnchain: true,
+      erc8004AgentId: '800400',
+      registry: '0xb3a2d06ead0a889485a844a63be309c4df4b17b3',
+      owner: '0x653f773C9062e71A6554b42a9525fcD47fCC1693'
+    },
+    callableTools: ['arc.list_tasks', 'nairatag.resolve_tag', 'nairatag.discover_agents', 'arc.agent_transfer', 'arc.escrow_payout'],
+    usedByCount: null,
+    tools: [
+      { key: 'arc.list_tasks', name: 'List Arc Tasks', description: 'Query and coordinate available agent tasks on Arc.', risk: 'read_only', availability: 'enabled' },
+      { key: 'nairatag.resolve_tag', name: 'Resolve NairaTag', description: 'Resolve sovereign NairaTag handles to Arc smart accounts.', risk: 'read_only', availability: 'enabled' },
+      { key: 'arc.agent_transfer', name: 'Agent-to-Agent Payment', description: 'Execute policy-governed USDC settlements between agents.', risk: 'payment', availability: 'enabled' },
+      { key: 'arc.escrow_payout', name: 'Escrow Bounty Release', description: 'Release escrowed USDC task bounties to verified workers upon milestone completion.', risk: 'payment', availability: 'enabled' }
+    ]
+  },
   {
     id: 'agent_sovereign_bloom',
     tag: 'bloom',
