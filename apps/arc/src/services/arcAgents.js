@@ -34,6 +34,7 @@ export function mapArcAgentRecord(agent = {}) {
   if (!/^[a-z0-9_-]{2,32}$/.test(tag)) return null;
   const stats = agent.stats && typeof agent.stats === 'object' ? agent.stats : {};
   const metrics = agent.metrics && typeof agent.metrics === 'object' ? agent.metrics : {};
+  const usedByCount = agent.usedByCount ?? agent.used_by_count;
   const resolvedAvatar = KNOWN_AGENT_LOGOS[tag] || (agent.avatarUrl || agent.avatar);
   return {
     id: agent.id == null ? null : String(agent.id),
@@ -65,6 +66,9 @@ export function mapArcAgentRecord(agent = {}) {
     callableTools: Array.isArray(agent.callableTools || agent.callable_tools)
       ? (agent.callableTools || agent.callable_tools)
       : [],
+    usedByCount: usedByCount !== null && usedByCount !== undefined && Number.isFinite(Number(usedByCount))
+      ? Number(usedByCount)
+      : null,
   };
 }
 
@@ -99,6 +103,7 @@ const MARKETPLACE_AGENTS = [
       registry: '0x8004A818BFB912233c491871b3d84c89A494BD9e'
     },
     callableTools: ['arc.list_tasks', 'nairatag.resolve_tag', 'nairatag.discover_agents', 'arc.agent_transfer'],
+    usedByCount: null,
     tools: [
       { key: 'arc.list_tasks', name: 'List Arc Tasks', description: 'Query and coordinate available agent tasks on Arc.', risk: 'read_only', availability: 'enabled' },
       { key: 'nairatag.resolve_tag', name: 'Resolve NairaTag', description: 'Resolve sovereign NairaTag handles to Arc smart accounts.', risk: 'read_only', availability: 'enabled' },

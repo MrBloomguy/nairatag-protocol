@@ -23,6 +23,7 @@ function mapTask(row) {
     status: row.status,
     escrowStatus: row.escrow_status === 'not_integrated' ? 'Arc escrow contract not connected' : row.escrow_status,
     escrowContract: row.escrow_contract || null,
+    participantCount: Number(row.participant_count) || 0,
     createdAt: row.created_at,
   };
 }
@@ -49,81 +50,6 @@ async function sha256Hex(value) {
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
-
-export const DEFAULT_ARC_TASKS = [
-  {
-    id: 'task_defillama_audit',
-    chainId: 5042002,
-    title: 'DeFi TVL & Liquidity Health Audit',
-    description: 'Autonomous audit of multi-chain liquidity pools and yield momentum for Arc treasury reserve planning.',
-    category: 'analytics',
-    categoryLabel: 'Analytics & DeFi',
-    creatorTag: 'bloom',
-    assignedAgentTag: 'defillama',
-    deliverable: 'JSON summary of top 10 protocol TVL, 7d momentum, and liquidity depth from @defillama.',
-    rewardUSDC: 5.0,
-    points: 120,
-    deadline: '24 Hours',
-    status: 'open',
-    escrowStatus: 'Circle Agent Wallet Escrow',
-    escrowContract: '0x3600000000000000000000000000000000000000',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'task_meteo_delivery_clearance',
-    chainId: 5042002,
-    title: 'Commercial Delivery Weather Risk Clearance',
-    description: 'Real-time rainfall and logistics dispatch risk assessment for food and parcel delivery routes across Lagos and Abuja.',
-    category: 'logistics',
-    categoryLabel: 'Logistics & Weather',
-    creatorTag: 'chowdeck',
-    assignedAgentTag: 'meteo',
-    deliverable: 'Logistics weather impact report with ETA delay score and precipitation warnings from @meteo.',
-    rewardUSDC: 2.5,
-    points: 80,
-    deadline: 'Immediate',
-    status: 'open',
-    escrowStatus: 'Circle Agent Wallet Escrow',
-    escrowContract: '0x3600000000000000000000000000000000000000',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'task_coingecko_fx_quote',
-    chainId: 5042002,
-    title: 'Real-Time FX Exchange Rate Benchmark',
-    description: 'Fetch verifiable USD/NGN and USDC pricing benchmarks for cross-agent sovereign settlements.',
-    category: 'pricing',
-    categoryLabel: 'FX & Pricing',
-    creatorTag: 'bloom',
-    assignedAgentTag: 'coingecko',
-    deliverable: 'Cryptographically timestamped 1 USDC/NGN conversion rate quote from @coingecko.',
-    rewardUSDC: 1.5,
-    points: 50,
-    deadline: 'Continuous',
-    status: 'open',
-    escrowStatus: 'Circle Agent Wallet Escrow',
-    escrowContract: '0x3600000000000000000000000000000000000000',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 'task_agent_wallet_settlement',
-    chainId: 5042002,
-    title: 'Autonomous Agent-to-Agent Payment Settlement',
-    description: 'Execute peer-to-peer USDC settlement between autonomous agent wallets on Arc testnet using policy guardrails.',
-    category: 'settlement',
-    categoryLabel: 'Agent Settlement',
-    creatorTag: 'bloom',
-    assignedAgentTag: 'bloom',
-    deliverable: 'Confirmed Arc Testnet transaction hash for tag-to-tag transfer within spending policy.',
-    rewardUSDC: 10.0,
-    points: 250,
-    deadline: '48 Hours',
-    status: 'open',
-    escrowStatus: 'Circle Agent Wallet Escrow',
-    escrowContract: '0x3600000000000000000000000000000000000000',
-    createdAt: new Date().toISOString()
-  }
-];
 
 function getLocalProgress(walletAddress = '') {
   if (!walletAddress || typeof window === 'undefined') return {};
@@ -156,14 +82,6 @@ export async function listArcTasks(walletAddress = '') {
     console.warn('[Arc Tasks] Remote tasks fallback:', err.message);
   }
 
-  // Merge default agent-to-agent tasks
-  const existingIds = new Set(tasks.map((t) => String(t.id)));
-  for (const defaultTask of DEFAULT_ARC_TASKS) {
-    if (!existingIds.has(String(defaultTask.id))) {
-      tasks.push(defaultTask);
-    }
-  }
-
   // Merge local progress
   const localProg = getLocalProgress(walletAddress);
   progress = { ...progress, ...localProg };
@@ -180,6 +98,39 @@ export async function listArcTasks(walletAddress = '') {
     });
   }
   return { tasks, progress };
+}
+
+export async function createArcTask({ walletAddress, sessionToken, task }) {
+  if (!walletAddress) throw new Error('Sign in to post a task.');
+  const taskId = `task_${crypto.randomUUID().replaceAll('-', '')}`;
+  const taskDetails = {
+    title: String(task.title || '').trim().slice(0, 120),
+    category: String(task.category || 'community'),
+    description: String(task.description || '').trim().slice(0, 2000),
+    deliverable: String(task.deliverable || '').trim().slice(0, 500),
+    rewardUSDC: Number(task.rewardUSDC),
+    deadline: String(task.deadline || 'Open until closed').trim().slice(0, 80),
+  };
+  const timestamp = Date.now();
+  const detailsHash = await sha256Hex(JSON.stringify(taskDetails));
+  const message = [
+    'NairaTag Arc Tasks', `Action: create`, `Task: ${taskId}`,
+    `Wallet: ${walletAddress.toLowerCase()}`, `Chain: ${ARC_CHAIN_ID}`, `Timestamp: ${timestamp}`,
+    `Task details SHA-256: ${detailsHash}`,
+  ].join('\n');
+  const provider = typeof window !== 'undefined' ? window.ethereum : null;
+  let signature = '0x';
+  if (!sessionToken) {
+    if (!provider?.request) throw new Error('Sign in again to authorize this task.');
+    signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });
+  }
+  const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
+  if (sessionToken) headers.Authorization = `Bearer ${sessionToken}`;
+  const payload = await readResponse(await fetch(ARC_TASKS_API, {
+    method: 'POST', headers,
+    body: JSON.stringify({ action: 'create', taskId, walletAddress, timestamp, signature, task: taskDetails }),
+  }));
+  return mapTask(payload.task);
 }
 
 export async function getArcAgentCompletedTaskCount(agentWallet) {
@@ -209,14 +160,7 @@ export async function getArcAgentTaskTotals(agentWallet) {
     tasks = (payload.tasks || []).map(mapTask);
     progress = mapProgress(payload.progress);
   } catch {
-    tasks = [...DEFAULT_ARC_TASKS];
-  }
-
-  const existingIds = new Set(tasks.map((t) => String(t.id)));
-  for (const defaultTask of DEFAULT_ARC_TASKS) {
-    if (!existingIds.has(String(defaultTask.id))) {
-      tasks.push(defaultTask);
-    }
+    tasks = [];
   }
   const localProg = getLocalProgress(agentWallet);
   progress = { ...progress, ...localProg };

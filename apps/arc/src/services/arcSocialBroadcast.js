@@ -59,26 +59,6 @@ export function broadcastArcRewardToTelegram(proof) {
   return postTelegramAlert({ kind: 'reward', ...proof });
 }
 
-export async function broadcastArcVoucherClaimToTelegram({ taskId, walletAddress }) {
-  const provider = typeof window !== 'undefined' ? window.ethereum : null;
-  const timestamp = Date.now();
-  let signature = null;
-  if (provider?.request) {
-    const message = [
-      'NairaTag Social Alerts',
-      'Action: voucher_claimed',
-      `Task: ${taskId}`,
-      `Wallet: ${walletAddress.toLowerCase()}`,
-      'Chain: 5042002',
-      `Timestamp: ${timestamp}`,
-    ].join('\n');
-    try {
-      signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });
-    } catch {}
-  }
-  return postTelegramAlert({ kind: 'voucher', taskId, walletAddress, timestamp, signature });
-}
-
 export function getTagShareUrl(tag) {
   const clean = String(tag || '').replace(/^[$₦@#]/, '').trim().toUpperCase();
   if (!/^[A-Z0-9_-]{1,32}$/.test(clean)) return 'https://arc.nairatag.ng/';
@@ -114,21 +94,21 @@ export function getAgentTelegramShareUrl({ tag }) {
 
 export function getTwitterShareUrl({ tag, txHash }) {
   const clean = String(tag || '').replace(/^[$₦@#]/, '').toUpperCase();
-  const text = `Just claimed my sovereign ₦${clean} handle on @NairaTaghq on Arc Testnet! Instant USDC payments with sub-second finality.\n\nClaim yours. ${txHash ? `Transaction: ${txHash} ` : ''}#Arc #NairaTag #Crypto`;
+  const text = `I just joined @NairaTaghq! Find me and send money using my NairaTag ₦${clean}. Claim yours too.`;
   return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(getTagShareUrl(clean))}`;
 }
 
 export function getTelegramShareUrl({ tag }) {
   const clean = String(tag || '').replace(/^[$₦@#]/, '').toUpperCase();
   const url = getTagShareUrl(clean);
-  const text = `Send USDC directly to my sovereign ₦${clean} tag on Arc Testnet.`;
+  const text = `Find me on NairaTag and send money using ₦${clean}.`;
   return getTelegramShareIntentUrl({ text, url });
 }
 
 export function getWhatsAppShareUrl({ tag }) {
   const clean = String(tag || '').replace(/^[$₦@#]/, '').toUpperCase();
   const url = getTagShareUrl(clean);
-  const text = `Send USDC directly to my NairaTag ₦${clean} on Arc: ${url}`;
+  const text = `Find me on NairaTag and send money using ₦${clean}: ${url}`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 

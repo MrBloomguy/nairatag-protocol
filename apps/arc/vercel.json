@@ -27,6 +27,10 @@
       "destination": "/api/social-alerts$1"
     },
     {
+      "source": "/api/social-graph(.*)",
+      "destination": "https://nairatag.ng/api/arc-social-graph$1"
+    },
+    {
       "source": "/api/arc-rewards(.*)",
       "destination": "/api/arc-rewards$1"
     },

@@ -26,42 +26,25 @@ function saveSession(result, walletAddress) {
 
 export async function establishCircleArcSession({ userToken, walletAddress }) {
   if (!userToken || !walletAddress) throw new Error('Complete Circle sign-in before starting your NairaTag session.');
-  try {
-    const result = await postAuth({ action: 'circle', userToken, walletAddress });
-    if (result?.token) return saveSession(result, walletAddress);
-  } catch (error) {
-    console.info('[Circle Arc Session remote fallback]:', error.message);
-  }
-  const fallbackResult = {
-    token: `circle_${String(userToken).slice(0, 16)}_${Date.now()}`,
-    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-  };
-  return saveSession(fallbackResult, walletAddress);
+  const result = await postAuth({ action: 'circle', userToken, walletAddress });
+  if (!result?.token) throw new Error('Your account session could not be started. Please try again.');
+  return saveSession(result, walletAddress);
 }
 
 export async function establishWalletArcSession(walletAddress) {
   if (!walletAddress) throw new Error('Connect a wallet before signing in.');
   const provider = typeof window !== 'undefined' ? window.ethereum : null;
-  try {
-    if (provider?.request) {
-      const challenge = await postAuth({ action: 'wallet_challenge', walletAddress });
-      const signature = await provider.request({ method: 'personal_sign', params: [challenge.message, walletAddress] });
-      const result = await postAuth({
-        action: 'wallet',
-        walletAddress,
-        challengeToken: challenge.challengeToken,
-        signature,
-      });
-      if (result?.token) return saveSession(result, walletAddress);
-    }
-  } catch (error) {
-    console.info('[Wallet Arc Session remote fallback]:', error.message);
-  }
-  const fallbackResult = {
-    token: `wallet_${String(walletAddress).slice(0, 10)}_${Date.now()}`,
-    expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
-  };
-  return saveSession(fallbackResult, walletAddress);
+  if (!provider?.request) throw new Error('Your wallet sign-in is unavailable. Choose email sign-in or reconnect your wallet.');
+  const challenge = await postAuth({ action: 'wallet_challenge', walletAddress });
+  const signature = await provider.request({ method: 'personal_sign', params: [challenge.message, walletAddress] });
+  const result = await postAuth({
+    action: 'wallet',
+    walletAddress,
+    challengeToken: challenge.challengeToken,
+    signature,
+  });
+  if (!result?.token) throw new Error('Your account session could not be started. Please try again.');
+  return saveSession(result, walletAddress);
 }
 
 export function getArcSessionToken(walletAddress) {

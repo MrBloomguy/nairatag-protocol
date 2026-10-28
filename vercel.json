@@ -36,6 +36,10 @@
       "dest": "/api/arc?route=follows"
     },
     {
+      "src": "/api/arc-social-graph(.*)",
+      "dest": "/api/arc?route=socialgraph"
+    },
+    {
       "src": "/api/celotags(.*)",
       "dest": "/api/celotags"
     },

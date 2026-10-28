@@ -83,7 +83,36 @@ function signSession(payload) {
   return `${encoded}.${signature}`;
 }
 
+function readArcAccountSession(req, body) {
+  const token = String(req.headers?.authorization || '').replace(/^Bearer\s+/i, '');
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const secret = process.env.ARC_SESSION_SECRET;
+  if (!secret || secret.length < 32) throw Object.assign(new Error('Account sign-in is temporarily unavailable.'), { status: 503 });
+  const signed = `${parts[0]}.${parts[1]}`;
+  const expected = createHmac('sha256', secret).update(signed).digest();
+  const supplied = Buffer.from(parts[2], 'base64url');
+  if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
+    throw Object.assign(new Error('Your sign-in session is invalid. Please sign in again.'), { status: 401 });
+  }
+  let session;
+  try { session = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8')); }
+  catch { throw Object.assign(new Error('Your sign-in session is invalid. Please sign in again.'), { status: 401 }); }
+  let walletAddress;
+  try { walletAddress = String(session.sub || '').toLowerCase(); }
+  catch { walletAddress = ''; }
+  if (session.iss !== 'nairatag-arc' || !Number.isFinite(session.exp) || session.exp <= Math.floor(Date.now() / 1000) || !isAddress(walletAddress)) {
+    throw Object.assign(new Error('Your sign-in session has expired. Please sign in again.'), { status: 401 });
+  }
+  if (String(body.walletAddress || '').toLowerCase() !== walletAddress) {
+    throw Object.assign(new Error('Your signed-in account does not match this profile.'), { status: 403 });
+  }
+  return { action: String(body.action || ''), tag: cleanTag(body.tag), walletAddress };
+}
+
 function readSession(req, body) {
+  const accountSession = readArcAccountSession(req, body);
+  if (accountSession) return accountSession;
   const token = String(req.headers?.authorization || '').replace(/^Bearer\s+/i, '');
   const [encoded, suppliedSignature] = token.split('.');
   if (!encoded || !suppliedSignature) throw Object.assign(new Error('Sign in to NairaTag social to continue.'), { status: 401 });
@@ -268,12 +297,23 @@ async function profileState(fields, targetTag) {
 
 export default async function handler(req, res) {
   try {
-    if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'Use POST for social graph actions.' });
     if (req.headers?.origin) {
-      const originHost = new URL(req.headers.origin).host.toLowerCase();
+      const originUrl = new URL(req.headers.origin);
+      const originHost = originUrl.host.toLowerCase();
       const requestHost = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim().toLowerCase();
-      if (originHost !== requestHost) return json(res, 403, { ok: false, error: 'Cross-origin requests are not allowed.' });
+      const isLocal = ['localhost', '127.0.0.1'].includes(originUrl.hostname.toLowerCase());
+      const isArcSite = originUrl.hostname.toLowerCase() === 'arc.nairatag.ng';
+      const isVercelPreview = originUrl.hostname.toLowerCase().endsWith('.vercel.app');
+      if (originHost !== requestHost && !isLocal && !isArcSite && !isVercelPreview) {
+        return json(res, 403, { ok: false, error: 'Cross-origin requests are not allowed.' });
+      }
+      res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+      res.setHeader('Vary', 'Origin');
     }
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    if (req.method !== 'POST') return json(res, 405, { ok: false, error: 'Use POST for social graph actions.' });
     const body = await readBody(req);
     const fields = body.action === 'session' ? await authorize(body) : readSession(req, body);
     let result;

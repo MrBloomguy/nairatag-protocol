@@ -21,7 +21,6 @@ const DEFAULT_TELEGRAM_BOT_TOKEN = '8663138070:AAElmwCbB-vjoYXe3w__zqCxOUT5URIBM
 const DEFAULT_TELEGRAM_CHANNEL_ID = '-1003984230029';
 
 const TAG_CLAIMED_EVENT = parseAbiItem('event TagClaimed(bytes32 indexed node, string canonical, string rawTag, address indexed owner, address resolver)');
-const IN_HOUSE_TASKS = {};
 const seenSignatures = new Map();
 
 function sendJson(res, status, payload) {
@@ -99,17 +98,6 @@ async function verifyTaskAccepted(body) {
   }
   const task = (payload.tasks || []).find((item) => String(item.id) === String(body.taskId));
   return task ? { title: cleanText(task.title), rewardUSDC: Number(task.reward_usdc) || 0, points: Number(task.points) || 0, status } : null;
-}
-
-function voucherMessage(body) {
-  return [
-    'NairaTag Social Alerts',
-    'Action: voucher_claimed',
-    `Task: ${body.taskId}`,
-    `Wallet: ${body.walletAddress.toLowerCase()}`,
-    `Chain: 5042002`,
-    `Timestamp: ${body.timestamp}`,
-  ].join('\n');
 }
 
 async function verifyWalletSignature(body, message) {
@@ -198,11 +186,6 @@ function alertText(body) {
     const title = cleanText(body.title || body.taskId);
     return `NairaTag task reward\n${wallet} completed: ${title}.${Number(body.rewardUSDC) > 0 ? ` Reward paid: $${Number(body.rewardUSDC)} USDC and ${Number(body.points) || 0} Protocol Points.` : ' Reward status: paid.'}\nTask ID: ${cleanText(body.taskId, 90)}\nArc Network - https://arc.nairatag.ng/#tasks`;
   }
-  if (body.kind === 'voucher') {
-    const task = IN_HOUSE_TASKS[body.taskId];
-    if (!task) throw new Error('Unknown NairaTag in-house task.');
-    return `NairaTag voucher claim\n${wallet} reported completing: ${task.title}.\nVoucher: ${task.reward}\nSelf-reported task claim - https://arc.nairatag.ng/#rewards`;
-  }
   if (body.kind === 'reward') {
     if (body.action === 'referral_signup') {
       const friendClean = cleanText(body.tag || '', 32).replace(/^[₦$@#]/, '').trim().toUpperCase();
@@ -269,18 +252,12 @@ export default async function handler(req, res) {
     if (body.kind === 'claim') {
       const claim = await verifyTagClaim(body);
       const cleanUpper = String(claim.tag || '').replace(/^[$₦@#]/, '').toUpperCase();
-      const networkTitle = String(claim.network || 'ARC NETWORK').toUpperCase();
       const sent = await sendTelegram([
-        `🎉 NEW NAIRATAG CLAIMED ON ${networkTitle}`,
+        `🎉 ${cleanUpper} just joined NairaTag!`,
         '',
-        `Tag: ₦${cleanUpper}`,
-        `Owner: ${claim.owner} (${shortAddress(claim.owner)})`,
-        `Network: ${claim.network || 'Arc Network'}`,
-        ...(claim.erc8004Id ? [`Agent: ERC-8004 #${claim.erc8004Id}`] : []),
-        `Transaction: ${claim.txHash}`,
-        `Explorer: ${claim.explorerUrl}`,
+        `Welcome, ₦${cleanUpper}!`,
         '',
-        'Claim your sovereign NairaTag: https://arc.nairatag.ng',
+        'Find your people and share your NairaTag: https://arc.nairatag.ng',
       ].join('\n'));
       return sendJson(res, 200, { ok: true, messageId: sent });
     }
@@ -338,9 +315,6 @@ export default async function handler(req, res) {
       await verifyWalletSignature(body, taskMessage(body));
       const taskDetails = await verifyTaskAccepted(body);
       message = alertText({ ...body, ...taskDetails });
-    } else if (body.kind === 'voucher' && /^[a-z0-9_-]{1,48}$/.test(String(body.taskId || '')) && IN_HOUSE_TASKS[body.taskId]) {
-      await verifyWalletSignature(body, voucherMessage(body));
-      message = alertText(body);
     } else if (body.kind === 'reward' && ['daily_claim', 'spin', 'payment_confirmed', 'referral_signup'].includes(body.action)) {
       await verifyWalletSignature(body, rewardMessage(body));
       message = alertText(body);

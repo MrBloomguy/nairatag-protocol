@@ -163,11 +163,9 @@ import {
   getAgentTwitterShareUrl,
   getAgentTelegramShareUrl,
   getAgentWhatsAppShareUrl,
-  broadcastArcVoucherClaimToTelegram,
   broadcastArcRewardToTelegram,
   getWhatsAppShareUrl,
   TELEGRAM_CHANNEL_URL,
-  TELEGRAM_CHANNEL_HANDLE,
 } from './services/arcSocialBroadcast.js';
 import {
   speakText,
@@ -194,8 +192,8 @@ import { claimAgentOnboardingReward, getAgentOnboardingRewardState } from './ser
 import AgentOnboardingModal from './components/AgentOnboardingModal.jsx';
 import AgentSuccessModal from './components/AgentSuccessModal.jsx';
 import { updatePersonalAgent } from './services/personalAgent.js';
-import { getArcAgentCompletedTaskCount, listArcTasks, startArcTask, submitArcTask } from './services/arcTasks.js';
-import { IN_HOUSE_TASKS, claimInHouseVoucher, getInHouseVouchers, syncInHouseVouchers } from './services/inHouseTasks.js';
+import { createArcTask, getArcAgentCompletedTaskCount, listArcTasks, startArcTask, submitArcTask } from './services/arcTasks.js';
+import { claimInHouseVoucher, getInHouseVouchers, listSocialTasks, syncInHouseVouchers } from './services/inHouseTasks.js';
 import {
   getNotificationInbox,
   markInboxNotificationRead,
@@ -929,7 +927,7 @@ function ArcAppShell() {
     if (!textToSend && !fileToSend) return;
     if (!walletAddress) {
       setIsConnectModalOpen(true);
-      showToast('Sign in or connect a wallet to start a saved chat.', 'info');
+      showToast('Sign in to start a saved chat.', 'info');
       return;
     }
 
@@ -1438,7 +1436,7 @@ function ArcAppShell() {
     if (isConnectModalOpen) setAuthScreen('welcome');
   }, [isConnectModalOpen]);
 
-  // Tasks & Bounties State
+  // Tasks State
   const [tasksFilter, setTasksFilter] = useState('all');
   useEffect(() => {
     if (tasksFilter === 'vouchers') setTasksFilter('all');
@@ -1451,13 +1449,16 @@ function ArcAppShell() {
   const [tasksLoading, setTasksLoading] = useState(true);
   const [tasksError, setTasksError] = useState('');
   const [tasksRefreshKey, setTasksRefreshKey] = useState(0);
+  const [isTaskCreating, setIsTaskCreating] = useState(false);
+  const [createdTask, setCreatedTask] = useState(null);
   const [inHouseVouchers, setInHouseVouchers] = useState([]);
+  const [socialTasks, setSocialTasks] = useState([]);
+  const [socialTaskProof, setSocialTaskProof] = useState('');
   const [rewardsInitialPage, setRewardsInitialPage] = useState(null);
   const [taskSubmissionDraft, setTaskSubmissionDraft] = useState('');
   const [userPoints, setUserPoints] = useState(0);
   const [arcRewardsError, setArcRewardsError] = useState('');
   const [activeEscrowStep, setActiveEscrowStep] = useState(2);
-  const [customTasks, setCustomTasks] = useState([]);
   const [postTaskForm, setPostTaskForm] = useState({
     title: '',
     category: 'dev',
@@ -1498,15 +1499,26 @@ function ArcAppShell() {
   const allTasks = backendTasks;
 
   useEffect(() => {
-    setInHouseVouchers(getInHouseVouchers(walletAddress));
+    getInHouseVouchers(walletAddress).then(setInHouseVouchers).catch((error) => {
+      console.warn('[Social tasks] Could not load persisted claims:', error.message);
+    });
     const refresh = (event) => {
       if (!walletAddress || event.detail?.walletAddress === walletAddress.toLowerCase()) {
-        setInHouseVouchers(getInHouseVouchers(walletAddress));
+        getInHouseVouchers(walletAddress).then(setInHouseVouchers).catch((error) => {
+          console.warn('[Social tasks] Could not refresh persisted claims:', error.message);
+        });
       }
     };
     window.addEventListener('nairatag-inhouse-vouchers-updated', refresh);
     return () => window.removeEventListener('nairatag-inhouse-vouchers-updated', refresh);
   }, [walletAddress]);
+
+  useEffect(() => {
+    let active = true;
+    listSocialTasks().then((tasks) => { if (active) setSocialTasks(tasks); })
+      .catch((error) => console.warn('[Social tasks] Could not load task list:', error.message));
+    return () => { active = false; };
+  }, [tasksRefreshKey]);
 
   useEffect(() => {
     let active = true;
@@ -1530,12 +1542,11 @@ function ArcAppShell() {
 
   const filteredInHouseTasks = useMemo(() => {
     const q = tasksSearch.toLowerCase().trim();
-    if (tasksFilter !== 'all' && tasksFilter !== 'community') return [];
-    return IN_HOUSE_TASKS.filter((task) =>
-      !q || [task.title, task.description, task.category, task.voucherName, task.voucherValue]
+    return socialTasks.filter((task) => (tasksFilter === 'all' || task.category === tasksFilter) &&
+      (!q || [task.title, task.description, task.category, task.id]
         .some((value) => String(value || '').toLowerCase().includes(q))
-    );
-  }, [tasksFilter, tasksSearch]);
+    ));
+  }, [socialTasks, tasksFilter, tasksSearch]);
 
   const filteredTasks = useMemo(() => {
     const q = tasksSearch.toLowerCase().trim();
@@ -1558,7 +1569,8 @@ function ArcAppShell() {
       categoryLabel: voucherTask.category,
       deadline: 'Available',
       rewardUSDC: 0,
-      points: Number(voucherTask.voucherValue.match(/\d+/)?.[0]) || 0,
+      points: voucherTask.points,
+      participantCount: voucherTask.participantCount,
       isVoucherTask: true,
       voucherTask,
     }));
@@ -1569,7 +1581,7 @@ function ArcAppShell() {
     const existingTask = allTasks.find((task) => task.id === selectedTaskId);
     if (existingTask) return existingTask;
     const voucherId = String(selectedTaskId || '').startsWith('voucher:') ? selectedTaskId.slice('voucher:'.length) : null;
-    const voucherTask = IN_HOUSE_TASKS.find((task) => task.id === voucherId);
+    const voucherTask = socialTasks.find((task) => task.id === voucherId);
     if (!voucherTask) return null;
     return {
       id: `voucher:${voucherTask.id}`,
@@ -1580,12 +1592,12 @@ function ArcAppShell() {
       categoryLabel: voucherTask.category,
       deadline: 'Available',
       rewardUSDC: 0,
-      points: Number(voucherTask.voucherValue.match(/\d+/)?.[0]) || 0,
+      points: voucherTask.points,
       escrowStatus: 'Protocol Points after review',
       isVoucherTask: true,
       voucherTask,
     };
-  }, [allTasks, selectedTaskId]);
+  }, [allTasks, selectedTaskId, socialTasks]);
   const selectedVoucherClaim = selectedTask?.isVoucherTask
     ? inHouseVouchers.find((voucher) => voucher.taskId === selectedTask.voucherTask.id)
     : null;
@@ -1966,6 +1978,17 @@ function ArcAppShell() {
       try {
         const stored = getStoredCircleSession();
         if (stored && stored.walletAddress) {
+          try {
+            if (!getArcSessionToken(stored.walletAddress)) {
+              await establishCircleArcSession({ userToken: stored.userToken, walletAddress: stored.walletAddress });
+            }
+          } catch (error) {
+            clearCircleSession();
+            clearArcSession();
+            setIsConnectModalOpen(true);
+            showToast(`Please sign in again to restore your account: ${error.message}`, 'error', 5000);
+            return;
+          }
           if (cancelled) return;
           setWalletAddress(stored.walletAddress);
           setAuthProvider('circle');
@@ -2031,6 +2054,12 @@ function ArcAppShell() {
     try {
       const login = await verifyCircleEmailOtp();
       const res = await connectCircleWallet(login, ({ message }) => setCircleStatus(message));
+      try { await establishCircleArcSession({ userToken: res.userToken, walletAddress: res.walletAddress }); }
+      catch (sessionError) {
+        clearCircleSession();
+        clearArcSession();
+        throw sessionError;
+      }
       setAccountEmail(circleInput.trim().toLowerCase());
       window.localStorage.setItem('nairatag_auth_provider', 'circle');
       window.localStorage.setItem('nairatag_account_email', circleInput.trim().toLowerCase());
@@ -2038,8 +2067,6 @@ function ArcAppShell() {
       setAuthProvider('circle');
       setCircleSession(res);
       setIsArcNetwork(true);
-      try { await establishCircleArcSession({ userToken: res.userToken, walletAddress: res.walletAddress }); }
-      catch (sessionError) { showToast(`Wallet connected, but account session setup failed: ${sessionError.message}`, 'error', 5000); }
       const [accountResult, rewardResult] = await Promise.allSettled([
         refreshBalance(res.walletAddress),
         getArcRewardState(res.walletAddress),
@@ -2055,10 +2082,10 @@ function ArcAppShell() {
       setIsConnectModalOpen(false);
       setCircleStatus('');
       setCircleOtpSent(false);
-      showToast(`Connected Circle Wallet: ${shorten(res.walletAddress)}`, 'success', 3000);
+      showToast("You're signed in.", 'success', 2500);
     } catch (err) {
       setCircleStatus('');
-      showToast(`Circle wallet error: ${err.message}`, 'error', 4500);
+      showToast(`Email sign-in error: ${err.message}`, 'error', 4500);
     } finally {
       setIsConnecting(false);
     }
@@ -2084,7 +2111,7 @@ function ArcAppShell() {
     setMyTag(null);
     setUsdcBalance({ formatted: '0.00', raw: 0n, rawString: '0' });
     setIsWalletModalOpen(false);
-    showToast('Wallet disconnected', 'info', 2000);
+    showToast('You are signed out.', 'info', 2000);
   };
 
   // Connect Wallet Handler
@@ -2095,15 +2122,14 @@ function ArcAppShell() {
     setIsConnecting(true);
     try {
       const { address, chainId: cId } = await connectWallet();
+      await establishWalletArcSession(address);
       setWalletAddress(address);
       setAuthProvider('injected');
       setChainId(cId);
       setIsArcNetwork(cId === activeArcChain.id);
-      try { await establishWalletArcSession(address); }
-      catch (sessionError) { showToast(`Connected, but account session setup failed: ${sessionError.message}`, 'error', 5000); }
       await refreshBalance(address);
       setIsConnectModalOpen(false);
-      showToast(`Connected ${shorten(address)}`, 'success', 2500);
+      showToast("You're signed in.", 'success', 2500);
     } catch (err) {
       showToast(`Connection error: ${err.message}`, 'error', 3500);
       alert(`Wallet Connection Error: ${err.message}`);
@@ -2171,42 +2197,45 @@ function ArcAppShell() {
     return () => clearTimeout(timer);
   }, [recipientInput]);
 
-  const handleClaimInHouseVoucher = async (task) => {
+  const handleClaimInHouseVoucher = async (task, proof) => {
     if (!walletAddress) {
-      showToast('Sign in or connect a wallet to claim this voucher.', 'info');
+      showToast('Sign in to your NairaTag account to submit this task.', 'info');
       setIsConnectModalOpen(true);
       return;
     }
     let vouchers;
     try {
-      vouchers = await claimInHouseVoucher(walletAddress, task.id);
+      vouchers = await claimInHouseVoucher(walletAddress, task.id, proof);
       setInHouseVouchers(vouchers);
     } catch (error) {
-      showToast(error.message || 'Could not save this voucher.', 'error');
+      showToast(error.message || 'Could not save this task submission.', 'error');
       return;
     }
-    try {
-      await broadcastArcVoucherClaimToTelegram({ taskId: task.id, walletAddress });
-      showToast(`${task.voucherName} submitted for admin review.`, 'success', 3500);
-    } catch (error) {
-      showToast(`${task.voucherName} submission saved. Telegram alert not sent: ${error.message}`, 'info', 5000);
-    }
+    setSocialTaskProof('');
+    showToast(`${task.title} submitted for review.`, 'success', 3500);
   };
 
   const handleRefreshVoucherClaims = async () => {
     if (!walletAddress) return;
-    try { setInHouseVouchers(await syncInHouseVouchers(walletAddress)); }
+    try {
+      const [claims, rewards] = await Promise.all([
+        syncInHouseVouchers(walletAddress),
+        getArcRewardState(walletAddress),
+      ]);
+      setInHouseVouchers(claims);
+      applyArcRewardState(rewards);
+    }
     catch (error) { showToast(error.message || 'Could not refresh voucher claims.', 'error'); }
   };
 
   const handleStartTask = async (task) => {
     if (!walletAddress) {
-      showToast('Sign in or connect a wallet before starting a bounty.', 'info');
+      showToast('Sign in to start a task.', 'info');
       setIsConnectModalOpen(true);
       return;
     }
     try {
-      const progress = await startArcTask({ taskId: task.id, walletAddress, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points, sessionToken: authProvider === 'circle' ? getArcSessionToken(walletAddress) : undefined, authProvider });
+      const progress = await startArcTask({ taskId: task.id, walletAddress, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points, sessionToken: getArcSessionToken(walletAddress), authProvider });
       setTaskProgress((previous) => ({ ...previous, [task.id]: progress }));
       showToast(`You started: ${task.title}`, 'success');
     } catch (error) {
@@ -2221,7 +2250,7 @@ function ArcAppShell() {
       return;
     }
     try {
-      const progress = await submitArcTask({ taskId: task.id, walletAddress, deliverable: submission, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points, sessionToken: authProvider === 'circle' ? getArcSessionToken(walletAddress) : undefined, authProvider });
+      const progress = await submitArcTask({ taskId: task.id, walletAddress, deliverable: submission, taskTitle: task.title, rewardUSDC: task.rewardUSDC, points: task.points, sessionToken: getArcSessionToken(walletAddress), authProvider });
       setTaskProgress((previous) => ({ ...previous, [task.id]: progress }));
       setTaskSubmissionDraft('');
       showToast('Submission saved to the Arc task service for owner review.', 'success');
@@ -2276,41 +2305,49 @@ function ArcAppShell() {
     showToast('🔗 Invite Link Copied! Share with friends to earn 10% fee rebates on Arc.', 'success', 3500);
   };
 
-  const handleCreateTask = (e) => {
+  const handleCreateTask = async (e) => {
     e.preventDefault();
-    if (!postTaskForm.title.trim()) {
-      showToast('Please enter a task title', 'error');
+    if (!walletAddress) {
+      setIsConnectModalOpen(true);
+      showToast('Sign in to post a task.', 'info');
       return;
     }
-    const usdc = parseFloat(postTaskForm.reward) || 20;
-    const newTask = {
-      id: `task_${Date.now()}`,
-      title: postTaskForm.title,
-      category: postTaskForm.category,
-      categoryLabel: postTaskForm.category === 'dev' ? '⚡ Engineering' : postTaskForm.category === 'design' ? '🎨 Design' : postTaskForm.category === 'data' ? '📊 Data & AI' : postTaskForm.category === 'content' ? '✍️ Content' : '🧪 Testing',
-      status: 'open',
-      rewardUSDC: usdc,
-      rewardNGN: `₦${(usdc * 1485).toLocaleString()}`,
-      points: Math.round(usdc * 10),
-      deadline: postTaskForm.deadline || '3 days left',
-      applicants: 0,
-      creatorTag: displayUserTag || '₦YOU',
-      escrowStatus: '🔒 Funded in Escrow',
-      description: postTaskForm.description || 'Community bounty on Arc Osaka EVM with automated milestone escrow settlement.',
-      deliverable: postTaskForm.requirements || 'Public verification link, GitHub PR, or live demo.',
-    };
-    setCustomTasks((prev) => [newTask, ...prev]);
-    setIsPostTaskOpen(false);
-    setPostTaskForm({
-      title: '',
-      category: 'dev',
-      reward: '35',
-      deadline: '3 days left',
-      description: '',
-      requirements: '',
-    });
-    triggerCelebrationConfetti();
-    showToast(`Bounty created & ${usdc} USDC locked in Arc milestone escrow!`, 'success', 3500);
+    const title = postTaskForm.title.trim();
+    const description = postTaskForm.description.trim();
+    const rewardUSDC = Number(postTaskForm.reward);
+    if (title.length < 4) {
+      showToast('Task titles must be at least 4 characters.', 'error');
+      return;
+    }
+    if (description.length < 10) {
+      showToast('Describe the task and what counts as completion.', 'error');
+      return;
+    }
+    if (!Number.isFinite(rewardUSDC) || rewardUSDC <= 0 || rewardUSDC > 1000000
+      || Math.abs(rewardUSDC * 1000000 - Math.round(rewardUSDC * 1000000)) > 0.000001) {
+      showToast('Enter a valid USDC reward with up to 6 decimal places.', 'error');
+      return;
+    }
+    setIsTaskCreating(true);
+    try {
+      const task = await createArcTask({
+        walletAddress,
+        sessionToken: getArcSessionToken(walletAddress),
+        task: {
+          title, category: postTaskForm.category, description,
+          deliverable: description, rewardUSDC, deadline: 'Open until closed',
+        },
+      });
+      setBackendTasks((current) => [task, ...current.filter((item) => item.id !== task.id)]);
+      setTasksRefreshKey((key) => key + 1);
+      setCreatedTask(task);
+      setPostTaskForm({ title: '', category: 'dev', reward: '35', deadline: 'Open until closed', description: '', requirements: '' });
+      triggerCelebrationConfetti();
+    } catch (error) {
+      showToast(error.message || 'Task could not be posted. Please try again.', 'error', 5000);
+    } finally {
+      setIsTaskCreating(false);
+    }
   };
 
   // Agent profile conversations use the live AI service; no canned agent replies.
@@ -2319,7 +2356,7 @@ function ArcAppShell() {
     if (!text) return;
     if (!walletAddress) {
       setIsConnectModalOpen(true);
-      showToast('Sign in or connect a wallet to chat with this agent.', 'info');
+      showToast('Sign in to chat with this agent.', 'info');
       return;
     }
     const currentMsgs = agentChatMessages[agentId] || [];
@@ -4132,13 +4169,8 @@ function ArcAppShell() {
                 </button>
 
                 <div className="task-detail-heading">
-                  <div className="milestone-badge-stage">
-                    <AgentMedallion type={selectedTask.badgeType || 'emerald'} size={46} />
-                  </div>
                   <div className="task-detail-heading-copy">
-                    <span className="task-cat-pill active">{selectedTask.categoryLabel}</span>
                     <h1>{selectedTask.title}</h1>
-                    <p>Posted by ₦{selectedTask.creatorTag.replace(/^₦/, '').toUpperCase()} Â· {selectedTask.deadline}</p>
                   </div>
                 </div>
 
@@ -4146,41 +4178,43 @@ function ArcAppShell() {
                   <div className="task-detail-grid">
                     <div className="task-detail-main">
                       <article className="task-detail-panel">
-                        <h2>Task details</h2>
-                        <p>{selectedTask.description}</p>
                         <div className="task-detail-deliverable">
-                          <strong>How to complete</strong>
-                          <span>{selectedTask.voucherTask.description}</span>
+                          <strong>Submit</strong>
+                          <span>Your social username or profile link</span>
                         </div>
-                        {selectedTask.voucherTask.url === 'rewards-referral' ? (
-                          <button type="button" className="btn-agent-secondary" onClick={() => { setRewardsInitialPage('referral'); setMainTab('rewards'); }}>
-                            <Share2 size={14} /> {selectedTask.voucherTask.actionLabel}
-                          </button>
-                        ) : (
-                          <a className="btn-agent-secondary" href={selectedTask.voucherTask.url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink size={14} /> {selectedTask.voucherTask.actionLabel}
-                          </a>
-                        )}
+                        <a className="btn-agent-secondary" href={selectedTask.voucherTask.url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink size={14} /> {selectedTask.voucherTask.actionLabel}
+                        </a>
                       </article>
                       <article className="task-detail-panel task-submit-panel">
-                        <h2>Submit completion</h2>
-                        <p>After completing the task, submit it for review. Approved tasks credit Protocol Points to your wallet.</p>
-                        <button type="button" className="btn-agent-primary" onClick={() => handleClaimInHouseVoucher(selectedTask.voucherTask)} disabled={Boolean(selectedVoucherClaim)}>
+                        <div className="social-task-proof-field">
+                          <label htmlFor="social-task-proof">Social account</label>
+                          <input
+                            id="social-task-proof"
+                            type="text"
+                            autoComplete="off"
+                            placeholder="@username or profile link"
+                            value={socialTaskProof}
+                            onChange={(event) => setSocialTaskProof(event.target.value)}
+                            maxLength={1000}
+                            disabled={Boolean(selectedVoucherClaim && selectedVoucherClaim.status !== 'rejected')}
+                          />
+                        </div>
+                        <button type="button" className="btn-agent-primary social-task-submit-button" onClick={() => handleClaimInHouseVoucher(selectedTask.voucherTask, socialTaskProof)} disabled={Boolean(selectedVoucherClaim && selectedVoucherClaim.status !== 'rejected')}>
                           <CheckCircle2 size={14} />
-                          {selectedVoucherClaim ? 'Submitted for review' : 'I completed this task'}
+                          {selectedVoucherClaim?.status === 'pending' ? 'Submitted for review' : selectedVoucherClaim?.status === 'approved' ? 'Task approved' : selectedVoucherClaim?.status === 'rejected' ? 'Resubmit for review' : 'Submit completion'}
                         </button>
                       </article>
                     </div>
                     <aside className="task-detail-sidebar">
                       <article className="task-detail-panel task-reward-panel">
-                        <span className="task-detail-eyebrow">VOUCHER REWARD</span>
+                        <span className="task-detail-eyebrow">SOCIAL TASK REWARD</span>
                         <strong>+{selectedTask.points} <small>Points</small></strong>
                         <span>Protocol Points after approval</span>
                       </article>
                       <article className="task-detail-panel">
-                        <h2><ShieldCheck size={16} /> Review status</h2>
+                        <h2><ShieldCheck size={16} /> Status</h2>
                         <div className="task-escrow-status">{selectedVoucherClaim?.status === 'approved' ? 'Approved' : selectedVoucherClaim?.status === 'rejected' ? 'Not approved' : selectedVoucherClaim ? 'Pending review' : 'Not submitted'}</div>
-                        <p>Submissions are signed by your wallet and reviewed by the NairaTag team.</p>
                       </article>
                     </aside>
                   </div>
@@ -4188,10 +4222,9 @@ function ArcAppShell() {
                   <div className="task-detail-grid">
                   <div className="task-detail-main">
                     <article className="task-detail-panel">
-                      <h2>Task details</h2>
                       <p>{selectedTask.description}</p>
                       <div className="task-detail-deliverable">
-                        <strong>What to submit</strong>
+                        <strong>Submit</strong>
                         <span>{selectedTask.deliverable}</span>
                       </div>
                       {selectedTask.requirements && (
@@ -4205,8 +4238,7 @@ function ArcAppShell() {
                     <article className="task-detail-panel task-submit-panel">
                       <div className="task-detail-panel-heading">
                         <div>
-                          <h2>Work & submission</h2>
-                          <p>{taskProgress[selectedTask.id]?.status === 'submitted' ? 'Your work has been submitted for review.' : 'Start the task, then submit a link or describe your completed work.'}</p>
+                          <h2>Your submission</h2>
                         </div>
                         <span className={`task-progress-badge ${taskProgress[selectedTask.id]?.status || 'not-started'}`}>
                           {taskProgress[selectedTask.id]?.status === 'paid' ? 'Reward paid' : taskProgress[selectedTask.id]?.status === 'submitted' ? 'In review' : taskProgress[selectedTask.id]?.status === 'in_progress' ? 'In progress' : 'Not started'}
@@ -4261,29 +4293,18 @@ function ArcAppShell() {
                           </button>
                         </>
                       )}
-                      <div className="task-detail-local-note">Task progress and submissions are stored in the shared Arc task service. Escrow payouts remain unavailable until an Arc escrow contract is deployed and connected.</div>
                     </article>
                   </div>
 
                   <aside className="task-detail-sidebar">
                     <article className="task-detail-panel task-reward-panel">
-                      <span className="task-detail-eyebrow">BOUNTY REWARD</span>
+                      <span className="task-detail-eyebrow">REWARD</span>
                       <strong>${selectedTask.rewardUSDC} <small>USDC</small></strong>
-                      <span>+{selectedTask.points} Protocol Points after approval</span>
-                      <button type="button" className="btn-agent-secondary" disabled title="The bounty escrow contract is not connected yet.">
-                        <Coins size={14} /> Claim reward
-                      </button>
-                      <small className="task-detail-local-note">Reward claims activate after escrow contract and owner approval integration.</small>
-                    </article>
-
-                    <article className="task-detail-panel">
-                      <h2><ShieldCheck size={16} /> Escrow status</h2>
-                      <div className="task-escrow-status">{selectedTask.escrowStatus}</div>
-                      <p>Arc task progress is stored remotely. This bounty is not yet backed by an Arc escrow contract.</p>
+                      <span>+{selectedTask.points} points after approval</span>
                     </article>
 
                     <button type="button" className="btn-agent-secondary task-chat-button" onClick={() => handleTaskChat(selectedTask)}>
-                      <MessageSquare size={15} /> Chat with task owner
+                      <MessageSquare size={15} /> Message owner
                     </button>
                   </aside>
                   </div>
@@ -4322,7 +4343,7 @@ function ArcAppShell() {
                     type="button"
                     className="btn-agent-primary create-task-header-btn"
                     style={{ padding: '6px 11px', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap', flexShrink: 0 }}
-                    onClick={() => setIsPostTaskOpen(true)}
+                    onClick={() => { setCreatedTask(null); setIsPostTaskOpen(true); }}
                   >
                     <Plus size={13} />
                     <span>Create Task</span>
@@ -4335,7 +4356,7 @@ function ArcAppShell() {
             <div className="agents-stats-grid">
               <div className="agents-stat-card">
                 <span className="agents-stat-card-label">Active Tasks</span>
-                <span className="agents-stat-card-value">{allTasks.length + IN_HOUSE_TASKS.length}</span>
+                <span className="agents-stat-card-value">{allTasks.length + socialTasks.length}</span>
               </div>
               <div className="agents-stat-card">
                 <span className="agents-stat-card-label">Total Agents</span>
@@ -4361,6 +4382,7 @@ function ArcAppShell() {
                 { id: 'content', label: '✍️ Content' },
                 { id: 'test', label: '🧪 Testing' },
                 { id: 'community', label: '📱 Community' },
+                { id: 'social', label: 'Social' },
               ].map((cat) => (
                 <button
                   key={cat.id}
@@ -4407,34 +4429,14 @@ function ArcAppShell() {
                     )}
 
                     <div className="tasks-empty-actions">
-                      {(tasksSearch || tasksFilter !== 'all') && (
-                        <button
-                          type="button"
-                          className="btn-agent-secondary"
-                          onClick={() => { setTasksSearch(''); setTasksFilter('all'); }}
-                        >
-                          Clear Filters
-                        </button>
-                      )}
                       {!tasksLoading && (
                         <button
                           type="button"
                           className="btn-agent-primary"
-                          onClick={() => setIsPostTaskOpen(true)}
+                          onClick={() => { setCreatedTask(null); setIsPostTaskOpen(true); }}
                         >
                           <Plus size={14} />
                           <span>Create Task</span>
-                        </button>
-                      )}
-                      {!tasksLoading && (
-                        <button
-                          type="button"
-                          className="btn-agent-secondary"
-                          onClick={() => setTasksRefreshKey((key) => key + 1)}
-                          title="Refresh tasks list"
-                        >
-                          <RefreshCw size={13} />
-                          <span>Refresh</span>
                         </button>
                       )}
                     </div>
@@ -4448,6 +4450,11 @@ function ArcAppShell() {
                       ? voucherClaim?.status === 'approved'
                       : taskProgress[task.id]?.status === 'paid';
                     const rankLabel = task.rank || `#${idx + 1}`;
+                    const creatorTag = String(task.creatorTag || '').replace(/^[₦$@#]/, '').trim();
+                    const creatorAgent = chatAgents.find((agent) => String(agent.tag || '').replace(/^[₦$@#]/, '').toLowerCase() === creatorTag.toLowerCase());
+                    const creatorAvatar = creatorTag.toLowerCase() === 'nairatag'
+                      ? '/nairatag-logo.png'
+                      : getOriginalAgentLogo(creatorAgent || creatorTag);
                     return (
                       <div
                         key={task.id}
@@ -4461,7 +4468,12 @@ function ArcAppShell() {
                         <span className="card-rank-tag">{rankLabel}</span>
 
                         <div className="milestone-badge-stage">
-                          <AgentMedallion type={task.badgeType || (idx % 2 === 0 ? 'emerald' : 'cyan')} size={46} />
+                          <img
+                            className="task-poster-avatar"
+                            src={creatorAvatar}
+                            alt={`${creatorTag || 'Task poster'} avatar`}
+                            onError={(event) => { event.currentTarget.src = '/agents/bloom.png'; }}
+                          />
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
@@ -4476,8 +4488,13 @@ function ArcAppShell() {
                         </div>
                         <div className="milestone-card-role" title={task.title}>{task.title}</div>
 
-                        <div className="milestone-task-status">
-                          <span>{task.categoryLabel} • {task.deadline}</span>
+                        <div
+                          className="milestone-task-status"
+                          title={`${task.participantCount || 0} people earned from this task`}
+                          aria-label={`${task.participantCount || 0} people earned from this task`}
+                        >
+                          <Users size={13} strokeWidth={2.2} aria-hidden="true" />
+                          <span>{(Number(task.participantCount) || 0).toLocaleString()}</span>
                         </div>
 
                         <div className="milestone-progress-bar-wrap">
@@ -4492,8 +4509,10 @@ function ArcAppShell() {
 
                         <div className="milestone-earnings-row">
                           <span className="milestone-earnings-label">Reward</span>
-                          <span className="milestone-earnings-value" style={{ color: isDone ? '#10B981' : 'var(--primary, #0052FF)' }}>
-                            {isDone ? 'Paid' : `$${task.rewardUSDC} USDC`}
+                          <span className="milestone-earnings-value" style={{ color: '#10B981' }}>
+                            {task.isVoucherTask
+                              ? (isDone ? 'Earned' : `+${task.points} Points`)
+                              : (isDone ? 'Paid' : `$${task.rewardUSDC} USDC`)}
                           </span>
                         </div>
                       </div>
@@ -4828,10 +4847,11 @@ function ArcAppShell() {
                         />
                         <div className="walley-agent-item-info">
                           <span className="walley-agent-tag">₦{agent.tag}</span>
-                          <span className="walley-agent-role">{agent.role}</span>
-                          <span className="walley-agent-availability">
-                            {agent.callableTools?.length ? `${agent.callableTools.length} live tools` : 'Chat only'}
-                          </span>
+                          {agent.usedByCount != null && (
+                            <span className="walley-agent-availability">
+                              Used by {agent.usedByCount.toLocaleString()} {agent.usedByCount === 1 ? 'person' : 'people'}
+                            </span>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -5473,31 +5493,29 @@ function ArcAppShell() {
               {celebrationDetails.type === 'payment' && `USDC Payment Sent to ${celebrationDetails.recipient}`}
               {celebrationDetails.type === 'swap' && `Swapped: ${celebrationDetails.amount}`}
               {celebrationDetails.type === 'agent' && `Agent Minted: ${celebrationDetails.amount}`}
-          {celebrationDetails.type === 'claim' && (celebrationDetails.erc8004LinkError
-            ? `Tag claimed. ERC-8004 link needs approval: ${celebrationDetails.amount}`
-            : `Tag claimed${celebrationDetails.erc8004Id ? ` and linked as ERC-8004 #${celebrationDetails.erc8004Id}` : ''}: ${celebrationDetails.amount}`)}
+              {celebrationDetails.type === 'claim' && `Your NairaTag is ready to share: ${celebrationDetails.amount}`}
             </div>
 
             {/* Ticket receipt */}
             <div className="ticket-receipt-card" style={{ width: '100%', marginTop: '6px' }}>
               <div className="ticket-header">
-                <span style={{ fontSize: '12px', fontWeight: 600 }}>Receipt</span>
+                <span style={{ fontSize: '12px', fontWeight: 600 }}>{celebrationDetails.type === 'claim' ? 'Your NairaTag' : 'Receipt'}</span>
                 <span className="ticket-status-pill">
                   <CheckCircle2 size={11} />
-                  <span>Finalized &lt; 1s</span>
+                  <span>{celebrationDetails.type === 'claim' ? 'Ready' : 'Finalized &lt; 1s'}</span>
                 </span>
               </div>
               <div className="ticket-route-row">
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>Amount</div>
+                  <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>{celebrationDetails.type === 'claim' ? 'Your NairaTag' : 'Amount'}</div>
                   <div style={{ fontSize: '14px', fontWeight: 600 }}>{celebrationDetails.amount}</div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
+                {celebrationDetails.type !== 'claim' && <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>Settlement</div>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--privy-color-success-dark)' }}>Osaka EVM</div>
-                </div>
+                </div>}
               </div>
-              <a
+              {celebrationDetails.type !== 'claim' && <a
                 href={celebrationDetails.explorerUrl}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -5505,8 +5523,8 @@ function ArcAppShell() {
                 style={{ textAlign: 'center', justifyContent: 'center', padding: '6px' }}
               >
                 View on ArcScan ↗
-              </a>
-              {celebrationDetails.erc8004Id && (
+              </a>}
+              {celebrationDetails.erc8004Id && celebrationDetails.type !== 'claim' && (
                 <a
                   href={`https://erc-8004.quicknode.com/agents/arc-testnet/${celebrationDetails.erc8004Id}`}
                   target="_blank"
@@ -5517,7 +5535,7 @@ function ArcAppShell() {
                   View ERC-8004 agent #{celebrationDetails.erc8004Id} ↗
                 </a>
               )}
-              {celebrationDetails.erc8004LinkError && (
+              {celebrationDetails.erc8004LinkError && celebrationDetails.type !== 'claim' && (
                 <div style={{ marginTop: '8px' }}>
                   <div style={{ color: 'var(--privy-color-foreground-2)', fontSize: '11px', marginBottom: '6px' }}>{celebrationDetails.erc8004LinkError}</div>
                   <button type="button" className="btn-action-primary" disabled={isRetryingArcAgentLink} onClick={handleRetryArcAgentLink}>
@@ -5531,16 +5549,16 @@ function ArcAppShell() {
             {celebrationDetails.type === 'claim' && (
               <div className="celebration-social-box">
                 <div className="celebration-social-header">
-                  <span className="celebration-social-title">Claim Broadcasted Live</span>
+                  <span className="celebration-social-title">Welcome to NairaTag</span>
                   <a
                     href={TELEGRAM_CHANNEL_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="celebration-live-channel-link"
-                    title="View live broadcast on Telegram"
+                    title="Join the NairaTag community"
                   >
                     <span className="celebration-live-dot" />
-                    <span>{TELEGRAM_CHANNEL_HANDLE}</span>
+                    <span>Join the community</span>
                     <ExternalLink size={10} />
                   </a>
                 </div>
@@ -5847,29 +5865,58 @@ function ArcAppShell() {
       )}
 
       {/* ───────────────────────────────────────────────────────────────────
-          MODAL: POST BOUNTY / TASK DIALOG
+          MODAL: CREATE TASK DIALOG
           ─────────────────────────────────────────────────────────────────── */}
       {isPostTaskOpen && (
-        <div className="modal-backdrop" onClick={() => setIsPostTaskOpen(false)}>
+        <div className="modal-backdrop" onClick={() => { if (!isTaskCreating) { setIsPostTaskOpen(false); setCreatedTask(null); } }}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '16px' }}>💼</span>
-                <span className="card-header-title">Post Milestone Bounty</span>
+                <span className="card-header-title">Create a new task</span>
               </div>
               <button
                 type="button"
                 style={{ background: 'none', border: 'none', color: 'var(--privy-color-foreground-2)', cursor: 'pointer' }}
-                onClick={() => setIsPostTaskOpen(false)}
+                onClick={() => { if (!isTaskCreating) { setIsPostTaskOpen(false); setCreatedTask(null); } }}
               >
                 <X size={18} />
               </button>
             </div>
 
+            {createdTask ? (
+              <div className="task-created-success">
+                <div className="task-created-success-icon"><CheckCircle2 size={24} /></div>
+                <h2>Task created successfully</h2>
+                <strong className="task-created-title">{createdTask.title}</strong>
+                <p>Your task is live. Users will see it in Tasks and receive an in-app notification.</p>
+                <div className="task-created-reward">Reward: ${Number(createdTask.rewardUSDC).toLocaleString(undefined, { maximumFractionDigits: 6 })} USDC</div>
+                <div className="task-created-share-actions">
+                  <a
+                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`New task on NairaTag: ${createdTask.title}. Reward: $${createdTask.rewardUSDC} USDC.`)}&url=${encodeURIComponent('https://arc.nairatag.ng/#tasks')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  ><Share2 size={14} /> Share on X</a>
+                  <a
+                    href={getTelegramShareIntentUrl({ text: `New task on NairaTag: ${createdTask.title}. Reward: $${createdTask.rewardUSDC} USDC.`, url: 'https://arc.nairatag.ng/#tasks' })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  ><Send size={14} /> Share on Telegram</a>
+                  <button type="button" onClick={() => triggerCopy('created_task_link', 'https://arc.nairatag.ng/#tasks')}>
+                    <Copy size={14} /> Copy task link
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  className="btn-agent-secondary task-created-done"
+                  onClick={() => { setIsPostTaskOpen(false); setCreatedTask(null); }}
+                >Done</button>
+              </div>
+            ) : (
             <form onSubmit={handleCreateTask} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
               <div>
                 <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--privy-color-foreground-2)', textTransform: 'uppercase' }}>
-                  Bounty Title
+                  Task title
                 </label>
                 <input
                   type="text"
@@ -5878,6 +5925,8 @@ function ArcAppShell() {
                   placeholder="e.g. Build Webhook Listener for Arc Osaka"
                   value={postTaskForm.title}
                   onChange={(e) => setPostTaskForm((prev) => ({ ...prev, title: e.target.value }))}
+                  minLength={4}
+                  maxLength={120}
                   required
                 />
               </div>
@@ -5907,12 +5956,15 @@ function ArcAppShell() {
                   </label>
                   <input
                     type="number"
-                    min="1"
                     className="token-amount-field"
                     style={{ width: '100%', fontSize: '13px', padding: '8px 10px', marginTop: '4px' }}
                     placeholder="35"
                     value={postTaskForm.reward}
                     onChange={(e) => setPostTaskForm((prev) => ({ ...prev, reward: e.target.value }))}
+                    min="0.000001"
+                    max="1000000"
+                    step="0.000001"
+                    required
                   />
                   <div style={{ fontSize: '10px', color: 'var(--privy-color-foreground-2)', marginTop: '2px' }}>
                     ≈ ₦{((parseFloat(postTaskForm.reward) || 0) * 1485).toLocaleString()} NGN
@@ -5928,20 +5980,24 @@ function ArcAppShell() {
                   className="token-amount-field"
                   rows={3}
                   style={{ width: '100%', fontSize: '12px', padding: '8px 10px', marginTop: '4px', resize: 'vertical' }}
-                  placeholder="Describe task scope, requirements, and deliverable format..."
+                  placeholder="Describe the task and what counts as completion..."
                   value={postTaskForm.description}
                   onChange={(e) => setPostTaskForm((prev) => ({ ...prev, description: e.target.value }))}
+                  minLength={10}
+                  maxLength={2000}
+                  required
                 />
               </div>
 
               <div style={{ padding: '8px 10px', background: 'rgba(0, 82, 255, 0.06)', borderRadius: '6px', border: '1px solid rgba(0, 82, 255, 0.15)', fontSize: '11px', color: 'var(--privy-color-interactive)' }}>
-                🔒 <strong>Smart Escrow:</strong> Funds are locked until milestone verification.
+                Escrow is not connected yet. Posting a task does not lock USDC.
               </div>
 
-              <button type="submit" className="btn-action-primary" style={{ marginTop: '4px' }}>
-                Create Task
+              <button type="submit" className="btn-action-primary" style={{ marginTop: '4px' }} disabled={isTaskCreating}>
+                {isTaskCreating ? 'Saving task…' : 'Create Task'}
               </button>
             </form>
+            )}
           </div>
         </div>
       )}
@@ -6088,7 +6144,7 @@ function ArcAppShell() {
                     </div>
                   </>
                 ) : (
-                  <div style={{ fontSize: '12px', padding: '16px' }}>Please sign in or connect a wallet to view QR code.</div>
+                  <div style={{ fontSize: '12px', padding: '16px' }}>Please sign in to view your QR code.</div>
                 )}
               </div>
             )}
@@ -6118,7 +6174,7 @@ function ArcAppShell() {
             <div style={{ marginTop: '14px', paddingTop: '10px', borderTop: '1px solid var(--privy-color-border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <ShieldCheck size={13} color={authProvider === 'circle' ? '#0052FF' : 'var(--privy-color-interactive)'} />
-                <span>{authProvider === 'circle' ? 'Circle Programmable Wallet (W3S)' : 'Injected Web3 Wallet'}</span>
+                <span>{authProvider === 'circle' ? 'Email account' : 'Wallet account'}</span>
               </div>
               <button
                 type="button"

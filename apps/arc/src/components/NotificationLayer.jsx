@@ -276,8 +276,8 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards, accoun
               <Bell size={16} />
             </div>
             <div>
-          <div className="push-pill-title">Stay in the rewards loop</div>
-              <div className="push-pill-sub">Get browser alerts for spins, streaks, referrals and Arc payments</div>
+              <div className="push-pill-title">Stay in the loop</div>
+              <div className="push-pill-sub">Rewards, streaks and referrals.</div>
             </div>
           </div>
 

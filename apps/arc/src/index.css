@@ -2935,6 +2935,17 @@ select,
   font-family: var(--font-maru), sans-serif;
 }
 
+.task-poster-avatar {
+  display: block;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  border-radius: 50%;
+  background: var(--surface1, #ffffff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.12);
+}
+
 /* ─── REFERENCE 1: MILESTONES GRID VIEW (BIGGER DESKTOP & 2-CARDS-PER-ROW MOBILE) ─── */
 .agents-milestones-grid {
   display: grid;
@@ -3066,10 +3077,30 @@ select,
 .task-submission-input { width: 100%; margin: 14px 0 9px; resize: vertical; }
 .task-submit-panel > .btn-agent-primary,
 .task-submit-panel > .btn-agent-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.social-task-proof-field { display: flex; flex-direction: column; gap: 7px; width: 100%; margin-bottom: 12px; }
+.social-task-proof-field label { color: var(--privy-color-foreground); font-size: 11px; font-weight: 700; }
+.social-task-proof-field input { box-sizing: border-box; width: 100%; min-height: 46px; padding: 0 13px; border: 1px solid var(--border-color, rgba(120,120,140,.24)); border-radius: 12px; background: var(--surface1, #fff); color: var(--privy-color-foreground); font: inherit; font-size: 13px; outline: none; transition: border-color .15s ease, box-shadow .15s ease; }
+.social-task-proof-field input::placeholder { color: var(--privy-color-foreground-3); }
+.social-task-proof-field input:focus { border-color: var(--primary, #5b4fff); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary, #5b4fff) 16%, transparent); }
+[data-theme="dark"] .social-task-proof-field input { background: #111217; border-color: #30313a; }
+.social-task-proof-field input:disabled { opacity: .65; cursor: not-allowed; }
+.task-submit-panel > .social-task-submit-button { display: flex; width: 100%; min-height: 44px; }
 .task-submit-panel button:disabled { opacity: .48; cursor: not-allowed; }
 .task-submission-saved { display: flex; gap: 9px; margin-top: 14px; padding: 12px; border-radius: 10px; color: #059669; background: rgba(16,185,129,.08); }
 .task-submission-saved div { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .task-submission-saved span { color: var(--privy-color-foreground-2); font-size: 11px; overflow-wrap: anywhere; }
+.task-created-success { display: flex; flex-direction: column; align-items: center; gap: 11px; padding: 24px 0 4px; text-align: center; }
+.task-created-success-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; color: #059669; background: rgba(16,185,129,.12); }
+.task-created-success h2 { margin: 0; color: var(--privy-color-foreground); font-size: 19px; }
+.task-created-success p { margin: 0; color: var(--privy-color-foreground-2); font-size: 12px; line-height: 1.5; }
+.task-created-title { max-width: 100%; color: var(--privy-color-foreground); font-size: 14px; overflow-wrap: anywhere; }
+.task-created-reward { padding: 7px 12px; border-radius: 999px; color: #059669; background: rgba(16,185,129,.1); font-size: 12px; font-weight: 800; }
+.task-created-share-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-top: 4px; }
+.task-created-share-actions a,
+.task-created-share-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 8px 10px; border: 1px solid var(--border-color, rgba(0,0,0,.1)); border-radius: 11px; color: var(--privy-color-foreground); background: var(--surface1, #fff); font: inherit; font-size: 11px; font-weight: 700; text-decoration: none; cursor: pointer; }
+.task-created-share-actions a:hover,
+.task-created-share-actions button:hover { border-color: var(--primary, #5b4fff); }
+.task-created-done { width: 100%; min-height: 40px; }
 .task-detail-local-note { display: block; margin-top: 10px; color: var(--privy-color-foreground-3); font-size: 10px; line-height: 1.45; }
 .task-reward-panel { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .task-detail-eyebrow { color: var(--privy-color-foreground-3); font-size: 10px; font-weight: 800; letter-spacing: .06em; }
@@ -3151,12 +3182,14 @@ select,
 }
 
 .milestone-task-status {
-  font-size: 11.5px;
+  min-height: 20px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--privy-color-foreground-3);
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 5px;
 }
 
 @media (max-width: 768px) {
