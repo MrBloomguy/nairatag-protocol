@@ -13,6 +13,12 @@
       "address": "0xf46dc708be8391090b83fb9a5d54c4a568bd64f3",
       "txHash": "0x1090dbd75d9e2e0a57ee5ad6d205fcf649eaa8df25912c551402074cca119981",
       "block": "28004917"
+    },
+    "NairaTagBountyEscrow": {
+      "address": "0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab",
+      "txHash": "0x250e11feca536de2e68722f82643be4dad3568bccc358d356dbf4b843c820436",
+      "block": "28377554",
+      "deployedAt": "2026-10-28T22:35:10.841Z"
     }
   }
 }

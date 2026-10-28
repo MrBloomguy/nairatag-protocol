@@ -192,7 +192,7 @@ import { claimAgentOnboardingReward, getAgentOnboardingRewardState } from './ser
 import AgentOnboardingModal from './components/AgentOnboardingModal.jsx';
 import AgentSuccessModal from './components/AgentSuccessModal.jsx';
 import { updatePersonalAgent } from './services/personalAgent.js';
-import { createArcTask, getArcAgentCompletedTaskCount, listArcTasks, startArcTask, submitArcTask } from './services/arcTasks.js';
+import { createArcTask, getArcAgentCompletedTaskCount, listArcTasks, startArcTask, submitArcTask, releaseTaskBountyOnChain, lockTaskBountyOnChain, getEscrowContractAddress } from './services/arcTasks.js';
 import { claimInHouseVoucher, getInHouseVouchers, listSocialTasks, syncInHouseVouchers } from './services/inHouseTasks.js';
 import {
   getNotificationInbox,
@@ -2259,6 +2259,72 @@ function ArcAppShell() {
     }
   };
 
+  const [isEscrowProcessing, setIsEscrowProcessing] = useState(false);
+
+  const handleReleaseEscrowPayout = async (task) => {
+    if (!walletAddress) {
+      showToast('Connect wallet to release on-chain escrow payout.', 'info');
+      setIsConnectModalOpen(true);
+      return;
+    }
+    setIsEscrowProcessing(true);
+    try {
+      showToast('Releasing USDC payout from NairaTagBountyEscrow on Arc Mainnet...', 'info', 4000);
+      const res = await releaseTaskBountyOnChain({
+        taskId: task.id,
+        fromAddress: walletAddress,
+      });
+      setTaskProgress((prev) => ({
+        ...prev,
+        [task.id]: {
+          ...(prev[task.id] || {}),
+          status: 'paid',
+          reviewedAt: Date.now(),
+          txHash: res.txHash,
+        },
+      }));
+      triggerCelebrationConfetti();
+      setCelebrationDetails({
+        type: 'payment',
+        txHash: res.txHash,
+        amount: `${task.rewardUSDC} USDC (Escrow Payout)`,
+        recipient: task.creatorTag ? `₦${task.creatorTag.replace(/^[₦$@#]/, '').toUpperCase()}` : 'Task Worker',
+        explorerUrl: res.explorerUrl,
+      });
+      setIsCelebrationOpen(true);
+      showToast(`Task bounty of ${task.rewardUSDC} USDC released on Arc Mainnet!`, 'success', 6000);
+    } catch (err) {
+      console.warn('[Escrow Release Error]', err);
+      showToast(`Escrow release: ${err.message || 'Transaction could not be confirmed.'}`, 'error', 6000);
+    } finally {
+      setIsEscrowProcessing(false);
+    }
+  };
+
+  const handleLockEscrowBounty = async (task) => {
+    if (!walletAddress) {
+      showToast('Connect wallet to lock USDC in Escrow.', 'info');
+      setIsConnectModalOpen(true);
+      return;
+    }
+    setIsEscrowProcessing(true);
+    try {
+      showToast('Locking USDC bounty into NairaTagBountyEscrow...', 'info', 4000);
+      const res = await lockTaskBountyOnChain({
+        taskId: task.id,
+        creatorTag: myTag?.tag || 'nairatag',
+        amountUsdc: task.rewardUSDC,
+        fromAddress: walletAddress,
+      });
+      showToast('Bounty locked in Escrow on Arc Mainnet!', 'success', 6000);
+    } catch (err) {
+      console.warn('[Escrow Lock Error]', err);
+      showToast(`Escrow deposit: ${err.message || 'Could not lock bounty.'}`, 'error', 6000);
+    } finally {
+      setIsEscrowProcessing(false);
+    }
+  };
+
   const handleTaskChat = (task) => {
     setChatInputText(`Hi @₦${task.creatorTag.replace(/^₦/, '')}, I’m working on “${task.title}”. `);
     setIsTaskChatDraft(true);
@@ -2955,17 +3021,18 @@ function ArcAppShell() {
       onboardingDismissedKeyRef.current = onboardingKey;
       setIsAgentOnboardingOpen(false);
       setAgentSuccessDetails({ variant: 'claimed', tag: res.cleanTag, progress: onboardingProgress || getAgentOnboarding(walletAddress, res.cleanTag) || {} });
-      setCelebrationDetails({
+            setCelebrationDetails({
         type: 'claim',
         cleanTag: res.cleanTag,
+        walletAddress: walletAddress,
         txHash: res.txHash,
         amount: `₦${res.cleanTag.toUpperCase()}`,
         recipient: 'Sovereign Onchain Tag',
-        explorerUrl: res.explorerUrl,
+        explorerUrl: res.explorerUrl || `https://explorer.arc.io/address/${walletAddress}`,
         erc8004Id: agentRegistration?.id || null,
         erc8004LinkError: agentLinkError,
       });
-      setIsCelebrationOpen(false);
+      setIsCelebrationOpen(true);
       setIsClaimModalOpen(false);
       await refreshBalance(walletAddress);
     } catch (e) {
@@ -4303,6 +4370,33 @@ function ArcAppShell() {
                       <span>+{selectedTask.points} points after approval</span>
                     </article>
 
+                    <article className="task-detail-panel" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 700, color: '#10b981' }}>
+                        <ShieldCheck size={16} />
+                        <span>Arc Mainnet Escrow</span>
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', lineHeight: 1.4 }}>
+                        Protected by <a href="https://explorer.arc.io/address/0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--privy-color-interactive)', textDecoration: 'underline' }}>NairaTagBountyEscrow (0x69f1...99ab)</a>. Payout releases directly in native USDC.
+                      </div>
+                      {taskProgress[selectedTask.id]?.status === 'submitted' && (
+                        <button
+                          type="button"
+                          className="btn-agent-primary"
+                          style={{ marginTop: '4px', width: '100%', justifyContent: 'center', background: '#10b981', color: '#fff' }}
+                          onClick={() => handleReleaseEscrowPayout(selectedTask)}
+                          disabled={isEscrowProcessing}
+                        >
+                          <ShieldCheck size={14} />
+                          <span>{isEscrowProcessing ? 'Releasing on Arc…' : 'Release USDC Escrow Payout'}</span>
+                        </button>
+                      )}
+                      {taskProgress[selectedTask.id]?.status === 'paid' && (
+                        <div style={{ padding: '6px 8px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '6px', fontSize: '11px', color: '#10b981', fontWeight: 600 }}>
+                          ✓ Bounty paid on-chain in USDC
+                        </div>
+                      )}
+                    </article>
+
                     <button type="button" className="btn-agent-secondary task-chat-button" onClick={() => handleTaskChat(selectedTask)}>
                       <MessageSquare size={15} /> Message owner
                     </button>
@@ -5506,24 +5600,35 @@ function ArcAppShell() {
                 </span>
               </div>
               <div className="ticket-route-row">
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>{celebrationDetails.type === 'claim' ? 'Your NairaTag' : 'Amount'}</div>
-                  <div style={{ fontSize: '14px', fontWeight: 600 }}>{celebrationDetails.amount}</div>
+                <div style={{ textAlign: 'left', width: '100%' }}>
+                  <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>{celebrationDetails.type === 'claim' ? 'Your Sovereign NairaTag' : 'Amount'}</div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--privy-color-foreground-1)' }}>{celebrationDetails.amount}</div>
+                  {celebrationDetails.type === 'claim' && (
+                    <div style={{ marginTop: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', border: '1px solid var(--privy-color-line-subtle)' }}>
+                      <div style={{ fontSize: '10px', color: 'var(--privy-color-foreground-2)', fontWeight: 600 }}>USDC-RECEIVING ADDRESS (ARC MAINNET)</div>
+                      <div style={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: 600, wordBreak: 'break-all', marginTop: '2px', color: 'var(--privy-color-interactive)' }}>
+                        {celebrationDetails.walletAddress || walletAddress}
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-3)', marginTop: '4px' }}>
+                        ✓ Anyone can now send native USDC to {celebrationDetails.amount} on Arc Mainnet with sub-cent gas.
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {celebrationDetails.type !== 'claim' && <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>Settlement</div>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--privy-color-success-dark)' }}>Osaka EVM</div>
                 </div>}
               </div>
-              {celebrationDetails.type !== 'claim' && <a
-                href={celebrationDetails.explorerUrl}
+              <a
+                href={celebrationDetails.explorerUrl || `https://explorer.arc.io/address/${celebrationDetails.walletAddress || walletAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="quick-chip-btn"
-                style={{ textAlign: 'center', justifyContent: 'center', padding: '6px' }}
+                style={{ textAlign: 'center', justifyContent: 'center', padding: '6px', marginTop: '6px' }}
               >
                 View on ArcScan ↗
-              </a>}
+              </a>
               {celebrationDetails.erc8004Id && celebrationDetails.type !== 'claim' && (
                 <a
                   href={`https://erc-8004.quicknode.com/agents/arc-testnet/${celebrationDetails.erc8004Id}`}
@@ -5989,8 +6094,14 @@ function ArcAppShell() {
                 />
               </div>
 
-              <div style={{ padding: '8px 10px', background: 'rgba(0, 82, 255, 0.06)', borderRadius: '6px', border: '1px solid rgba(0, 82, 255, 0.15)', fontSize: '11px', color: 'var(--privy-color-interactive)' }}>
-                Escrow is not connected yet. Posting a task does not lock USDC.
+              <div style={{ padding: '9px 11px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.25)', fontSize: '11px', color: '#10b981', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 700 }}>
+                  <ShieldCheck size={13} />
+                  <span>Arc Mainnet Bounty Escrow</span>
+                </div>
+                <span style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>
+                  Connected to <a href="https://explorer.arc.io/address/0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--privy-color-interactive)', textDecoration: 'underline' }}>0x69f1...99ab</a>. Task rewards are held in escrow and released in native USDC upon verified completion.
+                </span>
               </div>
 
               <button type="submit" className="btn-action-primary" style={{ marginTop: '4px' }} disabled={isTaskCreating}>

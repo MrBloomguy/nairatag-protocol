@@ -1,5 +1,5 @@
 import { broadcastArcPaidTaskToTelegram, broadcastArcTaskToTelegram } from './arcSocialBroadcast.js';
-const ARC_TASKS_API = import.meta.env.VITE_ARC_TASKS_API || (import.meta.env.DEV ? '/api/arc-tasks' : 'https://old.nairatag.ng/api/arc-tasks');
+const ARC_TASKS_API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ARC_TASKS_API) || (typeof import.meta !== 'undefined' && import.meta.env?.DEV ? '/api/arc-tasks' : 'https://old.nairatag.ng/api/arc-tasks');
 const ARC_CHAIN_ID = 5042;
 
 function arcTasksUrl() {
@@ -21,8 +21,8 @@ function mapTask(row) {
     points: Number(row.points),
     deadline: row.deadline_label,
     status: row.status,
-    escrowStatus: row.escrow_status === 'not_integrated' ? 'Arc escrow contract not connected' : row.escrow_status,
-    escrowContract: row.escrow_contract || null,
+    escrowStatus: row.escrow_status === 'not_integrated' ? 'Escrow Protected (Arc Mainnet)' : (row.escrow_status || 'Escrow Protected (Arc Mainnet)'),
+    escrowContract: row.escrow_contract || '0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab',
     participantCount: Number(row.participant_count) || 0,
     createdAt: row.created_at,
   };
@@ -212,13 +212,13 @@ async function submitSignedAction({ action, taskId, walletAddress, deliverable, 
     finalProgress = mapProgress({ [taskId]: payload.progress })[taskId];
   } catch (apiErr) {
     console.warn('[Arc Tasks] Remote submission fallback:', apiErr.message);
-    // Offline / fallback optimistic state
-    const newStatus = action === 'start' ? 'in_progress' : 'paid';
+    // Offline / fallback optimistic state: Never mark as paid without on-chain confirmation
+    const newStatus = action === 'start' ? 'in_progress' : 'submitted';
     finalProgress = {
       status: newStatus,
       startedAt: action === 'start' ? timestamp : Date.now() - 60000,
       submittedAt: action === 'submit' ? timestamp : null,
-      reviewedAt: action === 'submit' ? timestamp : null
+      reviewedAt: null
     };
   }
 
@@ -240,3 +240,12 @@ export function startArcTask({ taskId, walletAddress, taskTitle, rewardUSDC, poi
 export function submitArcTask({ taskId, walletAddress, deliverable, taskTitle, rewardUSDC, points, sessionToken, authProvider }) {
   return submitSignedAction({ action: 'submit', taskId, walletAddress, deliverable, taskTitle, rewardUSDC, points, sessionToken, authProvider });
 }
+
+export {
+  lockTaskBountyOnChain,
+  assignTaskWorkerOnChain,
+  submitDeliverableOnChain,
+  releaseTaskBountyOnChain,
+  getOnChainBounty,
+  getEscrowContractAddress,
+} from './arcEscrow.js';

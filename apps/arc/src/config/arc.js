@@ -79,14 +79,17 @@ export const ARC_USDC_DECIMALS = 6;
  */
 export const ARC_MAINNET_REGISTRY_ADDRESS = '0xb3a2d06ead0a889485a844a63be309c4df4b17b3';
 export const ARC_MAINNET_RESOLVER_ADDRESS = '0xf46dc708be8391090b83fb9a5d54c4a568bd64f3';
+export const ARC_MAINNET_ESCROW_ADDRESS = '0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab';
 
 export const ARC_TESTNET_REGISTRY_ADDRESS = '0x034f64b644988406ded382ebabb5c981bd19684a';
 export const ARC_TESTNET_RESOLVER_ADDRESS = '0xaee1af632006a5062accdb74f73930439b76efbf';
+export const ARC_TESTNET_ESCROW_ADDRESS = '0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab';
 
 export const isArcMainnet = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_ARC_NETWORK) || 'mainnet') === 'mainnet';
 
 export const ARC_NAIRATAG_REGISTRY_ADDRESS = isArcMainnet ? ARC_MAINNET_REGISTRY_ADDRESS : ARC_TESTNET_REGISTRY_ADDRESS;
 export const ARC_NAIRATAG_RESOLVER_ADDRESS = isArcMainnet ? ARC_MAINNET_RESOLVER_ADDRESS : ARC_TESTNET_RESOLVER_ADDRESS;
+export const ARC_NAIRATAG_ESCROW_ADDRESS = isArcMainnet ? ARC_MAINNET_ESCROW_ADDRESS : ARC_TESTNET_ESCROW_ADDRESS;
 
 /**
  * Arc Protocol Constants & Predeployed Infrastructure
@@ -329,6 +332,154 @@ export const ERC8004_VALIDATION_ABI = [
       { name: 'responseHash', type: 'bytes32' },
       { name: 'tag', type: 'string' },
       { name: 'lastUpdate', type: 'uint256' },
+    ],
+  },
+];
+
+/**
+ * NairaTagBountyEscrow ABI
+ * Deployed on Arc Mainnet at 0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab
+ */
+export const NAIRATAG_BOUNTY_ESCROW_ABI = [
+  {
+    type: 'function',
+    name: 'lockBounty',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'id', type: 'bytes32' },
+      { name: 'creatorTag', type: 'string' },
+      { name: 'token', type: 'address' },
+      { name: 'reward', type: 'uint256' },
+      { name: 'deadline', type: 'uint64' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'assignAgent',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'id', type: 'bytes32' },
+      { name: 'assignee', type: 'address' },
+      { name: 'assigneeTag', type: 'string' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'submitDeliverable',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'id', type: 'bytes32' },
+      { name: 'deliverableHash', type: 'bytes32' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'releaseBounty',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'id', type: 'bytes32' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'refundBounty',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'id', type: 'bytes32' },
+    ],
+    outputs: [],
+  },
+  {
+    type: 'function',
+    name: 'getBounty',
+    stateMutability: 'view',
+    inputs: [{ name: 'id', type: 'bytes32' }],
+    outputs: [
+      {
+        name: '',
+        type: 'tuple',
+        components: [
+          { name: 'id', type: 'bytes32' },
+          { name: 'creator', type: 'address' },
+          { name: 'creatorTag', type: 'string' },
+          { name: 'token', type: 'address' },
+          { name: 'reward', type: 'uint256' },
+          { name: 'assignee', type: 'address' },
+          { name: 'assigneeTag', type: 'string' },
+          { name: 'deadline', type: 'uint64' },
+          { name: 'status', type: 'uint8' },
+          { name: 'deliverableHash', type: 'bytes32' },
+        ],
+      },
+    ],
+  },
+  {
+    type: 'function',
+    name: 'bounties',
+    stateMutability: 'view',
+    inputs: [{ name: '', type: 'bytes32' }],
+    outputs: [
+      { name: 'id', type: 'bytes32' },
+      { name: 'creator', type: 'address' },
+      { name: 'creatorTag', type: 'string' },
+      { name: 'token', type: 'address' },
+      { name: 'reward', type: 'uint256' },
+      { name: 'assignee', type: 'address' },
+      { name: 'assigneeTag', type: 'string' },
+      { name: 'deadline', type: 'uint64' },
+      { name: 'status', type: 'uint8' },
+      { name: 'deliverableHash', type: 'bytes32' },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'BountyLocked',
+    inputs: [
+      { name: 'id', type: 'bytes32', indexed: true },
+      { name: 'creator', type: 'address', indexed: true },
+      { name: 'creatorTag', type: 'string', indexed: false },
+      { name: 'token', type: 'address', indexed: false },
+      { name: 'reward', type: 'uint256', indexed: false },
+      { name: 'deadline', type: 'uint64', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'AgentAssigned',
+    inputs: [
+      { name: 'id', type: 'bytes32', indexed: true },
+      { name: 'assignee', type: 'address', indexed: true },
+      { name: 'assigneeTag', type: 'string', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'DeliverableSubmitted',
+    inputs: [
+      { name: 'id', type: 'bytes32', indexed: true },
+      { name: 'deliverableHash', type: 'bytes32', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'BountyReleased',
+    inputs: [
+      { name: 'id', type: 'bytes32', indexed: true },
+      { name: 'recipient', type: 'address', indexed: true },
+      { name: 'amount', type: 'uint256', indexed: false },
+    ],
+  },
+  {
+    type: 'event',
+    name: 'BountyRefunded',
+    inputs: [
+      { name: 'id', type: 'bytes32', indexed: true },
+      { name: 'creator', type: 'address', indexed: true },
+      { name: 'amount', type: 'uint256', indexed: false },
     ],
   },
 ];

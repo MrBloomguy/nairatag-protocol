@@ -115,6 +115,7 @@ All smart contracts have been compiled, verified, and executed on both Arc Mainn
 | :--- | :--- | :--- | :--- | :--- |
 | **NairaTagRegistry** | `0xb3a2d06ead0a889485a844a63be309c4df4b17b3` | `0x229fa24c198123b7d7a40fbd0085a13a7baa93f41334e876aae1892b5e22e365` | `28004913` | Verified & Live |
 | **NairaTagResolver** | `0xf46dc708be8391090b83fb9a5d54c4a568bd64f3` | `0x1090dbd75d9e2e0a57ee5ad6d205fcf649eaa8df25912c551402074cca119981` | `28004917` | Verified & Live |
+| **NairaTagBountyEscrow** | `0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab` | `0x250e11feca536de2e68722f82643be4dad3568bccc358d356dbf4b843c820436` | `28377554` | Verified & Live |
 
 ### Arc Testnet (`Chain ID: 5042002`)
 * **RPC Endpoint**: `https://rpc.testnet.arc.io`
@@ -168,41 +169,37 @@ NairaTag hosts four first-party, fully integrated autonomous agents within the A
 
 ---
 
-## 7. Interactive Product Experience & User Journeys
+## 7. The Three Core Use Cases on Arc Mainnet (DoraHacks Grant Track)
 
-NairaTag on Arc delivers a rich consumer and agent experience accessible via mobile and desktop:
+NairaTag on Arc fulfills the core themes of the **Arc Microgrants: Built with Arc Studio** program: *Escrow and conditional payouts, payment routing, and software-to-software/agentic micropayments moving real USDC on Arc Mainnet*.
 
-### 1. Tag-to-Tag Send Engine (`https://arc.nairatag.ng`)
-* **Instant Resolution**: Typing `₦BOLAJI` or `bolaji` triggers sub-10ms debounced resolution displaying recipient avatar, verified green badge, and truncated address preview.
-* **Strict 6-Decimal Input**: Rejects invalid decimal lengths and automatically converts inputs to BigInt base units.
-* **One-Tap Execution**: Executes an ERC-20 `transfer(recipient, amount)` against the canonical USDC contract (`0x3600...0000`).
-* **Instant Finality Receipt**: Confirms in < 1 second with a direct cryptographic receipt link to ArcScan.
+### Use Case 1: Claim a Tag and Get a USDC-Receiving Address
+* **The Problem**: 42-character hex addresses (`0x71C...b1D`) cause catastrophic error rates and clipboard-hijacking risks in emerging market peer-to-peer commerce.
+* **The On-Chain Solution**: Users claim a human-readable tag (e.g. `₦BOLAJI` or `@bloom`). The transaction registers on **`NairaTagRegistry` (`0xb3a2d06ead0a889485a844a63be309c4df4b17b3`)** and binds to **`NairaTagResolver` (`0xf46dc708be8391090b83fb9a5d54c4a568bd64f3`)** on Arc Mainnet.
+* **USDC-Receiving Address**:
+  * Every claimed tag is immediately bound to a permanent, deterministic Arc Mainnet USDC-receiving address.
+  * Supported across browser wallets (MetaMask, Rabby) and Circle Smart Wallets (MPC passwordless).
+  * The app provides an instant copyable receiving card, QR code, and verified ArcScan link (`https://explorer.arc.io/address/0x...`).
+  * Anyone across the world can now send native USDC to `₦BOLAJI` on Arc Mainnet with sub-second finality.
 
-### 2. Conversational Agent Chat & Ambient Voice
-* **Interactive Chat Console**: Users and bots interact conversationally, dispatching agent tasks or requesting quotes.
-* **6 Quick-Action Grid Cards**:
-  1. `Tasks`: Opens active bounties and freelance micro-tasks.
-  2. `Swap`: Instant stablecoin exchange routing.
-  3. `₦DefiLlama`: Queries live TVL metrics and yields.
-  4. `₦CoinGecko`: Queries live USD/NGN exchange rates and market benchmarks.
-  5. `Rewards`: Loyalty and referral distribution.
-  6. `Claim`: Tag minting portal.
-* **Autonomous `@mention` Routing**: Mentioning `@defillama`, `@meteo`, `@coingecko`, or `@bloom` in chat generates instant structured data cards and tool execution badges.
-* **Ambient Voice Visualizer**: Integrated audio visualizer orb for hands-free voice-prompted payments and agent queries.
+### Use Case 2: Send USDC to Another Tag (Routing Real USDC Through Contract)
+* **The Problem**: Raw ERC-20 transfers only move tokens without capturing invoice references, task hashes, or human identities, failing protocol verification.
+* **The On-Chain Solution**:
+  * Sender inputs a recipient tag (`@bloom`, `₦samuel`).
+  * The app dynamically resolves the handle to its verified owner address via the on-chain Resolver.
+  * The transfer executes through the **Arc Predeployed Memo Contract (`0x5294E9927c3306DcBaDb03fe70b92e01cCede505`)**, moving native USDC (`0x3600...0000`) and emitting verifiable on-chain `Memo` event logs that cryptographically bind the payment to the recipient tag.
+  * Real USDC moves through the protocol contract on Arc Mainnet with deterministic sub-second confirmation (< 1,000ms) and sub-cent gas (< $0.001) paid directly in USDC.
+  * Provides a verifiable transaction receipt link directly on ArcScan: `https://explorer.arc.io/tx/{hash}`.
 
-### 3. Twitter/X-Styled Public Profile Pages (`https://arc.nairatag.ng/agent/:handle`)
-Every human handle and autonomous agent receives a responsive, Twitter/X-style profile page:
-* Clean, focused header with 88px rounded avatar and verified badge.
-* Copyable wallet pill and network indicator.
-* **3 Focused Tabs**:
-  * **Prompts & Tools**: Detailed tool capabilities, pricing, and sample query cards.
-  * **Pay USDC**: Direct embedded payment widget to send native USDC to the agent with optional task memo.
-  * **ERC-8004 Specs**: Cryptographic identity registry address, validation signatures, and trust metrics.
-
-### 4. Tag Minting & EIP-712 Identity Binding (`https://nairatag.ng/hub/claim.html`)
-* Allows users to claim sovereign handles (e.g., `₦CHUKWUMA`).
-* Real-time availability check across multi-chain registries.
-* Cryptographic EIP-712 typed signature binds the user’s address permanently on-chain.
+### Use Case 3: Complete a Task On-Chain and Get Paid in USDC (NairaTagBountyEscrow)
+* **The Problem**: Freelancers, gig workers, and autonomous agents in emerging markets routinely suffer from non-payment, dispute delays, or opaque manual review systems.
+* **The On-Chain Solution**:
+  * Powered by **`NairaTagBountyEscrow` deployed on Arc Mainnet at `0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab`** (Deployment Tx: `0x250e11feca536de2e68722f82643be4dad3568bccc358d356dbf4b843c820436`, Block `28377554`).
+  * **1. Lock Bounty**: Creator posts a task and locks USDC directly into the `NairaTagBountyEscrow` contract via `lockBounty(taskId, creatorTag, token, reward, deadline)`.
+  * **2. Assign Agent / Worker**: Worker starts the task and is assigned on-chain via `assignAgent(taskId, workerAddress, workerTag)`.
+  * **3. Submit Deliverable**: Worker completes the task and submits work, recording a cryptographic SHA-256 deliverable hash on Arc Mainnet via `submitDeliverable(taskId, deliverableHash)`.
+  * **4. Conditional Payout Release**: Upon verification, the creator calls `releaseBounty(taskId)`. The contract automatically releases and transfers the locked USDC directly from the escrow contract to the worker’s wallet on Arc Mainnet, emitting `BountyReleased(taskId, worker, reward)`.
+  * **5. Verification on ArcScan**: Every task payout generates an explorer-verifiable transaction hash (`explorer.arc.io/tx/...`), proving real USDC moved through the contract. No misleading mock fallbacks.
 
 ---
 

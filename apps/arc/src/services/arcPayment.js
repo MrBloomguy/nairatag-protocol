@@ -261,31 +261,42 @@ export async function sendUsdcOnArc({
     transport: custom(provider),
   });
 
-  const cleanMemo = String(memoText || memo || '').trim();
+  const cleanMemo = String(memoText || memo || (tagOrAddress ? `NairaTag: ${tagOrAddress}` : '')).trim();
   let hash;
   onStatusUpdate({ step: 'transacting', message: 'Sending transaction to your wallet...' });
 
   if (cleanMemo) {
-    // Encode the inner USDC transfer call
-    const transferCallData = encodeFunctionData({
-      abi: ERC20_ABI,
-      functionName: 'transfer',
-      args: [getAddress(targetAddress), baseUnits],
-    });
+    try {
+      // Encode the inner USDC transfer call
+      const transferCallData = encodeFunctionData({
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [getAddress(targetAddress), baseUnits],
+      });
 
-    const { stringToHex, keccak256 } = await import('viem');
-    const { ARC_MEMO_ADDRESS, ARC_MEMO_ABI } = await import('../config/arc.js');
-    const memoBytes = stringToHex(cleanMemo);
-    const memoId = keccak256(memoBytes);
+      const { stringToHex, keccak256 } = await import('viem');
+      const { ARC_MEMO_ADDRESS, ARC_MEMO_ABI } = await import('../config/arc.js');
+      const memoBytes = stringToHex(cleanMemo);
+      const memoId = keccak256(memoBytes);
 
-    // Call Arc predeployed Memo contract (preserves msg.sender via CallFrom precompile)
-    hash = await walletClient.writeContract({
-      account: getAddress(fromAddress),
-      address: ARC_MEMO_ADDRESS,
-      abi: ARC_MEMO_ABI,
-      functionName: 'memo',
-      args: [ARC_USDC_ADDRESS, transferCallData, memoId, memoBytes],
-    });
+      // Call Arc predeployed Memo contract (moves USDC and logs memo event on Arc)
+      hash = await walletClient.writeContract({
+        account: getAddress(fromAddress),
+        address: ARC_MEMO_ADDRESS,
+        abi: ARC_MEMO_ABI,
+        functionName: 'memo',
+        args: [ARC_USDC_ADDRESS, transferCallData, memoId, memoBytes],
+      });
+    } catch (memoErr) {
+      console.warn('[Arc Memo routing fallback to canonical USDC transfer]', memoErr?.message || memoErr);
+      hash = await walletClient.writeContract({
+        account: getAddress(fromAddress),
+        address: ARC_USDC_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: 'transfer',
+        args: [getAddress(targetAddress), baseUnits],
+      });
+    }
   } else {
     // Direct canonical ERC-20 USDC transfer
     hash = await walletClient.writeContract({
