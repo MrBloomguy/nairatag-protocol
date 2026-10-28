@@ -82,18 +82,19 @@ export default defineConfig(({ mode }) => {
         'canvas-confetti',
         'viem',
         'viem/chains',
+        // Circle's Wallet SDK is CommonJS and requires Firebase's browser modules.
+        // Prebundle it so those imports are available without a runtime `require`.
+        '@circle-fin/w3s-pw-web-sdk',
       ],
       exclude: [
         '@circle-fin/swap-kit',
         '@circle-fin/adapter-viem-v2',
-        '@circle-fin/w3s-pw-web-sdk',
       ],
     },
     build: {
       minify: process.env.VERCEL ? 'oxc' : false,
       chunkSizeWarningLimit: 800,
       rollupOptions: {
-        external: [/^firebase(\/.*)?$/],
         output: {
           manualChunks(id) {
             if (id.includes('node_modules/viem')) return 'viem';
