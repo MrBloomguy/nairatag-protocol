@@ -1,0 +1,125 @@
+{
+  "agentRegistrations": [
+    {
+      "tag": "bloom",
+      "canonicalTag": "₦BLOOM",
+      "address": "0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26",
+      "claimTx": "0xea33f0772ea8fc3703c31854c6d4ffa9da0cc20b190a19918488fa1e32cdc584",
+      "setAddrTx": "0xfa9b031829f49548e55a07d3d9ecf694593780763ff271df338293e65603305b"
+    },
+    {
+      "tag": "defillama",
+      "canonicalTag": "₦DEFILLAMA",
+      "address": "0xbfA1f73F632a54bFd04e9925dB6006135FcA6Ce6",
+      "claimTx": "0x6957b604fa10e7a79263f989231a5fc8ecc5fa37c8477aae4eb3c5fbe56640d8",
+      "setAddrTx": "0x26ddbcd7f51d6e24f5b05b5152fafdedf5279d4ad608da1d4bcb79782d4f948e"
+    },
+    {
+      "tag": "meteo",
+      "canonicalTag": "₦METEO",
+      "address": "0x235d0Aa81F1c375c3325214f2dd7F205487eae36",
+      "claimTx": "0x9a45240e8f8f78016113a2468c611c89d005f1101522800bf2ad9183563fb10d",
+      "setAddrTx": "0xf1bc9d2c2d63bb34338e7b0c08bf1fc99775d0e22650cc35db1e78497d2e4476"
+    },
+    {
+      "tag": "coingecko",
+      "canonicalTag": "₦COINGECKO",
+      "address": "0x1abfC727335489f2914Effd7e19C19C309850Ef8",
+      "claimTx": "0x00f59a3ce79b4fec86e787662466a7ea44b176a6c6c9fbb2a1b497caa7acd59f",
+      "setAddrTx": "0x920564d84854f4356ada215f971db06d9c1fe1fad04863ede205b23cb80767b7"
+    }
+  ],
+  "agentTransfers": [
+    {
+      "fromTag": "₦NAIRATAG",
+      "fromAddress": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+      "toTag": "₦BLOOM",
+      "toAddress": "0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26",
+      "amount": "0.000001 USDC",
+      "baseUnits": "1",
+      "txHash": "0x05743478b00c2f4ea1cbd59caa6d5f6f6edf0566f46c50428da63eeab026c5d4",
+      "blockNumber": "28385379",
+      "memo": "₦nairatag agent micropayment to ₦BLOOM"
+    },
+    {
+      "fromTag": "₦NAIRATAG",
+      "fromAddress": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+      "toTag": "₦DEFILLAMA",
+      "toAddress": "0xbfA1f73F632a54bFd04e9925dB6006135FcA6Ce6",
+      "amount": "0.000001 USDC",
+      "baseUnits": "1",
+      "txHash": "0xe6886767219939192c6410f18cb35a9324f362c74501bd74064b807d4cb090e0",
+      "blockNumber": "28385381",
+      "memo": "₦nairatag agent micropayment to ₦DEFILLAMA"
+    },
+    {
+      "fromTag": "₦NAIRATAG",
+      "fromAddress": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+      "toTag": "₦METEO",
+      "toAddress": "0x235d0Aa81F1c375c3325214f2dd7F205487eae36",
+      "amount": "0.000001 USDC",
+      "baseUnits": "1",
+      "txHash": "0xccd20d6265e7592548f301b67e5a90ff5bbcc1f64b2b8709f735af6dca7be838",
+      "blockNumber": "28385383",
+      "memo": "₦nairatag agent micropayment to ₦METEO"
+    },
+    {
+      "fromTag": "₦NAIRATAG",
+      "fromAddress": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+      "toTag": "₦COINGECKO",
+      "toAddress": "0x1abfC727335489f2914Effd7e19C19C309850Ef8",
+      "amount": "0.000001 USDC",
+      "baseUnits": "1",
+      "txHash": "0x743ee8a1abaa72921facfd63d20b2c8113bec38527ad31cad6fbcab34287bf54",
+      "blockNumber": "28385385",
+      "memo": "₦nairatag agent micropayment to ₦COINGECKO"
+    }
+  ],
+  "escrowTasks": [
+    {
+      "title": "Verify Arc Mainnet Sub-Second Settlement & Tag Resolution",
+      "taskId": "0x4e5f288d76666a8449484c58e8e2f0a8b70cccbc6efd3cffa6e1f40da683ea80",
+      "creator": "₦NAIRATAG",
+      "creatorAddress": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+      "worker": "₦BLOOM",
+      "workerAddress": "0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26",
+      "reward": "0.00001 USDC",
+      "status": "Released / Paid Out",
+      "lockTx": "0x936d0299f23a6721d45a56f9ce29bd3f691e09defd927cf7836e3285b0791853",
+      "assignTx": "0xb7f1cdecd928fef0bf963dff67b3d40f6a986b98759aa6d3274fcda3daf270a1",
+      "submitTx": "0x6867a25bd67920eb830e4a8e36b8e9912a252528613044e396377b6b0cad389c",
+      "releaseTx": "0x05c44d7a279ad6e5567ad1d178f9dbef12aae546115247b5dc5ee61287b00baf",
+      "blockNumber": "28385398"
+    },
+    {
+      "title": "Compute Real-Time Weather Logistics Risk for Nigerian Delivery Hubs",
+      "taskId": "0x137a8ab98f3473cb88d7d0b65c92f3a9bf09840f266efe2a7483acbbe4fa87e5",
+      "creator": "₦NAIRATAG",
+      "creatorAddress": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+      "worker": "₦METEO",
+      "workerAddress": "0x235d0Aa81F1c375c3325214f2dd7F205487eae36",
+      "reward": "0.00001 USDC",
+      "status": "Released / Paid Out",
+      "lockTx": "0xee9d3d3a0a1eaae45b91045be3cd6892e85681de99ec97a58fcf14812238dbe1",
+      "assignTx": "0xd9dd28753be86a0db0878d589b0bc9d452a95efbed19ad4b06b54717c928ae5e",
+      "submitTx": "0x36acca6415c7894a538f4e5220fb11b56bf73875025095bd41f8d8dbcfef600b",
+      "releaseTx": "0xc67ac0d1d1700ace7260140082e3cdc70760520490b77cd4197a53d0bf6b5b5c",
+      "blockNumber": "28385406"
+    },
+    {
+      "title": "Supply DeFi TVL & Protocol Liquidity Rankings for Arc Agents",
+      "taskId": "0x246c1ab416ac3bc70c2d17009e22cf9404e7ef1e26235e03aee1f143bd170f86",
+      "creator": "₦NAIRATAG",
+      "creatorAddress": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+      "worker": "Open Bounty (Any Verified Worker)",
+      "workerAddress": "0x0000000000000000000000000000000000000000",
+      "reward": "0.00001 USDC",
+      "status": "Open (Locked in Escrow)",
+      "lockTx": "0xf5b31d1beb70d2bb97f7345d46729174bdb389ce36242eea2f61587be40a867c",
+      "assignTx": null,
+      "submitTx": null,
+      "releaseTx": null,
+      "blockNumber": "28385409"
+    }
+  ]
+}

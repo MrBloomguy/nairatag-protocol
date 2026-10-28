@@ -19,19 +19,60 @@
       "txHash": "0x250e11feca536de2e68722f82643be4dad3568bccc358d356dbf4b843c820436",
       "block": "28377554",
       "deployedAt": "2026-10-28T22:35:10.841Z"
+    },
+    "ArcMemoPrecompile": {
+      "address": "0x5294E9927c3306DcBaDb03fe70b92e01cCede505",
+      "type": "precompiled"
     }
   },
   "officialAgents": {
     "nairatag": {
       "tag": "nairatag",
       "canonicalTag": "₦NAIRATAG",
+      "role": "Official In-House Flagship Platform Agent",
       "owner": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
+      "address": "0x653f773C9062e71A6554b42a9525fcD47fCC1693",
       "nodeHash": "0x44e39f7d0c916fe1be55ac17a3748f3df5fda5be09e7f85b592043c37cce4afb",
       "claimTxHash": "0x51d9daafb3ad6afd2492bf38ac317314a808c69fd19b2da8e7d384b7fde800b2",
       "resolverSetAddrTxHash": "0x85236ad1bda7e4e818e6f59c3a6a18f50421cff1e68d15786415a664983999e1",
       "resolverSetTextTxHash": "0xa5531ec41d0e4c7411bc67ca416b6d6b86193a533737c0a13c8cb0daffc6ba14",
-      "block": "28383417",
-      "claimedAt": "2026-10-28T23:24:50.000Z"
+      "block": "28383417"
+    },
+    "bloom": {
+      "tag": "bloom",
+      "canonicalTag": "₦BLOOM",
+      "role": "Core Settlement Assistant & Oracle",
+      "owner": "0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26",
+      "address": "0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26",
+      "claimTxHash": "0xea33f0772ea8fc3703c31854c6d4ffa9da0cc20b190a19918488fa1e32cdc584",
+      "resolverSetAddrTxHash": "0xfa9b031829f49548e55a07d3d9ecf694593780763ff271df338293e65603305b"
+    },
+    "defillama": {
+      "tag": "defillama",
+      "canonicalTag": "₦DEFILLAMA",
+      "role": "DeFi TVL & Liquidity Oracle",
+      "owner": "0xbfA1f73F632a54bFd04e9925dB6006135FcA6Ce6",
+      "address": "0xbfA1f73F632a54bFd04e9925dB6006135FcA6Ce6",
+      "claimTxHash": "0x6957b604fa10e7a79263f989231a5fc8ecc5fa37c8477aae4eb3c5fbe56640d8",
+      "resolverSetAddrTxHash": "0x26ddbcd7f51d6e24f5b05b5152fafdedf5279d4ad608da1d4bcb79782d4f948e"
+    },
+    "meteo": {
+      "tag": "meteo",
+      "canonicalTag": "₦METEO",
+      "role": "Logistics Weather & Delivery Risk Analyzer",
+      "owner": "0x235d0Aa81F1c375c3325214f2dd7F205487eae36",
+      "address": "0x235d0Aa81F1c375c3325214f2dd7F205487eae36",
+      "claimTxHash": "0x9a45240e8f8f78016113a2468c611c89d005f1101522800bf2ad9183563fb10d",
+      "resolverSetAddrTxHash": "0xf1bc9d2c2d63bb34338e7b0c08bf1fc99775d0e22650cc35db1e78497d2e4476"
+    },
+    "coingecko": {
+      "tag": "coingecko",
+      "canonicalTag": "₦COINGECKO",
+      "role": "FX Benchmark & Spot Price Oracle",
+      "owner": "0x1abfC727335489f2914Effd7e19C19C309850Ef8",
+      "address": "0x1abfC727335489f2914Effd7e19C19C309850Ef8",
+      "claimTxHash": "0x00f59a3ce79b4fec86e787662466a7ea44b176a6c6c9fbb2a1b497caa7acd59f",
+      "resolverSetAddrTxHash": "0x920564d84854f4356ada215f971db06d9c1fe1fad04863ede205b23cb80767b7"
     }
   }
 }

@@ -118,6 +118,7 @@ const MARKETPLACE_AGENTS = [
   {
     id: 'agent_sovereign_bloom',
     tag: 'bloom',
+    owner: '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26',
     canonicalTag: '₦BLOOM',
     name: 'NairaTag',
     displayName: 'NairaTag',
@@ -147,6 +148,7 @@ const MARKETPLACE_AGENTS = [
   {
     id: 'agent_marketplace_defillama',
     tag: 'defillama',
+    owner: '0xbfA1f73F632a54bFd04e9925dB6006135FcA6Ce6',
     canonicalTag: '₦DEFILLAMA',
     name: 'DefiLlama DeFi Oracle',
     displayName: 'DefiLlama DeFi Oracle',
@@ -174,6 +176,7 @@ const MARKETPLACE_AGENTS = [
   {
     id: 'agent_marketplace_meteo',
     tag: 'meteo',
+    owner: '0x235d0Aa81F1c375c3325214f2dd7F205487eae36',
     canonicalTag: '₦METEO',
     name: 'Open-Meteo Logistics Weather',
     displayName: 'Open-Meteo Logistics Weather',
@@ -201,6 +204,7 @@ const MARKETPLACE_AGENTS = [
   {
     id: 'agent_marketplace_coingecko',
     tag: 'coingecko',
+    owner: '0x1abfC727335489f2914Effd7e19C19C309850Ef8',
     canonicalTag: '₦COINGECKO',
     name: 'CoinGecko FX Benchmark',
     displayName: 'CoinGecko FX Benchmark',
