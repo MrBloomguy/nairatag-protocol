@@ -42,6 +42,15 @@ export default defineConfig(({ mode }) => {
           replacement: path.resolve(__dirname, 'src/shims/circle-social-jwt.js'),
         },
         {
+          // Circle Web SDK uses Firebase only for Apple social login.
+          find: /^firebase\/app$/,
+          replacement: path.resolve(__dirname, 'src/shims/circle-firebase-app.js'),
+        },
+        {
+          find: /^firebase\/auth$/,
+          replacement: path.resolve(__dirname, 'src/shims/circle-firebase-auth.js'),
+        },
+        {
           find: /^@circle-fin\/swap-kit$/,
           replacement: path.resolve(__dirname, 'src/shims/circle-swap-kit.js'),
         },
