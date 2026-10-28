@@ -250,7 +250,7 @@ const server = http.createServer((req, res) => {
 
   // Clean route mappings (without /hub/ prefix)
   const cleanRoutes = {
-    '/': '/hub/claim.html',
+    '/': '/hub/index.html',
     '/claim': '/hub/claim.html',
     '/agent': '/hub/agent.html',
     '/bounties': '/hub/tasks.html',

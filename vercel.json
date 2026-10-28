@@ -278,12 +278,12 @@
       "dest": "/api/hub-api"
     },
     {
-      "src": "/(theme\\.css|theme\\.js|notifications\\.css|notifications\\.js|tag-avatar\\.js|tag-card-generator\\.js|metal-bundle\\.js|PoppinsRounded-[^/]+)",
+      "src": "/(style\\.css|hero\\.css|app\\.js|theme\\.css|theme\\.js|notifications\\.css|notifications\\.js|tag-avatar\\.js|tag-card-generator\\.js|metal-bundle\\.js|PoppinsRounded-[^/]+)",
       "dest": "/hub/$1"
     },
     {
       "src": "/",
-      "dest": "/hub/claim.html"
+      "dest": "/hub/index.html"
     },
     {
       "src": "/(.*)",
