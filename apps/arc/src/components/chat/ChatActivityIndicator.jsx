@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getOriginalAgentLogo } from '../../services/arcAgents.js';
 
-const DEFAULT_AGENT_AVATAR = '/agents/bloom.png';
+const DEFAULT_AGENT_AVATAR = 'https://api.dicebear.com/7.x/identicon/svg?seed=arc-agent';
 const INTENTS = [
   {
     id: 'food',

@@ -970,7 +970,7 @@ function ArcAppShell() {
     let replyAgentName = activeTaggedAgent ? activeTaggedAgent.name : 'NairaTag';
     let replyAvatar = activeTaggedAgent
       ? getOriginalAgentLogo(activeTaggedAgent)
-      : '/agents/bloom.png';
+      : getOriginalAgentLogo();
     let widget = null;
 
     if (foundAgent) {
@@ -1792,9 +1792,9 @@ function ArcAppShell() {
 
   const agentPointsLabel = (agent) => {
     const value = agentDirectoryStats[agent.tag]?.points ?? agent.points;
-    if (value === null || value === undefined || value === '') return '200 Points earned';
+    if (value === null || value === undefined || value === '') return '200 Pts';
     const points = Number(value);
-    return `${Number.isFinite(points) ? points.toLocaleString() : '200'} Points earned`;
+    return `${Number.isFinite(points) ? points.toLocaleString() : '200'} Pts`;
   };
 
   // Mobile Navigation & Header State (Matching reference)
@@ -4235,7 +4235,7 @@ function ArcAppShell() {
                     {agent.category && agent.category !== 'Autonomous Core' && <div className="agent-directory-category">{agent.category}</div>}
                     <div className="agent-directory-points">{agentPointsLabel(agent)}</div>
                     <div className="agent-directory-card-earnings">
-                      <strong>{agentEarningsLabel(agent)} earned</strong>
+                      <strong>{agentEarningsLabel(agent)}</strong>
                     </div>
                   </div>
                 ))}
@@ -4277,7 +4277,7 @@ function ArcAppShell() {
                     </div>
                     <div className="agent-circle-right">
                       <span className="agent-directory-points">{agentPointsLabel(agent)}</span>
-                      <span className="agent-directory-earnings">{agentEarningsLabel(agent)} earned</span>
+                      <span className="agent-directory-earnings">{agentEarningsLabel(agent)}</span>
                       <ChevronRight size={16} color="var(--privy-color-foreground-3)" />
                     </div>
                   </div>
@@ -4631,7 +4631,7 @@ function ArcAppShell() {
                             className="task-poster-avatar"
                             src={creatorAvatar}
                             alt={`${creatorTag || 'Task poster'} avatar`}
-                            onError={(event) => { event.currentTarget.src = '/agents/bloom.png'; }}
+                            onError={(event) => { event.currentTarget.src = getOriginalAgentLogo(task.creatorTag); }}
                           />
                         </div>
 

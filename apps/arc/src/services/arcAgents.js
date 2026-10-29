@@ -4,30 +4,29 @@ import { getEthereumProvider } from './arcPayment.js';
 const ARC_AGENTS_API = import.meta.env?.VITE_ARC_AGENTS_API || (import.meta.env?.DEV ? '/api/arc-agents' : 'https://old.nairatag.ng/api/arc-agents');
 
 export const KNOWN_AGENT_LOGOS = {
-  nairatag: '/agents/bloom.png',
   defillama: '/agents/defillama.png',
   coingecko: '/agents/coingecko.png',
   meteo: '/agents/meteo.png',
-  bloom: '/agents/bloom.png',
 };
 
 export function getOriginalAgentLogo(agentOrTag) {
-  if (!agentOrTag) return '/agents/bloom.png';
+  if (!agentOrTag) {
+    return `https://api.dicebear.com/7.x/identicon/svg?seed=agent-${Math.random().toString(36).slice(2, 8)}`;
+  }
   if (typeof agentOrTag === 'string') {
     const clean = agentOrTag.trim().replace(/^[₦$@#]/, '').toLowerCase();
     if (KNOWN_AGENT_LOGOS[clean]) return KNOWN_AGENT_LOGOS[clean];
     if (clean.includes('defillama')) return KNOWN_AGENT_LOGOS.defillama;
     if (clean.includes('coingecko')) return KNOWN_AGENT_LOGOS.coingecko;
     if (clean.includes('meteo')) return KNOWN_AGENT_LOGOS.meteo;
-    if (clean.includes('bloom')) return KNOWN_AGENT_LOGOS.bloom;
-    if (agentOrTag.startsWith('http') || agentOrTag.startsWith('/')) return agentOrTag;
-    return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(clean)}`;
+    if ((agentOrTag.startsWith('http') || agentOrTag.startsWith('/')) && !agentOrTag.includes('bloom.png')) return agentOrTag;
+    return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(clean || 'agent')}`;
   }
   const tag = String(agentOrTag.tag || agentOrTag.agentTag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
   if (KNOWN_AGENT_LOGOS[tag]) return KNOWN_AGENT_LOGOS[tag];
-  if (agentOrTag.avatar && !agentOrTag.avatar.includes('dicebear')) return agentOrTag.avatar;
-  if (agentOrTag.avatarUrl && !agentOrTag.avatarUrl.includes('dicebear')) return agentOrTag.avatarUrl;
-  return KNOWN_AGENT_LOGOS[tag] || agentOrTag.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag || 'agent')}`;
+  if (agentOrTag.avatar && !agentOrTag.avatar.includes('dicebear') && !agentOrTag.avatar.includes('bloom.png')) return agentOrTag.avatar;
+  if (agentOrTag.avatarUrl && !agentOrTag.avatarUrl.includes('dicebear') && !agentOrTag.avatarUrl.includes('bloom.png')) return agentOrTag.avatarUrl;
+  return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag || 'agent')}`;
 }
 
 export function mapArcAgentRecord(agent = {}) {
@@ -36,7 +35,8 @@ export function mapArcAgentRecord(agent = {}) {
   const stats = agent.stats && typeof agent.stats === 'object' ? agent.stats : {};
   const metrics = agent.metrics && typeof agent.metrics === 'object' ? agent.metrics : {};
   const usedByCount = agent.usedByCount ?? agent.used_by_count;
-  const resolvedAvatar = KNOWN_AGENT_LOGOS[tag] || (agent.avatarUrl || agent.avatar);
+  const resolvedAvatar = (agent.avatarUrl || agent.avatar);
+  const safeAvatar = resolvedAvatar && !resolvedAvatar.includes('bloom.png') ? resolvedAvatar : null;
   return {
     id: agent.id == null ? null : String(agent.id),
     tag,
@@ -45,7 +45,7 @@ export function mapArcAgentRecord(agent = {}) {
     owner: agent.owner || agent.ownerAddress || agent.owner_address || agent.walletAddress || agent.wallet_address || agent.identity?.owner || null,
     category: String(agent.category || ''),
     role: String(agent.description || agent.role || ''),
-    avatar: resolvedAvatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
+    avatar: safeAvatar || KNOWN_AGENT_LOGOS[tag] || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
     status: String(agent.status || 'unknown').toLowerCase(),
     points: PROTOCOL_AGENT_POINTS[tag] ?? agent.pointsEarned ?? agent.points_earned ?? agent.earnedPoints ?? agent.earned_points ?? agent.protocolPoints ?? agent.protocol_points ?? agent.totalPoints ?? agent.total_points ?? agent.points ?? stats.pointsEarned ?? stats.points_earned ?? stats.points ?? metrics.pointsEarned ?? metrics.points_earned ?? metrics.points ?? null,
     earnings: PROTOCOL_AGENT_POINTS[tag] !== undefined ? 0 : (agent.earnings ?? agent.totalEarnings ?? agent.total_earnings ?? null),
@@ -91,7 +91,7 @@ const MARKETPLACE_AGENTS = [
     displayName: '₦nairatag (Official Protocol Agent)',
     category: 'Core Protocol',
     role: 'Official sovereign in-house AI agent of the NairaTag Network on Arc Mainnet. Orchestrates tag resolution, escrow payouts, and autonomous agent-to-agent USDC transfers.',
-    avatar: '/agents/bloom.png',
+    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=nairatag',
     status: 'active',
     points: 250,
     earnings: 0,
@@ -124,7 +124,7 @@ const MARKETPLACE_AGENTS = [
     displayName: 'NairaTag',
     category: '',
     role: 'Official AI assistant for the NairaTag protocol on Arc. Helps with instant USDC payments, tag lookups, and task rewards.',
-    avatar: '/agents/bloom.png',
+    avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=bloom',
     status: 'active',
     points: 200,
     earnings: 0,
