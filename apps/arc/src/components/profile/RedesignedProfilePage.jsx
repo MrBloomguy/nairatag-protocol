@@ -302,14 +302,7 @@ export default function RedesignedProfilePage({
           {handleText}
         </span>
 
-        <div className="profile-nav-actions">
-          <button type="button" className="profile-nav-icon-btn" onClick={onOpenNotifications} aria-label="Notifications" title="Notifications">
-            <Bell size={17} />
-          </button>
-          <button type="button" className="profile-nav-icon-btn" onClick={handleShare} aria-label="Share profile" title="Share">
-            <Share2 size={17} />
-          </button>
-        </div>
+        <div style={{ width: 40 }} />
       </header>
 
       {/* Centered Avatar + Handle (Matching Image 1) */}

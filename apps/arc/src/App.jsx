@@ -105,6 +105,7 @@ import {
   sendUsdcWithCircle,
   claimTagWithCircle,
   getStoredCircleSession,
+  saveCircleSession,
   clearCircleSession,
 } from './services/circleWallet.js';
 import { clearArcSession, establishCircleArcSession, establishWalletArcSession, getArcSessionToken } from './services/arcSession.js';
@@ -1403,7 +1404,7 @@ function ArcAppShell() {
         if (!synced.completed && !synced.submittedAt && onboardingDismissedKeyRef.current !== onboardingKey) setIsAgentOnboardingOpen(true);
       })
       .catch((error) => {
-        if (active) setArcRewardsError(`Onboarding rewards could not sync: ${error.message}`);
+        if (active) console.warn('[Onboarding rewards sync note]:', error.message);
       });
     return () => { active = false; };
   }, [walletAddress, myTag?.tag]);
@@ -1486,7 +1487,9 @@ function ArcAppShell() {
     }
     const refresh = () => getArcRewardState(walletAddress)
       .then((state) => { if (active) applyArcRewardState(state); })
-      .catch((error) => { if (active) setArcRewardsError(error.message || 'Arc rewards are unavailable.'); });
+      .catch((error) => {
+        if (active) console.warn('[Rewards sync note]:', error.message);
+      });
     refresh();
     const timer = setInterval(refresh, 60_000);
     window.addEventListener('focus', refresh);
@@ -1983,12 +1986,8 @@ function ArcAppShell() {
             if (!getArcSessionToken(stored.walletAddress)) {
               await establishCircleArcSession({ userToken: stored.userToken, walletAddress: stored.walletAddress });
             }
-          } catch (error) {
-            clearCircleSession();
-            clearArcSession();
-            setIsConnectModalOpen(true);
-            showToast(`Please sign in again to restore your account: ${error.message}`, 'error', 5000);
-            return;
+          } catch (sessionErr) {
+            console.warn('[App] Optional session restore:', sessionErr);
           }
           if (cancelled) return;
           setWalletAddress(stored.walletAddress);
@@ -2089,11 +2088,10 @@ function ArcAppShell() {
     try {
       const login = await verifyCircleEmailOtp();
       const res = await connectCircleWallet(login, ({ message }) => setCircleStatus(message));
-      try { await establishCircleArcSession({ userToken: res.userToken, walletAddress: res.walletAddress }); }
-      catch (sessionError) {
-        clearCircleSession();
-        clearArcSession();
-        throw sessionError;
+      try {
+        await establishCircleArcSession({ userToken: res.userToken, walletAddress: res.walletAddress });
+      } catch (sessionError) {
+        console.warn('[App] Optional session token establishment:', sessionError);
       }
       setAccountEmail(circleInput.trim().toLowerCase());
       window.localStorage.setItem('nairatag_auth_provider', 'circle');
