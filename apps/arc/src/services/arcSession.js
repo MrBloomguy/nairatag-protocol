@@ -32,19 +32,31 @@ export async function establishCircleArcSession({ userToken, walletAddress }) {
 }
 
 export async function establishWalletArcSession(walletAddress) {
-  if (!walletAddress) throw new Error('Connect a wallet before signing in.');
+  if (!walletAddress) return null;
   const provider = typeof window !== 'undefined' ? window.ethereum : null;
-  if (!provider?.request) throw new Error('Your wallet sign-in is unavailable. Choose email sign-in or reconnect your wallet.');
-  const challenge = await postAuth({ action: 'wallet_challenge', walletAddress });
-  const signature = await provider.request({ method: 'personal_sign', params: [challenge.message, walletAddress] });
-  const result = await postAuth({
-    action: 'wallet',
-    walletAddress,
-    challengeToken: challenge.challengeToken,
-    signature,
-  });
-  if (!result?.token) throw new Error('Your account session could not be started. Please try again.');
-  return saveSession(result, walletAddress);
+  if (!provider?.request) return null;
+  try {
+    const challenge = await postAuth({ action: 'wallet_challenge', walletAddress });
+    if (!challenge?.message || !challenge?.challengeToken) return null;
+    let signature;
+    try {
+      const { stringToHex } = await import('viem');
+      signature = await provider.request({ method: 'personal_sign', params: [stringToHex(challenge.message), walletAddress] });
+    } catch {
+      signature = await provider.request({ method: 'personal_sign', params: [challenge.message, walletAddress] });
+    }
+    if (!signature) return null;
+    const result = await postAuth({
+      action: 'wallet',
+      walletAddress,
+      challengeToken: challenge.challengeToken,
+      signature,
+    });
+    if (result?.token) return saveSession(result, walletAddress);
+  } catch (err) {
+    console.warn('[establishWalletArcSession] Optional session error:', err?.message || err);
+  }
+  return null;
 }
 
 export function getArcSessionToken(walletAddress) {

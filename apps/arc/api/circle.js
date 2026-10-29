@@ -76,7 +76,13 @@ async function circleRequest(path, { userToken, method = 'GET', body } = {}) {
   });
   const result = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(result?.message || result?.error || 'Circle request failed.');
+    let msg = result?.message || result?.error;
+    if (!msg) {
+      if (response.status === 403) msg = 'Circle API key unauthorized or IP not allowlisted in Circle Developer Console.';
+      else if (response.status === 401) msg = 'Circle authentication failed. Invalid API key.';
+      else msg = 'Circle service request failed.';
+    }
+    const error = new Error(msg);
     error.status = response.status;
     error.code = result?.code;
     error.details = result;

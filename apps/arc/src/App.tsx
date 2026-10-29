@@ -836,8 +836,10 @@ export default function App() {
       setIsConnectModalOpen(false);
       showToast(`Connected ${shorten(address)}`, 'success', 2500);
     } catch (err) {
-      showToast(`Connection error: ${err.message}`, 'error', 3500);
-      alert(`Wallet Connection Error: ${err.message}`);
+      console.error('[App] Wallet connection error:', err);
+      const errMsg = err?.message || err?.reason || (typeof err === 'string' ? err : 'Connection rejected or wallet unavailable.');
+      showToast(`Connection error: ${errMsg}`, 'error', 3500);
+      alert(`Wallet Connection Error: ${errMsg}`);
     } finally {
       setIsConnecting(false);
     }

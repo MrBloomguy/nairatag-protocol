@@ -2042,7 +2042,8 @@ function ArcAppShell() {
       showToast('Circle sent a verification code to your email.', 'success', 3500);
     } catch (err) {
       setCircleStatus('');
-      showToast(`Circle email error: ${err.message}`, 'error', 4500);
+      const errMsg = err?.message || err?.error || err?.reason || (typeof err === 'string' ? err : 'Circle email service is currently unavailable. Please connect with an EVM wallet (MetaMask/Rabby).');
+      showToast(`Circle email error: ${errMsg}`, 'error', 4500);
     } finally {
       setIsConnecting(false);
     }
@@ -2085,7 +2086,8 @@ function ArcAppShell() {
       showToast("You're signed in.", 'success', 2500);
     } catch (err) {
       setCircleStatus('');
-      showToast(`Email sign-in error: ${err.message}`, 'error', 4500);
+      const errMsg = err?.message || err?.error || err?.reason || (typeof err === 'string' ? err : 'Verification failed. Please try again.');
+      showToast(`Email sign-in error: ${errMsg}`, 'error', 4500);
     } finally {
       setIsConnecting(false);
     }
@@ -2122,7 +2124,11 @@ function ArcAppShell() {
     setIsConnecting(true);
     try {
       const { address, chainId: cId } = await connectWallet();
-      await establishWalletArcSession(address);
+      try {
+        await establishWalletArcSession(address);
+      } catch (sessionErr) {
+        console.warn('[App] Optional session token establishment:', sessionErr);
+      }
       setWalletAddress(address);
       setAuthProvider('injected');
       setChainId(cId);
@@ -2131,8 +2137,10 @@ function ArcAppShell() {
       setIsConnectModalOpen(false);
       showToast("You're signed in.", 'success', 2500);
     } catch (err) {
-      showToast(`Connection error: ${err.message}`, 'error', 3500);
-      alert(`Wallet Connection Error: ${err.message}`);
+      console.error('[App] Wallet connection error:', err);
+      const errMsg = err?.message || err?.reason || (typeof err === 'string' ? err : 'Connection rejected or wallet unavailable.');
+      showToast(`Connection error: ${errMsg}`, 'error', 3500);
+      alert(`Wallet Connection Error: ${errMsg}`);
     } finally {
       setIsConnecting(false);
     }
@@ -2146,8 +2154,9 @@ function ArcAppShell() {
       showToast('Switched to Arc Osaka EVM', 'success', 2500);
       if (walletAddress) refreshBalance(walletAddress);
     } catch (e) {
-      showToast(`Switch failed: ${e.message}`, 'error', 3500);
-      alert(`Network switch failed: ${e.message}`);
+      const switchErr = e?.message || e?.reason || (typeof e === 'string' ? e : 'Failed to switch network.');
+      showToast(`Switch failed: ${switchErr}`, 'error', 3500);
+      alert(`Network switch failed: ${switchErr}`);
     }
   };
 
@@ -2624,8 +2633,9 @@ function ArcAppShell() {
       setIsCelebrationOpen(true);
       refreshBalance(walletAddress);
     } catch (err) {
-      showToast(`Swap failed: ${err.message}`, 'error', 4000);
-      alert(`Swap failed: ${err.message}`);
+      const swapErr = err?.message || err?.reason || (typeof err === 'string' ? err : 'Swap failed on Arc.');
+      showToast(`Swap failed: ${swapErr}`, 'error', 4000);
+      alert(`Swap failed: ${swapErr}`);
     } finally {
       setSwapExecuting(false);
     }
@@ -3036,7 +3046,8 @@ function ArcAppShell() {
       setIsClaimModalOpen(false);
       await refreshBalance(walletAddress);
     } catch (e) {
-      showToast(`Claim failed: ${e.message}`, 'error', 4000);
+      const claimErr = e?.message || e?.reason || (typeof e === 'string' ? e : 'Claim failed on Arc.');
+      showToast(`Claim failed: ${claimErr}`, 'error', 4000);
     } finally {
       setIsClaiming(false);
     }

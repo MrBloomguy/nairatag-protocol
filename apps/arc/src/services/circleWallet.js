@@ -55,7 +55,8 @@ async function circleAction(action, params = {}) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(data.error || data.message || 'Circle service request failed.');
+    const errorMsg = data?.error || data?.message || (data?.code === 3 ? 'Circle API access forbidden (check Circle Console API key permissions).' : 'Circle service request failed.');
+    const error = new Error(errorMsg);
     error.code = data.code;
     error.status = response.status;
     throw error;
