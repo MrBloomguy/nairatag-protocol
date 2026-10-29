@@ -125,7 +125,7 @@ export default function RedesignedProfilePage({
           <button type="button" className="profile-nav-back-btn" onClick={() => setView('overview')} aria-label="Back to profile">
             <ArrowLeft size={18} />
           </button>
-          <span className="profile-nav-title">Settings</span>
+          
           <div style={{ width: 40 }} />
         </header>
 
@@ -298,9 +298,7 @@ export default function RedesignedProfilePage({
           <ArrowLeft size={18} />
         </button>
 
-        <span className="profile-nav-title">
-          {handleText}
-        </span>
+        
 
         <div style={{ width: 40 }} />
       </header>
@@ -361,15 +359,7 @@ export default function RedesignedProfilePage({
           {cleanTag ? `Official ₦${cleanTag} identity on Arc Osaka. Sub-second settlements.` : 'Claim your personalized NairaTag to send & receive USDC by name.'}
         </p>
 
-        <a
-          href={`https://explorer.arc.io/address/${walletAddress}`}
-          target="_blank"
-          rel="noreferrer"
-          className="profile-link-pill"
-        >
-          <Globe size={12} />
-          <span>arc.nairatag.ng · Arc Mainnet</span>
-        </a>
+
       </div>
 
       {/* Social Segmented Tabs Bar (Matching Image 1: Grid | Activity) */}

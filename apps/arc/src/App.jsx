@@ -3334,11 +3334,11 @@ function ArcAppShell() {
                       <Bell size={14} color="#5B4FFF" />
                       <span style={{ fontSize: '13px', fontWeight: 800 }}>Notifications</span>
                     </div>
-                    <span className="nav-badge-pill" style={{ background: 'var(--primary, #5b4fff)' }}>
-                      {notificationInbox.filter((item) => !item.readAt).length
-                        ? `${notificationInbox.filter((item) => !item.readAt).length} New`
-                        : 'Up to date'}
-                    </span>
+                    {notificationInbox.filter((item) => !item.readAt).length > 0 && (
+                      <span className="nav-badge-pill" style={{ background: 'var(--primary, #5b4fff)' }}>
+                        {`${notificationInbox.filter((item) => !item.readAt).length} New`}
+                      </span>
+                    )}
                   </div>
 
                   <div className="notifications-list">
