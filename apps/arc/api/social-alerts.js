@@ -207,16 +207,30 @@ function alertText(body) {
 
 async function sendTelegram(text) {
   const token = process.env.TELEGRAM_BOT_TOKEN || DEFAULT_TELEGRAM_BOT_TOKEN;
-  const channel = process.env.TELEGRAM_CHANNEL_ID || DEFAULT_TELEGRAM_CHANNEL_ID;
+  const primaryChannel = process.env.TELEGRAM_CHANNEL_ID || DEFAULT_TELEGRAM_CHANNEL_ID;
   if (!token) throw Object.assign(new Error('Telegram alerts are not configured. Set the server-side TELEGRAM_BOT_TOKEN.'), { statusCode: 503 });
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: channel, text, disable_web_page_preview: false }),
-  });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok || !result.ok) throw new Error(result.description || 'Telegram rejected the alert.');
-  return result.result?.message_id;
+
+  const targets = [primaryChannel, '@nairatagupdates'].filter(Boolean);
+  let lastErr = null;
+
+  for (const target of targets) {
+    try {
+      const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: target, text, disable_web_page_preview: false }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (response.ok && result.ok) {
+        return result.result?.message_id;
+      }
+      lastErr = new Error(result.description || `Telegram rejected the alert for ${target}`);
+      console.warn(`[Telegram Alert] Target ${target} response:`, result.description || response.status);
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Telegram rejected the alert.');
 }
 
 export default async function handler(req, res) {

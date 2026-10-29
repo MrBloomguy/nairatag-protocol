@@ -2302,6 +2302,17 @@ function ArcAppShell() {
       });
       setIsCelebrationOpen(true);
       showToast(`Task bounty of ${task.rewardUSDC} USDC released on Arc Mainnet!`, 'success', 6000);
+      broadcastArcPaymentToTelegram({
+        fromAddress: walletAddress,
+        fromTag: myTag?.tag || 'nairatag',
+        recipient: task.assignedAgentTag || task.creatorTag || 'Agent Worker',
+        recipientAddress: task.assignedWorker || task.creatorAddress,
+        amountUsdc: task.rewardUSDC,
+        memo: `Escrow Payout: ${task.title || task.id}`,
+        txHash: res.txHash,
+        explorerUrl: res.explorerUrl,
+        network: 'Arc Mainnet',
+      }).catch((e) => console.warn('[Telegram Escrow Release Broadcast]', e?.message));
     } catch (err) {
       console.warn('[Escrow Release Error]', err);
       showToast(`Escrow release: ${err.message || 'Transaction could not be confirmed.'}`, 'error', 6000);
@@ -2326,6 +2337,17 @@ function ArcAppShell() {
         fromAddress: walletAddress,
       });
       showToast('Bounty locked in Escrow on Arc Mainnet!', 'success', 6000);
+      broadcastArcPaymentToTelegram({
+        fromAddress: walletAddress,
+        fromTag: myTag?.tag || 'nairatag',
+        recipient: 'NairaTagBountyEscrow',
+        recipientAddress: '0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab',
+        amountUsdc: task.rewardUSDC,
+        memo: `Escrow Lock: ${task.title || task.id}`,
+        txHash: res.txHash,
+        explorerUrl: res.explorerUrl,
+        network: 'Arc Mainnet',
+      }).catch((e) => console.warn('[Telegram Escrow Lock Broadcast]', e?.message));
     } catch (err) {
       console.warn('[Escrow Lock Error]', err);
       showToast(`Escrow deposit: ${err.message || 'Could not lock bounty.'}`, 'error', 6000);
