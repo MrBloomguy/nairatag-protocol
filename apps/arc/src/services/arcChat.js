@@ -2,8 +2,8 @@ import { keccak256, stringToHex } from 'viem';
 import { getArcSessionToken } from './arcSession.js';
 
 const ARC_CHAIN_ID = 5042;
-const ARC_CHAT_API = import.meta.env.VITE_ARC_CHAT_API || 'https://old.nairatag.ng/api/arc-chat';
-const ARC_VOICE_API = import.meta.env.VITE_ARC_VOICE_API || 'https://old.nairatag.ng/api/arc?route=voice';
+const ARC_CHAT_API = import.meta.env.VITE_ARC_CHAT_API || '/api/arc-chat';
+const ARC_VOICE_API = import.meta.env.VITE_ARC_VOICE_API || 'https://nairatag.ng/api/arc?route=voice';
 
 export function createArcChatConversationId() {
   return crypto.randomUUID();
@@ -63,17 +63,24 @@ async function postArcChat(payload, token = null) {
 }
 
 export async function sendArcChatMessage({ walletAddress, conversationId, turnId, prompt, agentTag = 'arc', title }) {
-  if (!walletAddress) throw new Error('Sign in to chat with NairaTag.');
   try {
-    const token = getArcSessionToken(walletAddress);
-    if (token) return await postArcChat({ action: 'send', walletAddress, conversationId, turnId, prompt, agentTag, title }, token);
-    const signed = await signArcChatAction({ action: 'send', walletAddress, conversationId, turnId, prompt });
-    return await postArcChat({ ...signed, prompt, agentTag, title });
+    const cleanWallet = (walletAddress || '0x0000000000000000000000000000000000000000').toLowerCase();
+    const token = walletAddress ? getArcSessionToken(cleanWallet) : null;
+    const payload = {
+      action: 'send',
+      walletAddress: cleanWallet,
+      conversationId: conversationId || createArcChatConversationId(),
+      turnId: turnId || crypto.randomUUID(),
+      prompt,
+      agentTag,
+      title
+    };
+    return await postArcChat(payload, token);
   } catch (err) {
-    console.warn('[ArcChat] Service fallback:', err.message);
+    console.error('[ArcChat] Service error:', err.message);
     return {
-      ok: true,
-      reply: `Got it! I am ready to help you send USDC, claim NairaTags, or complete bounties on Arc. What would you like to do?`,
+      ok: false,
+      reply: `⚠️ Chat service notice: ${err.message}. Please try again shortly.`,
       toolEvents: [],
     };
   }
