@@ -9,6 +9,98 @@ function arcRewardsUrl() {
   return new URL(ARC_REWARDS_API, base);
 }
 
+const ABSTRACTED_ACCOUNT_KEY = 'nairatag_abstracted_rewards_account';
+
+export function getAbstractedRewardAccount(preferredWallet) {
+  if (preferredWallet && typeof preferredWallet === 'string' && preferredWallet.startsWith('0x') && preferredWallet.length === 42) {
+    return preferredWallet.toLowerCase();
+  }
+  if (typeof window === 'undefined') return '0x0000000000000000000000000000000000000001';
+  let stored = window.localStorage.getItem(ABSTRACTED_ACCOUNT_KEY);
+  if (!stored) {
+    const bytes = new Uint8Array(20);
+    if (window.crypto?.getRandomValues) {
+      window.crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < 20; i++) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    stored = '0x' + Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+    window.localStorage.setItem(ABSTRACTED_ACCOUNT_KEY, stored);
+  }
+  return stored.toLowerCase();
+}
+
+export function mergeAbstractedRewardsIntoWallet(walletAddress) {
+  if (!walletAddress || typeof window === 'undefined') return;
+  const abstractedAccount = window.localStorage.getItem(ABSTRACTED_ACCOUNT_KEY);
+  if (!abstractedAccount || abstractedAccount.toLowerCase() === walletAddress.toLowerCase()) return;
+  
+  const guestState = getLocalRewardState(abstractedAccount);
+  if (guestState.points > 0 || guestState.streak.streakCount > 0) {
+    const walletState = getLocalRewardState(walletAddress);
+    const merged = {
+      ...walletState,
+      points: walletState.points + guestState.points,
+      streak: {
+        streakCount: Math.max(walletState.streak.streakCount, guestState.streak.streakCount),
+        lastClaimDay: guestState.streak.lastClaimDay || walletState.streak.lastClaimDay,
+        claimedToday: walletState.streak.claimedToday || guestState.streak.claimedToday,
+      },
+      spins: {
+        earned: Math.max(walletState.spins.earned, guestState.spins.earned),
+        spent: Math.max(walletState.spins.spent, guestState.spins.spent),
+        available: Math.max(0, Math.max(walletState.spins.earned, guestState.spins.earned) - Math.max(walletState.spins.spent, guestState.spins.spent)),
+        paymentSpins: walletState.spins.paymentSpins + guestState.spins.paymentSpins,
+      }
+    };
+    saveLocalRewardState(walletAddress, merged);
+    saveLocalRewardState(abstractedAccount, mapState({ points: 0, streakCount: 0 }));
+  }
+}
+
+const LOCAL_STREAK_REWARDS = [10, 15, 20, 25, 30, 40, 50];
+const LOCAL_WHEEL_PRIZES = [
+  { id: 'p0', points: 50 },
+  { id: 'p1', points: 25 },
+  { id: 'p2', points: 100 },
+  { id: 'p3', points: 20 },
+  { id: 'p4', points: 10 },
+  { id: 'p5', points: 75 },
+  { id: 'p6', points: 250 },
+  { id: 'p7', points: 150 },
+];
+
+function applyLocalAction(action, targetWallet, extra = {}) {
+  const state = getLocalRewardState(targetWallet);
+  let result = {};
+
+  if (action === 'daily_claim') {
+    if (state.streak.claimedToday) {
+      throw new Error('Daily streak already claimed today. Come back tomorrow!');
+    }
+    const day = (Number(state.streak.streakCount) % 7) + 1;
+    const reward = LOCAL_STREAK_REWARDS[day - 1] || 10;
+    const newStreakCount = state.streak.streakCount + 1;
+    state.points += reward;
+    state.streak.streakCount = newStreakCount;
+    state.streak.lastClaimDay = getLocalDateString();
+    state.streak.claimedToday = true;
+    result = { points: reward, streakCount: newStreakCount };
+  } else if (action === 'spin') {
+    if (state.spins.available <= 0) {
+      throw new Error('No spins available today. Check back tomorrow!');
+    }
+    const prize = LOCAL_WHEEL_PRIZES[Math.floor(Math.random() * LOCAL_WHEEL_PRIZES.length)];
+    state.spins.spent += 1;
+    state.spins.available = Math.max(0, state.spins.earned - state.spins.spent);
+    state.points += prize.points;
+    result = { prize };
+  }
+
+  saveLocalRewardState(targetWallet, state);
+  return { result, state };
+}
+
 function getLocalDateString(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -26,9 +118,9 @@ function mapState(value = {}) {
       claimedToday: Boolean(value.claimedToday ?? value.streak?.claimedToday),
     },
     spins: {
-      earned: Number(value.spins?.earned) || 1,
+      earned: value.spins?.earned !== undefined ? Number(value.spins.earned) : 1,
       spent: Number(value.spins?.spent) || 0,
-      available: Number(value.spins?.available) ?? 1,
+      available: value.spins?.available !== undefined ? Number(value.spins.available) : 1,
       paymentSpins: Number(value.spins?.paymentSpins) || 0,
     },
     referrals: {
@@ -46,8 +138,9 @@ function mapState(value = {}) {
 }
 
 export function getLocalRewardState(walletAddress) {
-  if (typeof window === 'undefined' || !walletAddress) return mapState();
-  const key = `nairatag_rewards_state_${String(walletAddress).toLowerCase()}`;
+  if (typeof window === 'undefined') return mapState();
+  const target = getAbstractedRewardAccount(walletAddress);
+  const key = `nairatag_rewards_state_${target}`;
   try {
     const raw = window.localStorage.getItem(key);
     if (raw) {
@@ -92,13 +185,14 @@ async function parseResponse(response) {
 }
 
 export async function getArcRewardState(walletAddress) {
-  if (!walletAddress) return mapState();
+  const target = getAbstractedRewardAccount(walletAddress);
+  if (!target) return mapState();
   const local = getLocalRewardState(walletAddress);
   try {
     const url = arcRewardsUrl();
-    url.searchParams.set('wallet', walletAddress);
+    url.searchParams.set('wallet', target);
     const headers = { Accept: 'application/json' };
-    const sessionToken = getArcSessionToken(walletAddress);
+    const sessionToken = getArcSessionToken(target);
     if (sessionToken) headers.Authorization = `Bearer ${sessionToken}`;
     const payload = await parseResponse(await fetch(url, { headers }));
     const remote = mapState(payload.state);
@@ -126,12 +220,20 @@ export async function getArcRewardState(walletAddress) {
 }
 
 export async function submitArcRewardAction({ action, walletAddress, tag, referrerTag, txHash, requestId, ids }) {
-  if (!walletAddress) throw new Error('Sign in to your NairaTag account to continue.');
-  const sessionToken = getArcSessionToken(walletAddress);
+  const targetWallet = getAbstractedRewardAccount(walletAddress);
+  const sessionToken = getArcSessionToken(targetWallet);
   const provider = typeof window !== 'undefined' ? window.ethereum : null;
-  if (!sessionToken && !provider?.request) throw new Error('Your sign-in session expired. Please sign in again to update your rewards.');
+  const isDirectOffchain = !sessionToken && (!provider?.request || !walletAddress);
+
+  // For daily streak claim or wheel spin, execute offchain immediately without wallet prompt!
+  if (isDirectOffchain && (action === 'daily_claim' || action === 'spin')) {
+    const localRes = applyLocalAction(action, targetWallet, { requestId });
+    broadcastArcRewardToTelegram({ action, walletAddress: targetWallet, timestamp: Date.now() }).catch(() => {});
+    return localRes;
+  }
+
   const timestamp = Date.now();
-  const payload = { action, walletAddress, timestamp };
+  const payload = { action, walletAddress: targetWallet, timestamp };
   if (tag) payload.tag = String(tag).trim().replace(/^[₦$@#]/, '').toLowerCase();
   if (referrerTag) payload.referrerTag = String(referrerTag).trim().replace(/^[₦$@#]/, '').toLowerCase();
   if (txHash) payload.txHash = String(txHash).toLowerCase();
@@ -143,7 +245,7 @@ export async function submitArcRewardAction({ action, walletAddress, tag, referr
 
   if (sessionToken) {
     headers.Authorization = `Bearer ${sessionToken}`;
-  } else if (provider?.request) {
+  } else if (provider?.request && walletAddress && action !== 'daily_claim' && action !== 'spin') {
     const signedFields = {
       ...(payload.tag ? { tag: payload.tag } : {}),
       ...(payload.referrerTag ? { referrerTag: payload.referrerTag } : {}),
@@ -152,12 +254,12 @@ export async function submitArcRewardAction({ action, walletAddress, tag, referr
       ...(payload.ids ? { ids: payload.ids.join(',') } : {}),
     };
     const message = [
-      'NairaTag Arc Rewards', `Action: ${action}`, `Wallet: ${walletAddress.toLowerCase()}`,
+      'NairaTag Arc Rewards', `Action: ${action}`, `Wallet: ${targetWallet}`,
       `Chain: ${ARC_CHAIN_ID}`, `Timestamp: ${timestamp}`,
       ...Object.entries(signedFields).sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => `${key}: ${value}`),
     ].join('\n');
     try {
-      signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });
+      signature = await provider.request({ method: 'personal_sign', params: [message, targetWallet] });
       payload.signature = signature;
     } catch (signErr) {
       console.warn('[submitArcRewardAction sign error]', signErr.message);
@@ -174,9 +276,13 @@ export async function submitArcRewardAction({ action, walletAddress, tag, referr
       broadcastArcRewardToTelegram(payload).catch((error) => console.warn('[Telegram reward alert]', error.message));
     }
     const state = mapState(response.state);
-    saveLocalRewardState(walletAddress, state);
+    saveLocalRewardState(targetWallet, state);
     return { result: response.result, state };
   } catch (error) {
+    if (action === 'daily_claim' || action === 'spin') {
+      const localRes = applyLocalAction(action, targetWallet, { requestId });
+      return localRes;
+    }
     throw error;
   }
 }

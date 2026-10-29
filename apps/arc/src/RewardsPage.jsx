@@ -31,7 +31,7 @@ import {
   REFERRAL_SIGNUP_POINTS,
 } from './services/referrals.js';
 import { consumeDailySpin, getDailySpinStats } from './services/wheelRewards.js';
-import { getArcRewardState, submitArcRewardAction } from './services/arcRewards.js';
+import { getAbstractedRewardAccount, getArcRewardState, submitArcRewardAction } from './services/arcRewards.js';
 import { getTagShareUrl, getTelegramShareIntentUrl, getTwitterRewardShareUrl } from './services/arcSocialBroadcast.js';
 import './rewards.css';
 
@@ -189,7 +189,7 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
   const [wonPrize, setWonPrize] = useState(null);
   const [isCongratsOpen, setIsCongratsOpen] = useState(false);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
-  const [spinStats, setSpinStats] = useState({ earned: 1, spent: 0, available: 0, paymentSpins: 0 });
+  const [spinStats, setSpinStats] = useState({ earned: 1, spent: 0, available: 1, paymentSpins: 0 });
   const [spinMessage, setSpinMessage] = useState('');
 
   // Live countdown to midnight (matching screenshot countdown)
@@ -221,10 +221,11 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
   }, [accountKey]);
 
   useEffect(() => {
+    const activeKey = getAbstractedRewardAccount(accountKey);
     const refreshStats = (event) => {
       const eventAccount = event?.detail?.accountKey;
-      if (eventAccount && eventAccount !== String(accountKey || '').trim().toLowerCase()) return;
-      getDailySpinStats(accountKey).then(setSpinStats).catch((error) => setSpinMessage(error.message));
+      if (eventAccount && eventAccount !== activeKey && eventAccount !== String(accountKey || '').trim().toLowerCase()) return;
+      getDailySpinStats(activeKey).then(setSpinStats).catch((error) => setSpinMessage(error.message));
     };
     refreshStats();
     window.addEventListener('storage', refreshStats);
@@ -241,11 +242,7 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
 
   const spinTheWheel = async () => {
     if (isSpinning || isSpinPending || isCongratsOpen) return;
-    if (!accountKey) {
-      setSpinMessage('Sign in to save spins and Protocol Points.');
-      onRequestConnect?.();
-      return;
-    }
+    const activeKey = getAbstractedRewardAccount(accountKey);
     if (typeof onWinPrize !== 'function') {
       setSpinMessage('Points rewards are unavailable right now. Please reload and try again.');
       return;
@@ -254,7 +251,7 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
     setIsSpinPending(true);
     let consumed;
     try {
-      consumed = await consumeDailySpin(accountKey);
+      consumed = await consumeDailySpin(activeKey);
       setSpinStats(consumed.stats);
       const selectedIndex = WHEEL_PRIZES.findIndex((prize) => prize.id === consumed.prize?.id);
       if (!consumed.ok || selectedIndex < 0) throw new Error('The Arc rewards service did not return a valid spin result.');
@@ -413,9 +410,9 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
           type="button"
           className="wheel-spin-btn"
           onClick={spinTheWheel}
-          disabled={isSpinning || isSpinPending || isCongratsOpen || (Boolean(accountKey) && spinStats.available <= 0)}
+          disabled={isSpinning || isSpinPending || isCongratsOpen || spinStats.available <= 0}
         >
-          {isSpinPending ? 'Securing spin…' : isSpinning ? 'Spinning…' : !accountKey ? 'Sign in to spin' : spinStats.available > 0 ? `Spin now · ${spinStats.available} available` : 'No spins left today'}
+          {isSpinPending ? 'Securing spin…' : isSpinning ? 'Spinning…' : spinStats.available > 0 ? `Spin now · ${spinStats.available} available` : 'No spins left today'}
         </button>
         <p className="wheel-spin-feedback" aria-live="polite">{spinMessage}</p>
 
@@ -431,14 +428,14 @@ export function LuckyWheelModal({ isOpen, onClose, onWinPrize, accountKey = '', 
               <div className="wheel-metric-label">Spins Earned Today</div>
               <div className="wheel-metric-val">
                 <Ticket size={15} aria-hidden="true" />
-                <span>{accountKey ? spinStats.earned : '—'}</span>
+                <span>{spinStats.earned}</span>
               </div>
             </div>
             <div>
               <div className="wheel-metric-label">Available Spins</div>
               <div className="wheel-metric-val">
                 <Ticket size={15} aria-hidden="true" />
-                <span>{accountKey ? spinStats.available : '—'}</span>
+                <span>{spinStats.available}</span>
               </div>
             </div>
           </div>
@@ -870,7 +867,12 @@ export default function RewardsPage({
     }).catch(() => {});
     refresh();
     window.addEventListener('focus', refresh);
-    return () => { active = false; window.removeEventListener('focus', refresh); };
+    window.addEventListener('nairatag:reward-state-updated', refresh);
+    return () => {
+      active = false;
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('nairatag:reward-state-updated', refresh);
+    };
   }, [accountKey, referralTag]);
 
   const totalPoints = Number(pointsBalance) || 0;
@@ -884,11 +886,8 @@ export default function RewardsPage({
   const dailyStreakStatus = getDailyStreakStatus(dailyStreak, todayKey);
 
   const handleDailyStreakClaim = async () => {
-    if (!accountKey) {
-      onRequestConnect?.();
-      throw new Error('Sign in to claim your daily streak.');
-    }
-    const { result, state } = await submitArcRewardAction({ action: 'daily_claim', walletAddress: accountKey });
+    const activeAccount = getAbstractedRewardAccount(accountKey);
+    const { result, state } = await submitArcRewardAction({ action: 'daily_claim', walletAddress: activeAccount });
     const reward = Number(result.points);
     setMyReferralStats(state.referrals);
     setDailyStreak({ streakCount: state.streak.streakCount, lastClaimDate: state.streak.lastClaimDay });

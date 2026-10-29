@@ -188,7 +188,7 @@ import confetti from 'canvas-confetti';
 import RewardsPage, { GoldenVoucherModal, LuckyWheelModal, ReferralModal } from './RewardsPage.jsx';
 import NotificationLayer from './components/NotificationLayer.jsx';
 import { recordConfirmedPaymentSpin } from './services/wheelRewards.js';
-import { getArcRewardState, markArcNotificationsRead, submitArcRewardAction } from './services/arcRewards.js';
+import { getArcRewardState, markArcNotificationsRead, submitArcRewardAction, getLocalRewardState, mergeAbstractedRewardsIntoWallet } from './services/arcRewards.js';
 import { getAgentOnboarding, updateAgentOnboarding, syncAgentOnboardingRewards } from './services/agentOnboarding.js';
 import { claimAgentOnboardingReward, getAgentOnboardingRewardState } from './services/agentOnboardingRewards.js';
 import AgentOnboardingModal from './components/AgentOnboardingModal.jsx';
@@ -1480,11 +1480,19 @@ function ArcAppShell() {
   useEffect(() => {
     let active = true;
     if (!walletAddress) {
-      setUserPoints(0);
-      replaceNotificationInbox([]);
-      setArcRewardsError('');
-      return () => { active = false; };
+      const localState = getLocalRewardState();
+      applyArcRewardState(localState);
+      const onRewardUpdate = () => {
+        if (!active) return;
+        applyArcRewardState(getLocalRewardState());
+      };
+      window.addEventListener('nairatag:reward-state-updated', onRewardUpdate);
+      return () => {
+        active = false;
+        window.removeEventListener('nairatag:reward-state-updated', onRewardUpdate);
+      };
     }
+    mergeAbstractedRewardsIntoWallet(walletAddress);
     const refresh = () => getArcRewardState(walletAddress)
       .then((state) => { if (active) applyArcRewardState(state); })
       .catch((error) => {
@@ -1493,7 +1501,13 @@ function ArcAppShell() {
     refresh();
     const timer = setInterval(refresh, 60_000);
     window.addEventListener('focus', refresh);
-    return () => { active = false; clearInterval(timer); window.removeEventListener('focus', refresh); };
+    window.addEventListener('nairatag:reward-state-updated', refresh);
+    return () => {
+      active = false;
+      clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+      window.removeEventListener('nairatag:reward-state-updated', refresh);
+    };
   }, [walletAddress]);
 
   // Agent Chat (Muse Spark AI) State
