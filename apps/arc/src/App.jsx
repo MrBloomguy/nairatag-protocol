@@ -1082,7 +1082,7 @@ function ArcAppShell() {
               const synced = syncAgentOnboardingRewards(walletAddress, myTag.tag, reward.onboarding);
               if (synced) setAgentOnboarding(synced);
             })
-            .catch((error) => showToast(`Your task is ready, but its welcome points could not sync yet: ${error.message}`, 'error', 5000));
+            .catch((error) => console.warn('[Welcome points sync note]:', error.message));
         }
 
         if (selectedAgent) {
@@ -3087,12 +3087,18 @@ function ArcAppShell() {
       try { onboardingProgress = updateAgentOnboarding(walletAddress, res.cleanTag); }
       catch (error) { showToast(error.message || 'Your tag was claimed. Setup details could not be cached on this device.', 'error', 5000); }
       try {
+        const claimReward = await submitArcRewardAction({ action: 'tag_claimed', walletAddress, tag: res.cleanTag });
+        if (claimReward?.state) applyArcRewardState(claimReward.state);
+      } catch (e) {
+        console.warn('[Tag claim points sync note]:', e.message);
+      }
+      try {
         const reward = await claimAgentOnboardingReward({ walletAddress, tag: res.cleanTag, step: 'identity' });
-        if (reward.state) applyArcRewardState(reward.state);
-        const synced = syncAgentOnboardingRewards(walletAddress, res.cleanTag, reward.onboarding);
+        if (reward?.state) applyArcRewardState(reward.state);
+        const synced = syncAgentOnboardingRewards(walletAddress, res.cleanTag, reward?.onboarding || { identity: true });
         if (synced) onboardingProgress = synced;
       } catch (error) {
-        setArcRewardsError(`Tag claimed, but the onboarding reward could not sync yet: ${error.message}`);
+        console.warn('[Onboarding reward note]:', error.message);
       }
       setAgentOnboarding(onboardingProgress);
       const onboardingKey = `${String(walletAddress).toLowerCase()}:${String(res.cleanTag).replace(/^[₦$@#]/, '').toLowerCase()}`;

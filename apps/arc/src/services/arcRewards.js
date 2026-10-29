@@ -95,6 +95,18 @@ function applyLocalAction(action, targetWallet, extra = {}) {
     state.spins.available = Math.max(0, state.spins.earned - state.spins.spent);
     state.points += prize.points;
     result = { prize };
+  } else if (action === 'tag_claimed' || action === 'agent_onboarding_step') {
+    const rewardPoints = 250;
+    state.points = (state.points || 0) + rewardPoints;
+    const notif = {
+      id: 'notif-' + Date.now(),
+      title: '🎉 Tag Claimed & Activated',
+      body: `You claimed ₦${String(extra.tag || 'tag').replace(/^[₦$@#]/, '').toUpperCase()} and earned ${rewardPoints} Protocol Points!`,
+      createdAt: Date.now(),
+      read: false,
+    };
+    state.notifications = [notif, ...(state.notifications || [])];
+    result = { points: rewardPoints, tag: extra.tag };
   }
 
   saveLocalRewardState(targetWallet, state);
@@ -279,8 +291,8 @@ export async function submitArcRewardAction({ action, walletAddress, tag, referr
     saveLocalRewardState(targetWallet, state);
     return { result: response.result, state };
   } catch (error) {
-    if (action === 'daily_claim' || action === 'spin') {
-      const localRes = applyLocalAction(action, targetWallet, { requestId });
+    if (action === 'daily_claim' || action === 'spin' || action === 'tag_claimed' || action === 'agent_onboarding_step') {
+      const localRes = applyLocalAction(action, targetWallet, { requestId, tag });
       return localRes;
     }
     throw error;

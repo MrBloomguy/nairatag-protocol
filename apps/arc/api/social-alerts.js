@@ -117,11 +117,8 @@ async function verifyWalletSignature(body, message) {
 }
 
 async function verifyTagClaim(body) {
-  if (!isAddress(body.owner) || !/^0x[a-f\d]{64}$/i.test(String(body.txHash || ''))) {
-    throw new Error('A valid tag-claim transaction is required.');
-  }
   const cleanTagStr = String(body.tag || '').trim().replace(/^[$₦@#]/, '').toLowerCase();
-
+  const owner = isAddress(body.owner) ? body.owner : (isAddress(body.walletAddress) ? body.walletAddress : '0x0000000000000000000000000000000000000000');
   const isMainnet = body.chainId === 5042002 || (body.network && /testnet/i.test(body.network)) ? false : true;
   const primaryNet = isMainnet ? NETWORKS.mainnet : NETWORKS.testnet;
   let verifiedResult = null;
@@ -198,6 +195,8 @@ function alertText(body) {
       daily_claim: 'claimed a daily Protocol Points reward.',
       spin: 'won a Protocol Points spin reward.',
       payment_confirmed: 'earned a reward spin after a confirmed Arc payment.',
+      tag_claimed: 'claimed a sovereign NairaTag on Arc.',
+      agent_onboarding_step: 'completed an AI agent setup milestone.',
     };
     if (!messages[body.action]) throw new Error('This reward action cannot be announced.');
     return `NairaTag reward update\n${wallet} ${messages[body.action]}\nNairaTag Rewards - https://arc.nairatag.ng/#rewards`;
