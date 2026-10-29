@@ -3380,15 +3380,12 @@ function ArcAppShell() {
           {walletAddress ? (
             <button
               type="button"
-              className="wallet-connected-pill"
+              className="wallet-connected-pill header-avatar-only-btn"
               onClick={() => setMainTab('profile')}
-              title="Open your profile dashboard"
+              title={`Profile (${displayAccountName || 'NairaTag user'})`}
               aria-label="Open your profile dashboard"
             >
-              <ProfileAvatar tag={myTag?.tag} email={accountEmail} size={26} />
-              <span className="wallet-connected-handle">{displayAccountName || 'NairaTag user'}</span>
-              <span className="wallet-connected-sep desktop-only">|</span>
-              <span className="wallet-connected-bal desktop-only">{usdcBalance.formatted} USDC</span>
+              <ProfileAvatar tag={myTag?.tag} email={accountEmail} size={32} />
             </button>
           ) : (
             <button

@@ -5256,8 +5256,9 @@ body:has(.agent-modal-backdrop) {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: var(--surface1, #ffffff);
+  border: none;
+  outline: none;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5267,8 +5268,9 @@ body:has(.agent-modal-backdrop) {
 }
 
 [data-theme="dark"] .header-bell-btn {
-  border-color: #24252b;
-  background: #17181d;
+  border: none;
+  outline: none;
+  background: transparent;
 }
 
 .header-bell-btn:hover {
@@ -5792,9 +5794,10 @@ body:has(.main-content-wrapper.chat-mode) #root {
   justify-content: center;
   width: 34px;
   height: 34px;
-  border: 1px solid var(--border);
+  border: none;
+  outline: none;
   border-radius: 50%;
-  background: var(--surface2);
+  background: transparent;
   color: var(--privy-color-foreground-2);
   padding: 0;
   cursor: pointer;
@@ -5803,8 +5806,13 @@ body:has(.main-content-wrapper.chat-mode) #root {
 
 .chat-history-btn:hover {
   color: var(--primary);
-  border-color: var(--primary-border);
-  background: var(--primary-tint);
+  border: none;
+  outline: none;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .chat-history-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .arc-voice-backdrop {
@@ -9068,4 +9076,33 @@ body:has(.main-content-wrapper.chat-mode) #root {
     max-height: 52vh !important;
     -webkit-overflow-scrolling: touch !important;
   }
+}
+
+/* Header User Default Avatar Only Button */
+.wallet-connected-pill.header-avatar-only-btn {
+  padding: 0 !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.wallet-connected-pill.header-avatar-only-btn:hover {
+  transform: scale(1.06);
+  opacity: 0.9;
+  border: none !important;
+  box-shadow: none !important;
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+[data-theme="dark"] .wallet-connected-pill.header-avatar-only-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
 }
