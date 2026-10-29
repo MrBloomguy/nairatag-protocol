@@ -1401,7 +1401,7 @@ function ArcAppShell() {
         const synced = syncAgentOnboardingRewards(walletAddress, myTag.tag, payload.onboarding);
         if (!synced) return;
         setAgentOnboarding(synced);
-        if (!synced.completed && !synced.submittedAt && onboardingDismissedKeyRef.current !== onboardingKey) setIsAgentOnboardingOpen(true);
+        // Do not auto-pop onboarding modal on sign-in or page reload
       })
       .catch((error) => {
         if (active) console.warn('[Onboarding rewards sync note]:', error.message);
@@ -3101,10 +3101,17 @@ function ArcAppShell() {
         console.warn('[Onboarding reward note]:', error.message);
       }
       setAgentOnboarding(onboardingProgress);
-      onboardingDismissedKeyRef.current = null;
+      const onboardingKey = `${String(walletAddress).toLowerCase()}:${String(res.cleanTag).replace(/^[₦$@#]/, '').toLowerCase()}`;
+      onboardingDismissedKeyRef.current = onboardingKey;
       setIsCelebrationOpen(false);
       setIsClaimModalOpen(false);
-      setIsAgentOnboardingOpen(true);
+      setIsAgentOnboardingOpen(false);
+      setAgentSuccessDetails({
+        variant: 'claimed',
+        tag: res.cleanTag,
+        progress: onboardingProgress || getAgentOnboarding(walletAddress, res.cleanTag) || { tag: res.cleanTag, points: 20 },
+      });
+      showToast(`🎉 ₦${res.cleanTag.toUpperCase()} is officially yours on Arc Mainnet! +20 Pts earned.`, 'success', 5000);
       await refreshBalance(walletAddress);
     } catch (e) {
       const claimErr = e?.message || e?.reason || (typeof e === 'string' ? e : 'Claim failed on Arc.');

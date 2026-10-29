@@ -52,7 +52,7 @@ export default function AgentSuccessModal({ tag, progress = {}, variant = 'compl
 
   return <div className="agent-onboard-backdrop agent-success-backdrop" role="presentation" onClick={(event) => { if (event.target === event.currentTarget) onClose?.(); }}>
     <section className="agent-onboard agent-success-modal" role="dialog" aria-modal="true" aria-labelledby="agent-success-title">
-      <button type="button" className="agent-onboard-close" onClick={() => onClose?.()} aria-label="Close success message"><X size={20} /></button>
+      <button type="button" className="agent-onboard-close" onClick={() => onClose?.()} aria-label="Close success message"><X size={16} /></button>
       <div className="agent-success-avatar-wrap">
         <div className="agent-success-avatar" aria-label={avatar ? 'Your agent portrait' : 'NairaTag agent'}>
           {avatar ? (String(avatar).startsWith('data:') || String(avatar).startsWith('http')
