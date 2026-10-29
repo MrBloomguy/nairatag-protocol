@@ -3003,7 +3003,7 @@ function ArcAppShell() {
     }
     setClaimStatus({ loading: true });
     try {
-      const res = await checkArcTagAvailability(clean, walletAddress);
+      const res = await checkArcTagAvailability(clean, walletAddress, accountEmail);
       setClaimStatus(res);
     } catch (e) {
       setClaimStatus({ available: false, reason: e.message });
@@ -3024,10 +3024,12 @@ function ArcAppShell() {
     try {
       let res;
       if (authProvider === 'circle') {
-        const availability = await checkArcTagAvailability(claimInput, walletAddress);
+        const availability = await checkArcTagAvailability(claimInput, walletAddress, accountEmail);
         if (!availability.available) throw new Error(availability.reason || 'This NairaTag cannot be claimed.');
-        res = await claimTagWithCircle({ session: circleSession, walletAddress, rawTag: claimInput });
+        res = await claimTagWithCircle({ session: circleSession, walletAddress, rawTag: claimInput, email: accountEmail });
       } else {
+        const availabilityOther = await checkArcTagAvailability(claimInput, walletAddress, accountEmail);
+        if (!availabilityOther.available) throw new Error(availabilityOther.reason || 'This NairaTag cannot be claimed.');
         res = await claimArcNairaTag({ rawTag: claimInput, walletAddress });
       }
 
@@ -3066,6 +3068,9 @@ function ArcAppShell() {
             action: 'tag_claimed',
             walletAddress,
             tag: cleanTag,
+            email: accountEmail || null,
+            authProvider: authProvider || 'wallet',
+            txHash: res.txHash || null,
             ...(hasReferralAttribution ? { referrerTag: pendingReferral.tag } : {}),
           });
           if (claimNotice?.state) applyArcRewardState(claimNotice.state);
@@ -3945,7 +3950,7 @@ function ArcAppShell() {
                       fontWeight: 700,
                     }}>
                       <Check size={13} strokeWidth={3} />
-                      <span>Sovereign Identity Active on Arc</span>
+                      <span>Identity Active on Arc</span>
                     </div>
 
                     <div
@@ -4105,7 +4110,7 @@ function ArcAppShell() {
                       {isClaiming ? (
                         <>
                           <RefreshCw size={16} className="animate-spin" />
-                          <span>Claiming your ₦Tag…</span>
+                          <span>Claiming</span>
                         </>
                       ) : (
                         <span>Claim</span>

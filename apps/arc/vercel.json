@@ -15,6 +15,10 @@
       "destination": "/api/cards?handle=:handle"
     },
     {
+      "source": "/api/arc-agents(.*)",
+      "destination": "/api/arc-agents$1"
+    },
+    {
       "source": "/api/agent-service(.*)",
       "destination": "/api/agent-service$1"
     },
@@ -52,4 +56,3 @@
     }
   ]
 }
-

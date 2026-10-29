@@ -48,7 +48,7 @@ async function getWalletTagRecord(walletAddress) {
   return { node, record };
 }
 
-export async function checkArcTagAvailability(rawTag, walletAddress = null) {
+export async function checkArcTagAvailability(rawTag, walletAddress = null, email = null) {
   let cleanTag;
   try {
     cleanTag = normalizeArcTag(rawTag);
@@ -113,7 +113,29 @@ export async function checkArcTagAvailability(rawTag, walletAddress = null) {
     } catch {}
   }
 
-  // 3. Onchain registry checks
+  // 3. Centralized Database Check (enforces strict 1-tag limit across devices/emails/wallets)
+  try {
+    const params = new URLSearchParams({ action: 'check_claim', tag: cleanTag });
+    if (walletAddress) params.set('wallet', walletAddress);
+    if (email) params.set('email', email);
+    const dbRes = await fetch(`/api/arc-rewards?${params.toString()}`, { cache: 'no-store' });
+    const dbData = await dbRes.json().catch(() => ({}));
+    if (dbData?.check && dbData.check.can_claim === false) {
+      return {
+        available: false,
+        walletRestricted: Boolean(dbData.check.reason?.includes('owns') || dbData.check.reason?.includes('account') || dbData.check.reason?.includes('claimed')),
+        isTaken: Boolean(dbData.check.taken),
+        cleanTag,
+        canonicalTag: `₦${cleanTag.toUpperCase()}`,
+        existingTag: dbData.check.existing_tag || null,
+        reason: dbData.check.reason,
+      };
+    }
+  } catch (apiErr) {
+    console.warn('[checkArcTagAvailability DB check]:', apiErr.message);
+  }
+
+  // 4. Onchain registry checks
   try {
     const [owner, walletTag] = await Promise.all([
       publicClient.readContract({ address: ARC_NAIRATAG_REGISTRY_ADDRESS, abi: ARC_NAIRATAG_ABI, functionName: 'ownerOf', args: [cleanTag] }),
@@ -136,6 +158,9 @@ export async function checkArcTagAvailability(rawTag, walletAddress = null) {
 
 export async function getArcTagForWallet(walletAddress) {
   if (!walletAddress) return { hasTag: false, tag: null };
+  const norm = String(walletAddress).toLowerCase();
+
+  // 1. Onchain record check
   try {
     const result = await getWalletTagRecord(walletAddress);
     if (result) {
@@ -146,10 +171,24 @@ export async function getArcTagForWallet(walletAddress) {
   } catch (error) {
     console.warn('[getArcTagForWallet onchain check]', error.shortMessage || error.message);
   }
-  // Local claims fallback with strict protocol agent protection
+
+  // 2. Database claim check (syncs tag across all devices/incognito for this wallet)
+  try {
+    const dbRes = await fetch(`/api/arc-rewards?action=check_claim&wallet=${norm}&tag=probe_tag`, { cache: 'no-store' });
+    const dbData = await dbRes.json().catch(() => ({}));
+    if (dbData?.check?.existing_tag) {
+      const clean = String(dbData.check.existing_tag).toLowerCase();
+      if (clean !== 'bloom' || norm === '0x7c26a1f03339e2ea74d261d97f5ab9c38181af26') {
+        return { hasTag: true, tag: `₦${clean.toUpperCase()}`, cleanTag: clean, network: 'Arc Mainnet', claimedAt: Date.now() };
+      }
+    }
+  } catch (dbErr) {
+    console.warn('[getArcTagForWallet db check]:', dbErr.message);
+  }
+
+  // 3. Local claims fallback with strict protocol agent protection
   if (typeof window !== 'undefined') {
     try {
-      const norm = String(walletAddress).toLowerCase();
       const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
 
       // Sanitize: ₦bloom is the protocol agent (0x7c26...AF26), not a user tag

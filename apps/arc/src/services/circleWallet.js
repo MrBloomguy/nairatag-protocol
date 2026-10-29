@@ -339,7 +339,7 @@ export async function sendUsdcWithCircle({ session, fromAddress, toAddress, amou
 
 const RESERVED_PROTOCOL_TAGS = new Set(['nairatag', 'bloom', 'defillama', 'meteo', 'coingecko', 'arc']);
 
-export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
+export async function claimTagWithCircle({ session, walletAddress, rawTag, email = null }) {
   const cleanTag = String(rawTag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
   if (!/^[a-z0-9][a-z0-9_]{1,30}[a-z0-9]$/.test(cleanTag) || cleanTag.includes('__')) {
     throw new Error('NairaTags must be 3–32 letters, numbers, or single underscores inside the name.');
@@ -351,7 +351,7 @@ export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
     throw new Error('The Circle session does not own the connected wallet.');
   }
 
-  // Strict 1-tag-per-account check
+  // Strict 1-tag-per-account check locally
   if (typeof window !== 'undefined') {
     const norm = String(walletAddress).toLowerCase();
     const activeClaim = JSON.parse(window.localStorage.getItem('nairatag_claimed_tag_v1') || 'null');
@@ -364,6 +364,22 @@ export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
     );
     if (existing && existing.tag.toLowerCase() !== cleanTag) {
       throw new Error(`This account already owns ₦${existing.tag.toUpperCase()}. Each sovereign account is limited to 1 NairaTag.`);
+    }
+  }
+
+  // Authoritative Database check for both wallet and email
+  try {
+    const params = new URLSearchParams({ action: 'check_claim', tag: cleanTag });
+    if (walletAddress) params.set('wallet', walletAddress);
+    if (email) params.set('email', email);
+    const dbRes = await fetch(`/api/arc-rewards?${params.toString()}`, { cache: 'no-store' });
+    const dbData = await dbRes.json().catch(() => ({}));
+    if (dbData?.check && dbData.check.can_claim === false) {
+      throw new Error(dbData.check.reason || 'This account cannot claim another NairaTag.');
+    }
+  } catch (apiErr) {
+    if (apiErr.message?.includes('already owns') || apiErr.message?.includes('claimed') || apiErr.message?.includes('account') || apiErr.message?.includes('limit')) {
+      throw apiErr;
     }
   }
 
@@ -405,7 +421,14 @@ export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
       receipt,
     };
   } catch (err) {
-    if (err.message?.includes('already owns') || err.message?.includes('sovereign protocol agent')) {
+    if (
+      err.message?.includes('already owns') ||
+      err.message?.includes('sovereign protocol agent') ||
+      err.message?.includes('already claimed') ||
+      err.message?.includes('account') ||
+      err.message?.includes('limit') ||
+      err.message?.includes('cannot claim')
+    ) {
       throw err;
     }
     console.warn('[Circle Claim Tag fallback]:', err.message);

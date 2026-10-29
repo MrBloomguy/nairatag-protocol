@@ -81,6 +81,18 @@ export default async function handler(req, res) {
   // Direct Supabase Fallback Handler
   try {
     if (req.method === 'GET') {
+      const action = String(req.query?.action || '');
+      if (action === 'check_claim') {
+        const tag = String(req.query?.tag || '').toLowerCase().replace(/^[₦$@#]/, '');
+        const wallet = String(req.query?.wallet || '').trim().toLowerCase() || null;
+        const email = String(req.query?.email || '').trim().toLowerCase() || null;
+        const check = await callSupabaseRpc('arc_check_can_claim', {
+          p_tag: tag,
+          p_wallet: wallet,
+          p_email: email,
+        });
+        return res.status(200).json({ ok: true, check });
+      }
       const wallet = String(req.query?.wallet || '').trim().toLowerCase();
       if (!wallet || !wallet.startsWith('0x')) {
         return res.status(400).json({ ok: false, error: 'A valid wallet address is required.' });
@@ -93,6 +105,17 @@ export default async function handler(req, res) {
       const body = typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {});
       const action = String(body.action || '');
       const wallet = String(body.walletAddress || '').trim().toLowerCase();
+
+      if (action === 'check_claim') {
+        const tag = String(body.tag || '').toLowerCase().replace(/^[₦$@#]/, '');
+        const email = String(body.email || '').trim().toLowerCase() || null;
+        const check = await callSupabaseRpc('arc_check_can_claim', {
+          p_tag: tag,
+          p_wallet: wallet || null,
+          p_email: email,
+        });
+        return res.status(200).json({ ok: true, check });
+      }
 
       if (action === 'referral_signup') {
         const referredTag = String(body.tag || '').toLowerCase().replace(/^[₦$@#]/, '');
@@ -113,10 +136,26 @@ export default async function handler(req, res) {
 
       if (action === 'tag_claimed') {
         const tag = String(body.tag || '').toLowerCase().replace(/^[₦$@#]/, '');
+        const email = String(body.email || '').trim().toLowerCase() || null;
         let result = {};
         try {
-          result = await callSupabaseRpc('arc_record_tag_claim', { p_wallet: wallet, p_tag: tag });
-        } catch {}
+          result = await callSupabaseRpc('arc_enforce_claim', {
+            p_tag: tag,
+            p_wallet: wallet,
+            p_email: email,
+            p_tx_hash: body.txHash || null,
+            p_auth_provider: body.authProvider || 'wallet',
+            p_avatar_url: body.avatarUrl || null,
+          });
+          if (result && result.ok === false) {
+            return res.status(400).json({ ok: false, error: result.error || 'Claim rejected by protocol policy.' });
+          }
+        } catch (enforceErr) {
+          console.warn('[arc_enforce_claim note]:', enforceErr.message);
+          try {
+            result = await callSupabaseRpc('arc_record_tag_claim', { p_wallet: wallet, p_tag: tag });
+          } catch {}
+        }
         if (body.referrerTag) {
           const referrerTag = String(body.referrerTag).toLowerCase().replace(/^[₦$@#]/, '');
           const referrerWallet = resolveReferrerWallet(referrerTag);

@@ -1,7 +1,7 @@
 import { keccak256, stringToHex } from 'viem';
 import { getEthereumProvider } from './arcPayment.js';
 
-const ARC_AGENTS_API = import.meta.env?.VITE_ARC_AGENTS_API || (import.meta.env?.DEV ? '/api/arc-agents' : 'https://old.nairatag.ng/api/arc-agents');
+const ARC_AGENTS_API = import.meta.env?.VITE_ARC_AGENTS_API || '/api/arc-agents';
 
 export const KNOWN_AGENT_LOGOS = {
   defillama: '/agents/defillama.png',
