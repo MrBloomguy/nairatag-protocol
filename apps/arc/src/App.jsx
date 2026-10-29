@@ -3930,6 +3930,24 @@ function ArcAppShell() {
 
                 {/* Center Stage: Live Type Tag Searching Display */}
                 <div className="claim-hero-stage">
+                  {getPendingReferral()?.tag && (
+                    <div style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.25)',
+                      borderRadius: '999px',
+                      padding: '4px 12px',
+                      marginBottom: '10px',
+                      fontSize: '12px',
+                      color: '#059669',
+                      fontWeight: 650,
+                    }}>
+                      <span>🎁</span>
+                      <span>Referred by <strong>₦{getPendingReferral().tag.toUpperCase()}</strong> (+100 Pts bonus)</span>
+                    </div>
+                  )}
                   <div className="claim-stage-subtitle">Claim your NairaTag</div>
                   <div
                     className={`claim-live-tag-display ${claimInput.trim() ? 'has-value' : ''}`}
@@ -6411,6 +6429,10 @@ function VoiceModePreviewPage() {
 }
 
 export default function App() {
+  if (typeof window !== 'undefined') {
+    rememberReferralFromUrl();
+  }
+
   const isVoicePreview = import.meta.env.DEV && typeof window !== 'undefined'
     && new URLSearchParams(window.location.search).get('voicePreview') === '1';
   if (isVoicePreview) return <VoiceModePreviewPage />;
@@ -6420,11 +6442,18 @@ export default function App() {
   if (isLandingHost) return <NairaTagLanding />;
 
   const pathname = typeof window !== 'undefined' ? window.location.pathname.replace(/\/+$/, '') : '';
+  const hash = typeof window !== 'undefined' ? window.location.hash.toLowerCase() : '';
   const agentMatch = pathname.match(/^\/agent\/([a-zA-Z0-9_-]+)/i);
   const tagMatch = pathname.match(/^\/tag\/([a-zA-Z0-9_-]+)/i);
 
   if (pathname === '/admin') {
     return <PlatformAgentAdminPage />;
+  }
+
+  // If the user arrived with #claim (e.g. from referral link /tag/OLA?ref=₦ola#claim or /#claim),
+  // route directly into ArcAppShell so the user lands on the Claim screen to register!
+  if (hash === '#claim' || hash === '#/claim') {
+    return <ArcAppShell />;
   }
 
   if (agentMatch) {

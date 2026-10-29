@@ -533,12 +533,23 @@ export function ReferralModal({ isOpen, onClose, userTag = '', accountKey = '', 
 
   useEffect(() => {
     let active = true;
-    const refresh = () => getArcRewardState(accountKey).then((state) => { if (active) { setReferralStats(state.referrals); setReferralError(''); } }).catch((error) => { if (active) setReferralError(error.message || 'Referral rewards are unavailable.'); });
+    const refresh = () => getArcRewardState(accountKey).then((state) => {
+      if (active && state?.referrals) {
+        setReferralStats(state.referrals);
+        setReferralError('');
+      }
+    }).catch((error) => {
+      if (active) setReferralError(error.message || 'Referral rewards are unavailable.');
+    });
     refresh();
     window.addEventListener('focus', refresh);
+    window.addEventListener('nairatag:referrals-updated', refresh);
+    window.addEventListener('nairatag:reward-state-updated', refresh);
     return () => {
       active = false;
       window.removeEventListener('focus', refresh);
+      window.removeEventListener('nairatag:referrals-updated', refresh);
+      window.removeEventListener('nairatag:reward-state-updated', refresh);
     };
   }, [cleanTag, accountKey]);
 
@@ -628,7 +639,7 @@ export function ReferralModal({ isOpen, onClose, userTag = '', accountKey = '', 
           <div className="referral-unified-box">
             <div className="referral-unified-info">
               <span className="referral-unified-label">Your referral code</span>
-              <span className="referral-unified-code">{inviteCode ? `₦${inviteCode}` : 'Claim a NairaTag to activate'}</span>
+              <span className="referral-unified-code">{inviteCode || 'Claim a NairaTag to activate'}</span>
             </div>
             <button
               type="button"

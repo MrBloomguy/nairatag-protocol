@@ -33,6 +33,7 @@ import {
   ARC_ERC8004_REPUTATION_REGISTRY
 } from '../config/arc.js';
 import confetti from 'canvas-confetti';
+import { rememberReferralFromUrl, getPendingReferral } from '../services/referrals.js';
 import './public-twitter-profile.css';
 
 const shorten = (addr = '') => addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : '';
@@ -100,6 +101,12 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   const cleanTag = String(rawHandle || 'bloom').replace(/^[₦$@#]/, '').trim();
   const displayTag = `₦${cleanTag.toUpperCase()}`;
   const lowercaseTag = cleanTag.toLowerCase();
+  const cleanHandle = lowercaseTag;
+  const pendingReferral = getPendingReferral();
+
+  useEffect(() => {
+    rememberReferralFromUrl();
+  }, []);
 
   const [theme, setTheme] = useState(() => {
     try {
@@ -312,6 +319,34 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
       <main className="twitter-profile-shell">
         {/* Subtle accent border at top instead of bulky banner */}
         <div className="profile-top-accent" />
+
+        {pendingReferral?.tag && (
+          <div style={{
+            margin: '12px 16px 0',
+            padding: '10px 14px',
+            background: 'rgba(16, 185, 129, 0.1)',
+            border: '1px solid rgba(16, 185, 129, 0.28)',
+            borderRadius: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+            fontSize: '12.5px',
+            color: '#059669',
+          }}>
+            <span>🎁 <strong>₦{pendingReferral.tag.toUpperCase()}</strong> invited you to NairaTag! Claim a tag to earn +100 bonus Protocol Points.</span>
+            <a href="/#claim" style={{
+              background: '#059669',
+              color: '#fff',
+              padding: '5px 12px',
+              borderRadius: '999px',
+              fontWeight: 700,
+              fontSize: '11.5px',
+              textDecoration: 'none',
+              whiteSpace: 'nowrap',
+            }}>Claim ₦Tag</a>
+          </div>
+        )}
 
         {/* Profile Header Bar: Avatar + Action CTAs */}
         <div className="twitter-profile-bar">

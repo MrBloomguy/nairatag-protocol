@@ -107,6 +107,26 @@ function applyLocalAction(action, targetWallet, extra = {}) {
     };
     state.notifications = [notif, ...(state.notifications || [])];
     result = { points: rewardPoints, tag: extra.tag };
+  } else if (action === 'referral_signup') {
+    const rewardPoints = 100;
+    state.points = (state.points || 0) + rewardPoints;
+    state.referrals = state.referrals || { points: 0, joinedCount: 0, completedCount: 0, referrals: [] };
+    state.referrals.points = (state.referrals.points || 0) + rewardPoints;
+    state.referrals.joinedCount = (state.referrals.joinedCount || 0) + 1;
+    const friend = extra.tag || 'friend';
+    state.referrals.referrals = [
+      { tag: friend, milestone: 'signup', points: rewardPoints, createdAt: Date.now() },
+      ...(state.referrals.referrals || [])
+    ];
+    const notif = {
+      id: 'notif-' + Date.now(),
+      title: '🎁 Referral Bonus Claimed',
+      body: `₦${String(friend).replace(/^[₦$@#]/, '').toUpperCase()} joined with your referral! +${rewardPoints} Protocol Points credited.`,
+      createdAt: Date.now(),
+      read: false,
+    };
+    state.notifications = [notif, ...(state.notifications || [])];
+    result = { points: rewardPoints, referrerTag: extra.referrerTag, tag: friend };
   }
 
   saveLocalRewardState(targetWallet, state);
@@ -291,8 +311,8 @@ export async function submitArcRewardAction({ action, walletAddress, tag, referr
     saveLocalRewardState(targetWallet, state);
     return { result: response.result, state };
   } catch (error) {
-    if (action === 'daily_claim' || action === 'spin' || action === 'tag_claimed' || action === 'agent_onboarding_step') {
-      const localRes = applyLocalAction(action, targetWallet, { requestId, tag });
+    if (action === 'daily_claim' || action === 'spin' || action === 'tag_claimed' || action === 'agent_onboarding_step' || action === 'referral_signup') {
+      const localRes = applyLocalAction(action, targetWallet, { requestId, tag, referrerTag });
       return localRes;
     }
     throw error;

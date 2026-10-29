@@ -10,9 +10,15 @@ function cleanTag(tag) {
   return normalized.valid ? normalized.cleanTag.toLowerCase() : '';
 }
 
-export function rememberReferralFromUrl(search = window.location.search) {
+export function rememberReferralFromUrl(search = (typeof window !== 'undefined' ? window.location.search : '')) {
   try {
-    const tag = cleanTag(new URLSearchParams(search).get('ref'));
+    let tag = cleanTag(new URLSearchParams(search).get('ref'));
+    if (!tag && typeof window !== 'undefined') {
+      const match = window.location.pathname.match(/^\/tag\/([a-zA-Z0-9_-]+)/i);
+      if (match && match[1]) {
+        tag = cleanTag(match[1]);
+      }
+    }
     if (!tag) return null;
     const attribution = { tag, capturedAt: Date.now() };
     localStorage.setItem(PENDING_REFERRAL_KEY, JSON.stringify(attribution));
