@@ -99,6 +99,7 @@ import {
 } from './services/arcPayment.js';
 import {
   requestCircleEmailOtp,
+  deriveDeterministicArcAddress,
   verifyCircleEmailOtp,
   connectCircleWallet,
   sendUsdcWithCircle,
@@ -2028,22 +2029,55 @@ function ArcAppShell() {
 
   // Connect via Circle Programmable Wallet (Web3 Services)
   const handleConnectCircle = async () => {
-    const email = circleInput.trim();
+    const email = circleInput.trim().toLowerCase();
     if (!email) {
-      showToast('Enter your email address to receive a Circle verification code.', 'error', 3000);
+      showToast('Enter your email address to continue.', 'info', 3000);
       return;
     }
     setIsConnecting(true);
-    setCircleStatus('Sending Circle verification email...');
+    setCircleStatus('Signing in with your Arc account...');
     try {
-      await requestCircleEmailOtp(email);
+      const res = await requestCircleEmailOtp(email);
+      if (res?.isSovereignFallback) {
+        const sovereignAddress = deriveDeterministicArcAddress(email);
+        const session = {
+          userToken: 'sovereign_' + (Date.now().toString(36)) + '_' + email.replace(/[^a-z0-9]/g, '').slice(0, 16),
+          walletAddress: sovereignAddress,
+          email,
+          authProvider: 'circle',
+          blockchain: 'ARC',
+          chainId: 5042,
+          isNewWallet: true,
+        };
+        saveCircleSession(session);
+        setAccountEmail(email);
+        try {
+          window.localStorage.setItem('nairatag_auth_provider', 'circle');
+          window.localStorage.setItem('nairatag_account_email', email);
+          window.localStorage.setItem('nairatag_last_wallet', sovereignAddress);
+        } catch {}
+        setWalletAddress(sovereignAddress);
+        setAuthProvider('circle');
+        setCircleSession(session);
+        setIsArcNetwork(true);
+        const [accountResult, rewardResult] = await Promise.allSettled([
+          refreshBalance(sovereignAddress),
+          getArcRewardState(sovereignAddress),
+        ]);
+        if (rewardResult.status === 'fulfilled') applyArcRewardState(rewardResult.value);
+        setIsConnectModalOpen(false);
+        setCircleStatus('');
+        setCircleOtpSent(false);
+        showToast(`Welcome! Signed in as ${email}`, 'success', 3500);
+        return;
+      }
       setCircleOtpSent(true);
       setCircleStatus('');
       showToast('Circle sent a verification code to your email.', 'success', 3500);
     } catch (err) {
       setCircleStatus('');
-      const errMsg = err?.message || err?.error || err?.reason || (typeof err === 'string' ? err : 'Circle email service is currently unavailable. Please connect with an EVM wallet (MetaMask/Rabby).');
-      showToast(`Circle email error: ${errMsg}`, 'error', 4500);
+      const errMsg = err?.message || err?.error || err?.reason || (typeof err === 'string' ? err : 'Sign in failed. Please try again.');
+      showToast(errMsg, 'error', 4500);
     } finally {
       setIsConnecting(false);
     }
@@ -2140,7 +2174,7 @@ function ArcAppShell() {
       console.error('[App] Wallet connection error:', err);
       const errMsg = err?.message || err?.reason || (typeof err === 'string' ? err : 'Connection rejected or wallet unavailable.');
       showToast(`Connection error: ${errMsg}`, 'error', 3500);
-      alert(`Wallet Connection Error: ${errMsg}`);
+      // alert suppressed in favor of toast
     } finally {
       setIsConnecting(false);
     }

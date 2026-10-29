@@ -145,10 +145,9 @@ export default function AuthConnectModal({
             </div>
             <div className="auth-wallet-list">
               {[
-                { name: 'Arc Wallet', type: 'Arc Wallet', badge: 'ARC TESTNET' },
-                { name: 'MetaMask', type: 'MetaMask' },
-                { name: 'Coinbase Wallet', type: 'Coinbase Wallet' },
-                { name: 'WalletConnect', type: 'WalletConnect' },
+                { name: 'MetaMask', type: 'MetaMask', badge: 'EVM BROWSER' },
+                { name: 'Rabby Wallet', type: 'Rabby', badge: 'EVM BROWSER' },
+                { name: 'Browser Wallet (Injected)', type: 'injected', badge: 'ARC MAINNET' },
               ].map((wallet) => (
                 <button key={wallet.name} type="button" className="auth-wallet-option" disabled={isConnecting} onClick={() => handleConnect(wallet.type)}>
                   <span className="auth-wallet-option-icon"><Wallet size={17} /></span>

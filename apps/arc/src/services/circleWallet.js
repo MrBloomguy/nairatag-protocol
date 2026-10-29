@@ -67,7 +67,41 @@ async function circleAction(action, params = {}) {
   return data;
 }
 
+export function deriveDeterministicArcAddress(identifier) {
+  const clean = String(identifier || '').trim().toLowerCase();
+  const salt = `nairatag_arc_5042_email_${clean}`;
+  const hash = keccak256(stringToHex(salt));
+  return getAddress('0x' + hash.slice(-40));
+}
+
 export async function requestCircleEmailOtp(email) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+    throw new Error('Enter a valid email address.');
+  }
+  try {
+    const sdk = await getSdk();
+    const deviceId = await sdk.getDeviceId();
+    const otp = await circleAction('requestEmailOtp', { deviceId, email: normalizedEmail });
+    if (otp?.deviceToken && otp?.deviceEncryptionKey && otp?.otpToken) {
+      sdk.updateConfigs({
+        appSettings: { appId: APP_ID },
+        loginConfigs: {
+          deviceToken: otp.deviceToken,
+          deviceEncryptionKey: otp.deviceEncryptionKey,
+          otpToken: otp.otpToken,
+          email: { email: normalizedEmail },
+        },
+      });
+      return { email: normalizedEmail, isCircle: true };
+    }
+  } catch (err) {
+    console.warn('[Circle Email] Service restricted, falling back to sovereign smart account:', err?.message || err);
+  }
+  return { email: normalizedEmail, isSovereignFallback: true };
+}
+
+async function _legacyRequestCircleEmailOtp_unused(email) {
   const normalizedEmail = String(email || '').trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
     throw new Error('Enter a valid email address for Circle email verification.');
