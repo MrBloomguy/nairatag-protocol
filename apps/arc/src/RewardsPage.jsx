@@ -1089,7 +1089,7 @@ export default function RewardsPage({
           </article>
           <article className="rewards-asset-card rewards-asset-usdc">
             <span className="rewards-asset-symbol">$</span>
-            <div><strong>USDC</strong><span>{usdcBalance?.formatted || '0.00'} on Arc Testnet</span></div>
+            <div><strong>USDC</strong><span>{usdcBalance?.formatted || '0.00'} on Arc Mainnet</span></div>
           </article>
           <article className="rewards-asset-card rewards-asset-cngn">
             <span className="rewards-asset-symbol">₦</span>

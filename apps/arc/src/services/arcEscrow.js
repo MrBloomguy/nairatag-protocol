@@ -37,7 +37,7 @@ import {
 } from '../config/arc.js';
 import { getEthereumProvider } from './arcPayment.js';
 
-export const activeArcChain = isArcMainnet ? arcMainnet : arcTestnet;
+export const activeArcChain = arcMainnet;
 
 export const publicClient = createPublicClient({
   chain: activeArcChain,

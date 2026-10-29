@@ -29,8 +29,8 @@ import {
   isArcMainnet,
 } from '../config/arc.js';
 
-// Respect network mode: defaults to Arc Mainnet when deployed to mainnet
-export const activeArcChain = isArcMainnet ? arcMainnet : arcTestnet;
+// Arc Mainnet (Chain ID 5042) is the canonical execution network
+export const activeArcChain = arcMainnet;
 
 /**
  * Public client for read-only calls to Arc Testnet.

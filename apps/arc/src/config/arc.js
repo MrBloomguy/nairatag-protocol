@@ -85,7 +85,8 @@ export const ARC_TESTNET_REGISTRY_ADDRESS = '0x034f64b644988406ded382ebabb5c981b
 export const ARC_TESTNET_RESOLVER_ADDRESS = '0xaee1af632006a5062accdb74f73930439b76efbf';
 export const ARC_TESTNET_ESCROW_ADDRESS = '0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab';
 
-export const isArcMainnet = ((typeof import.meta !== 'undefined' && import.meta.env?.VITE_ARC_NETWORK) || 'mainnet') === 'mainnet';
+export const isArcMainnet = true; // Permanent Arc Mainnet (Chain ID 5042)
+export const activeArcChain = arcMainnet;
 
 export const ARC_NAIRATAG_REGISTRY_ADDRESS = isArcMainnet ? ARC_MAINNET_REGISTRY_ADDRESS : ARC_TESTNET_REGISTRY_ADDRESS;
 export const ARC_NAIRATAG_RESOLVER_ADDRESS = isArcMainnet ? ARC_MAINNET_RESOLVER_ADDRESS : ARC_TESTNET_RESOLVER_ADDRESS;

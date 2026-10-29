@@ -1318,6 +1318,7 @@ function ArcAppShell() {
 
   // Wallet & Network State
   const [walletAddress, setWalletAddress] = useState(null);
+  const [chainId, setChainId] = useState(null);
   const [isArcNetwork, setIsArcNetwork] = useState(false);
   const [usdcBalance, setUsdcBalance] = useState({ formatted: '0.00', raw: 0n, rawString: '0' });
   const [isConnecting, setIsConnecting] = useState(false);
@@ -2014,7 +2015,8 @@ function ArcAppShell() {
           setWalletAddress(stored.walletAddress);
           setAuthProvider('circle');
           setCircleSession(stored);
-          setIsArcNetwork(true);
+          setChainId(activeArcChain.id);
+      setIsArcNetwork(true);
           const savedEmail = window.localStorage.getItem('nairatag_account_email') || stored.email;
           if (savedEmail) setAccountEmail(savedEmail);
           refreshBalance(stored.walletAddress);
@@ -2046,6 +2048,31 @@ function ArcAppShell() {
     restoreSession();
     return () => { cancelled = true; };
   }, [refreshBalance]);
+
+  // Listen for wallet chain and account changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.ethereum?.on) return;
+    const handleChainChanged = (hexChainId) => {
+      const numId = parseInt(hexChainId, 16);
+      setChainId(numId);
+      setIsArcNetwork(numId === activeArcChain.id);
+      if (walletAddress) refreshBalance(walletAddress);
+    };
+    const handleAccountsChanged = (accounts) => {
+      if (!accounts || accounts.length === 0) {
+        handleDisconnect();
+      } else if (accounts[0] !== walletAddress) {
+        setWalletAddress(accounts[0]);
+        refreshBalance(accounts[0]);
+      }
+    };
+    window.ethereum.on('chainChanged', handleChainChanged);
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
+    return () => {
+      window.ethereum.removeListener?.('chainChanged', handleChainChanged);
+      window.ethereum.removeListener?.('accountsChanged', handleAccountsChanged);
+    };
+  }, [walletAddress, refreshBalance]);
 
   // Connect via Circle Programmable Wallet (Web3 Services)
   const handleConnectCircle = async () => {
@@ -2079,7 +2106,8 @@ function ArcAppShell() {
         setWalletAddress(sovereignAddress);
         setAuthProvider('circle');
         setCircleSession(session);
-        setIsArcNetwork(true);
+        setChainId(activeArcChain.id);
+      setIsArcNetwork(true);
         const [accountResult, rewardResult] = await Promise.allSettled([
           refreshBalance(sovereignAddress),
           getArcRewardState(sovereignAddress),
@@ -2120,6 +2148,7 @@ function ArcAppShell() {
       setWalletAddress(res.walletAddress);
       setAuthProvider('circle');
       setCircleSession(res);
+      setChainId(activeArcChain.id);
       setIsArcNetwork(true);
       const [accountResult, rewardResult] = await Promise.allSettled([
         refreshBalance(res.walletAddress),
@@ -2159,6 +2188,8 @@ function ArcAppShell() {
     } catch {}
     setWalletAddress(null);
     setAuthProvider(null);
+    setChainId(null);
+    setIsArcNetwork(false);
     setCircleSession(null);
     setAccountEmail('');
     setIsNotificationOpen(false);
@@ -2185,7 +2216,18 @@ function ArcAppShell() {
       setWalletAddress(address);
       setAuthProvider('injected');
       setChainId(cId);
-      setIsArcNetwork(cId === activeArcChain.id);
+      if (cId !== activeArcChain.id) {
+        try {
+          await switchOrAddArcNetwork();
+          setChainId(activeArcChain.id);
+          setIsArcNetwork(true);
+        } catch (switchErr) {
+          console.warn('[App] Optional chain switch note:', switchErr);
+          setIsArcNetwork(false);
+        }
+      } else {
+        setIsArcNetwork(true);
+      }
       await refreshBalance(address);
       setIsConnectModalOpen(false);
       showToast("You're signed in.", 'success', 2500);
@@ -2203,6 +2245,7 @@ function ArcAppShell() {
   const handleSwitchNetwork = async () => {
     try {
       await switchOrAddArcNetwork();
+      setChainId(activeArcChain.id);
       setIsArcNetwork(true);
       showToast('Switched to Arc Osaka EVM', 'success', 2500);
       if (walletAddress) refreshBalance(walletAddress);
