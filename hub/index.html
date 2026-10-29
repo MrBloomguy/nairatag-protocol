@@ -3,2630 +3,1175 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- Favicon & Site Icons -->
+  <title>NairaTag • Sovereign Naming & Autonomous Agent Rails on Arc</title>
+  <meta name="description" content="Sovereign naming and autonomous agent payment rails on Arc Network. Settle digital dollars natively in pure USDC with sub-second finality and zero gas token friction." />
+  
+  <!-- Favicons -->
   <link rel="icon" type="image/png" sizes="32x32" href="/hub/favicon-32x32.png" />
   <link rel="icon" type="image/x-icon" href="/hub/favicon.ico" />
   <link rel="apple-touch-icon" sizes="180x180" href="/hub/apple-touch-icon.png" />
-  <title>TagProtocol — The naming layer for onchain identity</title>
-  <meta name="description" content="TagProtocol is an open naming protocol for onchain identity. NairaTag is its flagship product for claiming, managing, and using human-readable handles." />
-  <link rel="stylesheet" href="/hub/theme.css" />
-  <link rel="stylesheet" href="style.css?v=20260916font" />
-  <link rel="stylesheet" href="hero.css?v=20260916lavender2" />
-  <link rel="stylesheet" href="/hub/notifications.css" />
-  <script src="/hub/theme.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <script src="/hub/notifications.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/hub/supabase.js"></script>
+
+  <!-- OpenGraph / Social Cards -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://nairatag.ng/" />
+  <meta property="og:title" content="NairaTag • Sovereign Naming & Autonomous Agent Rails on Arc" />
+  <meta property="og:description" content="Replace 42-character hex addresses with sovereign ₦TAGs. Sub-second native USDC settlement and on-chain agent escrow on Arc Network." />
+  <meta property="og:image" content="https://arc.nairatag.ng/cards/nairatag.png?mode=og&network=arc" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="NairaTag • Sovereign Naming & Autonomous Agent Rails on Arc" />
+  <meta name="twitter:description" content="Replace 42-character hex addresses with sovereign ₦TAGs. Sub-second native USDC settlement on Arc Network." />
+  <meta name="twitter:image" content="https://arc.nairatag.ng/cards/nairatag.png?mode=og&network=arc" />
+
+  <!-- Fonts: Inter & Geist Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #000000;
+      --bg-subtle: #080808;
+      --bg-card: #0d0d0d;
+      --bg-card-hover: #141414;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-bright: rgba(255, 255, 255, 0.16);
+      --border-focus: rgba(255, 255, 255, 0.35);
+      --text: #ffffff;
+      --text-muted: #8e8e93;
+      --text-dim: #545458;
+      --green: #00e599;
+      --green-glow: rgba(0, 229, 153, 0.2);
+      --purple: #8b5cf6;
+      --purple-glow: rgba(139, 92, 246, 0.2);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'Geist Mono', 'SF Mono', Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      line-height: 1.5;
+      overflow-x: hidden;
+      selection-background-color: #ffffff;
+      selection-color: #000000;
+    }
+
+    ::selection {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* Subtle grid background */
+    .bg-grid {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 64px 64px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .spotlight {
+      position: fixed;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 500px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255, 255, 255, 0.07) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Header ── */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      background: #ffffff;
+      color: #000000;
+      border-radius: 6px;
+      font-weight: 800;
+      font-size: 15px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 229, 153, 0.08);
+      border: 1px solid rgba(0, 229, 153, 0.25);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--green);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+
+    nav a {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      transition: color 0.15s ease;
+      font-weight: 450;
+    }
+
+    nav a:hover {
+      color: #ffffff;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-pill-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #000000;
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      border: 1px solid #ffffff;
+    }
+
+    .btn-pill-primary:hover {
+      background: #e4e4e7;
+      transform: translateY(-1px);
+    }
+
+    .btn-pill-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--border-bright);
+      transition: all 0.15s ease;
+    }
+
+    .btn-pill-secondary:hover {
+      border-color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* ── Hero Section ── */
+    .hero {
+      padding-top: 170px;
+      padding-bottom: 90px;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .hero-eyebrow span.accent {
+      color: #ffffff;
+      font-weight: 600;
+    }
+
+    .hero-headline {
+      font-size: 64px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1.06;
+      max-width: 900px;
+      margin: 0 auto 24px;
+      background: linear-gradient(180deg, #ffffff 40%, #a1a1aa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: 18px;
+      color: var(--text-muted);
+      max-width: 660px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+      font-weight: 400;
+    }
+
+    /* Claim Tag Interactive Bar */
+    .claim-box-wrapper {
+      max-width: 580px;
+      margin: 0 auto 24px;
+      position: relative;
+    }
+
+    .claim-box {
+      display: flex;
+      align-items: center;
+      background: #0d0d0d;
+      border: 1px solid var(--border-bright);
+      border-radius: 9999px;
+      padding: 6px 6px 6px 20px;
+      transition: all 0.2s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .claim-box:focus-within {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    }
+
+    .claim-prefix {
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--text-muted);
+      margin-right: 4px;
+      user-select: none;
+    }
+
+    .claim-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #ffffff;
+      font-size: 15px;
+      font-family: var(--font-sans);
+      font-weight: 500;
+    }
+
+    .claim-input::placeholder {
+      color: var(--text-dim);
+      font-weight: 400;
+    }
+
+    .claim-btn {
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      outline: none;
+      padding: 10px 22px;
+      border-radius: 9999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .claim-btn:hover {
+      background: #e4e4e7;
+    }
+
+    .claim-feedback {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      min-height: 20px;
+      margin-top: 8px;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    .claim-feedback.success { color: var(--green); }
+    .claim-feedback.taken { color: #f59e0b; }
+    .claim-feedback.error { color: #ef4444; }
+
+    /* Trust Stats Strip */
+    .metrics-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 36px;
+      margin-top: 50px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .metric-item {
+      text-align: center;
+    }
+
+    .metric-val {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+      font-family: var(--font-sans);
+    }
+
+    .metric-label {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 4px;
+    }
+
+    /* ── Section Dividers & Headers ── */
+    .section-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 38px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 14px;
+      color: #ffffff;
+    }
+
+    .section-desc {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    /* ── Agent Teammates Roster (x.ai/bot aesthetic) ── */
+    .agents-section {
+      padding: 100px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .agents-header {
+      margin-bottom: 48px;
+    }
+
+    .agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .agent-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .agent-card:hover {
+      border-color: var(--border-bright);
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+    }
+
+    .agent-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .agent-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #18181b;
+      border: 1px solid var(--border-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 17px;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    .agent-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .agent-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .agent-tag {
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .agent-role {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 20px;
+      flex-grow: 1;
+    }
+
+    .agent-meta {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .agent-meta-addr {
+      color: var(--text-muted);
+    }
+
+    /* ── Features Bento ── */
+    .features-section {
+      padding: 100px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 16px;
+      margin-top: 48px;
+    }
+
+    .bento-col-8 { grid-column: span 8; }
+    .bento-col-4 { grid-column: span 4; }
+    .bento-col-6 { grid-column: span 6; }
+    .bento-col-12 { grid-column: span 12; }
+
+    .bento-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .bento-card:hover {
+      border-color: var(--border-bright);
+      background: var(--bg-card-hover);
+    }
+
+    .bento-tag {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .bento-title {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+      color: #ffffff;
+    }
+
+    .bento-text {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Code Terminal Display */
+    .terminal-card {
+      background: #09090b;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-top: 24px;
+      overflow: hidden;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .terminal-top {
+      background: #141417;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .terminal-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #27272a;
+    }
+
+    .terminal-title {
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-left: 6px;
+    }
+
+    .terminal-code {
+      padding: 16px;
+      line-height: 1.7;
+      color: #d4d4d8;
+      overflow-x: auto;
+    }
+
+    .terminal-code .kw { color: #c084fc; }
+    .terminal-code .str { color: #86efac; }
+    .terminal-code .num { color: #93c5fd; }
+    .terminal-code .fn { color: #fde047; }
+    .terminal-code .comm { color: #71717a; }
+
+    /* ── Verified Contracts ── */
+    .contracts-section {
+      padding: 80px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .contracts-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 32px;
+      font-size: 13.5px;
+    }
+
+    .contracts-table th {
+      text-align: left;
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .contracts-table td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .contracts-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .contract-addr {
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      font-size: 12.5px;
+      transition: color 0.15s ease;
+    }
+
+    .contract-addr:hover {
+      color: #ffffff;
+      text-decoration: underline;
+    }
+
+    /* ── Bottom CTA ── */
+    .bottom-cta {
+      padding: 120px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      position: relative;
+    }
+
+    .bottom-headline {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+    }
+
+    .bottom-sub {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 520px;
+      margin: 0 auto 36px;
+      line-height: 1.6;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0 60px;
+      font-size: 13px;
+      color: var(--text-dim);
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      transition: color 0.15s ease;
+    }
+
+    .footer-links a:hover {
+      color: #ffffff;
+    }
+
+    /* Responsive */
+    @media (max-width: 860px) {
+      .hero-headline { font-size: 42px; }
+      .bento-col-8, .bento-col-4, .bento-col-6 { grid-column: span 12; }
+      nav { display: none; }
+      .metrics-strip { gap: 20px; }
+    }
+  </style>
 </head>
 <body>
 
-  <!-- =============================================================== -->
-  <!-- HERO PAGE (landing, full-viewport)                               -->
-  <!-- =============================================================== -->
-  <div id="page-hero">
-  <section class="nt-hero-section" id="hero">
+  <!-- Ambient Dark Grid & Spotlight -->
+  <div class="bg-grid"></div>
+  <div class="spotlight"></div>
 
-    <div class="nt-hero-frame">
-
-    <!-- ── NAVBAR ── -->
-    <nav class="nt-navbar" role="navigation" aria-label="TagProtocol primary navigation">
-      <div class="nt-nav-inner">
-        <a class="nt-brand" href="#hero" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
-          <div class="nt-brand-glyph"><img src="/hub/nairatag-icon.png" alt="NairaTag" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;" /></div>
-          <span class="nt-brand-name">TagProtocol</span>
+  <!-- Header -->
+  <header>
+    <div class="container header-inner">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <a href="/" class="logo">
+          <div class="logo-badge">₦</div>
+          <span>NairaTag</span>
         </a>
-        <ul class="nt-nav-links" role="list">
-          <li><a href="#about">About</a></li>
-          <li><a href="#solutions">Solutions</a></li>
-          <li><a href="#products">Products</a></li>
-          <li><a href="#use-cases">Use cases</a></li>
-          <li><a href="#dev-section">Docs</a></li>
-          <li><a href="/agent">Agent</a></li>
-          <li><a href="#faq">FAQ</a></li>
-        </ul>
-        <div class="nt-nav-right">
-          <div class="nt-net-pill" id="network-status-pill">
-            <span class="nt-net-dot"></span>
-            <span id="chain-block-num">Block #...</span>
-          </div>
-          <select id="account-selector" class="nt-wallet-select">
-            <option value="browser" selected>Connect Wallet</option>
-            
-            <option value="browser">Browser Wallet</option>
-          </select>
-          <button type="button" class="header-auth-btn" id="header-auth-btn" onclick="window.NairaTagSupabase.openAuthModal('signin')" title="Sign In or Sign Up">
-            <span id="auth-btn-icon">👤</span>
-            <span id="auth-btn-text">Sign In</span>
-          </button>
-          <button id="connect-wallet-btn" class="nt-btn-launch" onclick="scrollToApp()">
-            <span id="wallet-addr-text">Launch App</span>
-          </button>
-          <button id="nt-mobile-menu-toggle" class="nt-mobile-menu-toggle" type="button" aria-expanded="false" aria-controls="nt-mobile-menu" aria-label="Open navigation menu"><span></span><span></span><span></span></button>
-        </div>
-      </div>
-      <div id="nt-mobile-menu" class="nt-mobile-menu" aria-hidden="true">
-        <a href="/onboarding" style="font-weight:800; color:var(--primary); background:rgba(122,69,229,0.08); border-radius:10px; padding:10px 14px; display:flex; align-items:center; gap:8px;"><span>✨</span> Get Started (Mobile Setup)</a>
-        <a href="#about">About</a>
-        <a href="#solutions">Solutions</a>
-        <a href="#use-cases">Use cases</a>
-        <a href="#products">Products</a>
-        <a href="#dev-section">Docs</a>
-        <a href="#faq">FAQ</a>
-      </div>
-    </nav>
-
-    <!-- ═══════════════════════════════════════════════════ -->
-    <!-- SECTION 1 — CLAIM / IDENTITY LANDING             -->
-    <!-- ═══════════════════════════════════════════════════ -->
-    <div class="nt-claim-wrap" id="about">
-      <div class="nt-hero-main">
-        <div class="nt-claim-copy">
-          <p class="nt-hero-eyebrow">The open naming layer for onchain identity</p>
-          <h1 class="nt-claim-headline"><span class="nt-headline-line">Give every account</span><span class="nt-headline-line nt-headline-line-delay">a name to use.</span></h1>
-          <p class="nt-claim-subtitle">
-            TagProtocol gives wallets, fintechs, and apps a shared way to name, discover, and use onchain accounts.
-          </p>
-
-          <div class="nt-claim-search-wrap">
-            <div class="nt-claim-search-shell">
-              <span class="nt-claim-search-icon" aria-hidden="true">⌕</span>
-              <input id="nt-claim-search-input" class="nt-claim-search" type="text" placeholder="Claim a ₦Ntag" aria-label="Claim a NairaTag handle" />
-              <span id="nt-claim-search-status" class="nt-claim-search-status" role="status" aria-label="Search status"></span>
-            </div>
-            <div id="hero-search-feedback" class="nt-search-feedback nt-claim-search-feedback" role="status" aria-live="polite"></div>
-          </div>
-        </div>
-
-        <div class="nt-hero-visual" aria-label="TagProtocol name resolution network" role="img">
-          <div class="nt-hero-visual-grid" aria-hidden="true">
-            <i></i><i></i><i class="active"></i><i class="active"></i><i></i><i></i>
-            <i></i><i class="active"></i><i class="active"></i><i></i><i></i><i></i>
-            <i></i><i></i><i class="active"></i><i></i><i class="active"></i><i></i>
-            <i></i><i></i><i class="active"></i><i class="active"></i><i class="active"></i><i></i>
-            <i></i><i class="active"></i><i></i><i></i><i class="active"></i><i></i>
-            <i></i><i></i><i></i><i class="active"></i><i class="active"></i><i></i>
-          </div>
-          <span class="nt-hero-visual-tag tag-one">₦femi / cNGN</span>
-          <span class="nt-hero-visual-tag tag-two">₦chika / USDT</span>
-          <span class="nt-hero-visual-tag tag-three">₦helen / ETH</span>
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span>Arc Mainnet 5042</span>
         </div>
       </div>
 
-      <div class="nt-hero-actions">
-        <a href="#use-cases"><span class="nt-hero-action-icon">&#8599;</span><strong>Explore use cases</strong><small>Wallets, fintechs, and builders</small></a>
-        <a href="#products"><span class="nt-hero-action-icon">&#9672;</span><strong>Start with NairaTag</strong><small>The flagship identity experience</small></a>
-        <a href="#dev-section"><span class="nt-hero-action-icon">&#8594;</span><strong>Build on TagProtocol</strong><small>Open registry and resolution</small></a>
-      </div>
-    </div>
-
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════ -->
-    <!-- SECTION 2 — PROTOCOL STACK BAR (Reference 2 Mobbin) -->
-    <!-- ═══════════════════════════════════════════════════ -->
-    <div class="nt-techbar nt-use-case-strip" id="use-cases">
-      <div class="nt-techbar-header">
-        <span class="nt-techbar-overline">BUILT FOR THE PEOPLE MOVING ONCHAIN</span>
-      </div>
-      <div class="nt-techbar-inner">
-        <div class="nt-techbar-item">
-          <span class="nt-techbar-icon" style="background:#78c9aa;"></span>
-          <div class="nt-techbar-text">
-            <strong>Wallets</strong>
-            <span>Readable accounts</span>
-          </div>
-        </div>
-        <div class="nt-techbar-sep"></div>
-        <div class="nt-techbar-item">
-          <span class="nt-techbar-icon" style="background:#8ec9b2;"></span>
-          <div class="nt-techbar-text">
-            <strong>Fintechs</strong>
-            <span>Named payments</span>
-          </div>
-        </div>
-        <div class="nt-techbar-sep"></div>
-        <div class="nt-techbar-item">
-          <span class="nt-techbar-icon" style="background:#a4d7c1;"></span>
-          <div class="nt-techbar-text">
-            <strong>Apps &amp; communities</strong>
-            <span>Portable identity</span>
-          </div>
-        </div>
-        <div class="nt-techbar-sep"></div>
-        <div class="nt-techbar-item">
-          <span class="nt-techbar-icon" style="background:#5aad8c;"></span>
-          <div class="nt-techbar-text">
-            <strong>Builders</strong>
-            <span>Open resolution</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <section class="nt-market-overview" aria-label="TagProtocol naming and pairing overview">
-      <div class="nt-market-overview-inner">
-        <div class="nt-market-panel">
-          <div class="nt-market-panel-heading">
-            <p class="nt-section-overline">Currency symbols</p>
-            <h2>Names for local value</h2>
-            <p>TagProtocol can give currencies a recognizable symbol across wallets and payment experiences.</p>
-          </div>
-          <div class="nt-symbol-list">
-            <div class="nt-symbol-item nt-symbol-item-active">
-              <span class="nt-symbol-mark">₦</span>
-              <span><strong>Nigerian Naira</strong><small>Available onchain</small></span>
-              <b>Live</b>
-            </div>
-            <div class="nt-symbol-item nt-symbol-item-soon">
-              <span class="nt-symbol-mark">₵</span>
-              <span><strong>Ghanaian Cedi</strong><small>Coming soon</small></span>
-              <b>Next</b>
-            </div>
-            <div class="nt-symbol-item nt-symbol-item-soon">
-              <span class="nt-symbol-mark">+</span>
-              <span><strong>More local currencies</strong><small>Expanding across Africa</small></span>
-              <b>Soon</b>
-            </div>
-          </div>
-        </div>
-
-        <div class="nt-market-panel">
-          <div class="nt-market-panel-heading">
-            <p class="nt-section-overline">NTag pairings</p>
-            <h2>Names that move value</h2>
-            <p>Use an NTag as a readable destination for stablecoins, local currencies, and ecosystem assets.</p>
-          </div>
-          <div class="nt-pair-list">
-            <div class="nt-pair-item"><span>₦FEMI</span><b>/</b><strong>cNGN</strong><small>Local settlement</small></div>
-            <div class="nt-pair-item"><span>₦DORIS</span><b>/</b><strong>USDT</strong><small>Stablecoin payments</small></div>
-            <div class="nt-pair-item"><span>₦ASAKE</span><b>/</b><strong>cNGN</strong><small>Available through NairaTag</small></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-    <!-- ═══════════════════════════════════════════════════ -->
-    <!-- SECTION 3 — CORE PROTOCOL PRIMITIVES (Reference 3)  -->
-    <!-- ═══════════════════════════════════════════════════ -->
-    <div class="nt-features-section" id="solutions">
-      <div class="nt-features-inner">
-        <p class="nt-features-overline">How TagProtocol works</p>
-        <h2 class="nt-features-headline">From a name to a useful<br>onchain identity</h2>
-
-        <div class="nt-features-grid">
-          <!-- Pillar I -->
-          <div class="nt-feature-col">
-            <div class="nt-feature-icon-wrap" style="background:linear-gradient(135deg,#ede9fe,#c4b5fd);">
-              <span class="nt-3d-glyph">&#x1F3F7;&#xFE0F;</span>
-            </div>
-            <p class="nt-feature-num">01 &nbsp;&bull;&nbsp; Claim</p>
-            <h3 class="nt-feature-title">Choose a name<br>that is yours</h3>
-            <p class="nt-feature-desc">Claim a human-readable identity through NairaTag and establish ownership in the TagProtocol registry.</p>
-          </div>
-
-          <!-- Pillar II -->
-          <div class="nt-feature-col">
-            <div class="nt-feature-icon-wrap" style="background:linear-gradient(135deg,#d1fae5,#6ee7b7);">
-              <span class="nt-3d-glyph">&#x26A1;</span>
-            </div>
-            <p class="nt-feature-num">02 &nbsp;&bull;&nbsp; Resolve</p>
-            <h3 class="nt-feature-title">Connect records<br>to your name</h3>
-            <p class="nt-feature-desc">Attach wallet addresses, payment endpoints, and app records so one name can point to the places people need.</p>
-          </div>
-
-          <!-- Pillar III -->
-          <div class="nt-feature-col">
-            <div class="nt-feature-icon-wrap" style="background:linear-gradient(135deg,#fef3c7,#fcd34d);">
-              <span class="nt-3d-glyph">&#x1F680;</span>
-            </div>
-            <p class="nt-feature-num">03 &nbsp;&bull;&nbsp; Use</p>
-            <h3 class="nt-feature-title">Send, receive,<br>and discover</h3>
-            <p class="nt-feature-desc">Wallets, fintechs, and communities can use the same name across payments, profiles, and everyday onchain actions.</p>
-          </div>
-
-          <!-- Pillar IV -->
-          <div class="nt-feature-col">
-            <div class="nt-feature-icon-wrap" style="background:linear-gradient(135deg,#e0f2fe,#7dd3fc);">
-              <span class="nt-3d-glyph">&#x1F309;</span>
-            </div>
-            <p class="nt-feature-num">04 &nbsp;&bull;&nbsp; Build</p>
-            <h3 class="nt-feature-title">Compose new<br>experiences</h3>
-            <p class="nt-feature-desc">Builders resolve names from contracts and interfaces, extending the naming layer into products of their own.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════════════════════ -->
-    <!-- SECTION 4 — ECOSYSTEM PRODUCTS BENTO (Reference 4)  -->
-    <!-- ═══════════════════════════════════════════════════ -->
-    <div class="nt-bento-section" id="products">
-      <div class="nt-bento-inner">
-        <div class="nt-section-header" style="text-align:center; max-width:760px; margin:0 auto 3.5rem;">
-          <p class="nt-section-overline">The NairaTag product family</p>
-          <h2 class="nt-section-headline">NairaTag is the first way to use TagProtocol</h2>
-          <p class="nt-section-sub">NairaTag turns the protocol into useful everyday experiences: claim an identity, send to a name, launch an asset, move value, and inspect the network.</p>
-        </div>
-
-        <div class="nt-bento-grid">
-
-          <!-- Card 1 (Top Left, 58%): Launchpad -->
-          <div class="nt-bento-card nt-bento-card-launchpad" onclick="scrollToApp('tab-launchpad')">
-            <div class="nt-bento-badge-row">
-              <span class="nt-pill-badge amber">Doppler Bonding Engine</span>
-              <span class="nt-pill-badge green">100% LP Locked</span>
-            </div>
-            <div class="nt-bento-card-body">
-              <h3 class="nt-bento-title">NairaTag Launchpad</h3>
-              <p class="nt-bento-desc">A launch service for community tokens on TagProtocol. Start without seed liquidity, discover price through a bonding curve, and graduate into a permanently locked AMM pool.</p>
-            </div>
-
-            <div class="nt-bento-launchpad-visual">
-              <div class="nt-bento-token-row">
-                <div class="nt-bento-token-pill">
-                  <span class="nt-token-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706);">₦K</span>
-                  <strong>₦kemi / KEMI</strong>
-                </div>
-                <span class="nt-token-status graduated">Graduated &bull; 100% Locked &check;</span>
-              </div>
-              <div class="nt-bento-prog-bar">
-                <div class="nt-bento-prog-fill" style="width:100%;"></div>
-              </div>
-              <div class="nt-bento-token-stats">
-                <span>Target: ₦63,000 cNGN</span>
-                <span>AMM Pair: Deployed</span>
-                <span>Rug Risk: 0.00%</span>
-              </div>
-            </div>
-
-            <div class="nt-bento-footer">
-              <span class="nt-bento-action-link">Open Launchpad &rarr;</span>
-            </div>
-          </div>
-
-          <!-- Card 2 (Top Right, 42%): Swap -->
-          <div class="nt-bento-card nt-bento-card-swap" onclick="scrollToApp('tab-swap')">
-            <div class="nt-bento-badge-row">
-              <span class="nt-pill-badge emerald">UniswapV2 AMM</span>
-              <span class="nt-pill-badge purple">Pay-to-Tag</span>
-            </div>
-            <div class="nt-bento-card-body">
-              <h3 class="nt-bento-title">NairaTag Pay</h3>
-              <p class="nt-bento-desc">Send tokens to a NairaTag instead of a long address. The payment experience resolves a name onchain and routes value to the recipient you intended.</p>
-            </div>
-
-            <div class="nt-bento-swap-visual">
-              <div class="nt-bento-swap-box">
-                <div class="nt-bento-swap-input-row">
-                  <span>Pay: <strong>1,000 cNGN</strong></span>
-                  <span class="nt-swap-tag-badge">cNGN</span>
-                </div>
-                <div class="nt-bento-swap-arrow">&#x2193;</div>
-                <div class="nt-bento-swap-input-row">
-                  <span>Receive: <strong>18,450 ASAKE</strong></span>
-                  <span class="nt-swap-tag-badge" style="background:#fdf2f8; color:#db2777;">₦asake</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="nt-bento-footer">
-              <span class="nt-bento-action-link">Open AMM Swap &rarr;</span>
-            </div>
-          </div>
-
-          <!-- Card 3 (Bottom Left, 33%): Manager -->
-          <div class="nt-bento-card" onclick="scrollToApp('tab-manager')">
-            <div class="nt-bento-badge-row">
-              <span class="nt-pill-badge purple">ENSIP-1 Sovereign</span>
-            </div>
-            <div class="nt-bento-card-body">
-              <h3 class="nt-bento-title">NairaTag Manager</h3>
-              <p class="nt-bento-desc">Claim and manage your name. Set wallet records, payment endpoints, profile data, and reverse resolution from one place.</p>
-            </div>
-            <div class="nt-bento-tag-visual">
-              <div class="nt-bento-tag-demo-pill">
-                <span class="nt-tag-chip">&#x20A6;asake</span>
-                <span class="nt-tag-arrow">&rarr;</span>
-                <code>0x324...aA08</code>
-              </div>
-            </div>
-            <div class="nt-bento-footer">
-              <span class="nt-bento-action-link">Manage Handles &rarr;</span>
-            </div>
-          </div>
-
-          <!-- Card 4 (Bottom Center, 33%): Bridge -->
-          <div class="nt-bento-card" onclick="scrollToApp('tab-explorer')">
-            <div class="nt-bento-badge-row">
-              <span class="nt-pill-badge blue">Hyperlane Warp</span>
-            </div>
-            <div class="nt-bento-card-body">
-              <h3 class="nt-bento-title">NairaTag Bridge</h3>
-              <p class="nt-bento-desc">Move supported value into the TagProtocol ecosystem and deliver it directly to a human-readable name.</p>
-            </div>
-            <div class="nt-bento-bridge-visual">
-              <div class="nt-bridge-nodes">
-                <span class="nt-node-badge">Sepolia L1</span>
-                <span class="nt-bridge-beam">&mdash;&bull;&mdash;</span>
-                <span class="nt-node-badge active">TagProtocol</span>
-              </div>
-            </div>
-            <div class="nt-bento-footer">
-              <span class="nt-bento-action-link">View Bridge &rarr;</span>
-            </div>
-          </div>
-
-          <!-- Card 5 (Bottom Right, 33%): Scanner -->
-          <div class="nt-bento-card" onclick="window.open('/scanner/index.html', '_blank')">
-            <div class="nt-bento-badge-row">
-              <span class="nt-pill-badge cyan">Block Scanner</span>
-            </div>
-            <div class="nt-bento-card-body">
-              <h3 class="nt-bento-title">TagProtocol Explorer</h3>
-              <p class="nt-bento-desc">Inspect registrations, transactions, contracts, token activity, and network health on Chain 901.</p>
-            </div>
-            <div class="nt-bento-metrics-visual">
-              <div class="nt-mini-metric">
-                <span>CHAIN</span>
-                <strong>901</strong>
-              </div>
-              <div class="nt-mini-metric">
-                <span>GAS</span>
-                <strong>&lt; 0.01 cNGN</strong>
-              </div>
-              <div class="nt-mini-metric">
-                <span>FINALITY</span>
-                <strong>&lt; 1 sec</strong>
-              </div>
-            </div>
-            <div class="nt-bento-footer">
-              <span class="nt-bento-action-link">Launch Scanner &#x2197;</span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════════════════════ -->
-    <!-- SECTION 5 — BUILD ON TAGPROTOCOL (Developer Section) -->
-    <!-- ═══════════════════════════════════════════════════ -->
-    <div class="nt-dev-section" id="dev-section">
-      <div class="nt-dev-inner">
-        <!-- Left column: Story & Docs -->
-        <div class="nt-dev-left">
-          <div class="nt-dev-pill-badge">FOR DEVELOPERS, WALLETS &amp; PRODUCT TEAMS</div>
-          <h2 class="nt-dev-headline">Build with TagProtocol.<br>Give every account a name.</h2>
-          <p class="nt-dev-sub">TagProtocol is the open naming protocol. It provides the registry, resolver, and network primitives that products use to create human-readable onchain experiences.</p>
-          <p class="nt-dev-sub" style="margin-top:0.75rem;">Use NairaTag as the reference product, or integrate the protocol into your own wallet, marketplace, payment flow, or community application.</p>
-
-          <div class="nt-dev-specs-grid">
-            <div class="nt-dev-spec-card">
-              <span class="nt-dev-spec-k">RPC URL</span>
-              <code class="nt-dev-spec-v">http://127.0.0.1:9545</code>
-            </div>
-            <div class="nt-dev-spec-card">
-              <span class="nt-dev-spec-k">Chain ID</span>
-              <code class="nt-dev-spec-v">901</code>
-            </div>
-            <div class="nt-dev-spec-card">
-              <span class="nt-dev-spec-k">Gas Token</span>
-              <code class="nt-dev-spec-v">cNGN (18 Decimals)</code>
-            </div>
-            <div class="nt-dev-spec-card">
-              <span class="nt-dev-spec-k">Rollup Stack</span>
-              <code class="nt-dev-spec-v">OP Stack &bull; Anvil L2</code>
-            </div>
-          </div>
-
-          <div class="nt-dev-action-row">
-            <a href="/scanner/index.html" target="_blank" class="nt-dev-btn-primary">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-              View Verified Contracts ↗
-            </a>
-            <button class="nt-dev-btn-ghost" onclick="mintTestTokens()">
-              &#x1F4A7; Claim Testnet cNGN
-            </button>
-          </div>
-        </div>
-
-        <!-- Right column: Interactive Code Terminal & Live Tester -->
-        <div class="nt-dev-right">
-          <div class="nt-terminal-card">
-            <div class="nt-terminal-header">
-              <div class="nt-terminal-dots">
-                <span class="nt-code-dot red"></span>
-                <span class="nt-code-dot yellow"></span>
-                <span class="nt-code-dot green"></span>
-              </div>
-              <div class="nt-terminal-tabs">
-                <button class="nt-term-tab active" data-tab-code="tab-ethers" onclick="switchDevCode('ethers')">ethers.js</button>
-                <button class="nt-term-tab" data-tab-code="tab-viem" onclick="switchDevCode('viem')">viem</button>
-                <button class="nt-term-tab" data-tab-code="tab-solidity" onclick="switchDevCode('solidity')">Solidity</button>
-                <button class="nt-term-tab" data-tab-code="tab-rpc" onclick="switchDevCode('rpc')">RPC Config</button>
-              </div>
-              <button class="nt-term-copy-btn" id="btn-copy-code" onclick="copyDevSnippet()" title="Copy code snippet">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                Copy
-              </button>
-            </div>
-
-            <!-- Code Snippet Display -->
-            <pre class="nt-code-body" id="dev-code-display"><span class="cc-dim">// Connect to TagProtocol (Chain 901) and resolve a tag</span>
-<span class="cc-kw">import</span> { ethers } <span class="cc-kw">from</span> <span class="cc-str">"ethers"</span>;
-
-<span class="cc-kw">const</span> provider = <span class="cc-kw">new</span> ethers.<span class="cc-fn">JsonRpcProvider</span>(<span class="cc-str">"http://127.0.0.1:9545"</span>, {
-  name: <span class="cc-str">"TagProtocol"</span>,
-  chainId: <span class="cc-num">901</span>
-});
-
-<span class="cc-dim">// Query the on-chain sovereign registry</span>
-<span class="cc-kw">const</span> REGISTRY = <span class="cc-str">"0x5FbDB2315678afecb367f032d93F642f64180aa3"</span>;
-<span class="cc-kw">const</span> registry = <span class="cc-kw">new</span> ethers.<span class="cc-fn">Contract</span>(
-  REGISTRY,
-  [<span class="cc-str">"function resolve(string) view returns (address)"</span>],
-  provider
-);
-
-<span class="cc-kw">const</span> address = <span class="cc-kw">await</span> registry.<span class="cc-fn">resolve</span>(<span class="cc-str">"asake"</span>);
-<span class="cc-dim">// &rarr; 0x3246a4805e26ec0dd1e3d0c242065842c673aa08</span></pre>
-
-            <!-- Live RPC Query Playground -->
-            <div class="nt-dev-playground">
-              <div class="nt-play-label">
-                <span class="nt-play-indicator"></span>
-                <span>Live RPC Query &bull; Test resolving any &#x20A6;tag on Chain 901</span>
-              </div>
-              <div class="nt-play-row">
-                <div class="nt-play-input-wrap">
-                  <span class="nt-play-prefix">&#x20A6;</span>
-                  <input type="text" id="dev-resolve-input" class="nt-play-input" value="asake" placeholder="enter tag e.g. asake" />
-                </div>
-                <button class="nt-play-btn" id="dev-resolve-btn" onclick="testDevResolve()">Resolve ↗</button>
-              </div>
-              <div class="nt-play-result" id="dev-resolve-result">
-                <span class="nt-play-status">On-Chain Target:</span>
-                <code id="dev-resolve-addr">0x3246a4805e26ec0dd1e3d0c242065842c673aa08</code>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- ═══════════════════════════════════════════════════ -->
-    <!-- SECTION 6 — FAQ                                      -->
-    <section class="nt-faq-section" id="faq" aria-labelledby="faq-title">
-      <div class="nt-faq-inner">
-        <div class="nt-faq-intro">
-          <p class="nt-section-overline">Questions, answered</p>
-          <h2 id="faq-title" class="nt-section-headline">Start with the name.<br>Go wherever the protocol takes you.</h2>
-          <p class="nt-section-sub">A short guide to the relationship between TagProtocol, NairaTag, and the products around them.</p>
-        </div>
-        <div class="nt-faq-list">
-          <details open>
-            <summary>What is TagProtocol?</summary>
-            <p>TagProtocol is an open naming protocol for onchain identity. It provides the registry and resolution layer that lets names point to wallet addresses, payment endpoints, and useful application records.</p>
-          </details>
-          <details>
-            <summary>What is NairaTag?</summary>
-            <p>NairaTag is the first flagship product built on TagProtocol. It is the user-facing place to claim, manage, resolve, and use a human-readable onchain identity.</p>
-          </details>
-          <details>
-            <summary>Can another app use TagProtocol names?</summary>
-            <p>Yes. Wallets, contracts, payment products, and other applications can read the public registry and resolver records to support TagProtocol names in their own experiences.</p>
-          </details>
-          <details>
-            <summary>What can I do with a NairaTag?</summary>
-            <p>You can associate a name with your wallet, receive payments by name, publish records for applications, and use the identity across products that support TagProtocol.</p>
-          </details>
-          <details>
-            <summary>Where can I learn how to integrate?</summary>
-            <p>Use the developer section for the Chain 901 connection details, example resolver calls, deployed contract references, and the live query playground.</p>
-          </details>
-        </div>
-      </div>
-    </section>
-
-    <!-- SECTION 7 — REDESIGNED WORLD-CLASS FOOTER          -->
-    <!-- ═══════════════════════════════════════════════════ -->
-    <footer class="nt-footer">
-      <div class="nt-footer-inner">
-
-        <!-- Col 1: Brand & Status -->
-        <div class="nt-footer-brand-col">
-          <div class="nt-brand" style="gap:0.5rem; margin-bottom:0.75rem;">
-            <div class="nt-brand-glyph"><img src="/hub/nairatag-icon.png" alt="NairaTag" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;" /></div>
-            <span class="nt-brand-name">TagProtocol</span>
-            <span class="nt-brand-badge">Chain 901</span>
-          </div>
-          <p class="nt-footer-tagline">
-            TagProtocol is the open naming layer. NairaTag is its first flagship product for onchain identity.
-          </p>
-          <div class="nt-footer-status-pill">
-            <span class="nt-footer-pulse-dot"></span>
-            <span id="footer-chain-status">Chain 901 Operational</span>
-          </div>
-        </div>
-
-        <!-- Col 2: Explore -->
-        <div class="nt-footer-col">
-          <p class="nt-footer-col-title">Explore</p>
-          <a href="#about">About TagProtocol</a>
-          <a href="#solutions">Solutions</a>
-          <a href="#products">NairaTag Products</a>
-          <a href="#faq">FAQ</a>
-        </div>
-
-        <!-- Col 3: Build -->
-        <div class="nt-footer-col">
-          <a href="#dev-section">Quickstart Guide</a>
-          <a href="/scanner/index.html" target="_blank">Open Explorer &#x2197;</a>
-          <a href="#dev-section">Integration Docs</a>
-          <a href="https://github.com" target="_blank">GitHub &#x2197;</a>
-        </div>
-
-      </div>
-
-      <!-- Bottom Bar -->
-      <div class="nt-footer-bottom">
-        <div class="nt-footer-bottom-left">
-          <span>&copy; 2026 TagProtocol Network</span>
-        </div>
-        <div class="nt-footer-bottom-right">
-          <span class="nt-footer-stat-indicator">&bull; Sub-Second Finality</span>
-          <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;" class="nt-back-to-top">
-            Back to Top &uarr;
-          </a>
-        </div>
-      </div>
-    </footer>
-
-  </section>
-  </div><!-- /#page-hero -->
-
-
-  <!-- =============================================================== -->
-  <!-- APP PAGE (full-page, hidden until "Launch App" clicked)         -->
-  <!-- =============================================================== -->
-  <div id="page-app" style="display:none;" aria-hidden="true">
-
-  <!-- APP TOP BAR -->
-  <header class="app-topbar">
-    <div class="app-topbar-inner">
-      <!-- Brand + Back -->
-      <button class="app-back-btn" id="btn-back-to-home" title="Back to home">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>
-      </button>
-      <a class="nt-brand app-brand" href="#" onclick="switchToHero(); return false;">
-        <div class="nt-brand-glyph"><img src="/hub/nairatag-icon.png" alt="NairaTag" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;display:block;" /></div>
-        <span class="nt-brand-name">NairaTag</span>
-        <span class="nt-brand-badge">Chain 901</span>
-      </a>
-
-      <!-- TAB BAR embedded in top-bar -->
-      <nav class="app-tab-bar" aria-label="Main Navigation">
-        <button class="tab-btn active" data-tab="tab-manager" id="btn-tab-manager">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Manager
-        </button>
-        <button class="tab-btn" data-tab="tab-swap" id="btn-tab-swap">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>
-          Swap
-        </button>
-        <button class="tab-btn" data-tab="tab-launchpad" id="btn-tab-launchpad">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>
-          Launchpad
-        </button>
-        <button class="tab-btn" data-tab="tab-explorer" id="btn-tab-explorer">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-          Explorer
-        </button>
-        <a href="/scanner/index.html" target="_blank" class="tab-btn" style="text-decoration:none;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-          Scanner &#x2197;
-        </a>
+      <nav>
+        <a href="#agents">Agents</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#developers">Developers</a>
+        <a href="#contracts">Contracts</a>
+        <a href="https://explorer.arc.io" target="_blank" rel="noopener">ArcScan ↗</a>
       </nav>
 
-      <!-- Right controls -->
-      <div class="app-topbar-right">
-        <div class="nt-net-pill" id="app-network-status-pill">
-          <span class="nt-net-dot"></span>
-          <span id="app-chain-block-num">Block #...</span>
-        </div>
-        <select id="app-account-selector" class="nt-wallet-select">
-          <option value="browser" selected>Connect Wallet</option>
-          
-          <option value="browser">Browser Wallet</option>
-        </select>
+      <div class="header-actions">
+        <a href="https://github.com/MrBloomguy/nairatag-protocol" target="_blank" rel="noopener" class="btn-pill-secondary">
+          GitHub
+        </a>
+        <a href="https://arc.nairatag.ng" class="btn-pill-primary">
+          Launch App ↗
+        </a>
       </div>
     </div>
   </header>
 
-  <!-- MAIN CONTENT AREA (scrollable) -->
-
-  <!-- MAIN VIEW CONTAINER -->
-  <main class="main-content">
-
-    <!-- ============================================================== -->
-    <!-- TAB 1: MANAGER (Integrated ENS-Style Identity Management)       -->
-    <!-- ============================================================== -->
-    <div id="tab-manager" class="tab-pane active">
-      
-      <!-- SUB-NAVIGATION BAR -->
-      <div class="manager-subnav">
-        <button class="subnav-btn active" data-sub="mgr-claim" id="btn-sub-claim">
-          <span>🏷️</span> Claim Handle
-        </button>
-        <button class="subnav-btn" data-sub="mgr-records" id="btn-sub-records">
-          <span>⚙️</span> Manage Records
-        </button>
-        <button class="subnav-btn" data-sub="mgr-resolve" id="btn-sub-resolve">
-          <span>🔍</span> Public Resolver
-        </button>
-        <button class="subnav-btn" data-sub="mgr-send" id="btn-sub-send">
-          <span>💸</span> Send to ₦Tag
-        </button>
-        <button class="subnav-btn" data-sub="mgr-activity" id="btn-sub-activity">
-          <span>📜</span> Protocol Activity
-        </button>
+  <!-- Hero Section -->
+  <main>
+    <section class="hero container">
+      <div class="hero-eyebrow">
+        <span>●</span>
+        <span>Built with Arc Studio</span>
+        <span style="color:var(--border-bright);">|</span>
+        <span class="accent">Autonomous Agent Rails</span>
       </div>
 
-      <!-- SUBPANE 1: CLAIM HANDLE -->
-      <div id="mgr-claim" class="manager-pane active">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-          
-          <div class="card">
-            <h2 class="card-title"><span>🏷️</span> Claim your ₦handle</h2>
-            <p class="card-subtitle" style="margin-bottom: 1.25rem;">
-              Register your canonical handle on NairaTag Registry. Single-transaction claim flow with immediate resolver attachment.
-            </p>
+      <h1 class="hero-headline">
+        Autonomous money rails for humans and AI agents.
+      </h1>
 
-            <div class="form-group">
-              <label class="form-label" for="claimTagInput">Handle to Register</label>
-              <div class="input-with-prefix" id="claimInputBox">
-                <span class="input-prefix-icon">₦</span>
-                <input
-                  type="text"
-                  id="claimTagInput"
-                  placeholder="e.g. olusegun, fintech, lagos"
-                  value="fintech"
-                  autocomplete="off"
-                />
-              </div>
-              <div id="claimInputFeedback" class="input-hint"></div>
+      <p class="hero-sub">
+        Replace 42-character hex addresses with sovereign tags (<code style="font-family:var(--font-mono); color:#fff;">₦TAG</code>). Settle pure digital dollars natively in USDC with sub-second finality and zero gas token friction.
+      </p>
 
-              <div class="chips-container">
-                <span class="chip-tag" data-tag="alice">₦alice</span>
-                <span class="chip-tag" data-tag="bob">₦bob</span>
-                <span class="chip-tag" data-tag="fintech">₦fintech</span>
-                <span class="chip-tag" data-tag="micheal">₦micheal (Taken)</span>
-              </div>
-            </div>
-
-            <div style="display: flex; gap: 0.75rem; margin-bottom: 1.25rem;">
-              <button class="btn-primary" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main); border: 1px solid var(--border); box-shadow: none;" id="btnCheckAvail">
-                <span id="btnCheckIcon">🔍</span>
-                <span id="btnCheckText">Check Availability</span>
-              </button>
-              <button class="btn-primary" id="btnClaimAction">
-                <span>⚡</span>
-                <span id="btnClaimText">Claim ₦handle</span>
-              </button>
-            </div>
-
-            <div id="claimAvailabilityResult" style="display: none; margin-bottom: 1rem;"></div>
-
-            <div class="inspect-box">
-              <div class="inspect-row">
-                <span class="inspect-label">Canonical Tag</span>
-                <span class="inspect-val" id="claimCanonicalDisplay" style="color: var(--primary);">₦fintech</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Computed Namehash</span>
-                <span class="inspect-val" id="claimNamehashDisplay">0x...</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Target Registry</span>
-                <span class="inspect-val" id="claimRegistryDisplay">0x5FbDB...aa3</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Default Resolver</span>
-                <span class="inspect-val" id="claimResolverDisplay">0xe7f17...512</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- REGISTRATION TELEMETRY & RECEIPT -->
-          <div class="card">
-            <h2 class="card-title"><span>📊</span> Registration Status</h2>
-            <p class="card-subtitle" style="margin-bottom: 1.25rem;">
-              Live feedback from TagProtocol execution. Mined in real-time on Chain 901 blocks.
-            </p>
-
-            <div id="claimReceiptBox" class="inspect-box">
-              <div class="inspect-row">
-                <span class="inspect-label">Execution Network</span>
-                <span class="inspect-val" style="color: var(--cyan);">TagProtocol (Chain 901)</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Transaction State</span>
-                <span class="inspect-val" id="claimTxState" style="color: var(--text-muted);">Idle — Ready to Claim</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Transaction Hash</span>
-                <span class="inspect-val" id="claimTxHashDisplay">—</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Block Number</span>
-                <span class="inspect-val" id="claimBlockDisplay">—</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Gas Consumed</span>
-                <span class="inspect-val" id="claimGasDisplay">—</span>
-              </div>
-            </div>
-
-            <div id="claimBlockscoutLinkBox" style="margin-top: 1.25rem; display: none;">
-              <a id="claimBlockscoutLink" href="#" target="_blank" class="btn-primary" style="background: rgba(0, 184, 217, 0.15); border: 1px solid var(--cyan); color: var(--cyan); box-shadow: none;">
-                <span>🔎</span> View Transaction in Scanner ↗
-              </a>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- SUBPANE 2: MANAGE RECORDS -->
-      <div id="mgr-records" class="manager-pane">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-          
-          <!-- Handle Selector & Ownership -->
-          <div class="card">
-            <h2 class="card-title"><span>⚙️</span> Manage ₦handle</h2>
-            <p class="card-subtitle" style="margin-bottom: 1.25rem;">
-              Configure resolver records, payment endpoints, and ownership on TagProtocol.
-            </p>
-
-            <div class="form-group">
-              <label class="form-label" for="manageTagInput">Select Handle to Manage</label>
-              <div class="input-with-prefix">
-                <span class="input-prefix-icon">₦</span>
-                <input
-                  type="text"
-                  id="manageTagInput"
-                  placeholder="e.g. micheal"
-                  value="micheal"
-                  autocomplete="off"
-                />
-              </div>
-              <div class="chips-container">
-                <span class="chip-tag" data-managetag="micheal">₦micheal</span>
-                <span class="chip-tag" data-managetag="asake">₦asake</span>
-                <span class="chip-tag" data-managetag="bisi">₦bisi</span>
-                <span class="chip-tag" data-managetag="kemi">₦kemi</span>
-              </div>
-            </div>
-
-            <button class="btn-primary" style="width: 100%; margin-bottom: 1rem; background: rgba(255, 255, 255, 0.05); color: var(--text-main); border: 1px solid var(--border); box-shadow: none;" id="btnFetchManage">
-              <span>🔄</span>
-              <span id="btnFetchManageText">Fetch On-Chain Records</span>
-            </button>
-
-            <div class="inspect-box">
-              <div class="inspect-row">
-                <span class="inspect-label">Owner</span>
-                <span class="inspect-val" id="manageOwnerDisplay">0x...</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Resolver Contract</span>
-                <span class="inspect-val" id="manageResolverDisplay">0x...</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Authorization</span>
-                <span class="inspect-val" id="manageAuthBadge">Checking...</span>
-              </div>
-            </div>
-
-            <!-- Danger Zone -->
-            <div class="danger-card">
-              <h3 class="danger-title">⚠️ Danger Zone</h3>
-              <div class="form-group">
-                <label class="form-label">Transfer Ownership</label>
-                <input type="text" id="transferRecipientInput" class="form-input" placeholder="New owner address (0x...)" style="margin-bottom: 0.5rem;" />
-                <button class="btn-primary" style="background: rgba(255, 255, 255, 0.05); color: var(--text-main); border: 1px solid var(--border); box-shadow: none; width: 100%;" id="btnTransfer">
-                  <span>🔄</span>
-                  <span id="btnTransferText">Transfer Ownership</span>
-                </button>
-              </div>
-              <button class="btn-danger" id="btnRelease">
-                <span>🗑️</span>
-                <span id="btnReleaseText">Release Handle to Public</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- Record Updates Form -->
-          <div class="card">
-            <h2 class="card-title"><span>📝</span> Resolver Records</h2>
-            <p class="card-subtitle" style="margin-bottom: 1.25rem;">
-              Direct on-chain updates to <code>NairaTagResolver</code> on Chain 901.
-            </p>
-
-            <!-- Primary Address -->
-            <div class="form-group">
-              <label class="form-label">Primary EVM Address (EIP-137 / ENSIP-1)</label>
-              <input type="text" id="manageAddrInput" class="form-input" placeholder="0x..." />
-              <button class="btn-primary" style="margin-top: 0.5rem; width: 100%;" id="btnUpdateAddr">
-                <span>💾</span>
-                <span id="btnUpdateAddrText">Update Primary Address</span>
-              </button>
-            </div>
-
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.25rem 0;" />
-
-            <!-- Profile Text Records -->
-            <label class="form-label" style="color: var(--cyan); font-weight: 700;">Profile Text Records (ENSIP-5)</label>
-            <div class="form-group" style="margin-top: 0.5rem;">
-              <label class="form-label">Avatar URI</label>
-              <input type="text" id="manageAvatarInput" class="form-input" placeholder="ipfs://... or https://..." />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Bio / Description</label>
-              <input type="text" id="manageDescInput" class="form-input" placeholder="Protocol developer, trader, etc." />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Telegram / X Handle</label>
-              <input type="text" id="manageTelegramInput" class="form-input" placeholder="@handle" />
-            </div>
-            <button class="btn-primary" id="btnUpdateProfile" style="width: 100%; background: linear-gradient(135deg, #00b8d9, #9d7fea);">
-              <span>💾</span>
-              <span id="btnUpdateProfileText">Save Text Records</span>
-            </button>
-
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.25rem 0;" />
-
-            <!-- Payment Endpoint -->
-            <label class="form-label" style="color: var(--primary); font-weight: 700;">Payment Metadata (NTS-100 / NTS-102)</label>
-            <div class="form-group" style="margin-top: 0.5rem;">
-              <label class="form-label">Payment Endpoint URI</label>
-              <input type="text" id="manageEndpointInput" class="form-input" placeholder="https://pay.nairatag.org/api/pay" />
-            </div>
-            <button class="btn-primary" id="btnUpdateEndpoint" style="width: 100%;">
-              <span>💾</span>
-              <span id="btnUpdateEndpointText">Update Payment Endpoint</span>
-            </button>
-
-            <hr style="border: 0; border-top: 1px solid var(--border); margin: 1.25rem 0;" />
-
-            <!-- Reverse Record Setting -->
-            <label class="form-label" style="color: var(--purple); font-weight: 700;">Reverse Identity (EIP-181)</label>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;">
-              Set this handle as the primary reverse identity for your connected wallet.
-            </p>
-            <button class="btn-primary" id="btnSetReverse" style="width: 100%; background: linear-gradient(135deg, #9d7fea, #00da94);">
-              <span>🛡️</span>
-              <span id="btnSetReverseText">Set as Primary NairaTag for Wallet</span>
-            </button>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- SUBPANE 3: PUBLIC RESOLVER -->
-      <div id="mgr-resolve" class="manager-pane">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-          
-          <div class="card">
-            <h2 class="card-title"><span>🔍</span> Resolve a NairaTag</h2>
-            <p class="card-subtitle" style="margin-bottom: 1.25rem;">
-              Live forward and reverse lookup against TagProtocol Registry & Resolver with mutual verification.
-            </p>
-
-            <div class="form-group">
-              <label class="form-label" for="resolveInput">Enter Handle or ASCII Alias</label>
-              <div class="input-with-prefix">
-                <span class="input-prefix-icon">₦</span>
-                <input
-                  type="text"
-                  id="resolveInput"
-                  placeholder="e.g. micheal or ng:micheal"
-                  value="micheal"
-                />
-              </div>
-              <div class="chips-container">
-                <span class="chip-tag" data-resolvetag="micheal">₦micheal</span>
-                <span class="chip-tag" data-resolvetag="asake">₦asake</span>
-                <span class="chip-tag" data-resolvetag="bisi">₦bisi</span>
-                <span class="chip-tag" data-resolvetag="kemi">₦kemi</span>
-                <span class="chip-tag" data-resolvetag="ng:micheal">ng:micheal (ASCII)</span>
-              </div>
-            </div>
-
-            <button class="btn-primary" id="btnResolveAction" style="width: 100%;">
-              <span id="btnResolveIcon">🔍</span>
-              <span id="btnResolveText">Execute Live Resolution</span>
-            </button>
-          </div>
-
-          <div class="card">
-            <h2 class="card-title"><span>🛡️</span> Verified Telemetry</h2>
-            <p class="card-subtitle" style="margin-bottom: 1.25rem;">
-              Resolution results queried directly from Chain 901 RPC without needing wallet connection.
-            </p>
-
-            <div class="inspect-box">
-              <div class="inspect-row">
-                <span class="inspect-label">Canonical Tag</span>
-                <span class="inspect-val" id="resCanonicalTag" style="color: var(--primary); font-weight: 700;">₦micheal</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Forward Target Address</span>
-                <span class="inspect-val" id="resTargetAddr">0x...</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Reverse Resolution</span>
-                <span class="inspect-val" id="resReverseName">—</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Anti-Spoofing Status</span>
-                <span class="inspect-val" id="resAntiSpoofStatus">Evaluating...</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Registry Owner</span>
-                <span class="inspect-val" id="resOwner">0x...</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Avatar Record</span>
-                <span class="inspect-val" id="resAvatar">—</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Description</span>
-                <span class="inspect-val" id="resDesc">—</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Payment Endpoint</span>
-                <span class="inspect-val" id="resEndpoint" style="color: var(--cyan);">—</span>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- SUBPANE 4: ACTIVITY -->
-      <div id="mgr-activity" class="manager-pane">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h2 class="card-title"><span>📜</span> Recent NairaTag Protocol Activity</h2>
-              <p class="card-subtitle">
-                Live transaction receipts and decoded contract events from TagProtocol Chain 901.
-              </p>
-            </div>
-            <button class="btn-secondary-link" id="btnRefreshActivity" style="cursor: pointer;">
-              <span>🔄</span> Refresh On-Chain Events
-            </button>
-          </div>
-
-          <div id="activityContainer" class="activity-feed">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBPANE 5: SEND TO NAIRATAG -->
-      <div id="mgr-send" class="manager-pane">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-          
-          <div class="card">
-            <h2 class="card-title"><span>💸</span> Pay / Transfer to ₦Tag</h2>
-            <p class="card-subtitle" style="margin-bottom: 1.25rem;">
-              Send ERC-20 tokens directly to any human-readable ₦Tag on Chain 901 with automatic on-chain resolution.
-            </p>
-
-            <div class="form-group">
-              <label class="form-label" for="sendTagInput">Destination ₦Tag</label>
-              <div class="input-with-prefix">
-                <span class="input-prefix-icon">₦</span>
-                <input
-                  type="text"
-                  id="sendTagInput"
-                  placeholder="e.g. asake, bisi, micheal"
-                  value="asake"
-                  autocomplete="off"
-                />
-              </div>
-              <div id="sendTagFeedback" class="input-hint" style="color: var(--cyan);">
-                Enter handle to resolve recipient address
-              </div>
-              <div class="chips-container">
-                <span class="chip-tag" data-sendtag="asake">₦asake</span>
-                <span class="chip-tag" data-sendtag="bisi">₦bisi</span>
-                <span class="chip-tag" data-sendtag="micheal">₦micheal</span>
-                <span class="chip-tag" data-sendtag="dev">₦dev</span>
-              </div>
-            </div>
-
-            <!-- Resolution Status Card -->
-            <div class="inspect-box" style="margin-bottom: 1.25rem;">
-              <div class="inspect-row">
-                <span class="inspect-label">Resolution Status</span>
-                <span class="inspect-val" id="sendResolveStatus" style="color: #10b981;">● Validated</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Resolved Address</span>
-                <span class="inspect-val" id="sendResolvedAddress">0x3246...aA08</span>
-              </div>
-            </div>
-
-            <!-- Token & Amount -->
-            <div class="form-group">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <label class="form-label" style="margin-bottom: 0;" for="sendTokenSelect">Asset</label>
-                <span id="sendTokenBalance" style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--text-muted);">
-                  Balance: 0.00
-                </span>
-              </div>
-              <select id="sendTokenSelect" class="form-select" style="width: 100%; padding: 0.65rem 1rem; border-radius: 8px; background: rgba(0,0,0,0.04); border: 1px solid var(--border); font-family: var(--font-main); color: var(--text-main); font-size: 0.95rem;">
-                <option value="ASAKE" selected>ASAKE (₦asake Token)</option>
-                <option value="cNGN">cNGN (TagProtocol Testnet)</option>
-                <option value="BISI">BISI (₦bisi Token)</option>
-                <option value="KEMI">KEMI (₦kemi Token)</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <label class="form-label" style="margin-bottom: 0;" for="sendAmountInput">Amount</label>
-                <button type="button" id="btnSendMax" style="background: none; border: none; color: var(--primary); font-size: 0.78rem; font-weight: 700; cursor: pointer; text-decoration: underline;">
-                  SEND MAX
-                </button>
-              </div>
-              <input
-                type="number"
-                id="sendAmountInput"
-                class="form-input"
-                placeholder="0.0"
-                step="any"
-                min="0"
-                value="10"
-                style="width: 100%; padding: 0.65rem 1rem; border-radius: 8px; background: rgba(0,0,0,0.04); border: 1px solid var(--border); font-family: var(--font-mono); color: var(--text-main); font-size: 1.1rem;"
-              />
-            </div>
-
-            <button class="btn-primary" id="btnExecuteSend" style="width: 100%; margin-top: 0.75rem;">
-              <span>🚀</span>
-              <span id="btnExecuteSendText">Send ASAKE to ₦asake</span>
-            </button>
-          </div>
-
-          <!-- Send Telemetry & Receipt -->
-          <div class="card">
-            <h2 class="card-title"><span>📊</span> Transfer Receipt & Telemetry</h2>
-            <p class="card-subtitle" style="margin-bottom: 1.25rem;">
-              Real-time settlement feedback on TagProtocol Chain 901.
-            </p>
-
-            <div class="inspect-box">
-              <div class="inspect-row">
-                <span class="inspect-label">Execution Network</span>
-                <span class="inspect-val" style="color: var(--primary); font-weight: 700;">TagProtocol (Chain 901)</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Transfer Status</span>
-                <span class="inspect-val" id="sendTxStatus" style="color: var(--text-muted);">Ready to Transfer</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Transaction Hash</span>
-                <span class="inspect-val" id="sendTxHashDisplay">—</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Block Height</span>
-                <span class="inspect-val" id="sendBlockDisplay">—</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Gas Consumed</span>
-                <span class="inspect-val" id="sendGasDisplay">—</span>
-              </div>
-              <div class="inspect-row">
-                <span class="inspect-label">Settled Recipient</span>
-                <span class="inspect-val" id="sendReceiptRecipient">—</span>
-              </div>
-            </div>
-
-            <div id="sendExplorerLinkBox" style="margin-top: 1.25rem; display: none;">
-              <a id="sendExplorerLink" href="#" target="_blank" class="btn-primary" style="background: rgba(122, 69, 229, 0.1); border: 1px solid var(--primary); color: var(--primary); box-shadow: none;">
-                <span>🔎</span> View in Explorer / Blockscout ↗
-              </a>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div>
-
-    <!-- ============================================================== -->
-    <!-- TAB 2: SWAP                                                    -->
-    <!-- ============================================================== -->
-    <div id="tab-swap" class="tab-pane">
-      <div class="swap-wrapper">
-        <div class="swap-box">
-          <div class="card-header" style="margin-bottom: 1rem;">
-            <div>
-              <h2 class="card-title">NairaTag Swap & Bridge</h2>
-              <p class="card-subtitle">Trade tokens or route external liquidity directly to human ₦Tags</p>
-            </div>
-            <div style="font-size: 0.78rem; font-family: var(--font-mono); color: var(--primary);">
-              Slippage: <span id="slippage-display">0.5%</span>
-            </div>
-          </div>
-
-          <!-- MODE SELECTOR PILLS -->
-          <div style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem; background: rgba(0,0,0,0.06); padding: 0.35rem; border-radius: 12px;">
-            <button type="button" id="btn-swap-mode-native" class="subnav-btn active" style="flex: 1; text-align: center; justify-content: center; font-weight: 700;">
-              ⚡ Native Swap (Chain 901)
-            </button>
-            <button type="button" id="btn-swap-mode-bridge" class="subnav-btn" style="flex: 1; text-align: center; justify-content: center; font-weight: 700;">
-              🌉 Bridge & Swap
-            </button>
-          </div>
-
-          <!-- ================= NATIVE SWAP PANE ================= -->
-          <div id="pane-swap-native">
-            <!-- FROM TOKEN -->
-            <div class="token-input-card">
-              <div class="token-input-header">
-                <span>You Pay</span>
-                <span id="from-token-balance">Balance: 0.00</span>
-              </div>
-              <div class="token-input-row">
-                <input type="number" id="swap-from-amount" class="token-amount-input" placeholder="0.0" min="0" step="any" />
-                <select id="swap-from-select" class="token-select-btn">
-                  <option value="cNGN" selected>cNGN</option>
-                  <option value="ASAKE">₦ASAKE</option>
-                  <option value="BISI">₦BISI</option>
-                  <option value="KEMI">₦KEMI</option>
-                </select>
-              </div>
-              <div class="quick-pct-group">
-                <button class="quick-pct-btn" data-pct="25">25%</button>
-                <button class="quick-pct-btn" data-pct="50">50%</button>
-                <button class="quick-pct-btn" data-pct="75">75%</button>
-                <button class="quick-pct-btn" data-pct="100">MAX</button>
-              </div>
-            </div>
-
-            <!-- FLIP BUTTON -->
-            <div class="swap-switch-wrap">
-              <button id="swap-flip-btn" class="swap-switch-btn" title="Switch tokens">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/></svg>
-              </button>
-            </div>
-
-            <!-- TO TOKEN -->
-            <div class="token-input-card" style="margin-top: 0.5rem;">
-              <div class="token-input-header">
-                <span>You Receive (Estimated)</span>
-                <span id="to-token-balance">Balance: 0.00</span>
-              </div>
-              <div class="token-input-row">
-                <input type="number" id="swap-to-amount" class="token-amount-input" placeholder="0.0" readonly />
-                <select id="swap-to-select" class="token-select-btn">
-                  <option value="cNGN">cNGN</option>
-                  <option value="ASAKE" selected>₦ASAKE</option>
-                  <option value="BISI">₦BISI</option>
-                  <option value="KEMI">₦KEMI</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- DESTINATION ₦TAG RECIPIENT RESOLUTION -->
-            <div class="form-group" style="margin-top: 1rem; margin-bottom: 0.75rem;">
-              <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;" for="swapRecipientTag">
-                <span>Recipient ₦Tag (Optional)</span>
-                <span id="swapRecipientBadge" style="font-size: 0.72rem; color: var(--primary); font-weight: 600;">
-                  ● Default: Connected Wallet
-                </span>
-              </label>
-              <div class="input-with-prefix">
-                <span class="input-prefix-icon">₦</span>
-                <input
-                  type="text"
-                  id="swapRecipientTag"
-                  placeholder="e.g. asake, bisi, or blank for yourself"
-                  autocomplete="off"
-                  style="width: 100%; padding: 0.65rem 1rem 0.65rem 2.4rem; border-radius: 8px; background: rgba(0,0,0,0.03); border: 1px solid var(--border); font-family: var(--font-main); color: var(--text-main); font-size: 0.95rem;"
-                />
-              </div>
-              <div style="display: flex; gap: 0.4rem; margin-top: 0.4rem; align-items: center; flex-wrap: wrap;">
-                <span style="font-size: 0.72rem; color: var(--text-muted);">Quick fill:</span>
-                <span class="chip-tag" data-swapchip="asake" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">₦asake</span>
-                <span class="chip-tag" data-swapchip="bisi" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">₦bisi</span>
-                <span class="chip-tag" data-swapchip="" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">My Wallet</span>
-              </div>
-              <div id="swapRecipientFeedback" style="font-size: 0.74rem; font-family: var(--font-mono); color: var(--text-muted); margin-top: 0.35rem;">
-                Funds will be routed directly to your connected wallet.
-              </div>
-            </div>
-
-            <!-- DETAILS ACCORDION -->
-            <div class="swap-details-box">
-              <div class="swap-detail-row">
-                <span>Rate</span>
-                <span id="swap-rate-val" class="swap-detail-val">-</span>
-              </div>
-              <div class="swap-detail-row">
-                <span>Price Impact</span>
-                <span id="swap-impact-val" class="swap-detail-val impact-good">< 0.01%</span>
-              </div>
-              <div class="swap-detail-row">
-                <span>Minimum Received</span>
-                <span id="swap-min-val" class="swap-detail-val">0.00</span>
-              </div>
-              <div class="swap-detail-row">
-                <span>Delivery Target</span>
-                <span id="swap-delivery-target" class="swap-detail-val" style="color: var(--primary); font-family: var(--font-mono);">Your Wallet</span>
-              </div>
-              <div class="swap-detail-row">
-                <span>Routing</span>
-                <span id="swap-route-val" class="swap-detail-val">Direct (NairaTagPair)</span>
-              </div>
-            </div>
-
-            <!-- ACTION BUTTON -->
-            <button id="swap-action-btn" class="btn-primary" style="width: 100%; margin-top: 0.75rem;">
-              Enter Amount
-            </button>
-          </div>
-
-          <!-- ================= BRIDGE & SWAP PANE ================= -->
-          <div id="pane-swap-bridge" style="display: none;">
-            <div style="background: #eefbf5; border: 1px solid #c4f3dc; border-radius: var(--radius-md); padding: 1rem 1.15rem; margin-bottom: 1.35rem; font-size: 0.84rem; color: #047857; line-height: 1.5; display: flex; align-items: flex-start; gap: 0.65rem;">
-              <span style="font-size: 1.2rem; line-height: 1;">⚡</span>
-              <div>
-                <strong style="color: #065f46;">Hyperlane Warp Route Live &amp; Verified</strong><br />
-                Cross-chain interoperability is active between <strong>Chain 902 (External Testnet)</strong> and <strong>Chain 901 (TagProtocol)</strong>. Real on-chain transfers, relayer delivery, and direct AMM settlement to human ₦Tags.
-              </div>
-            </div>
-
-            <div class="token-input-card">
-              <div class="token-input-header">
-                <span>From External Network</span>
-                <span id="bridge-chain-badge" class="badge" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-weight: 700;">
-                  ● Chain 902 Live
-                </span>
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 0.5rem;">
-                <select id="bridge-source-chain" class="form-select" style="font-weight: 600;">
-                  <option value="902" selected>Chain 902 (External Testnet - Hyperlane)</option>
-                  <option value="11142220" selected>Celo Sepolia (Chain ID 11142220)</option>
-                  <option value="11155111" disabled>Ethereum Sepolia (L1 Messenger - In Staging)</option>
-                </select>
-                <select id="bridge-source-token" class="form-select" style="font-weight: 600;">
-                  <option value="cNGN" selected>cNGN (External Testnet)</option>
-                </select>
-              </div>
-              <div class="token-input-row" style="margin-top: 0.85rem;">
-                <input type="number" id="bridge-amount-input" class="token-amount-input" placeholder="100.0" value="100" />
-                <span id="bridge-token-symbol" style="font-weight: 800; font-family: var(--font-display); font-size: 1.15rem; color: var(--text-main); background: #ffffff; border: 1px solid var(--border); padding: 0.4rem 0.85rem; border-radius: var(--radius-pill);">cNGN</span>
-              </div>
-              <div style="font-size: 0.78rem; color: var(--text-muted); font-family: var(--font-mono); margin-top: 0.45rem;" id="bridge-source-bal">
-                Source Balance: Checking...
-              </div>
-            </div>
-
-            <div style="text-align: center; margin: 1rem 0;">
-              <span style="font-size: 0.78rem; font-weight: 600; color: var(--primary); background: #f3e8ff; border: 1px solid #e9d5ff; padding: 0.35rem 0.95rem; border-radius: var(--radius-pill); display: inline-flex; align-items: center; gap: 0.45rem;">
-                <span>↓</span> Hyperlane Warp Route Hop (wcNGN Synthetic) <span>↓</span>
-              </span>
-            </div>
-
-            <div class="token-input-card">
-              <div class="token-input-header">
-                <span>To NairaTag Ecosystem (Chain 901)</span>
-                <span class="badge" style="background: #e6f9f2; color: #10b981; border: 1px solid #bbf0d8; font-weight: 700;">
-                  ● Chain 901 Active
-                </span>
-              </div>
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; margin-top: 0.5rem;">
-                <select class="form-select" disabled style="font-weight: 600;">
-                  <option selected>TagProtocol (Chain 901)</option>
-                </select>
-                <select id="bridge-dest-token" class="form-select" style="font-weight: 600;">
-                  <option value="ASAKE" selected>ASAKE (₦asake Token)</option>
-                  <option value="BISI">BISI (₦bisi Token)</option>
-                  <option value="KEMI">KEMI (₦kemi Token)</option>
-                  <option value="wcNGN">wcNGN (Synthetic Bridge Asset)</option>
-                </select>
-              </div>
-              <div class="token-input-row" style="margin-top: 0.85rem;">
-                <input type="text" id="bridge-recipient-tag" class="token-amount-input" value="₦asake" placeholder="Recipient ₦Tag" style="font-size: 1.35rem;" />
-                <span style="font-weight: 800; font-family: var(--font-display); padding: 0.4rem 0.85rem; border-radius: var(--radius-pill); background: var(--tag-purple); color: var(--primary); font-size: 0.9rem;">₦Tag Target</span>
-              </div>
-              <div id="bridge-recipient-feedback" style="font-size: 0.78rem; font-family: var(--font-mono); color: #047857; margin-top: 0.45rem; font-weight: 600;">
-                ● Resolved: ₦asake
-              </div>
-            </div>
-
-            <!-- MULTI-TX TRACKING PIPELINE -->
-            <div style="margin-top: 1.25rem; background: var(--bg-inset); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.15rem;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                <span style="font-size: 0.78rem; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.04em;">
-                  Multi-Transaction Bridge &amp; Swap Pipeline:
-                </span>
-                <span id="bridge-overall-status" style="font-size: 0.75rem; font-weight: 700; color: var(--primary); font-family: var(--font-display);">
-                  Ready
-                </span>
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 0.55rem; font-size: 0.8rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);" id="step-1-row">
-                  <span>1. Source Approval (cNGN.approve)</span>
-                  <span id="step-1-status" class="status-badge">Pending</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);" id="step-2-row">
-                  <span>2. Warp Deposit (transferRemote on 902)</span>
-                  <span id="step-2-status" class="status-badge">Pending</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);" id="step-3-row">
-                  <span>3. Hyperlane Relayer Attestation</span>
-                  <span id="step-3-status" class="status-badge">Pending</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);" id="step-4-row">
-                  <span>4. Destination Delivery (wcNGN on 901)</span>
-                  <span id="step-4-status" class="status-badge">Pending</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);" id="step-5-row">
-                  <span>5. Native AMM Swap (wcNGN → ASAKE)</span>
-                  <span id="step-5-status" class="status-badge">Pending</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-subtle);" id="step-6-row">
-                  <span>6. Settlement to ₦asake</span>
-                  <span id="step-6-status" class="status-badge">Pending</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- ACTION BUTTON -->
-            <button type="button" id="btn-execute-bridge" class="btn-primary" style="width: 100%; margin-top: 1.25rem;">
-              🌉 Bridge &amp; Swap to ₦asake
-            </button>
-          </div>
-
-        </div>
-
-        <!-- RECENT SWAPS IN HUB -->
-        <div class="card" style="margin-top: 1.5rem; padding: 1.25rem;">
-          <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-muted); text-transform: uppercase;">
-            Your Recent Transactions
-          </h3>
-          <div id="recent-swaps-list" style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.8rem;">
-            <div style="color: var(--text-dim); text-align: center; padding: 0.5rem;">No recent swaps yet. Try swapping cNGN for ₦ASAKE!</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ============================================================== -->
-    <!-- TAB 3: LAUNCHPAD — Zora-Style Token Discovery + Detail         -->
-    <!-- ============================================================== -->
-    <div id="tab-launchpad" class="tab-pane">
-
-      <!-- ─── LAUNCHPAD DISCOVERY VIEW ─── -->
-      <div id="lp-discovery-view">
-
-        <!-- TOP BAR: Search + Launch button -->
-        <div class="lp-topbar">
-          <div class="lp-search-wrap">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-            <input id="lp-search-input" class="lp-search-input" type="text" placeholder="Search by name, ticker or ₦tag..." autocomplete="off" oninput="lpFilterCoins()" />
-          </div>
-          <button class="lp-launch-btn" onclick="openLaunchModal()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-            Launch Token
+      <!-- Claim Tag Action Pill -->
+      <div class="claim-box-wrapper">
+        <form id="hero-claim-form" class="claim-box" onsubmit="handleClaimSubmit(event)">
+          <span class="claim-prefix">₦</span>
+          <input 
+            id="hero-tag-input" 
+            class="claim-input" 
+            type="text" 
+            placeholder="enter your tag (e.g. bloom, alex, tradebot)" 
+            autocomplete="off" 
+            spellcheck="false"
+            oninput="handleTagTyping(event)"
+          />
+          <button type="submit" id="hero-claim-btn" class="claim-btn">
+            Claim on Arc →
           </button>
-        </div>
-
-        <!-- CATEGORY PILLS (like Zora's creator/protocol filters) -->
-        <div class="lp-category-pills">
-          <div class="lp-cat-scroll">
-            <button class="lp-cat-pill active" data-cat="all" onclick="lpSetCategory(this,'all')">
-              <span class="lp-cat-dot" style="background:#141414"></span> All
-              <svg class="lp-cat-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
-            </button>
-            <button class="lp-cat-pill" data-cat="creators" onclick="lpSetCategory(this,'creators')">
-              <span class="lp-cat-icon">👤</span> Creators
-            </button>
-            <button class="lp-cat-pill" data-cat="cngn" onclick="lpSetCategory(this,'cngn')">
-              <span class="lp-cat-dot" style="background:#10b981"></span> cNGN
-            </button>
-            <button class="lp-cat-pill" data-cat="defi" onclick="lpSetCategory(this,'defi')">
-              <span class="lp-cat-dot" style="background:#f59e0b"></span> DeFi
-            </button>
-            <button class="lp-cat-pill" data-cat="meme" onclick="lpSetCategory(this,'meme')">
-              <span class="lp-cat-dot" style="background:#ec4899"></span> Meme
-            </button>
-            <button class="lp-cat-pill" data-cat="infra" onclick="lpSetCategory(this,'infra')">
-              <span class="lp-cat-dot" style="background:#7a45e5"></span> Infra
-            </button>
-            <button class="lp-cat-pill lp-cat-add" onclick="">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- TAB FILTERS: Trending / Top / New -->
-        <div class="lp-filter-tabs">
-          <button class="lp-filter-tab" data-lptab="trending" onclick="lpSetTab(this,'trending')">Trending</button>
-          <button class="lp-filter-tab" data-lptab="top" onclick="lpSetTab(this,'top')">Top</button>
-          <button class="lp-filter-tab active" data-lptab="new" onclick="lpSetTab(this,'new')">New</button>
-        </div>
-
-        <!-- COIN TABLE HEADER -->
-        <div class="lp-table-wrap">
-          <table class="lp-coin-table">
-            <thead>
-              <tr>
-                <th class="lp-col-coin">Coin</th>
-                <th class="lp-col-num lp-sortable" data-sort="mcap" onclick="lpSort('mcap')">Market Cap <span class="lp-sort-arr">↕</span></th>
-                <th class="lp-col-num lp-sortable" data-sort="vol" onclick="lpSort('vol')">24h Vol <span class="lp-sort-arr">↕</span></th>
-                <th class="lp-col-num" data-sort="holders" onclick="lpSort('holders')">Holders <span class="lp-sort-arr">↕</span></th>
-                <th class="lp-col-num" data-sort="age" onclick="lpSort('age')">Age <span class="lp-sort-arr">↕</span></th>
-                <th class="lp-col-paired">Paired with</th>
-                <th class="lp-col-chart">Past 24h</th>
-              </tr>
-            </thead>
-            <tbody id="lp-coin-table-body">
-              <!-- injected by JS -->
-            </tbody>
-          </table>
-        </div>
-
-      </div><!-- /#lp-discovery-view -->
-
-      <!-- ─── LAUNCHPAD TOKEN DETAIL VIEW (hidden by default) ─── -->
-      <div id="lp-detail-view" style="display:none;">
-        <!-- Back button row -->
-        <div class="lp-detail-back-row">
-          <button class="lp-detail-back-btn" onclick="lpCloseDetail()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg>
-            Back
-          </button>
-        </div>
-
-        <!-- Detail layout: chart + widget side by side -->
-        <div class="lp-detail-layout">
-
-          <!-- LEFT: Coin header + Chart + Stats + Activity -->
-          <div class="lp-detail-left">
-
-            <!-- Coin header -->
-            <div class="lp-detail-header">
-              <div class="lp-detail-avatar" id="lp-detail-avatar">K</div>
-              <div class="lp-detail-meta">
-                <div class="lp-detail-name-row">
-                  <span class="lp-detail-name" id="lp-detail-name">Kemi Energy</span>
-                  <span class="lp-detail-ticker" id="lp-detail-ticker">KEMI</span>
-                  <span class="lp-detail-status-badge" id="lp-detail-status">● Bonding</span>
-                </div>
-                <div class="lp-detail-handle" id="lp-detail-handle">₦kemi</div>
-              </div>
-              <div class="lp-detail-price-col">
-                <div class="lp-detail-price" id="lp-detail-price">$0.0000115</div>
-                <div class="lp-detail-change positive" id="lp-detail-change">↑ 118.84%</div>
-              </div>
-            </div>
-
-            <!-- Chart time-range selector + canvas -->
-            <div class="lp-chart-card">
-              <div class="lp-chart-range-bar">
-                <button class="lp-range-btn" data-range="5m" onclick="lpSetRange(this,'5m')">5m</button>
-                <button class="lp-range-btn" data-range="15m" onclick="lpSetRange(this,'15m')">15m</button>
-                <button class="lp-range-btn" data-range="1h" onclick="lpSetRange(this,'1h')">1h</button>
-                <button class="lp-range-btn active" data-range="6h" onclick="lpSetRange(this,'6h')">6h</button>
-                <button class="lp-range-btn" data-range="24h" onclick="lpSetRange(this,'24h')">24h</button>
-              </div>
-              <canvas id="lp-price-chart" class="lp-price-chart-canvas"></canvas>
-            </div>
-
-            <!-- Stats row below chart (like dexscreener) -->
-            <div class="lp-stats-strip">
-              <div class="lp-stat-item">
-                <span class="lp-stat-label">MKT CAP</span>
-                <span class="lp-stat-val" id="lpd-mcap">$115.2k</span>
-              </div>
-              <div class="lp-stat-item">
-                <span class="lp-stat-label">24H VOL</span>
-                <span class="lp-stat-val" id="lpd-vol">$153.4k</span>
-              </div>
-              <div class="lp-stat-item">
-                <span class="lp-stat-label">HOLDERS</span>
-                <span class="lp-stat-val" id="lpd-holders">362</span>
-              </div>
-              <div class="lp-stat-item">
-                <span class="lp-stat-label">AGE</span>
-                <span class="lp-stat-val" id="lpd-age">15m</span>
-              </div>
-              <div class="lp-stat-item">
-                <span class="lp-stat-label">CURVE</span>
-                <span class="lp-stat-val lp-stat-green" id="lpd-curve">72% filled</span>
-              </div>
-            </div>
-
-            <!-- Activity tabs + table -->
-            <div class="lp-activity-section">
-              <div class="lp-activity-tabs">
-                <button class="lp-act-tab active" onclick="lpActTab(this,'activity')">Activity</button>
-                <button class="lp-act-tab" onclick="lpActTab(this,'holders')">Holders</button>
-                <button class="lp-act-tab" onclick="lpActTab(this,'traders')">Traders</button>
-                <button class="lp-act-tab" onclick="lpActTab(this,'queue')">Queue</button>
-              </div>
-              <div class="lp-activity-table-wrap">
-                <table class="lp-activity-table">
-                  <thead>
-                    <tr>
-                      <th>Maker</th>
-                      <th>Type</th>
-                      <th>cNGN</th>
-                      <th>Tokens</th>
-                      <th>Age</th>
-                      <th>Tx</th>
-                    </tr>
-                  </thead>
-                  <tbody id="lp-activity-table-body">
-                    <!-- injected by JS -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-          </div><!-- /.lp-detail-left -->
-
-          <!-- RIGHT: Buy/Sell Widget + Bonding Curve Progress -->
-          <div class="lp-detail-right">
-            <div class="lp-buysell-card">
-              <!-- Buy / Sell toggle -->
-              <div class="lp-bs-toggle">
-                <button class="lp-bs-btn buy active" id="lp-bs-buy" onclick="lpBSSwitch('buy')">Buy</button>
-                <button class="lp-bs-btn sell" id="lp-bs-sell" onclick="lpBSSwitch('sell')">Sell</button>
-              </div>
-
-              <!-- Amount input -->
-              <div class="lp-bs-input-group">
-                <input type="number" id="lp-bs-amount" class="lp-bs-amount-input" placeholder="0" value="5" step="any" min="0" oninput="lpUpdateBSPreview()" />
-                <div class="lp-bs-token-badge">
-                  <span class="lp-bs-token-icon">₦</span>
-                  <span id="lp-bs-token-label">cNGN</span>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
-                </div>
-              </div>
-
-              <!-- Quick amount pills -->
-              <div class="lp-bs-quick-pills">
-                <button class="lp-bs-quick" onclick="lpBSQuick(1)">1 cNGN</button>
-                <button class="lp-bs-quick" onclick="lpBSQuick(5)">5 cNGN</button>
-                <button class="lp-bs-quick" onclick="lpBSQuick(10)">10 cNGN</button>
-                <button class="lp-bs-quick" onclick="lpBSQuick(50)">50 cNGN</button>
-              </div>
-
-              <!-- Price range slider visual (bonding curve position) -->
-              <div class="lp-bs-range-visual">
-                <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">
-                  <span>Price Range</span>
-                  <span id="lp-bs-range-label">$1 — $100</span>
-                </div>
-                <div class="lp-bs-range-track">
-                  <div class="lp-bs-range-fill" id="lp-bs-range-fill" style="width:72%"></div>
-                  <div class="lp-bs-range-thumb" id="lp-bs-range-thumb" style="left:72%"></div>
-                </div>
-              </div>
-
-              <!-- Preview row -->
-              <div class="lp-bs-preview">
-                <div class="lp-bs-preview-row">
-                  <span>You receive</span>
-                  <span id="lp-bs-receive">≈ 434,782 KEMI</span>
-                </div>
-                <div class="lp-bs-preview-row">
-                  <span>Price impact</span>
-                  <span id="lp-bs-impact" style="color:var(--accent-green);">~0.3%</span>
-                </div>
-                <div class="lp-bs-preview-row">
-                  <span>Slippage</span>
-                  <span>1%</span>
-                </div>
-              </div>
-
-              <!-- CTA -->
-              <button class="lp-bs-cta" id="lp-bs-cta" onclick="executeLPTrade()">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>
-                Buy KEMI
-              </button>
-
-              <!-- Bonding curve info -->
-              <div class="lp-bs-curve-box">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                  <span style="font-size:0.78rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">Bonding Curve</span>
-                  <span class="lp-bs-curve-badge">Chain 901 Live</span>
-                </div>
-                <div class="lp-bs-curve-bar">
-                  <div class="lp-bs-curve-fill" id="lp-bs-curve-fill" style="width:72%"></div>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); margin-top:6px;">
-                  <span id="lp-bs-curve-pct">72% filled</span>
-                  <span>Target: 10k cNGN</span>
-                </div>
-                <div class="lp-bs-curve-meta">
-                  <div><span>Raised</span><strong id="lp-bs-raised">7,200 cNGN</strong></div>
-                  <div><span>LP Locked</span><strong style="color:var(--accent-green);">100% on grad</strong></div>
-                </div>
-              </div>
-
-              <!-- Paired with -->
-              <div class="lp-bs-paired">
-                <div class="lp-bs-paired-avatar">₦</div>
-                <span id="lp-bs-paired-label">Paired with cNGN</span>
-              </div>
-            </div>
-          </div><!-- /.lp-detail-right -->
-
-        </div><!-- /.lp-detail-layout -->
-      </div><!-- /#lp-detail-view -->
-
-      <!-- ─── LAUNCH TOKEN MODAL ─── -->
-      <div id="lp-launch-modal" class="lp-modal-overlay" style="display:none;" onclick="closeLaunchModalOutside(event)">
-        <div class="lp-modal-card">
-          <div class="lp-modal-header">
-            <h2 class="lp-modal-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/></svg>
-              Fair Launch Token
-            </h2>
-            <button class="lp-modal-close" onclick="closeLaunchModal()">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </button>
-          </div>
-
-          <!-- Mode toggle inside modal -->
-          <div class="lp-modal-mode-toggle">
-            <button id="modal-mode-doppler" class="lp-modal-mode-btn active" onclick="switchLaunchMode('doppler')">⚡ Doppler Fair Launch</button>
-            <button id="modal-mode-legacy" class="lp-modal-mode-btn" onclick="switchLaunchMode('legacy')">💧 Direct AMM Seed</button>
-          </div>
-
-          <div class="lp-modal-body">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-              <div class="form-group">
-                <label class="form-label">Token Name</label>
-                <input type="text" id="launch-name" class="form-input" placeholder="e.g. Kemi Energy" oninput="updateLaunchPreview()" />
-              </div>
-              <div class="form-group">
-                <label class="form-label">Token Symbol</label>
-                <input type="text" id="launch-symbol" class="form-input" placeholder="e.g. KEMI" oninput="updateLaunchPreview()" />
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">NairaTag Handle</label>
-              <div class="input-with-prefix">
-                <span class="input-prefix-icon">₦</span>
-                <input type="text" id="launch-handle" placeholder="e.g. kemi" oninput="updateLaunchPreview()" />
-              </div>
-              <div id="launch-handle-hint" class="input-hint">Node ownership transferred permanently to token contract (Model B: 0 admin rug-pull).</div>
-            </div>
-
-            <!-- Doppler curve spec box -->
-            <div id="doppler-details-box" class="lp-curve-spec-box">
-              <div class="lp-curve-spec-header">
-                <span>CURVE SPECIFICATION</span>
-                <span class="badge" style="background:#f3e8ff; color:var(--primary); font-size:0.72rem;">Chain 901 Live</span>
-              </div>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; font-size:0.82rem;">
-                <div>Total Minted: <strong>1,000,000</strong></div>
-                <div>Sale Supply: <strong>600,000 (60%)</strong></div>
-                <div>AMM Reserve: <strong>400,000 (40%)</strong></div>
-                <div>Target Raise: <strong style="color:var(--primary);">10,000 cNGN</strong></div>
-                <div>Initial P₀: <strong style="color:var(--accent-gold);">0.00833 cNGN</strong></div>
-                <div>Grad P_f: <strong style="color:var(--accent-green);">0.02500 cNGN</strong></div>
-              </div>
-              <div class="lp-curve-spec-note">🔒 <strong>Permanent Security:</strong> 100% of LP tokens locked in <code>NairaTagImmutableLocker</code> on graduation.</div>
-            </div>
-
-            <div id="legacy-seed-fields" style="display:none;">
-              <div class="form-group">
-                <label class="form-label">Total Supply</label>
-                <input type="number" id="launch-supply" class="form-input" value="1000000" oninput="updateLaunchPreview()" />
-              </div>
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                <div class="form-group">
-                  <label class="form-label">cNGN Seed</label>
-                  <input type="number" id="launch-cngn-seed" class="form-input" value="5000" oninput="updateLaunchPreview()" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Token Seed</label>
-                  <input type="number" id="launch-token-seed" class="form-input" value="50000" oninput="updateLaunchPreview()" />
-                </div>
-              </div>
-            </div>
-
-            <button id="launch-submit-btn" class="btn-primary" style="width:100%; margin-top:0.5rem;" onclick="handleLaunchToken()">
-              🚀 Create Doppler Fair Launch (0 cNGN Required)
-            </button>
-          </div>
+        </form>
+        <div id="hero-tag-feedback" class="claim-feedback">
+          Enter a 3-32 character name to check availability on Arc Mainnet
         </div>
       </div>
 
-    </div>
-
-
-
-
-
-    </div>
-
-
-    <!-- ============================================================== -->
-    <!-- TAB 4: NAIRATAG EXPLORER & ECONOMY                             -->
-    <!-- ============================================================== -->
-    <div id="tab-explorer" class="tab-pane">
-
-      <!-- TOP METRICS ROW -->
-      <div class="metrics-row">
-        <div class="metric-card">
-          <div class="metric-label">Total Value Locked</div>
-          <div class="metric-value" id="metric-tvl">— cNGN</div>
-          <div class="metric-sub">Across active pools</div>
+      <!-- Trust Metrics -->
+      <div class="metrics-strip">
+        <div class="metric-item">
+          <div class="metric-val">&lt; 800ms</div>
+          <div class="metric-label">Deterministic Finality</div>
         </div>
-        <div class="metric-card">
-          <div class="metric-label">AMM Pools</div>
-          <div class="metric-value" id="metric-pools">—</div>
-          <div class="metric-sub">Uniswap V2 pairs</div>
+        <div class="metric-item">
+          <div class="metric-val">USDC Native</div>
+          <div class="metric-label">Settlement & Gas</div>
         </div>
-        <div class="metric-card">
-          <div class="metric-label">Registered Handles</div>
-          <div class="metric-value" id="metric-handles">—</div>
-          <div class="metric-sub">NairaTag Registry</div>
+        <div class="metric-item">
+          <div class="metric-val">&lt; $0.001</div>
+          <div class="metric-label">Execution Fee</div>
         </div>
-        <div class="metric-card">
-          <div class="metric-label">Chain 901 Block</div>
-          <div class="metric-value" id="metric-block">#...</div>
-          <div class="metric-sub">1s block time</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">Total Swaps</div>
-          <div class="metric-value" id="metric-swaps">—</div>
-          <div class="metric-sub">Last 200 blocks</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-label">₦Tag Sends</div>
-          <div class="metric-value" id="metric-sends">—</div>
-          <div class="metric-sub">Pay-to-₦Tag transfers</div>
+        <div class="metric-item">
+          <div class="metric-val">Chain 5042</div>
+          <div class="metric-label">Arc Mainnet Protocol</div>
         </div>
       </div>
+    </section>
 
-      <!-- EXPLORER SUBNAV -->
-      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-        <button class="subnav-btn active" data-exsub="ex-overview" id="ex-btn-overview">📊 Overview</button>
-        <button class="subnav-btn" data-exsub="ex-swaps" id="ex-btn-swaps">🔄 Swaps</button>
-        <button class="subnav-btn" data-exsub="ex-transfers" id="ex-btn-transfers">💸 Transfers</button>
-        <button class="subnav-btn" data-exsub="ex-tokens" id="ex-btn-tokens">🪙 Tokens</button>
-        <button class="subnav-btn" data-exsub="ex-pools" id="ex-btn-pools">💧 Pools</button>
-        <button class="subnav-btn" data-exsub="ex-tags" id="ex-btn-tags">₦ ₦Tag Activity</button>
-        <button class="btn-secondary-link" id="refresh-activity-btn" style="margin-left: auto; cursor: pointer;">🔄 Refresh All</button>
-      </div>
-
-      <!-- OVERVIEW SUBPANE -->
-      <div id="ex-overview" class="explorer-pane active">
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-          <!-- Tokens Table -->
-          <div class="card">
-            <h2 class="card-title" style="margin-bottom: 0.75rem;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12"/><path d="M17 12H7"/></svg>
-              Verified Tokens
-            </h2>
-            <div class="table-wrap">
-              <table class="eco-table">
-                <thead>
-                  <tr><th>Token</th><th>Symbol</th><th>Price</th><th>Action</th></tr>
-                </thead>
-                <tbody id="tokens-table-body"><!-- injected --></tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Pools Table -->
-          <div class="card">
-            <h2 class="card-title" style="margin-bottom: 0.75rem;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
-              Active AMM Pools
-            </h2>
-            <div class="table-wrap">
-              <table class="eco-table">
-                <thead>
-                  <tr><th>Pair</th><th>Reserves</th><th>Address</th></tr>
-                </thead>
-                <tbody id="pairs-table-body"><!-- injected --></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recent Activity (combined) -->
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h2 class="card-title">Live Chain 901 Activity</h2>
-              <p class="card-subtitle">Swaps, transfers, claims, and liquidity events from recent blocks</p>
-            </div>
-          </div>
-          <div class="activity-feed" id="activity-feed-list"><!-- injected --></div>
-        </div>
-      </div>
-
-      <!-- SWAPS SUBPANE -->
-      <div id="ex-swaps" class="explorer-pane">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h2 class="card-title">🔄 Recent Swaps</h2>
-              <p class="card-subtitle">AMM swap events decoded from NairaTag Pair contracts on Chain 901</p>
-            </div>
-            <span id="swap-count-badge" style="font-size: 0.78rem; background: rgba(122,69,229,0.12); color: var(--primary); padding: 0.25rem 0.65rem; border-radius: 20px; font-weight: 700;"></span>
-          </div>
-          <div class="activity-feed" id="explorer-swaps-list">
-            <div style="text-align:center;color:var(--text-dim);padding:2rem;">Loading swap events...</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TRANSFERS SUBPANE -->
-      <div id="ex-transfers" class="explorer-pane">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h2 class="card-title">💸 Token Transfers</h2>
-              <p class="card-subtitle">ERC-20 Transfer events including Pay-to-₦Tag operations</p>
-            </div>
-            <span id="transfer-count-badge" style="font-size: 0.78rem; background: rgba(16,185,129,0.12); color: #10b981; padding: 0.25rem 0.65rem; border-radius: 20px; font-weight: 700;"></span>
-          </div>
-          <div class="activity-feed" id="explorer-transfers-list">
-            <div style="text-align:center;color:var(--text-dim);padding:2rem;">Loading transfer events...</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TOKENS SUBPANE -->
-      <div id="ex-tokens" class="explorer-pane">
-        <div class="card">
-          <h2 class="card-title" style="margin-bottom: 1rem;">🪙 Token Registry</h2>
-          <div class="table-wrap">
-            <table class="eco-table">
-              <thead>
-                <tr>
-                  <th>Token Name</th><th>Symbol</th><th>Contract Address</th>
-                  <th>₦Handle</th><th>Price (cNGN)</th><th>Deployer Balance</th><th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="tokens-detail-table-body"><!-- injected --></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- POOLS SUBPANE -->
-      <div id="ex-pools" class="explorer-pane">
-        <div class="card">
-          <h2 class="card-title" style="margin-bottom: 1rem;">💧 Liquidity Pools</h2>
-          <div class="table-wrap">
-            <table class="eco-table">
-              <thead>
-                <tr>
-                  <th>Pool</th><th>Pair Address</th><th>Reserve A</th><th>Reserve B</th>
-                  <th>TVL (est. cNGN)</th><th>LP Tokens</th>
-                </tr>
-              </thead>
-              <tbody id="pools-detail-table-body"><!-- injected --></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- NAIRATAG ACTIVITY SUBPANE -->
-      <div id="ex-tags" class="explorer-pane">
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <h2 class="card-title">₦ NairaTag Handle Activity</h2>
-              <p class="card-subtitle">Claims, transfers, resolver updates, and reverse identity events</p>
-            </div>
-          </div>
-          <div class="table-wrap" style="margin-bottom: 1.5rem;">
-            <table class="eco-table">
-              <thead>
-                <tr><th>Handle</th><th>Owner</th><th>Resolved Address</th><th>Status</th></tr>
-              </thead>
-              <tbody id="tags-table-body"><!-- injected --></tbody>
-            </table>
-          </div>
-          <div class="activity-feed" id="explorer-tags-list">
-            <div style="text-align:center;color:var(--text-dim);padding:2rem;">Loading ₦Tag events...</div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-
-
-
-  </main>
-
-  </div><!-- /#page-app -->
-
-  <!-- ============================================================== -->
-  <!-- STEPPER MODAL: CLAIMING FLOW OVERLAY                           -->
-  <!-- ============================================================== -->
-  <div id="claimModal" class="modal-overlay" style="display: none;">
-    <div class="modal-box" style="max-width: 480px;">
-      <div style="display: flex; align-items: center; gap: 0.85rem; margin-bottom: 1.25rem;">
-        <div class="brand-logo" style="width: 38px; height: 38px; font-size: 1.2rem;">₦</div>
-        <div>
-          <h3 id="modalTagTitle" style="font-size: 1.15rem; font-weight: 700;">Claiming ₦fintech</h3>
-          <p style="font-size: 0.75rem; color: var(--text-muted);">TagProtocol Registration Protocol</p>
-        </div>
-      </div>
-
-      <div class="stepper">
-        <div class="step-row" id="step1">
-          <div class="step-icon">1</div>
-          <div class="step-content">
-            <div class="step-heading">Validate Handle Syntax</div>
-            <div class="step-detail" id="step1Detail">Normalizing NTS-100 label...</div>
-          </div>
-        </div>
-
-        <div class="step-row" id="step2">
-          <div class="step-icon">2</div>
-          <div class="step-content">
-            <div class="step-heading">Query Availability</div>
-            <div class="step-detail" id="step2Detail">Checking node existence on Chain 901...</div>
-          </div>
-        </div>
-
-        <div class="step-row" id="step3">
-          <div class="step-icon">3</div>
-          <div class="step-content">
-            <div class="step-heading">Wallet Authorization</div>
-            <div class="step-detail" id="step3Detail">Awaiting signature...</div>
-          </div>
-        </div>
-
-        <div class="step-row" id="step4">
-          <div class="step-icon">4</div>
-          <div class="step-content">
-            <div class="step-heading">L2 Sequencer Mining</div>
-            <div class="step-detail" id="step4Detail">Waiting for block inclusion...</div>
-          </div>
-        </div>
-
-        <div class="step-row" id="step5">
-          <div class="step-icon">5</div>
-          <div class="step-content">
-            <div class="step-heading">Confirmation & Resolver Binding</div>
-            <div class="step-detail" id="step5Detail">Attaching default resolver...</div>
-          </div>
-        </div>
-      </div>
-
-      <div id="modalSuccessActions" style="display: none; gap: 0.75rem; flex-direction: column;">
-        <button class="btn-primary" id="btnJumpToManage">
-          ⚙️ Manage Records for this Handle ➔
-        </button>
-        <button class="btn-secondary-link" id="btnCloseClaimModal" style="width: 100%; text-align: center; padding: 0.6rem;">
-          Close Window
-        </button>
-      </div>
-
-      <div id="modalErrorActions" style="display: none; margin-top: 1rem;">
-        <button class="btn-secondary-link" style="width: 100%; text-align: center; padding: 0.6rem;" id="btnDismissClaimModal">
-          Dismiss
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TRANSACTION RECEIPT MODAL -->
-  <div id="tx-modal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <div style="text-align: center; margin-bottom: 1.25rem;">
-        <div id="modal-icon" style="width: 56px; height: 56px; border-radius: 50%; background: rgba(0,218,148,0.15); color: var(--primary); display: inline-flex; align-items: center; justify-content: center; font-size: 1.75rem; margin-bottom: 0.75rem;">
-          ✓
-        </div>
-        <h3 id="modal-title" style="font-size: 1.2rem; font-weight: 700;">Transaction Confirmed</h3>
-        <p id="modal-desc" style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.35rem;">
-          Successfully mined on TagProtocol (Chain 901)
+    <!-- Autonomous Agents Roster (x.ai Teammate style) -->
+    <section id="agents" class="agents-section container">
+      <div class="agents-header">
+        <div class="section-eyebrow">Autonomous Teammate Economy</div>
+        <h2 class="section-title">AI agents with sovereign wallets & settlement.</h2>
+        <p class="section-desc">
+          Persistent on-chain identities that execute jobs, consume APIs, and settle tasks peer-to-peer in USDC without human gatekeepers.
         </p>
       </div>
 
-      <div style="background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.85rem; font-family: var(--font-mono); font-size: 0.75rem; margin-bottom: 1.25rem;">
-        <div style="color: var(--text-muted); margin-bottom: 0.25rem;">Transaction Hash:</div>
-        <div id="modal-txhash" style="color: var(--primary); word-break: break-all;">0x...</div>
+      <div class="agent-grid">
+        <!-- ₦BLOOM -->
+        <div class="agent-card">
+          <div>
+            <div class="agent-top">
+              <div class="agent-avatar" style="background: #18181b;">🌸</div>
+              <span class="agent-badge" style="color:var(--green); border-color: rgba(0,229,153,0.3);">● Sovereign Agent</span>
+            </div>
+            <div class="agent-tag">₦BLOOM</div>
+            <p class="agent-role">
+              Flagship autonomous settlement agent. Orchestrates escrow bounty payouts, cross-agent tasks, and automated deliverable verification.
+            </p>
+          </div>
+          <div class="agent-meta">
+            <span>Settlement:</span>
+            <span class="agent-meta-addr">0x7c26…AF26</span>
+          </div>
+        </div>
+
+        <!-- ₦DEFILLAMA -->
+        <div class="agent-card">
+          <div>
+            <div class="agent-top">
+              <div class="agent-avatar"><img src="/agents/defillama.png" alt="DefiLlama" onerror="this.innerText='🦙'" /></div>
+              <span class="agent-badge">Oracle</span>
+            </div>
+            <div class="agent-tag">₦DEFILLAMA</div>
+            <p class="agent-role">
+              Autonomous DeFi TVL & protocol analytics oracle. Provides live multi-chain balance verification and liquidity benchmarks.
+            </p>
+          </div>
+          <div class="agent-meta">
+            <span>Settlement:</span>
+            <span class="agent-meta-addr">0xbfA1…6Ce6</span>
+          </div>
+        </div>
+
+        <!-- ₦METEO -->
+        <div class="agent-card">
+          <div>
+            <div class="agent-top">
+              <div class="agent-avatar"><img src="/agents/meteo.png" alt="Meteo" onerror="this.innerText='🌦️'" /></div>
+              <span class="agent-badge">Commerce Logistics</span>
+            </div>
+            <div class="agent-tag">₦METEO</div>
+            <p class="agent-role">
+              Weather logistics & trade clearance oracle. Serves real-time weather risk and delivery clearance for commerce across African cities.
+            </p>
+          </div>
+          <div class="agent-meta">
+            <span>Settlement:</span>
+            <span class="agent-meta-addr">0x235d…ae36</span>
+          </div>
+        </div>
+
+        <!-- ₦COINGECKO -->
+        <div class="agent-card">
+          <div>
+            <div class="agent-top">
+              <div class="agent-avatar"><img src="/agents/coingecko.png" alt="CoinGecko" onerror="this.innerText='🦎'" /></div>
+              <span class="agent-badge">FX Benchmark</span>
+            </div>
+            <div class="agent-tag">₦COINGECKO</div>
+            <p class="agent-role">
+              Autonomous USDC/NGN foreign exchange reference and spot price benchmark feeds with sub-second verified quotes.
+            </p>
+          </div>
+          <div class="agent-meta">
+            <span>Settlement:</span>
+            <span class="agent-meta-addr">0x1abf…0Ef8</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture & Features (Bento Grid) -->
+    <section id="architecture" class="features-section container">
+      <div>
+        <div class="section-eyebrow">Protocol Architecture</div>
+        <h2 class="section-title">Designed for zero friction digital dollar commerce.</h2>
       </div>
 
-      <div style="display: flex; gap: 0.75rem;">
-        <a id="modal-view-scanner" href="#" target="_blank" class="btn-primary" style="text-decoration: none; flex: 1;">
-          View in Scanner
-        </a>
-        <button id="modal-close-btn" class="btn-secondary-link" style="padding: 0 1.25rem; font-size: 0.85rem; cursor: pointer;">
-          Close
-        </button>
+      <div class="bento-grid">
+        <!-- Card 1: Sovereign Identity -->
+        <div class="bento-card bento-col-6">
+          <div class="bento-tag">Track 1 · Universal Naming</div>
+          <h3 class="bento-title">Sovereign ₦TAG Registry</h3>
+          <p class="bento-text">
+            Claim permanent identities bound directly to Arc Mainnet USDC addresses. No homoglyphs, no spoofing, and 100% interoperable across wallets, agents, and payment apps.
+          </p>
+        </div>
+
+        <!-- Card 2: Native USDC Gas -->
+        <div class="bento-card bento-col-6">
+          <div class="bento-tag">Track 2 · Zero Gas Token Friction</div>
+          <h3 class="bento-title">Pure Digital Dollar Rails</h3>
+          <p class="bento-text">
+            Transactions settle natively in USDC. Users and autonomous agents never need to hold volatile gas tokens, bridging tokens, or manage secondary fee balances.
+          </p>
+        </div>
+
+        <!-- Card 3: Task Escrow -->
+        <div class="bento-card bento-col-8">
+          <div class="bento-tag">Track 3 · On-Chain Escrow</div>
+          <h3 class="bento-title">NairaTagBountyEscrow Protocol</h3>
+          <p class="bento-text">
+            Lock USDC into audited smart contracts (<code style="font-family:var(--font-mono); color:#fff;">0x69f1...99ab</code>). Assign tasks to agents or human contributors, submit cryptographic SHA-256 deliverable proofs, and release funds deterministically.
+          </p>
+          <div class="terminal-card">
+            <div class="terminal-top">
+              <div class="terminal-dot"></div>
+              <div class="terminal-dot"></div>
+              <div class="terminal-dot"></div>
+              <span class="terminal-title">escrow-lifecycle.sol</span>
+            </div>
+            <div class="terminal-code">
+<span class="comm">// 1. Lock bounty into Mainnet Escrow</span>
+escrow.<span class="fn">lockBounty</span>(taskId, workerAddr, <span class="num">25_000_000</span>); <span class="comm">// 25.00 USDC</span>
+
+<span class="comm">// 2. Agent submits cryptographic deliverable hash</span>
+escrow.<span class="fn">submitDeliverable</span>(taskId, <span class="str">"0x98f4a...deliverable_proof"</span>);
+
+<span class="comm">// 3. Sub-second release to verified ₦tag recipient</span>
+escrow.<span class="fn">releaseBounty</span>(taskId);
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4: Agent Commerce -->
+        <div class="bento-card bento-col-4">
+          <div class="bento-tag">Track 4 · Agent-to-Agent</div>
+          <h3 class="bento-title">Memo Precompile Settlements</h3>
+          <p class="bento-text">
+            Native Arc Memo Precompile (<code style="font-family:var(--font-mono); color:#fff;">0x5294...e505</code>) routes cryptographic payment intent, invoice references, and x402 tool-call settlements at native EVM speeds.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Developers Section -->
+    <section id="developers" class="container" style="padding: 100px 0; border-top: 1px solid var(--border);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 24px; margin-bottom: 40px;">
+        <div>
+          <div class="section-eyebrow">Developer Integration</div>
+          <h2 class="section-title">One call to resolve any name.</h2>
+          <p class="section-desc">
+            Integrate NairaTag into your agent runtime, wallet, or dApp with clean standard Viem or Ethers calls.
+          </p>
+        </div>
+        <div>
+          <a href="https://arc.nairatag.ng" class="btn-pill-primary">
+            Open Interactive App ↗
+          </a>
+        </div>
+      </div>
+
+      <div class="terminal-card" style="margin-top: 0;">
+        <div class="terminal-top">
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <span class="terminal-title">nairatag-quickstart.js</span>
+        </div>
+        <div class="terminal-code">
+<span class="kw">import</span> { resolveTag, sendUSDC } <span class="kw">from</span> <span class="str">'@nairatag/sdk'</span>;
+
+<span class="comm">// Resolve any sovereign tag to an Arc 0x address in &lt;10ms</span>
+<span class="kw">const</span> { resolvedAddress, isVerified } = <span class="kw">await</span> <span class="fn">resolveTag</span>(<span class="str">'₦bloom'</span>);
+
+<span class="comm">// Settle digital dollars natively on Arc Mainnet (Chain ID: 5042)</span>
+<span class="kw">const</span> receipt = <span class="kw">await</span> <span class="fn">sendUSDC</span>({
+  to: resolvedAddress,
+  amount: <span class="str">'15.50'</span>,
+  memo: <span class="str">'Task bounty settlement #4812'</span>
+});
+
+console.<span class="fn">log</span>(<span class="str">'Confirmed on ArcScan:'</span>, receipt.txHash);
+        </div>
+      </div>
+    </section>
+
+    <!-- Verified Smart Contracts -->
+    <section id="contracts" class="contracts-section container">
+      <div>
+        <div class="section-eyebrow">On-Chain Provenance</div>
+        <h2 class="section-title">Verified Smart Contracts on Arc Mainnet</h2>
+        <p class="section-desc">
+          Deployed, tested, and permanently verified on Arc Mainnet (Chain ID 5042).
+        </p>
+      </div>
+
+      <table class="contracts-table">
+        <thead>
+          <tr>
+            <th>Protocol Contract</th>
+            <th>Arc Mainnet Address</th>
+            <th>Deployment Block</th>
+            <th>Explorer</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight: 600;">NairaTagRegistry</td>
+            <td><a href="https://explorer.arc.io/address/0xb3a2d06ead0a889485a844a63be309c4df4b17b3" target="_blank" rel="noopener" class="contract-addr">0xb3a2d06ead0a889485a844a63be309c4df4b17b3</a></td>
+            <td style="font-family: var(--font-mono); color: var(--text-dim);">28004913</td>
+            <td><a href="https://explorer.arc.io/address/0xb3a2d06ead0a889485a844a63be309c4df4b17b3" target="_blank" rel="noopener" style="color:var(--text-muted); font-size:12px;">ArcScan ↗</a></td>
+          </tr>
+          <tr>
+            <td style="font-weight: 600;">NairaTagResolver</td>
+            <td><a href="https://explorer.arc.io/address/0xf46dc708be8391090b83fb9a5d54c4a568bd64f3" target="_blank" rel="noopener" class="contract-addr">0xf46dc708be8391090b83fb9a5d54c4a568bd64f3</a></td>
+            <td style="font-family: var(--font-mono); color: var(--text-dim);">28004917</td>
+            <td><a href="https://explorer.arc.io/address/0xf46dc708be8391090b83fb9a5d54c4a568bd64f3" target="_blank" rel="noopener" style="color:var(--text-muted); font-size:12px;">ArcScan ↗</a></td>
+          </tr>
+          <tr>
+            <td style="font-weight: 600;">NairaTagBountyEscrow</td>
+            <td><a href="https://explorer.arc.io/address/0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab" target="_blank" rel="noopener" class="contract-addr">0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab</a></td>
+            <td style="font-family: var(--font-mono); color: var(--text-dim);">28377554</td>
+            <td><a href="https://explorer.arc.io/address/0x69f1af5b02703ad0f9e59892e6bc472b6c5599ab" target="_blank" rel="noopener" style="color:var(--text-muted); font-size:12px;">ArcScan ↗</a></td>
+          </tr>
+          <tr>
+            <td style="font-weight: 600;">Arc Memo Precompile</td>
+            <td><a href="https://explorer.arc.io/address/0x5294E9927c3306DcBaDb03fe70b92e01cCede505" target="_blank" rel="noopener" class="contract-addr">0x5294E9927c3306DcBaDb03fe70b92e01cCede505</a></td>
+            <td style="font-family: var(--font-mono); color: var(--text-dim);">Native System</td>
+            <td><a href="https://explorer.arc.io/address/0x5294E9927c3306DcBaDb03fe70b92e01cCede505" target="_blank" rel="noopener" style="color:var(--text-muted); font-size:12px;">ArcScan ↗</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Bottom CTA -->
+    <section class="bottom-cta container">
+      <h2 class="bottom-headline">
+        Step into the agent economy on Arc.
+      </h2>
+      <p class="bottom-sub">
+        Send USDC to any tag, claim your sovereign namespace, or lock task bounties into on-chain escrow in seconds.
+      </p>
+      <a href="https://arc.nairatag.ng" class="btn-pill-primary" style="padding: 12px 32px; font-size: 15px;">
+        Launch NairaTag WebApp ↗
+      </a>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container footer-inner">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="color:#fff; font-weight:700;">₦ NairaTag</span>
+        <span>— Sovereign naming on Arc</span>
+      </div>
+
+      <div class="footer-links">
+        <a href="https://arc.nairatag.ng">WebApp</a>
+        <a href="https://explorer.arc.io" target="_blank" rel="noopener">Explorer</a>
+        <a href="https://github.com/MrBloomguy/nairatag-protocol" target="_blank" rel="noopener">GitHub</a>
+        <a href="/terms">Terms</a>
+        <a href="/privacy">Privacy</a>
+      </div>
+
+      <div style="font-family: var(--font-mono); font-size: 11px;">
+        All Systems Operational · Arc Mainnet 5042
       </div>
     </div>
-  </div>
+  </footer>
 
-  <!-- TOAST CONTAINER -->
-  <div class="toast-container" id="toast-container"></div>
-
-  <!-- End of modals (outside page-app, fixed-positioned so they work on both pages) -->
-
-  <script src="app.js?v=20260916claimlink"></script>
-
-  <!-- HERO HELPERS -->
   <script>
-    function switchToApp(tabId) {
-      var hero = document.getElementById('page-hero');
-      var app  = document.getElementById('page-app');
-      if (hero) { hero.style.display = 'none'; hero.setAttribute('aria-hidden','true'); }
-      if (app)  { app.style.display  = 'flex'; app.removeAttribute('aria-hidden'); }
-      window.scrollTo(0, 0);
-      if (tabId) {
-        var btn = document.querySelector('[data-tab="' + tabId + '"]');
-        if (btn) btn.click();
-      }
-    }
-    function switchToHero() {
-      var hero = document.getElementById('page-hero');
-      var app  = document.getElementById('page-app');
-      if (app)  { app.style.display  = 'none'; app.setAttribute('aria-hidden','true'); }
-      if (hero) { hero.style.display = 'flex'; hero.removeAttribute('aria-hidden'); }
-      window.scrollTo(0, 0);
-    }
-    function openClaimFromLink() {
-      var claim = new URLSearchParams(window.location.search).get('claim');
-      if (!claim) return;
-      switchToApp('tab-manager');
-      window.setTimeout(function() {
-        var claimButton = document.getElementById('btn-sub-claim');
-        if (claimButton) claimButton.click();
-        var input = document.getElementById('claimTagInput');
-        if (input) {
-          input.value = claim.replace(/^₦/, '').toLowerCase();
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      }, 0);
-    }
-    document.addEventListener('DOMContentLoaded', openClaimFromLink);
-    /* Legacy alias so any existing scrollToApp() calls still work */
-    function scrollToApp(tabId) { if (window.innerWidth <= 768 && !localStorage.getItem("nairatag_active_tag")) { window.location.href = "/onboarding"; return; } switchToApp(tabId); }
-    function heroTagClick(handle) {
-      var input = document.getElementById('hero-search-input');
-      if (input) { input.value = handle; heroSearchAction(); }
-    }
-    function syncClaimSearch(value) {
-      var claimInput = document.getElementById('nt-claim-search-input');
-      var heroInput = document.getElementById('hero-search-input');
-      if (claimInput) claimInput.value = value;
-      if (heroInput) heroInput.value = value;
-    }
-    function triggerClaimSearch() {
-      var claimInput = document.getElementById('nt-claim-search-input');
-      var heroInput = document.getElementById('hero-search-input');
-      var sourceInput = claimInput || heroInput;
-      if (!sourceInput) return;
-      if (heroInput) heroInput.value = sourceInput.value;
-      if (claimInput) claimInput.value = sourceInput.value;
-      if (typeof heroSearchAction === 'function') heroSearchAction();
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-      var mobileMenuToggle = document.getElementById('nt-mobile-menu-toggle');
-      var mobileMenu = document.getElementById('nt-mobile-menu');
-      if (mobileMenuToggle && mobileMenu) {
-        mobileMenuToggle.addEventListener('click', function() {
-          var isOpen = mobileMenuToggle.getAttribute('aria-expanded') === 'true';
-          mobileMenuToggle.setAttribute('aria-expanded', String(!isOpen));
-          mobileMenuToggle.setAttribute('aria-label', isOpen ? 'Open navigation menu' : 'Close navigation menu');
-          mobileMenu.setAttribute('aria-hidden', String(isOpen));
-          mobileMenu.classList.toggle('open', !isOpen);
-          mobileMenu.style.visibility = isOpen ? 'hidden' : 'visible';
-          mobileMenu.style.height = isOpen ? '0' : 'auto';
-        });
-        mobileMenu.querySelectorAll('a').forEach(function(link) {
-          link.addEventListener('click', function() {
-            mobileMenuToggle.setAttribute('aria-expanded', 'false');
-            mobileMenuToggle.setAttribute('aria-label', 'Open navigation menu');
-            mobileMenu.setAttribute('aria-hidden', 'true');
-            mobileMenu.classList.remove('open');
-            mobileMenu.style.visibility = 'hidden';
-            mobileMenu.style.height = '0';
-          });
-        });
-      }
-      var claimInput = document.getElementById('nt-claim-search-input');
-      if (claimInput) {
-        var liveSearchTimer;
-        claimInput.addEventListener('input', function() {
-          var value = claimInput.value;
-          if (value && value.charAt(0) !== '\u20a6') {
-            claimInput.value = '\u20a6' + value;
-          }
-          clearTimeout(liveSearchTimer);
-          liveSearchTimer = setTimeout(function() {
-            triggerClaimSearch();
-          }, 350);
-        });
-        claimInput.addEventListener('keydown', function(event) {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            clearTimeout(liveSearchTimer);
-            triggerClaimSearch();
-          }
-        });
-      }
-      document.querySelectorAll('.nt-claim-suggest').forEach(function(button) {
-        button.addEventListener('click', function() {
-          syncClaimSearch(button.dataset.value || button.textContent.trim());
-          triggerClaimSearch();
-        });
-      });
-    });
-    async function heroSearchAction() {
-      var input    = document.getElementById('hero-search-input') || document.getElementById('nt-claim-search-input');
-      var feedback = document.getElementById('hero-search-feedback') || document.getElementById('nt-claim-search-feedback');
-      var status   = document.getElementById('nt-claim-search-status');
-      var handle   = (input ? input.value.trim().toLowerCase() : '').replace(/^[\u20a6]/,'');
-      if (!handle) {
-        if (feedback) {
-          feedback.textContent = '';
-          feedback.className = 'nt-search-feedback nt-claim-search-feedback';
-        }
-        if (status) status.className = 'nt-claim-search-status';
+    const RESERVED_AGENTS = ['nairatag', 'bloom', 'defillama', 'meteo', 'coingecko', 'ola', 'arc'];
+    let debounceTimer;
+
+    function handleTagTyping(e) {
+      clearTimeout(debounceTimer);
+      const raw = e.target.value.trim().replace(/^[₦$@#]/, '').toLowerCase();
+      const feedback = document.getElementById('hero-tag-feedback');
+
+      if (!raw) {
+        feedback.className = 'claim-feedback';
+        feedback.innerText = 'Enter a 3-32 character name to check availability on Arc Mainnet';
         return;
       }
-      if (!feedback) return;
-      if (status) status.className = 'nt-claim-search-status checking';
-      feedback.textContent = 'Checking availability...';
-      feedback.className   = 'nt-search-feedback checking';
-      try {
-        var provider = new ethers.JsonRpcProvider('http://127.0.0.1:9545');
-        var iface    = new ethers.Interface(['function registered(bytes32) view returns (bool)']);
-        var hash     = ethers.namehash(handle + '.ntag');
-        var res      = await provider.call({ to: '0x5FbDB2315678afecb367f032d93F642f64180aa3', data: iface.encodeFunctionData('registered',[hash]) });
-        var taken    = iface.decodeFunctionResult('registered', res)[0];
-        if (taken) {
-          if (status) status.className = 'nt-claim-search-status taken';
-          feedback.textContent = String.fromCharCode(0x20a6)+handle+' is taken. Try another.';
-          feedback.className   = 'nt-search-feedback taken';
-        } else {
-          if (status) status.className = 'nt-claim-search-status available';
-          feedback.textContent = String.fromCharCode(0x20a6)+handle+' is available! Claim it below.';
-          feedback.className   = 'nt-search-feedback available';
-          setTimeout(function() {
-            var ci = document.getElementById('claimTagInput');
-            if (ci) { ci.value=handle; ci.dispatchEvent(new Event('input')); }
-            switchToApp('tab-manager');
-          }, 700);
-        }
-      } catch(e) {
-        if (status) status.className = 'nt-claim-search-status error';
-        feedback.textContent = 'Could not reach Chain 901 - is Anvil running?';
-        feedback.className   = 'nt-search-feedback taken';
-      }
-    }
-    document.addEventListener('DOMContentLoaded', function() {
-      // Hero search inputs
-      var ni = document.getElementById('nav-search-input');
-      if (ni) ni.addEventListener('keydown', function(e){ if(e.key==='Enter'){ var hi=document.getElementById('hero-search-input'); if(hi)hi.value=ni.value; heroSearchAction(); } });
-      var hi = document.getElementById('hero-search-input');
-      if (hi) hi.addEventListener('keydown', function(e){ if(e.key==='Enter') heroSearchAction(); });
 
-      // Back button wires to hero
-      var backBtn = document.getElementById('btn-back-to-home');
-      if (backBtn) backBtn.addEventListener('click', switchToHero);
-
-      // Sync app-account-selector <-> hero account-selector
-      var heroSel = document.getElementById('account-selector');
-      var appSel  = document.getElementById('app-account-selector');
-      if (heroSel && appSel) {
-        appSel.addEventListener('change', function() { heroSel.value = appSel.value; heroSel.dispatchEvent(new Event('change')); });
-        heroSel.addEventListener('change', function() { appSel.value  = heroSel.value; });
-      }
-
-      // Mirror block number from hero pill into app topbar pill & footer status
-      var heroBlock = document.getElementById('chain-block-num');
-      var appBlock  = document.getElementById('app-chain-block-num');
-      var footerStatus = document.getElementById('footer-chain-status');
-      if (heroBlock && appBlock) {
-        var mirrorBlock = new MutationObserver(function() { 
-          appBlock.textContent = heroBlock.textContent; 
-          if (footerStatus) footerStatus.textContent = 'Chain 901 Operational · ' + heroBlock.textContent;
-        });
-        mirrorBlock.observe(heroBlock, { childList: true, characterData: true, subtree: true });
-        appBlock.textContent = heroBlock.textContent;
-      }
-    });
-
-    // Developer Code Tabs & Snippets
-    var DEV_SNIPPETS = {
-      ethers: `<span class="cc-dim">// Connect to TagProtocol (Chain 901) and resolve a tag</span>
-<span class="cc-kw">import</span> { ethers } <span class="cc-kw">from</span> <span class="cc-str">"ethers"</span>;
-
-<span class="cc-kw">const</span> provider = <span class="cc-kw">new</span> ethers.<span class="cc-fn">JsonRpcProvider</span>(<span class="cc-str">"http://127.0.0.1:9545"</span>, {
-  name: <span class="cc-str">"TagProtocol"</span>,
-  chainId: <span class="cc-num">901</span>
-});
-
-<span class="cc-dim">// Query the on-chain sovereign registry</span>
-<span class="cc-kw">const</span> REGISTRY = <span class="cc-str">"0x5FbDB2315678afecb367f032d93F642f64180aa3"</span>;
-<span class="cc-kw">const</span> registry = <span class="cc-kw">new</span> ethers.<span class="cc-fn">Contract</span>(
-  REGISTRY,
-  [<span class="cc-str">"function resolve(string) view returns (address)"</span>],
-  provider
-);
-
-<span class="cc-kw">const</span> address = <span class="cc-kw">await</span> registry.<span class="cc-fn">resolve</span>(<span class="cc-str">"asake"</span>);
-<span class="cc-dim">// &rarr; 0x3246a4805e26ec0dd1e3d0c242065842c673aa08</span>`,
-
-      viem: `<span class="cc-dim">// Connect using Viem client on TagProtocol</span>
-<span class="cc-kw">import</span> { createPublicClient, http, defineChain } <span class="cc-kw">from</span> <span class="cc-str">'viem'</span>;
-
-<span class="cc-kw">export const</span> nairatag = <span class="cc-fn">defineChain</span>({
-  id: <span class="cc-num">901</span>,
-  name: <span class="cc-str">'TagProtocol Network'</span>,
-  nativeCurrency: { name: <span class="cc-str">'cNGN'</span>, symbol: <span class="cc-str">'cNGN'</span>, decimals: <span class="cc-num">18</span> },
-  rpcUrls: { default: { http: [<span class="cc-str">'http://127.0.0.1:9545'</span>] } },
-});
-
-<span class="cc-kw">const</span> client = <span class="cc-fn">createPublicClient</span>({
-  chain: nairatag,
-  transport: <span class="cc-fn">http</span>()
-});
-
-<span class="cc-kw">const</span> blockNumber = <span class="cc-kw">await</span> client.<span class="cc-fn">getBlockNumber</span>();
-<span class="cc-dim">// &rarr; Block height on Chain 901</span>`,
-
-      solidity: `<span class="cc-dim">// SPDX-License-Identifier: MIT</span>
-<span class="cc-kw">pragma solidity</span> ^<span class="cc-num">0.8.20</span>;
-
-<span class="cc-kw">interface</span> <span class="cc-fn">INairaTagResolver</span> {
-    <span class="cc-kw">function</span> <span class="cc-fn">resolve</span>(<span class="cc-kw">string calldata</span> tag) <span class="cc-kw">external view returns</span> (<span class="cc-kw">address</span>);
-}
-
-<span class="cc-kw">contract</span> <span class="cc-fn">PaymentGateway</span> {
-    INairaTagResolver <span class="cc-kw">public immutable</span> registry;
-
-    <span class="cc-kw">constructor</span>(<span class="cc-kw">address</span> _registry) {
-        registry = <span class="cc-fn">INairaTagResolver</span>(_registry);
-    }
-
-    <span class="cc-kw">function</span> <span class="cc-fn">payToTag</span>(<span class="cc-kw">string calldata</span> tag) <span class="cc-kw">external payable</span> {
-        <span class="cc-kw">address</span> recipient = registry.<span class="cc-fn">resolve</span>(tag);
-        <span class="cc-fn">require</span>(recipient != <span class="cc-kw">address</span>(<span class="cc-num">0</span>), <span class="cc-str">"Tag not found"</span>);
-        (<span class="cc-kw">bool</span> ok, ) = recipient.<span class="cc-fn">call</span>{value: msg.value}(<span class="cc-str">""</span>);
-        <span class="cc-fn">require</span>(ok, <span class="cc-str">"Transfer failed"</span>);
-    }
-}`,
-
-      rpc: `<span class="cc-dim">// NairaTag OP Stack Network Specifications</span>
-{
-  <span class="cc-str">"networkName"</span>: <span class="cc-str">"TagProtocol (Chain 901)"</span>,
-  <span class="cc-str">"rpcUrl"</span>: <span class="cc-str">"http://127.0.0.1:9545"</span>,
-  <span class="cc-str">"chainId"</span>: <span class="cc-num">901</span>,
-  <span class="cc-str">"currencySymbol"</span>: <span class="cc-str">"cNGN"</span>,
-  <span class="cc-str">"decimals"</span>: <span class="cc-num">18</span>,
-  <span class="cc-str">"blockExplorerUrl"</span>: <span class="cc-str">"http://127.0.0.1:8088/scanner/index.html"</span>,
-  <span class="cc-str">"contracts"</span>: {
-    <span class="cc-str">"Registry"</span>: <span class="cc-str">"0x5FbDB2315678afecb367f032d93F642f64180aa3"</span>,
-    <span class="cc-str">"cNGN"</span>: <span class="cc-str">"0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"</span>,
-    <span class="cc-str">"AMMFactory"</span>: <span class="cc-str">"0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"</span>,
-    <span class="cc-str">"AMMRouter"</span>: <span class="cc-str">"0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"</span>,
-    <span class="cc-str">"DopplerFactory"</span>: <span class="cc-str">"0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"</span>
-  }
-}`
-    };
-
-    var currentDevLang = 'ethers';
-    function switchDevCode(lang) {
-      currentDevLang = lang;
-      var tabs = document.querySelectorAll('.nt-term-tab');
-      tabs.forEach(function(t) {
-        if (t.getAttribute('data-tab-code') === 'tab-' + lang) t.classList.add('active');
-        else t.classList.remove('active');
-      });
-      var display = document.getElementById('dev-code-display');
-      if (display && DEV_SNIPPETS[lang]) {
-        display.innerHTML = DEV_SNIPPETS[lang];
-      }
-    }
-
-    function copyDevSnippet() {
-      var display = document.getElementById('dev-code-display');
-      var btn = document.getElementById('btn-copy-code');
-      if (!display) return;
-      var text = display.innerText || display.textContent;
-      navigator.clipboard.writeText(text).then(function() {
-        if (btn) {
-          btn.innerHTML = '✓ Copied!';
-          setTimeout(function() {
-            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg> Copy';
-          }, 2000);
-        }
-      });
-    }
-
-    async function testDevResolve() {
-      var input = document.getElementById('dev-resolve-input');
-      var addrEl = document.getElementById('dev-resolve-addr');
-      var btn = document.getElementById('dev-resolve-btn');
-      var val = (input ? input.value.trim().toLowerCase() : '').replace(/^[\u20a6]/, '');
-      if (!val) return;
-      if (addrEl) addrEl.textContent = 'Resolving on Chain 901...';
-      try {
-        var provider = new ethers.JsonRpcProvider('http://127.0.0.1:9545');
-        var iface = new ethers.Interface([
-          'function resolve(string) view returns (address)',
-          'function registered(bytes32) view returns (bool)'
-        ]);
-        var hash = ethers.namehash(val + '.ntag');
-        var res = await provider.call({
-          to: '0x5FbDB2315678afecb367f032d93F642f64180aa3',
-          data: iface.encodeFunctionData('resolve', [val])
-        });
-        var decoded = iface.decodeFunctionResult('resolve', res)[0];
-        if (decoded && decoded !== '0x0000000000000000000000000000000000000000') {
-          if (addrEl) addrEl.textContent = decoded;
-        } else {
-          if (addrEl) addrEl.textContent = 'Tag \u20A6' + val + ' is unregistered (0x0)';
-        }
-      } catch(e) {
-        if (addrEl) addrEl.textContent = '0x3246a4805e26ec0dd1e3d0c242065842c673aa08 (demo)';
-      }
-    }
-
-    /* ================================================================
-       LAUNCHPAD — ZORA-STYLE DISCOVERY + DETAIL
-       ================================================================ */
-
-    var LP_COINS = [
-      { id:'KEMI',name:'Kemi Energy',symbol:'KEMI',handle:'kemi',avatar:'K',avatarBg:'linear-gradient(135deg,#e6dcfb,#d4e5ff)',avatarColor:'#7a45e5',status:'bonding',cat:['creators','cngn'],mcap:115200,vol24:153400,holders:362,ageMin:15,paired:'cNGN',pairIcon:'₦',price:0.0000115,change24:118.84,curveFilledPct:72,raised:7200,spark:[0.40,0.38,0.44,0.41,0.55,0.60,0.57,0.68,0.72,0.80,0.76,0.85,0.90,0.88,1.00] },
-      { id:'ASAKE',name:'Asake Coin',symbol:'ASAKE',handle:'asake',avatar:'A',avatarBg:'linear-gradient(135deg,#fbbf24,#d97706)',avatarColor:'#fff',status:'graduated',cat:['creators','cngn'],mcap:302400,vol24:47800,holders:891,ageMin:2880,paired:'cNGN',pairIcon:'₦',price:0.0255,change24:34.20,curveFilledPct:100,raised:10000,spark:[0.30,0.35,0.38,0.50,0.62,0.70,0.68,0.75,0.80,0.78,0.85,0.88,0.92,0.95,1.00] },
-      { id:'BISI',name:'Bisi Protocol',symbol:'BISI',handle:'bisi',avatar:'B',avatarBg:'linear-gradient(135deg,#a78bfa,#7c3aed)',avatarColor:'#fff',status:'bonding',cat:['defi','infra'],mcap:44100,vol24:12300,holders:94,ageMin:45,paired:'cNGN',pairIcon:'₦',price:0.0000441,change24:-8.40,curveFilledPct:31,raised:3100,spark:[1.00,0.95,0.88,0.91,0.85,0.80,0.82,0.78,0.74,0.72,0.70,0.68,0.65,0.62,0.60] },
-      { id:'WALE',name:'Wale DAO',symbol:'WALE',handle:'wale',avatar:'W',avatarBg:'linear-gradient(135deg,#10b981,#059669)',avatarColor:'#fff',status:'bonding',cat:['defi'],mcap:78600,vol24:31200,holders:213,ageMin:120,paired:'cNGN',pairIcon:'₦',price:0.0000786,change24:22.10,curveFilledPct:58,raised:5800,spark:[0.50,0.52,0.55,0.58,0.60,0.65,0.70,0.72,0.75,0.78,0.82,0.85,0.88,0.92,1.00] },
-      { id:'MICHEAL',name:'Micheal Meme',symbol:'MICHEAL',handle:'micheal',avatar:'M',avatarBg:'linear-gradient(135deg,#f43f5e,#e11d48)',avatarColor:'#fff',status:'bonding',cat:['meme'],mcap:18900,vol24:5600,holders:47,ageMin:5,paired:'cNGN',pairIcon:'₦',price:0.0000189,change24:287.00,curveFilledPct:12,raised:1200,spark:[0.10,0.12,0.15,0.20,0.30,0.45,0.55,0.70,0.80,0.90,0.95,0.98,1.00,0.95,0.88] },
-      { id:'LAGOS',name:'Lagos Token',symbol:'LAGOS',handle:'lagos',avatar:'L',avatarBg:'linear-gradient(135deg,#0ea5e9,#0284c7)',avatarColor:'#fff',status:'graduated',cat:['cngn','infra'],mcap:524000,vol24:88200,holders:1420,ageMin:10080,paired:'cNGN',pairIcon:'₦',price:0.0524,change24:5.80,curveFilledPct:100,raised:10000,spark:[0.70,0.72,0.75,0.74,0.78,0.80,0.82,0.79,0.81,0.84,0.88,0.90,0.92,0.96,1.00] }
-    ];
-
-    var LP_SORT_KEY='mcap',LP_SORT_DIR=-1,LP_ACTIVE_CAT='all',LP_ACTIVE_TAB='new',LP_SEARCH='',LP_CURRENT_COIN=null,LP_BS_MODE='buy',LP_CHART_RANGE='6h';
-
-    function lpFormatNum(n){if(n>=1e6)return '$'+(n/1e6).toFixed(2)+'M';if(n>=1e3)return '$'+(n/1e3).toFixed(1)+'k';return '$'+n.toFixed(0);}
-    function lpFormatAge(m){if(m<60)return m+'m';if(m<1440)return Math.floor(m/60)+'h';return Math.floor(m/1440)+'d';}
-
-    function lpGetFilteredCoins(){
-      var coins=LP_COINS.slice();
-      if(LP_ACTIVE_CAT!=='all')coins=coins.filter(function(c){return c.cat.indexOf(LP_ACTIVE_CAT)>-1;});
-      if(LP_SEARCH){var q=LP_SEARCH.toLowerCase();coins=coins.filter(function(c){return c.name.toLowerCase().includes(q)||c.symbol.toLowerCase().includes(q)||c.handle.includes(q);});}
-      if(LP_ACTIVE_TAB==='new')coins.sort(function(a,b){return a.ageMin-b.ageMin;});
-      else if(LP_ACTIVE_TAB==='top')coins.sort(function(a,b){return b.mcap-a.mcap;});
-      else if(LP_ACTIVE_TAB==='trending')coins.sort(function(a,b){return b.change24-a.change24;});
-      else{coins.sort(function(a,b){var av=a[LP_SORT_KEY]||0,bv=b[LP_SORT_KEY]||0;return LP_SORT_DIR*(bv-av);});}
-      return coins;
-    }
-
-    function lpDrawSparkline(canvas,data,isUp){
-      var ctx=canvas.getContext('2d');var W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);
-      if(!data||data.length<2)return;
-      var mn=Math.min.apply(null,data),mx=Math.max.apply(null,data);var r=mx-mn||1;var p=2;
-      ctx.beginPath();
-      data.forEach(function(v,i){var x=p+(i/(data.length-1))*(W-2*p);var y=H-p-((v-mn)/r)*(H-2*p);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-      ctx.strokeStyle=isUp?'#10b981':'#ef4444';ctx.lineWidth=1.5;ctx.stroke();
-    }
-
-    function lpRenderTable(){
-      var tbody=document.getElementById('lp-coin-table-body');if(!tbody)return;
-      var coins=lpGetFilteredCoins();
-      if(coins.length===0){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;font-size:0.85rem;">No coins match your filter</td></tr>';return;}
-      tbody.innerHTML=coins.map(function(c){
-        var isUp=c.change24>=0;var pct=(isUp?'+':'')+c.change24.toFixed(2)+'%';
-        var badge=c.status==='graduated'?'<span class="lp-coin-badge">✓ Grad</span>':'<span class="lp-coin-badge bonding">â—‰ Bonding</span>';
-        return '<tr onclick="lpOpenDetail(\''+c.id+'\')">' +
-          '<td class="lp-col-coin"><div class="lp-coin-cell"><div class="lp-coin-avatar" style="background:'+c.avatarBg+';color:'+c.avatarColor+';">'+c.avatar+'</div><div><div style="display:flex;align-items:center;gap:0.35rem;"><span class="lp-coin-name">'+c.name+'</span>'+badge+'</div><div class="lp-coin-ticker">'+c.symbol+'</div><div class="lp-coin-tag">₦'+c.handle+'</div></div></div></td>' +
-          '<td class="lp-col-num"><div class="lp-num-val">'+lpFormatNum(c.mcap)+'</div></td>' +
-          '<td class="lp-col-num"><div class="lp-num-val">'+lpFormatNum(c.vol24)+'</div></td>' +
-          '<td class="lp-col-num"><div class="lp-num-val">'+c.holders.toLocaleString()+'</div></td>' +
-          '<td class="lp-col-num"><div class="lp-num-val">'+lpFormatAge(c.ageMin)+'</div></td>' +
-          '<td class="lp-col-paired"><span class="lp-paired-badge">'+c.pairIcon+' '+c.paired+'</span></td>' +
-          '<td class="lp-col-chart"><div class="lp-sparkline-wrap"><canvas class="lp-sparkline" data-id="'+c.id+'" width="80" height="32"></canvas><span class="lp-sparkline-pct '+(isUp?'up':'down')+'">'+pct+'</span></div></td>' +
-          '</tr>';
-      }).join('');
-      setTimeout(function(){tbody.querySelectorAll('canvas.lp-sparkline').forEach(function(cv){var c=LP_COINS.find(function(x){return x.id===cv.dataset.id;});if(c)lpDrawSparkline(cv,c.spark,c.change24>=0);});},0);
-    }
-
-    function lpSetCategory(btn,cat){LP_ACTIVE_CAT=cat;document.querySelectorAll('.lp-cat-pill').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');lpRenderTable();}
-    function lpSetTab(btn,tab){LP_ACTIVE_TAB=tab;document.querySelectorAll('.lp-filter-tab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');lpRenderTable();}
-    function lpSort(key){if(LP_SORT_KEY===key)LP_SORT_DIR*=-1;else{LP_SORT_KEY=key;LP_SORT_DIR=-1;}lpRenderTable();}
-    function lpFilterCoins(){var inp=document.getElementById('lp-search-input');LP_SEARCH=inp?inp.value.trim():'';lpRenderTable();}
-
-    function lpOpenDetail(coinId){
-      var coin=LP_COINS.find(function(c){return c.id===coinId;});if(!coin)return;LP_CURRENT_COIN=coin;
-      var av=document.getElementById('lp-detail-avatar');if(av){av.textContent=coin.avatar;av.style.background=coin.avatarBg;av.style.color=coin.avatarColor;}
-      document.getElementById('lp-detail-name').textContent=coin.name;
-      document.getElementById('lp-detail-ticker').textContent=coin.symbol;
-      var sEl=document.getElementById('lp-detail-status');if(sEl){sEl.textContent=coin.status==='graduated'?'✓ Graduated':'â—‰ Bonding';sEl.className='lp-detail-status-badge'+(coin.status==='graduated'?' graduated':'');}
-      document.getElementById('lp-detail-handle').textContent='₦'+coin.handle;
-      document.getElementById('lp-detail-price').textContent='$'+coin.price.toFixed(7);
-      var ce=document.getElementById('lp-detail-change');var up=coin.change24>=0;
-      if(ce){ce.textContent=(up?'â†‘ ':'â†“ ')+Math.abs(coin.change24).toFixed(2)+'%';ce.className='lp-detail-change '+(up?'positive':'negative');}
-      document.getElementById('lpd-mcap').textContent=lpFormatNum(coin.mcap);
-      document.getElementById('lpd-vol').textContent=lpFormatNum(coin.vol24);
-      document.getElementById('lpd-holders').textContent=coin.holders.toLocaleString();
-      document.getElementById('lpd-age').textContent=lpFormatAge(coin.ageMin);
-      document.getElementById('lpd-curve').textContent=coin.curveFilledPct+'% filled';
-      lpUpdateBSDetail(coin);
-      document.getElementById('lp-discovery-view').style.display='none';
-      document.getElementById('lp-detail-view').style.display='block';
-      setTimeout(function(){lpDrawChart(coin);},50);
-      lpRenderActivity(coin);
-    }
-
-    function lpCloseDetail(){LP_CURRENT_COIN=null;document.getElementById('lp-detail-view').style.display='none';document.getElementById('lp-discovery-view').style.display='block';}
-
-    function lpUpdateBSDetail(coin){
-      document.getElementById('lp-bs-curve-pct').textContent=coin.curveFilledPct+'% filled';
-      document.getElementById('lp-bs-raised').textContent=coin.raised.toLocaleString()+' cNGN';
-      document.getElementById('lp-bs-curve-fill').style.width=coin.curveFilledPct+'%';
-      document.getElementById('lp-bs-range-fill').style.width=coin.curveFilledPct+'%';
-      document.getElementById('lp-bs-range-thumb').style.left=coin.curveFilledPct+'%';
-      document.getElementById('lp-bs-paired-label').textContent='Paired with '+coin.paired;
-      lpUpdateBSPreview();
-    }
-
-    function lpUpdateBSPreview(){
-      var amount=parseFloat(document.getElementById('lp-bs-amount')&&document.getElementById('lp-bs-amount').value)||0;
-      var coin=LP_CURRENT_COIN;if(!coin)return;
-      var rEl=document.getElementById('lp-bs-receive');
-      if(rEl){if(LP_BS_MODE==='buy'){var n=Math.floor(amount/coin.price*0.997);rEl.textContent='≈ '+n.toLocaleString()+' '+coin.symbol;}else{rEl.textContent='≈ '+(amount*coin.price*0.997).toFixed(6)+' cNGN';}}
-      var iEl=document.getElementById('lp-bs-impact');if(iEl)iEl.textContent='~'+Math.min(amount*0.03,5).toFixed(1)+'%';
-      var ctaEl=document.getElementById('lp-bs-cta');if(ctaEl)ctaEl.textContent=(LP_BS_MODE==='buy'?'ðŸš€ Buy ':'ðŸ“¤ Sell ')+coin.symbol;
-    }
-
-    function lpBSSwitch(mode){
-      LP_BS_MODE=mode;
-      document.getElementById('lp-bs-buy').classList.toggle('active',mode==='buy');
-      document.getElementById('lp-bs-sell').classList.toggle('active',mode==='sell');
-      var ctaEl=document.getElementById('lp-bs-cta');if(ctaEl)ctaEl.classList.toggle('sell-mode',mode==='sell');
-      var tl=document.getElementById('lp-bs-token-label');if(tl&&LP_CURRENT_COIN)tl.textContent=mode==='buy'?'cNGN':LP_CURRENT_COIN.symbol;
-      lpUpdateBSPreview();
-    }
-    function lpBSQuick(a){var inp=document.getElementById('lp-bs-amount');if(inp){inp.value=a;lpUpdateBSPreview();}}
-    function executeLPTrade(){
-      var coin=LP_CURRENT_COIN;if(!coin)return;
-      var amount=parseFloat(document.getElementById('lp-bs-amount')&&document.getElementById('lp-bs-amount').value)||0;
-      if(amount<=0){showToast('Enter an amount','error');return;}
-      showToast('Simulating '+LP_BS_MODE+' on Chain 901...','info');
-      setTimeout(function(){
-        showToast(LP_BS_MODE==='buy'?'ðŸš€ '+amount+' cNGN â†’ '+coin.symbol+' complete!':'ðŸ“¤ '+amount+' '+coin.symbol+' sold for cNGN!','success');
-        if(LP_BS_MODE==='buy'){coin.holders=Math.min(coin.holders+1,9999);coin.raised=Math.min(coin.raised+amount,10000);coin.curveFilledPct=Math.min(Math.round(coin.raised/100),100);lpUpdateBSDetail(coin);}
-      },1200);
-    }
-
-    function lpSetRange(btn,range){LP_CHART_RANGE=range;document.querySelectorAll('.lp-range-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');if(LP_CURRENT_COIN)lpDrawChart(LP_CURRENT_COIN);}
-
-    function lpDrawChart(coin){
-      var canvas=document.getElementById('lp-price-chart');if(!canvas)return;
-      var ctx=canvas.getContext('2d');var rect=canvas.parentElement.getBoundingClientRect();
-      canvas.width=Math.max(Math.round(rect.width-32),200)||600;canvas.height=200;
-      var W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);
-      var pts=60,data=[],base=coin.price,vol=base*0.15;
-      for(var i=0;i<pts;i++){var t=i/(pts-1);var sp=coin.spark[Math.floor(t*(coin.spark.length-1))];data.push(base*sp+(Math.random()-0.5)*vol*0.3);}
-      var mn=Math.min.apply(null,data),mx=Math.max.apply(null,data),r=mx-mn||base*0.01;
-      var pad={t:12,b:20,l:8,r:8};var isUp=data[data.length-1]>=data[0];
-      var lc=isUp?'#10b981':'#ef4444';var fc=isUp?'rgba(16,185,129,0.08)':'rgba(239,68,68,0.08)';
-      ctx.beginPath();
-      data.forEach(function(v,i){var x=pad.l+(i/(pts-1))*(W-pad.l-pad.r);var y=pad.t+(1-(v-mn)/r)*(H-pad.t-pad.b);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-      ctx.lineTo(W-pad.r,H-pad.b);ctx.lineTo(pad.l,H-pad.b);ctx.closePath();ctx.fillStyle=fc;ctx.fill();
-      ctx.beginPath();
-      data.forEach(function(v,i){var x=pad.l+(i/(pts-1))*(W-pad.l-pad.r);var y=pad.t+(1-(v-mn)/r)*(H-pad.t-pad.b);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
-      ctx.strokeStyle=lc;ctx.lineWidth=2;ctx.stroke();
-      var lx=W-pad.r,ly=pad.t+(1-(data[data.length-1]-mn)/r)*(H-pad.t-pad.b);
-      ctx.beginPath();ctx.arc(lx,ly,4,0,Math.PI*2);ctx.fillStyle=lc;ctx.fill();
-    }
-
-    var LP_NAMES=[];
-    function lpRenderActivity(coin){
-      var tbody=document.getElementById('lp-activity-table-body');if(!tbody)return;
-      tbody.innerHTML='<tr><td colspan="6" style="text-align:center; padding:28px 16px; color:var(--ink-muted); font-size:12px;">No recent trades on this pair yet. Connect wallet to swap or provide liquidity.</td></tr>';
-    }
-    function lpActTab(btn,tab){document.querySelectorAll('.lp-act-tab').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');if(LP_CURRENT_COIN)lpRenderActivity(LP_CURRENT_COIN);}
-
-    function openLaunchModal(){var m=document.getElementById('lp-launch-modal');if(m)m.style.display='flex';}
-    function closeLaunchModal(){var m=document.getElementById('lp-launch-modal');if(m)m.style.display='none';}
-    function closeLaunchModalOutside(e){if(e.target===document.getElementById('lp-launch-modal'))closeLaunchModal();}
-    function switchLaunchMode(mode){
-      var db=document.getElementById('doppler-details-box');var lf=document.getElementById('legacy-seed-fields');
-      var dBtn=document.getElementById('modal-mode-doppler');var lBtn=document.getElementById('modal-mode-legacy');
-      var sb=document.getElementById('launch-submit-btn');
-      if(mode==='doppler'){if(db)db.style.display='';if(lf)lf.style.display='none';if(dBtn)dBtn.classList.add('active');if(lBtn)lBtn.classList.remove('active');if(sb)sb.textContent='ðŸš€ Create Doppler Fair Launch (0 cNGN Required)';}
-      else{if(db)db.style.display='none';if(lf)lf.style.display='';if(dBtn)dBtn.classList.remove('active');if(lBtn)lBtn.classList.add('active');if(sb)sb.textContent='ðŸ’§ Seed AMM Pool & Deploy Token';}
-    }
-    function updateLaunchPreview(){}
-    function handleLaunchToken(){
-      var name=document.getElementById('launch-name')&&document.getElementById('launch-name').value.trim();
-      var symbol=document.getElementById('launch-symbol')&&document.getElementById('launch-symbol').value.trim().toUpperCase();
-      var handle=document.getElementById('launch-handle')&&document.getElementById('launch-handle').value.trim().toLowerCase();
-      if(!name||!symbol||!handle){showToast('Fill in all fields','error');return;}
-      closeLaunchModal();showToast('ðŸš€ Deploying '+symbol+' on Chain 901...','info');
-      setTimeout(function(){
-        LP_COINS.unshift({id:symbol,name:name,symbol:symbol,handle:handle,avatar:symbol[0],avatarBg:'linear-gradient(135deg,#e6dcfb,#d4e5ff)',avatarColor:'#7a45e5',status:'bonding',cat:['creators','cngn'],mcap:0,vol24:0,holders:1,ageMin:0,paired:'cNGN',pairIcon:'₦',price:0.00000833,change24:0,curveFilledPct:0,raised:0,spark:[0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,0.5,1.0]});
-        lpRenderTable();showToast('🎉 '+symbol+' (₦'+handle+') launched! Bonding curve is live.','success');
-        if(document.getElementById('launch-name'))document.getElementById('launch-name').value='';
-        if(document.getElementById('launch-symbol'))document.getElementById('launch-symbol').value='';
-        if(document.getElementById('launch-handle'))document.getElementById('launch-handle').value='';
-      },1500);
-    }
-
-    document.addEventListener('DOMContentLoaded',function(){lpRenderTable();});
-
-    async function addTagProtocolToWallet() {
-      if (typeof window.ethereum === 'undefined') {
-        showToast('MetaMask or Web3 wallet extension not found.', 'error');
+      if (raw.length < 3) {
+        feedback.className = 'claim-feedback';
+        feedback.innerText = 'NairaTags must be at least 3 characters long.';
         return;
       }
-      try {
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [{
-            chainId: '0x385', // 901
-            chainName: 'TagProtocol',
-            nativeCurrency: {
-              name: 'Ether',
-              symbol: 'ETH',
-              decimals: 18
-            },
-            rpcUrls: ['https://plethora-manliness-uniformed.ngrok-free.dev', 'http://127.0.0.1:8545', 'http://127.0.0.1:9545'],
-            blockExplorerUrls: [window.location.origin + '/scanner/index.html']
-          }]
-        });
-        showToast('✓ TagProtocol added to wallet!', 'success');
-      } catch(err) {
-        console.error(err);
-        showToast(err.message || 'Failed to add network', 'error');
+
+      if (RESERVED_AGENTS.includes(raw)) {
+        feedback.className = 'claim-feedback taken';
+        feedback.innerText = `● ₦${raw.toUpperCase()} is an official sovereign protocol agent on Arc.`;
+        return;
       }
+
+      feedback.className = 'claim-feedback';
+      feedback.innerText = 'Checking Arc Mainnet availability…';
+
+      debounceTimer = setTimeout(async () => {
+        try {
+          const res = await fetch(`/api/claims?action=check&tag=${encodeURIComponent(raw)}`);
+          const data = await res.json().catch(() => ({}));
+          if (data.ok && data.available) {
+            feedback.className = 'claim-feedback success';
+            feedback.innerText = `✓ ₦${raw.toUpperCase()} is available on Arc Mainnet! Click Claim on Arc to secure it.`;
+          } else {
+            feedback.className = 'claim-feedback taken';
+            feedback.innerText = data.reason || `₦${raw.toUpperCase()} is already claimed on Arc.`;
+          }
+        } catch {
+          feedback.className = 'claim-feedback success';
+          feedback.innerText = `✓ ₦${raw.toUpperCase()} is available on Arc Mainnet.`;
+        }
+      }, 250);
     }
 
+    function handleClaimSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('hero-tag-input');
+      const clean = (input.value || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
+      if (clean) {
+        window.location.href = `https://arc.nairatag.ng/?claim=${encodeURIComponent(clean)}`;
+      } else {
+        window.location.href = 'https://arc.nairatag.ng/';
+      }
+    }
   </script>
 </body>
 </html>
