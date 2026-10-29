@@ -5578,7 +5578,7 @@ function ArcAppShell() {
         />
       )}
 
-      {isCelebrationOpen && celebrationDetails && (
+      {isCelebrationOpen && celebrationDetails && celebrationDetails.type !== 'claim' && (
         <div className="modal-backdrop" onClick={() => setIsCelebrationOpen(false)}>
           <div className="modal-dialog celebration-sheet" onClick={(e) => e.stopPropagation()}>
             <div className="celebration-flame-icon">
@@ -5589,35 +5589,23 @@ function ArcAppShell() {
               {celebrationDetails.type === 'payment' && `USDC Payment Sent to ${celebrationDetails.recipient}`}
               {celebrationDetails.type === 'swap' && `Swapped: ${celebrationDetails.amount}`}
               {celebrationDetails.type === 'agent' && `Agent Minted: ${celebrationDetails.amount}`}
-              {celebrationDetails.type === 'claim' && `Your NairaTag is ready to share: ${celebrationDetails.amount}`}
             </div>
 
             {/* Ticket receipt */}
             <div className="ticket-receipt-card" style={{ width: '100%', marginTop: '6px' }}>
               <div className="ticket-header">
-                <span style={{ fontSize: '12px', fontWeight: 600 }}>{celebrationDetails.type === 'claim' ? 'Your NairaTag' : 'Receipt'}</span>
+                <span style={{ fontSize: '12px', fontWeight: 600 }}>Receipt</span>
                 <span className="ticket-status-pill">
                   <CheckCircle2 size={11} />
-                  <span>{celebrationDetails.type === 'claim' ? 'Ready' : 'Finalized &lt; 1s'}</span>
+                  <span>Finalized &lt; 1s</span>
                 </span>
               </div>
               <div className="ticket-route-row">
                 <div style={{ textAlign: 'left', width: '100%' }}>
-                  <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>{celebrationDetails.type === 'claim' ? 'Your Sovereign NairaTag' : 'Amount'}</div>
+                  <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>Amount</div>
                   <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--privy-color-foreground-1)' }}>{celebrationDetails.amount}</div>
-                  {celebrationDetails.type === 'claim' && (
-                    <div style={{ marginTop: '8px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', borderRadius: '6px', border: '1px solid var(--privy-color-line-subtle)' }}>
-                      <div style={{ fontSize: '10px', color: 'var(--privy-color-foreground-2)', fontWeight: 600 }}>USDC-RECEIVING ADDRESS (ARC MAINNET)</div>
-                      <div style={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: 600, wordBreak: 'break-all', marginTop: '2px', color: 'var(--privy-color-interactive)' }}>
-                        {celebrationDetails.walletAddress || walletAddress}
-                      </div>
-                      <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-3)', marginTop: '4px' }}>
-                        ✓ Anyone can now send native USDC to {celebrationDetails.amount} on Arc Mainnet with sub-cent gas.
-                      </div>
-                    </div>
-                  )}
                 </div>
-                {celebrationDetails.type !== 'claim' && <div style={{ textAlign: 'right' }}>
+                <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>Settlement</div>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--privy-color-success-dark)' }}>Osaka EVM</div>
                 </div>}
@@ -5631,7 +5619,7 @@ function ArcAppShell() {
               >
                 View on ArcScan ↗
               </a>
-              {celebrationDetails.erc8004Id && celebrationDetails.type !== 'claim' && (
+              {celebrationDetails.erc8004Id && (
                 <a
                   href={`https://erc-8004.quicknode.com/agents/arc-testnet/${celebrationDetails.erc8004Id}`}
                   target="_blank"
@@ -5642,7 +5630,7 @@ function ArcAppShell() {
                   View ERC-8004 agent #{celebrationDetails.erc8004Id} ↗
                 </a>
               )}
-              {celebrationDetails.erc8004LinkError && celebrationDetails.type !== 'claim' && (
+              {celebrationDetails.erc8004LinkError && (
                 <div style={{ marginTop: '8px' }}>
                   <div style={{ color: 'var(--privy-color-foreground-2)', fontSize: '11px', marginBottom: '6px' }}>{celebrationDetails.erc8004LinkError}</div>
                   <button type="button" className="btn-action-primary" disabled={isRetryingArcAgentLink} onClick={handleRetryArcAgentLink}>
@@ -5652,62 +5640,7 @@ function ArcAppShell() {
               )}
             </div>
 
-            {/* Social Intent Sharing & Telegram Broadcast Confirmation */}
-            {celebrationDetails.type === 'claim' && (
-              <div className="celebration-social-box">
-                <div className="celebration-social-header">
-                  <span className="celebration-social-title">Welcome to NairaTag</span>
-                  <a
-                    href={TELEGRAM_CHANNEL_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="celebration-live-channel-link"
-                    title="Join the NairaTag community"
-                  >
-                    <span className="celebration-live-dot" />
-                    <span>Join the community</span>
-                    <ExternalLink size={10} />
-                  </a>
-                </div>
 
-                <div className="celebration-social-buttons">
-                  <a
-                    href={getTwitterShareUrl({ tag: celebrationDetails.cleanTag, txHash: celebrationDetails.txHash })}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="celebration-social-btn btn-x"
-                    title="Share to X"
-                  >
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                    </svg>
-                    <span>Post to X</span>
-                  </a>
-
-                  <a
-                    href={getTelegramShareUrl({ tag: celebrationDetails.cleanTag })}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="celebration-social-btn btn-tg"
-                    title="Share on Telegram"
-                  >
-                    <Send size={13} />
-                    <span>Telegram</span>
-                  </a>
-
-                  <a
-                    href={getWhatsAppShareUrl({ tag: celebrationDetails.cleanTag })}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="celebration-social-btn btn-wa"
-                    title="Share on WhatsApp"
-                  >
-                    <Share2 size={13} />
-                    <span>WhatsApp</span>
-                  </a>
-                </div>
-              </div>
-            )}
 
             <button
               type="button"
