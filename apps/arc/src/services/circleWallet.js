@@ -55,9 +55,12 @@ async function circleAction(action, params = {}) {
   });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const errorMsg = data?.error || data?.message || (data?.code === 3 ? 'Circle API access forbidden (check Circle Console API key permissions).' : 'Circle service request failed.');
+    let errorMsg = data?.error || data?.message;
+    if (!errorMsg || errorMsg === 'Forbidden' || data?.code === 3) {
+      errorMsg = 'Circle email sign-in is currently restricted. Please connect with an EVM wallet (MetaMask or Rabby).';
+    }
     const error = new Error(errorMsg);
-    error.code = data.code;
+    error.code = data?.code;
     error.status = response.status;
     throw error;
   }
