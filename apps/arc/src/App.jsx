@@ -3101,23 +3101,10 @@ function ArcAppShell() {
         console.warn('[Onboarding reward note]:', error.message);
       }
       setAgentOnboarding(onboardingProgress);
-      const onboardingKey = `${String(walletAddress).toLowerCase()}:${String(res.cleanTag).replace(/^[₦$@#]/, '').toLowerCase()}`;
-      onboardingDismissedKeyRef.current = onboardingKey;
-      setIsAgentOnboardingOpen(false);
-      setAgentSuccessDetails({ variant: 'claimed', tag: res.cleanTag, progress: onboardingProgress || getAgentOnboarding(walletAddress, res.cleanTag) || {} });
-            setCelebrationDetails({
-        type: 'claim',
-        cleanTag: res.cleanTag,
-        walletAddress: walletAddress,
-        txHash: res.txHash,
-        amount: `₦${res.cleanTag.toUpperCase()}`,
-        recipient: 'Sovereign Onchain Tag',
-        explorerUrl: res.explorerUrl || `https://explorer.arc.io/address/${walletAddress}`,
-        erc8004Id: agentRegistration?.id || null,
-        erc8004LinkError: agentLinkError,
-      });
-      setIsCelebrationOpen(true);
+      onboardingDismissedKeyRef.current = null;
+      setIsCelebrationOpen(false);
       setIsClaimModalOpen(false);
+      setIsAgentOnboardingOpen(true);
       await refreshBalance(walletAddress);
     } catch (e) {
       const claimErr = e?.message || e?.reason || (typeof e === 'string' ? e : 'Claim failed on Arc.');
