@@ -5608,7 +5608,7 @@ function ArcAppShell() {
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>Settlement</div>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--privy-color-success-dark)' }}>Osaka EVM</div>
-                </div>}
+                </div>
               </div>
               <a
                 href={celebrationDetails.explorerUrl || `https://explorer.arc.io/address/${celebrationDetails.walletAddress || walletAddress}`}
