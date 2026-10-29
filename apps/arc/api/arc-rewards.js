@@ -43,39 +43,45 @@ export default async function handler(req, res) {
     return res.status(204).end();
   }
 
-  // First try proxying to TARGET_API
-  try {
-    const url = new URL(TARGET_API);
-    if (req.query) {
-      for (const [key, val] of Object.entries(req.query)) {
-        if (val) url.searchParams.set(key, val);
+  const queryAction = String(req.query?.action || '');
+  const bodyAction = typeof req.body === 'object' ? String(req.body?.action || '') : '';
+  const isDirectAction = ['check_claim', 'tag_claimed'].includes(queryAction) || ['check_claim', 'tag_claimed'].includes(bodyAction);
+
+  // If not direct authoritative claim action, try proxying to TARGET_API
+  if (!isDirectAction) {
+    try {
+      const url = new URL(TARGET_API);
+      if (req.query) {
+        for (const [key, val] of Object.entries(req.query)) {
+          if (val) url.searchParams.set(key, val);
+        }
       }
+
+      const headers = {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      };
+      if (req.headers.authorization) headers.Authorization = req.headers.authorization;
+
+      const options = {
+        method: req.method,
+        headers,
+      };
+
+      if (req.method === 'POST') {
+        options.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
+      }
+
+      const response = await fetch(url.toString(), options);
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data?.ok) {
+        return res.status(response.status).json(data);
+      }
+      // If upstream returned error, fall through to direct Supabase RPC handler
+    } catch (error) {
+      console.warn('[arc-rewards proxy note, using direct Supabase fallback]:', error.message);
     }
-
-    const headers = {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    };
-    if (req.headers.authorization) headers.Authorization = req.headers.authorization;
-
-    const options = {
-      method: req.method,
-      headers,
-    };
-
-    if (req.method === 'POST') {
-      options.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
-    }
-
-    const response = await fetch(url.toString(), options);
-    const data = await response.json().catch(() => ({}));
-
-    if (response.ok && data?.ok) {
-      return res.status(response.status).json(data);
-    }
-    // If upstream returned error, fall through to direct Supabase RPC handler
-  } catch (error) {
-    console.warn('[arc-rewards proxy note, using direct Supabase fallback]:', error.message);
   }
 
   // Direct Supabase Fallback Handler
