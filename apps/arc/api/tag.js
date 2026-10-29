@@ -28,14 +28,14 @@ function getBaseHtml() {
       if (fs.existsSync(p)) {
         return fs.readFileSync(p, 'utf8');
       }
-    } catch {}
+    } catch { }
   }
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NairaTag Identity</title>
+  <title>NairaTag</title>
 </head>
 <body>
   <div id="root"></div>
@@ -58,13 +58,16 @@ export default function handler(req, res) {
     const host = String(forwardedHost).split(',')[0].trim();
     const proto = String(req.headers['x-forwarded-proto'] || 'https').split(',')[0].trim();
     const origin = `${proto}://${host}`;
+    const isAgent = req.query?.isAgent === 'true' || requestUrl.pathname.startsWith('/agent/');
     const tag = `₦${handle.toUpperCase()}`;
-    const tagUrl = `${origin}/tag/${encodeURIComponent(handle)}`;
+    const tagUrl = isAgent ? `${origin}/agent/${encodeURIComponent(handle)}` : `${origin}/tag/${encodeURIComponent(handle)}`;
     const imageUrl = `${origin}/cards/${encodeURIComponent(handle)}.png?mode=og&network=arc`;
-    const title = `${tag} · NairaTag on Arc`;
-    const description = `Send USDC on Arc directly to ${tag}, a human-readable NairaTag identity.`;
+    const title = isAgent ? `${tag} · Sovereign Agent on Arc` : `${tag} · NairaTag on Arc`;
+    const description = isAgent
+      ? `Pay, chat with, and assign bounties to ${tag}, an autonomous sovereign agent on Arc Mainnet.`
+      : `Send USDC on Arc directly to ${tag}, a human-readable NairaTag identity.`;
 
-    let page = html.includes('<title>') 
+    let page = html.includes('<title>')
       ? html.replace(/<title>[^<]*<\/title>/i, `<title>${escapeAttribute(title)}</title>`)
       : html.replace('</head>', `<title>${escapeAttribute(title)}</title></head>`);
 

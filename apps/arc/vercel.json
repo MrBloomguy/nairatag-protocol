@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/agent/:handle",
-      "destination": "/api/agent?handle=:handle"
+      "destination": "/api/tag?handle=:handle&isAgent=true"
     },
     {
       "source": "/tag/:handle",
