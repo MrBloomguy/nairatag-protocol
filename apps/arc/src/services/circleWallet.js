@@ -337,14 +337,36 @@ export async function sendUsdcWithCircle({ session, fromAddress, toAddress, amou
   };
 }
 
+const RESERVED_PROTOCOL_TAGS = new Set(['nairatag', 'bloom', 'defillama', 'meteo', 'coingecko', 'arc']);
+
 export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
   const cleanTag = String(rawTag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
   if (!/^[a-z0-9][a-z0-9_]{1,30}[a-z0-9]$/.test(cleanTag) || cleanTag.includes('__')) {
     throw new Error('NairaTags must be 3–32 letters, numbers, or single underscores inside the name.');
   }
+  if (RESERVED_PROTOCOL_TAGS.has(cleanTag)) {
+    throw new Error(`₦${cleanTag.toUpperCase()} is an official sovereign protocol agent on Arc.`);
+  }
   if (!isAddress(walletAddress) || getAddress(walletAddress) !== getAddress(session?.walletAddress)) {
     throw new Error('The Circle session does not own the connected wallet.');
   }
+
+  // Strict 1-tag-per-account check
+  if (typeof window !== 'undefined') {
+    const norm = String(walletAddress).toLowerCase();
+    const activeClaim = JSON.parse(window.localStorage.getItem('nairatag_claimed_tag_v1') || 'null');
+    if (activeClaim?.tag && String(activeClaim.tag).replace(/^[₦$@#]/, '').toLowerCase() !== cleanTag) {
+      throw new Error(`This account already owns ₦${String(activeClaim.tag).replace(/^[₦$@#]/, '').toUpperCase()}. Each sovereign account is limited to 1 NairaTag.`);
+    }
+    const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
+    const existing = Object.values(localClaims).find(
+      (item) => String(item.owner).toLowerCase() === norm && item.tag.toLowerCase() !== 'bloom'
+    );
+    if (existing && existing.tag.toLowerCase() !== cleanTag) {
+      throw new Error(`This account already owns ₦${existing.tag.toUpperCase()}. Each sovereign account is limited to 1 NairaTag.`);
+    }
+  }
+
   try {
     const execution = await executeCircleContract({
       session,
@@ -354,6 +376,26 @@ export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
     });
     const receipt = await publicClient.waitForTransactionReceipt({ hash: execution.txHash, confirmations: 1, timeout: 120_000 });
     if (receipt.status !== 'success') throw new Error(`Circle wallet tag claim failed on Arc. Transaction: ${execution.txHash}`);
+    if (typeof window !== 'undefined') {
+      const norm = String(walletAddress).toLowerCase();
+      const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
+      // Purge any stale duplicate tags for this same owner
+      for (const [k, v] of Object.entries(localClaims)) {
+        if (String(v.owner).toLowerCase() === norm && k !== cleanTag && k !== 'bloom') {
+          delete localClaims[k];
+        }
+      }
+      localClaims[cleanTag] = {
+        tag: cleanTag,
+        owner: getAddress(walletAddress),
+        claimedAt: Date.now(),
+        txHash: execution.txHash,
+      };
+      if (localClaims.bloom && String(localClaims.bloom.owner).toLowerCase() !== '0x7c26a1f03339e2ea74d261d97f5ab9c38181af26') {
+        localClaims.bloom.owner = '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26';
+      }
+      window.localStorage.setItem('nairatag_local_claims_v1', JSON.stringify(localClaims));
+    }
     return {
       ...execution,
       success: true,
@@ -363,17 +405,30 @@ export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
       receipt,
     };
   } catch (err) {
+    if (err.message?.includes('already owns') || err.message?.includes('sovereign protocol agent')) {
+      throw err;
+    }
     console.warn('[Circle Claim Tag fallback]:', err.message);
     const syntheticHash = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join('');
     try {
       if (typeof window !== 'undefined') {
+        const norm = String(walletAddress).toLowerCase();
         const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
+        // Purge any stale duplicate tags for this same owner
+        for (const [k, v] of Object.entries(localClaims)) {
+          if (String(v.owner).toLowerCase() === norm && k !== cleanTag && k !== 'bloom') {
+            delete localClaims[k];
+          }
+        }
         localClaims[cleanTag] = {
           tag: cleanTag,
           owner: getAddress(walletAddress),
           claimedAt: Date.now(),
           txHash: syntheticHash,
         };
+        if (localClaims.bloom && String(localClaims.bloom.owner).toLowerCase() !== '0x7c26a1f03339e2ea74d261d97f5ab9c38181af26') {
+          localClaims.bloom.owner = '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26';
+        }
         window.localStorage.setItem('nairatag_local_claims_v1', JSON.stringify(localClaims));
       }
     } catch {}

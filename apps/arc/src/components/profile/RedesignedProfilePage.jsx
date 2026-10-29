@@ -55,8 +55,8 @@ export default function RedesignedProfilePage({
   const [activeModel, setActiveModel] = useState('Gemini 2.0 Flash');
 
   const cleanTag = myTag?.tag ? String(myTag.tag).replace(/^[₦$@#]/, '').toUpperCase() : null;
-  const displayName = cleanTag ? `₦${cleanTag}` : displayAccountName || (accountEmail ? accountEmail.split('@')[0] : 'Arc Explorer');
-  const handleText = cleanTag ? `@${cleanTag.toLowerCase()}` : (accountEmail ? `@${accountEmail.split('@')[0]}` : (walletAddress ? `@${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : 'Guest'));
+  const displayName = cleanTag ? `₦${cleanTag}` : displayAccountName || (accountEmail ? `₦${accountEmail.split('@')[0].toUpperCase()}` : 'Arc Explorer');
+  const handleText = cleanTag ? `₦${cleanTag}` : (accountEmail ? `₦${accountEmail.split('@')[0].toUpperCase()}` : (walletAddress ? `${walletAddress.slice(0, 6)}…${walletAddress.slice(-4)}` : 'Guest'));
 
   const handleCopyWallet = () => {
     if (!walletAddress) return;

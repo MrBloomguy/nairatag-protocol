@@ -1,5 +1,6 @@
 import { normalizeTag } from './nairatagResolver.js';
 import { submitArcRewardAction } from './arcRewards.js';
+import { addInboxNotification } from './notificationInbox.js';
 
 const PENDING_REFERRAL_KEY = 'nairatag_pending_referral_v1';
 export const REFERRAL_SIGNUP_POINTS = 100;
@@ -22,6 +23,20 @@ export function rememberReferralFromUrl(search = (typeof window !== 'undefined' 
     if (!tag) return null;
     const attribution = { tag, capturedAt: Date.now() };
     localStorage.setItem(PENDING_REFERRAL_KEY, JSON.stringify(attribution));
+
+    // Post to Notifications drawer as requested by user
+    try {
+      addInboxNotification({
+        id: `ref_invite_${tag}`,
+        title: '🎁 Referral Bonus Active',
+        body: `You were invited by ₦${tag.toUpperCase()}! Claim your sovereign NairaTag on Arc to receive +100 bonus Protocol Points.`,
+        type: 'reward',
+        url: '/#claim',
+        actionLabel: 'Claim Tag',
+        timestamp: Date.now(),
+      });
+    } catch {}
+
     return attribution;
   } catch { return null; }
 }

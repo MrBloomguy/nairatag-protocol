@@ -1326,7 +1326,14 @@ function ArcAppShell() {
   const [myTag, setMyTag] = useState(() => {
     try {
       const saved = localStorage.getItem('nairatag_claimed_tag_v1');
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const cleanTag = String(parsed?.tag || '').replace(/^[₦$@#]/, '').toLowerCase();
+        if (cleanTag === 'bloom' && parsed?.owner && parsed.owner.toLowerCase() !== '0x7c26a1f03339e2ea74d261d97f5ab9c38181af26') {
+          return { tag: 'ola', owner: parsed.owner };
+        }
+        return parsed;
+      }
     } catch {}
     return null;
   });
@@ -3009,6 +3016,10 @@ function ArcAppShell() {
       setIsConnectModalOpen(true);
       return;
     }
+    if (myTag?.tag) {
+      showToast(`You already own sovereign identity ₦${myTag.tag.toUpperCase()}. Each account can hold 1 NairaTag.`, 'info', 4000);
+      return;
+    }
     setIsClaiming(true);
     try {
       let res;
@@ -3019,100 +3030,91 @@ function ArcAppShell() {
       } else {
         res = await claimArcNairaTag({ rawTag: claimInput, walletAddress });
       }
-      let agentRegistration = null;
-      let agentLinkError = null;
-      try {
-        agentRegistration = await completeArcAgentLink(res.cleanTag, walletAddress);
-      } catch (error) {
-        agentLinkError = error.message || 'ERC-8004 linking did not complete.';
-        const pendingLink = { tag: res.cleanTag, owner: walletAddress, ...(error.partialRegistration || {}) };
-        setPendingArcAgentLink(pendingLink);
-        window.localStorage.setItem('nairatag_pending_arc_agent_link_v1', JSON.stringify(pendingLink));
-      }
-      let referralReward = null;
-      const pendingReferral = getPendingReferral();
-      const hasReferralAttribution = Boolean(pendingReferral?.tag);
-      try {
-        const claimNotice = await submitArcRewardAction({
-          action: 'tag_claimed',
-          walletAddress,
-          tag: res.cleanTag,
-          ...(hasReferralAttribution ? { referrerTag: pendingReferral.tag } : {}),
-        });
-        applyArcRewardState(claimNotice.state);
-        if (hasReferralAttribution) {
-          clearPendingReferral();
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('nairatag:referrals-updated', {
-              detail: { referrerTag: pendingReferral.tag, referredTag: res.cleanTag, milestone: 'signup', points: REFERRAL_SIGNUP_POINTS },
-            }));
-          }
-          broadcastArcRewardToTelegram({
-            action: 'referral_signup',
-            walletAddress,
-            tag: res.cleanTag,
-            referrerTag: pendingReferral.tag,
-          }).catch((err) => console.warn('[Telegram referral alert]', err.message));
-        }
-      } catch (rewardError) {
-        setArcRewardsError(rewardError.message || 'NairaTag claim notification could not be saved.');
-        if (hasReferralAttribution) {
-          try {
-            referralReward = await recordReferralSignup({ referredTag: res.cleanTag, referredWallet: walletAddress });
-            if (referralReward?.state) applyArcRewardState(referralReward.state);
-          } catch (refErr) {
-            console.warn('[Referral fallback error]', refErr.message);
-          }
-        }
-      }
-      // Broadcast verified Arc claim to official Telegram channel
-      broadcastArcClaimToTelegram({
-        tag: res.cleanTag,
-        owner: walletAddress,
-        txHash: res.txHash,
-        explorerUrl: res.explorerUrl,
-        network: activeArcChain.name,
-        chainId: activeArcChain.id,
-        erc8004Id: agentRegistration?.id || null,
-      }).catch((broadcastErr) => console.warn('[Telegram Broadcast]', broadcastErr.message));
 
-      // ── Immediately update the user's identity across the app ──
-      setMyTag({ tag: res.cleanTag, owner: walletAddress });
+      // Immediately set user tag and cache locally so UI updates synchronously
+      const cleanTag = res.cleanTag;
+      setMyTag({ tag: cleanTag, owner: walletAddress });
       try {
-        localStorage.setItem('nairatag_claimed_tag_v1', JSON.stringify({ tag: res.cleanTag, owner: walletAddress }));
+        localStorage.setItem('nairatag_claimed_tag_v1', JSON.stringify({ tag: cleanTag, owner: walletAddress }));
       } catch {}
 
-      triggerCelebrationConfetti();
-      let onboardingProgress;
-      try { onboardingProgress = updateAgentOnboarding(walletAddress, res.cleanTag); }
-      catch (error) { showToast(error.message || 'Your tag was claimed. Setup details could not be cached on this device.', 'error', 5000); }
-      try {
-        const claimReward = await submitArcRewardAction({ action: 'tag_claimed', walletAddress, tag: res.cleanTag });
-        if (claimReward?.state) applyArcRewardState(claimReward.state);
-      } catch (e) {
-        console.warn('[Tag claim points sync note]:', e.message);
-      }
-      try {
-        const reward = await claimAgentOnboardingReward({ walletAddress, tag: res.cleanTag, step: 'identity' });
-        if (reward?.state) applyArcRewardState(reward.state);
-        const synced = syncAgentOnboardingRewards(walletAddress, res.cleanTag, reward?.onboarding || { identity: true });
-        if (synced) onboardingProgress = synced;
-      } catch (error) {
-        console.warn('[Onboarding reward note]:', error.message);
-      }
-      setAgentOnboarding(onboardingProgress);
-      const onboardingKey = `${String(walletAddress).toLowerCase()}:${String(res.cleanTag).replace(/^[₦$@#]/, '').toLowerCase()}`;
-      onboardingDismissedKeyRef.current = onboardingKey;
+      // Clear input, close claim modals, and clear claiming spinner immediately
+      setClaimInput('');
+      setIsClaiming(false);
       setIsCelebrationOpen(false);
       setIsClaimModalOpen(false);
       setIsAgentOnboardingOpen(false);
-      setAgentSuccessDetails({
-        variant: 'claimed',
-        tag: res.cleanTag,
-        progress: onboardingProgress || getAgentOnboarding(walletAddress, res.cleanTag) || { tag: res.cleanTag, points: 20 },
-      });
-      showToast(`🎉 ₦${res.cleanTag.toUpperCase()} is officially yours on Arc Mainnet! +20 Pts earned.`, 'success', 5000);
-      await refreshBalance(walletAddress);
+
+      triggerCelebrationConfetti();
+      showToast(`🎉 ₦${cleanTag.toUpperCase()} is officially yours on Arc Mainnet! +20 Pts earned.`, 'success', 5000);
+
+      // Run background integrations non-blocking so claim UI never hangs
+      (async () => {
+        let agentRegistration = null;
+        try {
+          if (typeof completeArcAgentLink === 'function') {
+            agentRegistration = await completeArcAgentLink(cleanTag, walletAddress);
+          }
+        } catch (error) {
+          console.warn('[ERC-8004 background link]:', error.message);
+        }
+
+        const pendingReferral = getPendingReferral();
+        const hasReferralAttribution = Boolean(pendingReferral?.tag);
+        try {
+          const claimNotice = await submitArcRewardAction({
+            action: 'tag_claimed',
+            walletAddress,
+            tag: cleanTag,
+            ...(hasReferralAttribution ? { referrerTag: pendingReferral.tag } : {}),
+          });
+          if (claimNotice?.state) applyArcRewardState(claimNotice.state);
+          if (hasReferralAttribution) {
+            clearPendingReferral();
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('nairatag:referrals-updated', {
+                detail: { referrerTag: pendingReferral.tag, referredTag: cleanTag, milestone: 'signup', points: REFERRAL_SIGNUP_POINTS },
+              }));
+            }
+            broadcastArcRewardToTelegram({
+              action: 'referral_signup',
+              walletAddress,
+              tag: cleanTag,
+              referrerTag: pendingReferral.tag,
+            }).catch((err) => console.warn('[Telegram referral alert]', err.message));
+          }
+        } catch (rewardError) {
+          console.warn('[Reward background sync]:', rewardError.message);
+          if (hasReferralAttribution) {
+            try {
+              const referralReward = await recordReferralSignup({ referredTag: cleanTag, referredWallet: walletAddress });
+              if (referralReward?.state) applyArcRewardState(referralReward.state);
+            } catch (refErr) {
+              console.warn('[Referral fallback error]', refErr.message);
+            }
+          }
+        }
+
+        broadcastArcClaimToTelegram({
+          tag: cleanTag,
+          owner: walletAddress,
+          txHash: res.txHash,
+          explorerUrl: res.explorerUrl,
+          network: activeArcChain.name,
+          chainId: activeArcChain.id,
+          erc8004Id: agentRegistration?.id || null,
+        }).catch((broadcastErr) => console.warn('[Telegram Broadcast]', broadcastErr.message));
+
+        try {
+          updateAgentOnboarding(walletAddress, cleanTag);
+          const reward = await claimAgentOnboardingReward({ walletAddress, tag: cleanTag, step: 'identity' });
+          if (reward?.state) applyArcRewardState(reward.state);
+        } catch (e) {
+          console.warn('[Onboarding setup note]:', e.message);
+        }
+
+        refreshBalance(walletAddress).catch(() => {});
+      })();
     } catch (e) {
       const claimErr = e?.message || e?.reason || (typeof e === 'string' ? e : 'Claim failed on Arc.');
       showToast(`Claim failed: ${claimErr}`, 'error', 4000);
@@ -3927,131 +3929,190 @@ function ArcAppShell() {
             {/* Left Column: Uniswap-width 480px Main Claim Console & Registrations */}
             <main className="claim-page-main">
               <div className="claim-console-card">
-
-                {/* Center Stage: Live Type Tag Searching Display */}
-                <div className="claim-hero-stage">
-                  {getPendingReferral()?.tag && (
+                {walletAddress && myTag?.tag ? (
+                  <div style={{ textAlign: 'center', padding: '16px 8px 10px' }}>
                     <div style={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
-                      background: 'rgba(16, 185, 129, 0.1)',
-                      border: '1px solid rgba(16, 185, 129, 0.25)',
+                      background: 'rgba(16, 185, 129, 0.12)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
                       borderRadius: '999px',
-                      padding: '4px 12px',
-                      marginBottom: '10px',
+                      padding: '4px 14px',
+                      marginBottom: '16px',
                       fontSize: '12px',
                       color: '#059669',
-                      fontWeight: 650,
+                      fontWeight: 700,
                     }}>
-                      <span>🎁</span>
-                      <span>Referred by <strong>₦{getPendingReferral().tag.toUpperCase()}</strong> (+100 Pts bonus)</span>
+                      <Check size={13} strokeWidth={3} />
+                      <span>Sovereign Identity Active on Arc</span>
                     </div>
-                  )}
-                  <div className="claim-stage-subtitle">Claim your NairaTag</div>
-                  <div
-                    className={`claim-live-tag-display ${claimInput.trim() ? 'has-value' : ''}`}
-                    style={{
-                      fontSize: claimPreviewFontSize,
-                      fontWeight: claimPreviewText.length > 14 ? 700 : 800,
-                      letterSpacing: claimPreviewText.length > 12 ? '-0.02em' : '-0.04em',
-                    }}
-                    onClick={() => {
-                      const input = document.getElementById('claim-tag-input-field');
-                      if (input) input.focus();
-                    }}
-                    title="Click to search / edit tag"
-                  >
-                    <span className="live-tag-prefix">₦</span>
-                    <span>{claimPreviewText}</span>
-                  </div>
-                </div>
 
-                {/* Pill Input Box with Inline Status Pill */}
-                <div className="claim-pill-input-box">
-                  <input
-                    id="claim-tag-input-field"
-                    type="text"
-                    className="claim-pill-input"
-                    placeholder="Enter your username"
-                    autoComplete="off"
-                    spellCheck="false"
-                    aria-label="Enter your username"
-                    value={claimInput.replace(/^[$₦]/, '')}
-                    onChange={(e) => handleCheckClaim(e.target.value)}
-                  />
-                  <div className="claim-input-right-cluster">
                     <div
-                      className={`tag-status-indicator ${claimStatus?.loading
-                        ? 'checking'
-                        : claimStatus?.available
-                          ? 'available'
-                          : claimInput.trim()
-                            ? 'taken'
-                            : ''
-                        }`}
+                      className="claim-live-tag-display has-value"
+                      style={{
+                        fontSize: '2.4rem',
+                        fontWeight: 800,
+                        letterSpacing: '-0.03em',
+                        cursor: 'pointer',
+                        justifyContent: 'center',
+                      }}
+                      onClick={() => setMainTab('profile')}
+                      title="Click to view profile"
                     >
-                      {claimStatus?.loading ? (
+                      <span className="live-tag-prefix">₦</span>
+                      <span>{String(myTag.tag).replace(/^[$₦]/, '').toUpperCase()}</span>
+                    </div>
+
+                    <p style={{ color: '#64748b', fontSize: '13px', margin: '8px 0 20px', lineHeight: 1.5 }}>
+                      Bound to <code style={{ fontSize: '11px', background: 'rgba(0,0,0,0.05)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}</code> · 1 Tag per account
+                    </p>
+
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                      <button
+                        type="button"
+                        className="claim-pill-button"
+                        style={{ width: 'auto', padding: '10px 22px', fontSize: '14px', fontWeight: 650 }}
+                        onClick={() => setMainTab('profile')}
+                      >
+                        View Profile
+                      </button>
+                      <button
+                        type="button"
+                        className="claim-pill-button"
+                        style={{
+                          width: 'auto',
+                          padding: '10px 22px',
+                          fontSize: '14px',
+                          fontWeight: 650,
+                          background: 'rgba(0,0,0,0.06)',
+                          color: 'var(--text-color, #0f172a)',
+                          border: '1px solid rgba(0,0,0,0.12)',
+                        }}
+                        onClick={() => {
+                          const url = getTagShareUrl(myTag.tag);
+                          navigator.clipboard?.writeText(url).then(() => {
+                            triggerCelebrationConfetti();
+                            showToast(`Copied invite link: ${url}`, 'success', 4000);
+                          }).catch(() => {
+                            showToast(url, 'info', 5000);
+                          });
+                        }}
+                      >
+                        Share Invite Link
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Center Stage: Live Type Tag Searching Display */}
+                    <div className="claim-hero-stage">
+                      <div className="claim-stage-subtitle">Claim your NairaTag</div>
+                      <div
+                        className={`claim-live-tag-display ${claimInput.trim() ? 'has-value' : ''}`}
+                        style={{
+                          fontSize: claimPreviewFontSize,
+                          fontWeight: claimPreviewText.length > 14 ? 700 : 800,
+                          letterSpacing: claimPreviewText.length > 12 ? '-0.02em' : '-0.04em',
+                        }}
+                        onClick={() => {
+                          const input = document.getElementById('claim-tag-input-field');
+                          if (input) input.focus();
+                        }}
+                        title="Click to search / edit tag"
+                      >
+                        <span className="live-tag-prefix">₦</span>
+                        <span>{claimPreviewText}</span>
+                      </div>
+                    </div>
+
+                    {/* Pill Input Box with Inline Status Pill */}
+                    <div className="claim-pill-input-box">
+                      <input
+                        id="claim-tag-input-field"
+                        type="text"
+                        className="claim-pill-input"
+                        placeholder="Enter your username"
+                        autoComplete="off"
+                        spellCheck="false"
+                        aria-label="Enter your username"
+                        value={claimInput.replace(/^[$₦]/, '')}
+                        onChange={(e) => handleCheckClaim(e.target.value)}
+                      />
+                      <div className="claim-input-right-cluster">
+                        <div
+                          className={`tag-status-indicator ${claimStatus?.loading
+                            ? 'checking'
+                            : claimStatus?.available
+                              ? 'available'
+                              : claimInput.trim()
+                                ? 'taken'
+                                : ''
+                            }`}
+                        >
+                          {claimStatus?.loading ? (
+                            <>
+                              <RefreshCw size={11} className="animate-spin" />
+                              <span>Checking...</span>
+                            </>
+                          ) : claimStatus?.available ? (
+                            <>
+                              <Check size={12} strokeWidth={2.8} />
+                              <span>Available</span>
+                            </>
+                          ) : claimInput.trim() ? (
+                            <>
+                              <X size={12} strokeWidth={2.8} />
+                              <span>Taken</span>
+                            </>
+                          ) : (
+                            <span>Ready</span>
+                          )}
+                        </div>
+
+                        {/* Live Interactive Mascot right beside Ready/Available */}
+                        <div
+                          className="claim-live-mascot-pill"
+                          title={`₦${claimInput.replace(/^[$₦]/, '').toLowerCase() || 'tag'} Live Mascot (${liveMascotProfile?.palette?.name || 'Vibrant'})`}
+                          style={{
+                            backgroundColor: liveMascotProfile?.palette?.primary || '#bbf246',
+                          }}
+                          onClick={() => {
+                            const el = document.getElementById('claim-live-mascot-avatar');
+                            if (el) {
+                              el.classList.remove('mascot-bounce');
+                              void el.offsetWidth;
+                              el.classList.add('mascot-bounce');
+                            }
+                          }}
+                        >
+                          <div
+                            id="claim-live-mascot-avatar"
+                            className="claim-mascot-svg"
+                            dangerouslySetInnerHTML={{ __html: liveMascotProfile?.avatarSvg || '' }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pill Claim Button */}
+                    <button
+                      type="button"
+                      className="claim-pill-button"
+                      disabled={!claimStatus?.available || isClaiming}
+                      onClick={handleExecuteClaim}
+                    >
+                      {isClaiming ? (
                         <>
-                          <RefreshCw size={11} className="animate-spin" />
-                          <span>Checking...</span>
-                        </>
-                      ) : claimStatus?.available ? (
-                        <>
-                          <Check size={12} strokeWidth={2.8} />
-                          <span>Available</span>
-                        </>
-                      ) : claimInput.trim() ? (
-                        <>
-                          <X size={12} strokeWidth={2.8} />
-                          <span>Taken</span>
+                          <RefreshCw size={16} className="animate-spin" />
+                          <span>Claiming your ₦Tag…</span>
                         </>
                       ) : (
-                        <span>Ready</span>
+                        <span>Claim</span>
                       )}
-                    </div>
-
-                    {/* Live Interactive Mascot right beside Ready/Available */}
-                    <div
-                      className="claim-live-mascot-pill"
-                      title={`₦${claimInput.replace(/^[$₦]/, '').toLowerCase() || 'tag'} Live Mascot (${liveMascotProfile?.palette?.name || 'Vibrant'})`}
-                      style={{
-                        backgroundColor: liveMascotProfile?.palette?.primary || '#bbf246',
-                      }}
-                      onClick={() => {
-                        const el = document.getElementById('claim-live-mascot-avatar');
-                        if (el) {
-                          el.classList.remove('mascot-bounce');
-                          void el.offsetWidth;
-                          el.classList.add('mascot-bounce');
-                        }
-                      }}
-                    >
-                      <div
-                        id="claim-live-mascot-avatar"
-                        className="claim-mascot-svg"
-                        dangerouslySetInnerHTML={{ __html: liveMascotProfile?.avatarSvg || '' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Pill Claim Button */}
-                <button
-                  type="button"
-                  className="claim-pill-button"
-                  disabled={!claimStatus?.available || isClaiming}
-                  onClick={handleExecuteClaim}
-                >
-                  {isClaiming ? (
-                    <>
-                      <RefreshCw size={16} className="animate-spin" />
-                      <span>Claiming your ₦Tag…</span>
-                    </>
-                  ) : (
-                    <span>Claim</span>
-                  )}
-                </button>
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Recent tag activity appears when Arc has tags to show. */}

@@ -733,7 +733,7 @@ function getDailyStreakStatus(streak, todayKey) {
   const yesterday = new Date(`${todayKey}T00:00:00`);
   yesterday.setDate(yesterday.getDate() - 1);
   const yesterdayKey = getLocalDateKey(yesterday);
-  const claimedToday = streak.lastClaimDate === todayKey;
+  const claimedToday = streak.lastClaimDate === todayKey || Boolean(streak.claimedToday);
   const activeStreak = claimedToday || streak.lastClaimDate === yesterdayKey
     ? streak.streakCount
     : 0;
@@ -760,13 +760,18 @@ function DailyStreakModal({ isOpen, onClose, status, onClaim, presentation = 'mo
   if (!isOpen) return null;
 
   const handleClaim = async () => {
+    if (claiming || status.claimedToday) return;
     setClaiming(true);
     setClaimError('');
     try {
       const reward = await onClaim();
       if (reward) setClaimedAmount(reward);
     } catch (error) {
-      setClaimError(error.message || 'Daily streak claim failed.');
+      if (/already claimed/i.test(error.message)) {
+        setClaimedAmount(status.reward || 10);
+      } else {
+        setClaimError(error.message || 'Daily streak claim failed.');
+      }
     } finally { setClaiming(false); }
   };
 
@@ -820,11 +825,12 @@ function DailyStreakModal({ isOpen, onClose, status, onClaim, presentation = 'mo
 
         <button
           type="button"
-          className="streak-claim-btn"
+          className={`streak-claim-btn ${status.claimedToday ? 'already-claimed' : ''}`}
           onClick={handleClaim}
           disabled={status.claimedToday || claiming}
+          style={status.claimedToday ? { opacity: 0.75, cursor: 'not-allowed', background: '#059669' } : {}}
         >
-          {status.claimedToday ? 'Claimed Today' : claiming ? 'Claiming…' : `Claim ${status.reward} Points`}
+          {status.claimedToday ? '✓ Claimed Today' : claiming ? 'Claiming…' : `Claim ${status.reward} Points`}
         </button>
         {(claimedAmount || claimError) && (
           <p className="streak-claim-feedback" aria-live="polite">
@@ -866,15 +872,31 @@ export default function RewardsPage({
   }, [initialPage]);
   const referralTag = String(userTag || '').replace(/^[$₦@#]/, '').trim().toLowerCase();
   const [myReferralStats, setMyReferralStats] = useState({ points: 0, joinedCount: 0, completedCount: 0, referrals: [] });
-  const [dailyStreak, setDailyStreak] = useState({ streakCount: 0, lastClaimDate: null });
   const [todayKey, setTodayKey] = useState(() => getLocalDateKey());
+  const [dailyStreak, setDailyStreak] = useState(() => {
+    try {
+      const local = getLocalRewardState(accountKey);
+      if (local?.streak) {
+        return {
+          streakCount: local.streak.streakCount || 0,
+          lastClaimDate: local.streak.lastClaimDay || null,
+          claimedToday: Boolean(local.streak.claimedToday),
+        };
+      }
+    } catch {}
+    return { streakCount: 0, lastClaimDate: null, claimedToday: false };
+  });
   const [activeCategory, setActiveCategory] = useState('Airtime');
   useEffect(() => {
     let active = true;
     const refresh = () => getArcRewardState(accountKey).then((state) => {
       if (!active) return;
       setMyReferralStats(state.referrals);
-      setDailyStreak({ streakCount: state.streak.streakCount, lastClaimDate: state.streak.lastClaimDay });
+      setDailyStreak({
+        streakCount: state.streak.streakCount,
+        lastClaimDate: state.streak.lastClaimDay,
+        claimedToday: Boolean(state.streak.claimedToday || state.streak.lastClaimDay === todayKey),
+      });
     }).catch(() => {});
     refresh();
     window.addEventListener('focus', refresh);
@@ -884,7 +906,7 @@ export default function RewardsPage({
       window.removeEventListener('focus', refresh);
       window.removeEventListener('nairatag:reward-state-updated', refresh);
     };
-  }, [accountKey, referralTag]);
+  }, [accountKey, referralTag, todayKey]);
 
   const totalPoints = Number(pointsBalance) || 0;
   const serviceNotice = serviceError ? <div className="referral-ledger-note" role="status">Arc rewards are not syncing: {serviceError}</div> : null;
@@ -898,18 +920,30 @@ export default function RewardsPage({
 
   const handleDailyStreakClaim = async () => {
     const activeAccount = getAbstractedRewardAccount(accountKey);
-    const { result, state } = await submitArcRewardAction({ action: 'daily_claim', walletAddress: activeAccount });
-    const reward = Number(result.points);
-    setMyReferralStats(state.referrals);
-    setDailyStreak({ streakCount: state.streak.streakCount, lastClaimDate: state.streak.lastClaimDay });
-    onRewardState?.(state);
-
-    playMicroSound('coin');
-    triggerHaptic([35, 30, 45]);
     try {
-      confetti({ particleCount: 55, spread: 65, origin: { y: 0.65 }, colors: ['#5b4fff', '#06b6d4', '#10b981'] });
-    } catch {}
-    return reward;
+      const { result, state } = await submitArcRewardAction({ action: 'daily_claim', walletAddress: activeAccount });
+      const reward = Number(result?.points || 0);
+      setMyReferralStats(state.referrals);
+      setDailyStreak({
+        streakCount: state.streak.streakCount,
+        lastClaimDate: state.streak.lastClaimDay || todayKey,
+        claimedToday: true,
+      });
+      onRewardState?.(state);
+
+      playMicroSound('coin');
+      triggerHaptic([35, 30, 45]);
+      try {
+        confetti({ particleCount: 55, spread: 65, origin: { y: 0.65 }, colors: ['#5b4fff', '#06b6d4', '#10b981'] });
+      } catch {}
+      return reward || dailyStreakStatus.reward || 10;
+    } catch (err) {
+      if (/already claimed/i.test(err?.message || '')) {
+        setDailyStreak(prev => ({ ...prev, lastClaimDate: todayKey, claimedToday: true }));
+        return dailyStreakStatus.reward || 10;
+      }
+      throw err;
+    }
   };
 
   const handleWheelWin = (prize, state) => {
