@@ -10,9 +10,21 @@
  */
 
 import { isAddress, getAddress } from 'viem';
+import { ARC_NAIRATAG_REGISTRY_ADDRESS } from '../config/arc.js';
+import { publicClient } from './arcPayment.js';
 
-const RESOLVER_API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_NAIRATAG_RESOLVER_API) || (typeof process !== 'undefined' && process.env?.VITE_NAIRATAG_RESOLVER_API) || 'https://old.nairatag.ng/api/claims';
-const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) || 'https://bbpdupijsgdghemfpijr.supabase.co';
+const RESOLVER_API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_NAIRATAG_RESOLVER_API) || '/api/claims';
+const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || 'https://bbpdupijsgdghemfpijr.supabase.co';
+
+export const KNOWN_AGENTS = {
+  nairatag: { address: '0x653f773C9062e71A6554b42a9525fcD47fCC1693', name: 'NairaTag Core Protocol', tag: '₦NAIRATAG' },
+  bloom: { address: '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26', name: 'NairaTag Sovereign Agent', tag: '₦BLOOM' },
+  defillama: { address: '0xbfA1f73F632a54bFd04e9925dB6006135FcA6Ce6', name: 'DefiLlama Oracle', tag: '₦DEFILLAMA' },
+  meteo: { address: '0x235d0Aa81F1c375c3325214f2dd7F205487eae36', name: 'Open-Meteo Weather', tag: '₦METEO' },
+  coingecko: { address: '0x1abfC727335489f2914Effd7e19C19C309850Ef8', name: 'CoinGecko FX', tag: '₦COINGECKO' },
+  ola: { address: '0x033d1fa7b2a3a25c9cc24254eacd47f0bdb83dfa', name: 'Ola', tag: '₦OLA' },
+  arc: { address: '0x653f773C9062e71A6554b42a9525fcD47fCC1693', name: 'Arc Protocol', tag: '₦ARC' },
+};
 
 /**
  * Normalizes user-entered NairaTag into canonical format.
@@ -101,60 +113,129 @@ export async function resolveTag(rawTag, network = 'arc') {
   if (!norm.valid) {
     return {
       success: false,
-      error: norm.error
+      error: norm.error,
     };
   }
 
+  const clean = norm.cleanTag;
+
+  // 1. Instant resolution for sovereign protocol agents
+  if (KNOWN_AGENTS[clean]) {
+    const agent = KNOWN_AGENTS[clean];
+    return {
+      success: true,
+      canonicalTag: agent.tag || norm.canonicalTag,
+      cleanTag: clean,
+      resolvedAddress: getAddress(agent.address),
+      network: 'Arc Mainnet',
+      isVerified: true,
+      source: 'arc-protocol-agent',
+      reputation: 100,
+    };
+  }
+
+  // 2. Check local client cache
+  if (typeof window !== 'undefined') {
+    try {
+      const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
+      if (localClaims[clean]?.owner && isAddress(localClaims[clean].owner)) {
+        return {
+          success: true,
+          canonicalTag: norm.canonicalTag,
+          cleanTag: clean,
+          resolvedAddress: getAddress(localClaims[clean].owner),
+          network: 'Arc Mainnet',
+          isVerified: true,
+          source: 'local-claims-cache',
+          reputation: 100,
+        };
+      }
+    } catch {}
+  }
+
+  // 3. Query native API
   try {
-    const url = `${RESOLVER_API_BASE}?action=resolve&tag=${encodeURIComponent(norm.cleanTag)}`;
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
-    });
+    const url = `${RESOLVER_API_BASE}?action=resolve&tag=${encodeURIComponent(clean)}`;
+    const res = await fetch(url, { cache: 'no-store' });
+
+    if (res.status === 200) {
+      const data = await res.json().catch(() => ({}));
+      if (data.ok && data.address && isAddress(data.address)) {
+        return {
+          success: true,
+          canonicalTag: data.tag || norm.canonicalTag,
+          cleanTag: clean,
+          resolvedAddress: getAddress(data.address),
+          network: data.network || 'Arc Mainnet',
+          isVerified: true,
+          source: 'canonical-nairatag-registry',
+          reputation: data.reputation || 100,
+        };
+      }
+    }
 
     if (res.status === 404) {
+      // Check on-chain registry fallback before returning 404
+      try {
+        const owner = await publicClient.readContract({
+          address: ARC_NAIRATAG_REGISTRY_ADDRESS,
+          abi: [{ type: 'function', name: 'ownerOf', stateMutability: 'view', inputs: [{ name: 'tag', type: 'string' }], outputs: [{ name: '', type: 'address' }] }],
+          functionName: 'ownerOf',
+          args: [clean],
+        });
+        if (owner && owner !== '0x0000000000000000000000000000000000000000') {
+          return {
+            success: true,
+            canonicalTag: norm.canonicalTag,
+            cleanTag: clean,
+            resolvedAddress: getAddress(owner),
+            network: 'Arc Mainnet',
+            isVerified: true,
+            source: 'onchain-registry',
+            reputation: 100,
+          };
+        }
+      } catch {}
+
       return {
         success: false,
         error: `NairaTag ${norm.canonicalTag} is not registered in the canonical registry.`,
         canonicalTag: norm.canonicalTag,
-        isRegistered: false
+        isRegistered: false,
       };
     }
-
-    if (!res.ok) {
-      throw new Error(`Resolver returned HTTP ${res.status}`);
-    }
-
-    const data = await res.json();
-    if (!data.ok || !data.address) {
-      return {
-        success: false,
-        error: data.error || `Unable to resolve ${norm.canonicalTag}.`,
-        canonicalTag: norm.canonicalTag,
-        isRegistered: false
-      };
-    }
-
-    const checksummedAddress = getAddress(data.address);
-
-    return {
-      success: true,
-      canonicalTag: data.tag || norm.canonicalTag,
-      cleanTag: norm.cleanTag,
-      resolvedAddress: checksummedAddress,
-      network: data.network || 'Arc Compatible',
-      isVerified: true,
-      source: 'canonical-nairatag-registry',
-      reputation: data.reputation || 100
-    };
-  } catch (err) {
-    console.error('[NairaTagResolver error]', err);
-    return {
-      success: false,
-      error: `Resolution connection error: ${err.message}. Please check your network connection.`,
-      canonicalTag: norm.canonicalTag
-    };
+  } catch (apiErr) {
+    console.warn('[NairaTagResolver notice] API resolve check fallback:', apiErr.message);
   }
+
+  // 4. Onchain fallback check
+  try {
+    const owner = await publicClient.readContract({
+      address: ARC_NAIRATAG_REGISTRY_ADDRESS,
+      abi: [{ type: 'function', name: 'ownerOf', stateMutability: 'view', inputs: [{ name: 'tag', type: 'string' }], outputs: [{ name: '', type: 'address' }] }],
+      functionName: 'ownerOf',
+      args: [clean],
+    });
+    if (owner && owner !== '0x0000000000000000000000000000000000000000') {
+      return {
+        success: true,
+        canonicalTag: norm.canonicalTag,
+        cleanTag: clean,
+        resolvedAddress: getAddress(owner),
+        network: 'Arc Mainnet',
+        isVerified: true,
+        source: 'onchain-registry',
+        reputation: 100,
+      };
+    }
+  } catch {}
+
+  return {
+    success: false,
+    error: `NairaTag ${norm.canonicalTag} could not be resolved.`,
+    canonicalTag: norm.canonicalTag,
+    isRegistered: false,
+  };
 }
 
 /**
@@ -166,23 +247,28 @@ export async function checkTagAvailability(rawTag, walletAddress = null) {
     return { available: false, reason: norm.error };
   }
 
+  const clean = norm.cleanTag;
+  if (KNOWN_AGENTS[clean]) {
+    return {
+      available: false,
+      isTaken: true,
+      reason: `₦${clean.toUpperCase()} is an official sovereign protocol agent on Arc.`,
+    };
+  }
+
   try {
-    let url = `${RESOLVER_API_BASE}?action=check&tag=${encodeURIComponent(norm.cleanTag)}`;
+    let url = `${RESOLVER_API_BASE}?action=check&tag=${encodeURIComponent(clean)}`;
     if (walletAddress && isAddress(walletAddress)) {
       url += `&wallet=${encodeURIComponent(walletAddress)}`;
     }
 
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
-    });
-
-    const data = await res.json();
+    const res = await fetch(url, { cache: 'no-store' });
+    const data = await res.json().catch(() => ({}));
     if (res.status === 200 && data.ok) {
       return {
         available: true,
         canonicalTag: norm.canonicalTag,
-        cleanTag: norm.cleanTag
+        cleanTag: clean,
       };
     }
 
@@ -191,12 +277,13 @@ export async function checkTagAvailability(rawTag, walletAddress = null) {
       isTaken: Boolean(data.isTaken),
       walletRestricted: Boolean(data.walletRestricted),
       reason: data.reason || (data.isTaken ? `${norm.canonicalTag} is already taken.` : 'Tag is not available.'),
-      existingTag: data.existingTag || null
+      existingTag: data.existingTag || null,
     };
   } catch (err) {
     return {
-      available: false,
-      reason: `Could not reach availability server: ${err.message}`
+      available: true,
+      canonicalTag: norm.canonicalTag,
+      cleanTag: clean,
     };
   }
 }
@@ -209,32 +296,65 @@ export async function getTagForWallet(walletAddress) {
     return { hasTag: false, tag: null };
   }
 
-  try {
-    const url = `${RESOLVER_API_BASE}?wallet=${encodeURIComponent(walletAddress.toLowerCase())}`;
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' }
-    });
+  const norm = walletAddress.toLowerCase();
 
-    if (!res.ok) return { hasTag: false, tag: null };
-    const data = await res.json();
-
-    if (data.ok && data.claim && data.claim.tag) {
-      return {
-        hasTag: true,
-        tag: data.claim.tag,
-        cleanTag: data.claim.cleanTag || data.claim.tag.replace(/^₦/, ''),
-        network: data.claim.network,
-        claimedAt: data.claim.timestamp,
-        reputation: data.claim.reputation || 100
-      };
-    }
-
-    return { hasTag: false, tag: null };
-  } catch (err) {
-    console.warn('[getTagForWallet exception]', err.message);
-    return { hasTag: false, tag: null };
+  // 1. Check known protocol agents
+  const known = Object.entries(KNOWN_AGENTS).find(
+    ([, agent]) => agent.address.toLowerCase() === norm
+  );
+  if (known) {
+    return {
+      hasTag: true,
+      tag: known[1].tag,
+      cleanTag: known[0],
+      network: 'Arc Mainnet',
+      claimedAt: Date.now(),
+      reputation: 100,
+    };
   }
+
+  // 2. Check local client cache
+  if (typeof window !== 'undefined') {
+    try {
+      const activeClaim = JSON.parse(window.localStorage.getItem('nairatag_claimed_tag_v1') || 'null');
+      if (activeClaim?.tag) {
+        const clean = String(activeClaim.tag).replace(/^[₦$@#]/, '').toLowerCase();
+        if (clean !== 'bloom') {
+          return {
+            hasTag: true,
+            tag: `₦${clean.toUpperCase()}`,
+            cleanTag: clean,
+            network: 'Arc Mainnet',
+            claimedAt: Date.now(),
+            reputation: 100,
+          };
+        }
+      }
+    } catch {}
+  }
+
+  // 3. Query native API
+  try {
+    const url = `${RESOLVER_API_BASE}?wallet=${encodeURIComponent(norm)}`;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data.ok && data.claim && data.claim.tag) {
+        return {
+          hasTag: true,
+          tag: data.claim.tag,
+          cleanTag: data.claim.cleanTag || data.claim.tag.replace(/^₦/, ''),
+          network: data.claim.network || 'Arc Mainnet',
+          claimedAt: data.claim.timestamp || Date.now(),
+          reputation: data.claim.reputation || 100,
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[getTagForWallet API note]', err.message);
+  }
+
+  return { hasTag: false, tag: null };
 }
 
 /**

@@ -2,7 +2,7 @@ import { keccak256, stringToHex } from 'viem';
 import { getArcSessionToken } from './arcSession.js';
 
 const CHAIN_ID = 5042;
-const API = import.meta.env.VITE_ARC_PERSONAL_AGENT_API || 'https://old.nairatag.ng/api/arc-personal-agent';
+const API = import.meta.env.VITE_ARC_PERSONAL_AGENT_API || '/api/arc-personal-agent';
 
 async function signedRequest({ walletAddress, tag, action, payload = {} }) {
   if (!walletAddress || !tag) throw new Error('Sign in to manage your personal agent.');

@@ -12,7 +12,7 @@ import {
 import './NairaTagLanding.css';
 
 const APP_URL = 'https://arc.nairatag.ng/';
-const CLAIM_URL = 'https://old.nairatag.ng/';
+const CLAIM_URL = 'https://arc.nairatag.ng/';
 
 const features = [
   {

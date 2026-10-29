@@ -48,7 +48,11 @@
     },
     {
       "source": "/api/arc-tasks(.*)",
-      "destination": "https://nairatag.ng/api/arc-tasks$1"
+      "destination": "/api/arc-tasks$1"
+    },
+    {
+      "source": "/api/claims(.*)",
+      "destination": "/api/claims$1"
     },
     {
       "source": "/openapi.json",

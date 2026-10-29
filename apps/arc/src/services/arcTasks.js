@@ -1,9 +1,9 @@
 import { broadcastArcPaidTaskToTelegram, broadcastArcTaskToTelegram } from './arcSocialBroadcast.js';
-const ARC_TASKS_API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ARC_TASKS_API) || (typeof import.meta !== 'undefined' && import.meta.env?.DEV ? '/api/arc-tasks' : 'https://old.nairatag.ng/api/arc-tasks');
+const ARC_TASKS_API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_ARC_TASKS_API) || '/api/arc-tasks';
 const ARC_CHAIN_ID = 5042;
 
 function arcTasksUrl() {
-  const base = typeof window !== 'undefined' ? window.location.origin : 'https://old.nairatag.ng';
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://arc.nairatag.ng';
   return new URL(ARC_TASKS_API, base);
 }
 
@@ -126,7 +126,7 @@ export async function createArcTask({ walletAddress, sessionToken, task }) {
   }
   const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
   if (sessionToken) headers.Authorization = `Bearer ${sessionToken}`;
-  const payload = await readResponse(await fetch(ARC_TASKS_API, {
+  const payload = await readResponse(await fetch(arcTasksUrl().toString(), {
     method: 'POST', headers,
     body: JSON.stringify({ action: 'create', taskId, walletAddress, timestamp, signature, task: taskDetails }),
   }));
@@ -204,7 +204,7 @@ async function submitSignedAction({ action, taskId, walletAddress, deliverable, 
   try {
     const headers = { 'Content-Type': 'application/json', Accept: 'application/json' };
     if (sessionToken) headers.Authorization = `Bearer ${sessionToken}`;
-    const payload = await readResponse(await fetch(ARC_TASKS_API, {
+    const payload = await readResponse(await fetch(arcTasksUrl().toString(), {
       method: 'POST',
       headers,
       body: JSON.stringify({ action, taskId, walletAddress, timestamp, signature, deliverable }),
