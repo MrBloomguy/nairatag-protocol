@@ -3933,61 +3933,6 @@ function ArcAppShell() {
             {/* Left Column: Uniswap-width 480px Main Claim Console & Registrations */}
             <main className="claim-page-main">
               <div className="claim-console-card">
-                {/* Active Claimed Tag Banner (Persistent Profile Display) */}
-                {myTag?.tag && (
-                  <div className="active-claimed-banner">
-                    <div className="active-claimed-info">
-                      <span style={{ fontSize: '15px' }}>✨</span>
-                      <div>
-                        <div className="active-claimed-label">
-                          You own <strong>₦{myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}</strong>
-                        </div>
-                        <div className="active-claimed-sub">
-                          {shorten(walletAddress)} · Arc Mainnet
-                        </div>
-                      </div>
-                    </div>
-                    <div className="active-claimed-actions">
-                      <button
-                        type="button"
-                        className="btn-claimed-action"
-                        onClick={() => triggerCopy('my_tag', `₦${myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}`)}
-                        title="Copy ₦Tag"
-                      >
-                        {copiedKey === 'my_tag' ? 'Copied' : 'Copy'}
-                      </button>
-                      <a
-                        href={getTwitterShareUrl({ tag: myTag.tag })}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-claimed-social-action"
-                        title="Share on X"
-                      >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                        </svg>
-                      </a>
-                      <a
-                        href={getTelegramShareUrl({ tag: myTag.tag })}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-claimed-social-action"
-                        title="Share on Telegram"
-                      >
-                        <Send size={12} />
-                      </a>
-                      <a
-                        href={getWhatsAppShareUrl({ tag: myTag.tag })}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn-claimed-social-action"
-                        title="Share on WhatsApp"
-                      >
-                        <Share2 size={12} />
-                      </a>
-                    </div>
-                  </div>
-                )}
 
                 {/* Center Stage: Live Type Tag Searching Display */}
                 <div className="claim-hero-stage">
@@ -4096,18 +4041,6 @@ function ArcAppShell() {
                   )}
                 </button>
               </div>
-
-              {pendingArcAgentLink && pendingArcAgentLink.owner?.toLowerCase() === walletAddress?.toLowerCase() && (
-                <button
-                  type="button"
-                  className="quick-chip-btn"
-                  style={{ alignSelf: 'center', marginTop: '8px' }}
-                  disabled={isRetryingArcAgentLink}
-                  onClick={handleRetryArcAgentLink}
-                >
-                  {isRetryingArcAgentLink ? 'Linking to ERC-8004…' : `Complete ERC-8004 link for ₦${pendingArcAgentLink.tag.toUpperCase()}`}
-                </button>
-              )}
 
               {/* Recent tag activity appears when Arc has tags to show. */}
               {recentArcTags.length > 0 && (
