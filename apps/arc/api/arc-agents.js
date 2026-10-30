@@ -56,9 +56,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Fetch all active agents from public.arc_agents
+    // 1. Fetch all agents from public.arc_agents (exclude only explicitly retired platform bots)
     const agentsData = await fetchFromSupabase(
-      'arc_agents?select=id,tag,display_name,category,description,avatar_url,owner_type,owner_wallet,status,is_public,created_at&is_public=eq.true&status=in.(active,chat_only)&order=created_at.asc'
+      'arc_agents?select=id,tag,display_name,category,description,avatar_url,owner_type,owner_wallet,status,is_public,created_at&status=neq.retired&order=created_at.asc'
     ).catch((err) => {
       console.warn('[arc-agents] Failed to fetch arc_agents:', err.message);
       return [];
@@ -71,6 +71,16 @@ export default async function handler(req, res) {
       console.warn('[arc-agents] Failed to fetch arc_claims:', err.message);
       return [];
     });
+
+    // 3. Fetch any historical claims from user_claims
+    const userClaimsData = await fetchFromSupabase(
+      'user_claims?select=tag,clean_tag,wallet_address,claimed_at&order=claimed_at.desc'
+    ).catch(() => []);
+
+    // 4. Fetch any personal agent profiles from arc_personal_agent_profiles
+    const personalProfilesData = await fetchFromSupabase(
+      'arc_personal_agent_profiles?select=tag,wallet_address,created_at'
+    ).catch(() => []);
 
     // Build merged map of agents
     const agentMap = new Map();
@@ -119,6 +129,56 @@ export default async function handler(req, res) {
           points: 20,
           earnings: 0,
           createdAt: c.claimed_at,
+        });
+      }
+    }
+
+    // Merge in any historical claims from user_claims
+    for (const uc of userClaimsData) {
+      const tag = String(uc.clean_tag || uc.tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
+      if (!tag || tag === 'bloom' || tag === 'nairatag' || tag.startsWith('e2e') || tag.startsWith('contest') || tag.startsWith('test') || tag.startsWith('http') || tag.startsWith('pass') || tag.startsWith('audit')) continue;
+      if (!agentMap.has(tag)) {
+        agentMap.set(tag, {
+          id: `userclaim-${tag}`,
+          tag,
+          displayName: `₦${tag.toUpperCase()}`,
+          name: `₦${tag.toUpperCase()}`,
+          category: 'User Agent',
+          description: `Sovereign NairaTag user on Arc Mainnet`,
+          role: `Sovereign NairaTag user on Arc Mainnet`,
+          avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
+          ownerType: 'user',
+          ownerWallet: uc.wallet_address,
+          owner: uc.wallet_address,
+          status: 'active',
+          points: 20,
+          earnings: 0,
+          createdAt: uc.claimed_at,
+        });
+      }
+    }
+
+    // Merge in any personal agent profiles from arc_personal_agent_profiles
+    for (const p of personalProfilesData) {
+      const tag = String(p.tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
+      if (!tag || tag === 'bloom' || tag === 'nairatag') continue;
+      if (!agentMap.has(tag)) {
+        agentMap.set(tag, {
+          id: `profile-${tag}`,
+          tag,
+          displayName: `₦${tag.toUpperCase()}`,
+          name: `₦${tag.toUpperCase()}`,
+          category: 'User Agent',
+          description: `Sovereign NairaTag user on Arc Mainnet`,
+          role: `Sovereign NairaTag user on Arc Mainnet`,
+          avatarUrl: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
+          ownerType: 'user',
+          ownerWallet: p.wallet_address,
+          owner: p.wallet_address,
+          status: 'active',
+          points: 20,
+          earnings: 0,
+          createdAt: p.created_at,
         });
       }
     }

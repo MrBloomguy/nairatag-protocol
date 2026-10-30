@@ -258,67 +258,28 @@ export async function fetchArcAgentDirectory({ signal } = {}) {
     }
   }
 
-  // Merge locally claimed agents from localStorage so user agents NEVER disappear from directory
+  // One-time background sync: ensure any local claims are synced to Supabase database
   if (typeof window !== 'undefined') {
     try {
       const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
       const activeClaim = JSON.parse(window.localStorage.getItem('nairatag_claimed_tag_v1') || 'null');
-      const agentLinks = JSON.parse(window.localStorage.getItem('nairatag_arc_agent_links_v1') || '{}');
-
       const allLocal = { ...localClaims };
       if (activeClaim?.tag) {
         const clean = String(activeClaim.tag).replace(/^[₦$@#]/, '').toLowerCase();
-        allLocal[clean] = {
-          tag: clean,
-          owner: activeClaim.owner,
-          claimedAt: activeClaim.claimedAt || Date.now(),
-        };
+        allLocal[clean] = { tag: clean, owner: activeClaim.owner };
       }
-
       for (const [key, claim] of Object.entries(allLocal)) {
         const cleanTag = String(claim.tag || key || '').replace(/^[₦$@#]/, '').toLowerCase();
         if (!cleanTag || cleanTag === 'bloom' || cleanTag === 'nairatag') continue;
-        if (!existingTags.has(cleanTag)) {
-          const link = agentLinks[cleanTag] || {};
-          const localRecord = {
-            id: link.id || `local-${cleanTag}`,
-            tag: cleanTag,
-            canonicalTag: `₦${cleanTag.toUpperCase()}`,
-            name: `₦${cleanTag.toUpperCase()}`,
-            displayName: `₦${cleanTag.toUpperCase()}`,
-            category: 'User Agent',
-            role: 'Sovereign NairaTag user on Arc Mainnet',
-            avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(cleanTag)}`,
-            owner: claim.owner || null,
-            status: 'active',
-            points: 20,
-            earnings: 0,
-            earningsCurrency: 'USDC',
-            entityType: 'autonomous_agent',
-            invocationMethods: ['text', 'voice'],
-            tools: [],
-            callableTools: [],
-          };
-          merged.push(localRecord);
-          existingTags.add(cleanTag);
-
-          // Auto-reconcile / sync unpersisted local claim to the server in the background
-          if (claim.owner) {
-            fetch('/api/claims', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                tag: cleanTag,
-                wallet: claim.owner,
-                txHash: claim.txHash || null,
-              }),
-            }).catch(() => {});
-          }
+        if (!existingTags.has(cleanTag) && claim.owner) {
+          fetch('/api/claims', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tag: cleanTag, wallet: claim.owner, txHash: claim.txHash || null }),
+          }).catch(() => {});
         }
       }
-    } catch (localErr) {
-      console.warn('[Arc Agent Directory] Local claims merge fallback:', localErr.message);
-    }
+    } catch {}
   }
 
   for (const agent of merged) {

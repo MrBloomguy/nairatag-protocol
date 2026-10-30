@@ -3076,37 +3076,27 @@ function ArcAppShell() {
         res = await claimArcNairaTag({ rawTag: claimInput, walletAddress });
       }
 
-      // Immediately set user tag and cache locally so UI updates synchronously
+      // Synchronously persist the claim directly to Supabase so it is in the database immediately
       const cleanTag = res.cleanTag;
       setMyTag({ tag: cleanTag, owner: walletAddress });
       try {
-        localStorage.setItem('nairatag_claimed_tag_v1', JSON.stringify({ tag: cleanTag, owner: walletAddress }));
-      } catch {}
+        await fetch('/api/claims', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tag: cleanTag,
+            wallet: walletAddress,
+            email: accountEmail || null,
+            txHash: res.txHash || null,
+            authProvider: authProvider || 'wallet',
+          }),
+        });
+      } catch (syncErr) {
+        console.warn('[Direct Supabase claim sync error]:', syncErr.message);
+      }
 
-      // Immediately add the new agent to chatAgents state so the Agents directory displays it in real-time
-      const newAgentObj = {
-        id: `agent_${cleanTag}`,
-        tag: cleanTag,
-        canonicalTag: `₦${cleanTag.toUpperCase()}`,
-        name: `₦${cleanTag.toUpperCase()}`,
-        displayName: `₦${cleanTag.toUpperCase()}`,
-        category: 'User Agent',
-        role: 'Sovereign NairaTag user on Arc Mainnet',
-        avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(cleanTag)}`,
-        owner: walletAddress,
-        status: 'active',
-        points: 20,
-        earnings: 0,
-        earningsCurrency: 'USDC',
-        entityType: 'autonomous_agent',
-        invocationMethods: ['text', 'voice'],
-        tools: [],
-        callableTools: [],
-      };
-      setChatAgents((prev) => {
-        const existing = prev.filter((a) => a.tag.toLowerCase() !== cleanTag);
-        return [...existing, newAgentObj];
-      });
+      // Immediately refresh the agent directory from Supabase so the new agent is listed
+      await loadAgentDirectory().catch(() => {});
 
       // Clear input, close claim modals, and clear claiming spinner immediately
       setClaimInput('');
