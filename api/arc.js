@@ -5,7 +5,7 @@ import follows from '../lib/arc/follows.js';
 import rewards from '../lib/arc/rewards.js';
 import tasks from '../lib/arc/tasks.js';
 import admin from '../lib/arc/admin.js';
-import socialGraph from '../apps/arc/api/social-graph.js';
+import socialGraph from '../lib/arc/social-graph.js';
 import personalAgent from '../lib/arc/personal-agent.js';
 import personalAgentReconcile from '../lib/arc/personal-agent-reconcile.js';
 import userAgents from '../lib/arc/user-agents.js';
