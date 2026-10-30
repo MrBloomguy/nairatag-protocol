@@ -1,6 +1,6 @@
 import { getArcSessionToken } from './arcSession.js';
 
-const API = import.meta.env.VITE_ARC_SOCIAL_API || 'https://nairatag.ng/api/arc-social-graph';
+const API = import.meta.env.VITE_ARC_SOCIAL_API || '/api/social-alerts';
 
 function cleanTag(value) {
   return String(value || '').normalize('NFKC').trim().replace(/^[₦$@#]/, '').toLowerCase();

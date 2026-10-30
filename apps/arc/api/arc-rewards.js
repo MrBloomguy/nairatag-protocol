@@ -4,7 +4,7 @@
  * Automatically falls back to direct Supabase RPC if upstream service is unavailable.
  */
 
-const TARGET_API = process.env.ARC_REWARDS_UPSTREAM || 'https://nairatag.ng/api/arc-rewards';
+const TARGET_API = process.env.ARC_REWARDS_UPSTREAM || '';
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://bbpdupijsgdghemfpijr.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_3mRhhwX9BhnJyobyCX7uWw_h2-idCPf';
 
@@ -47,8 +47,8 @@ export default async function handler(req, res) {
   const bodyAction = typeof req.body === 'object' ? String(req.body?.action || '') : '';
   const isDirectAction = ['check_claim', 'tag_claimed'].includes(queryAction) || ['check_claim', 'tag_claimed'].includes(bodyAction);
 
-  // If not direct authoritative claim action, try proxying to TARGET_API
-  if (!isDirectAction) {
+  // If not direct authoritative claim action and TARGET_API is configured, try proxying
+  if (!isDirectAction && TARGET_API) {
     try {
       const url = new URL(TARGET_API);
       if (req.query) {

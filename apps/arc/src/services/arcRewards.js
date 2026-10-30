@@ -1,11 +1,11 @@
 import { broadcastArcRewardToTelegram } from './arcSocialBroadcast.js';
 import { getArcSessionToken } from './arcSession.js';
 
-const ARC_REWARDS_API = import.meta.env.VITE_ARC_REWARDS_API || (import.meta.env.DEV ? '/api/arc-rewards' : 'https://nairatag.ng/api/arc-rewards');
+const ARC_REWARDS_API = import.meta.env.VITE_ARC_REWARDS_API || '/api/arc-rewards';
 const ARC_CHAIN_ID = 5042;
 
 function arcRewardsUrl() {
-  const base = typeof window !== 'undefined' ? window.location.origin : 'https://nairatag.ng';
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://arc.nairatag.ng';
   return new URL(ARC_REWARDS_API, base);
 }
 
@@ -277,7 +277,7 @@ export async function submitArcRewardAction({ action, walletAddress, tag, referr
 
   if (sessionToken) {
     headers.Authorization = `Bearer ${sessionToken}`;
-  } else if (provider?.request && walletAddress && action !== 'daily_claim' && action !== 'spin') {
+  } else if (provider?.request && walletAddress && action !== 'daily_claim' && action !== 'spin' && action !== 'tag_claimed') {
     const signedFields = {
       ...(payload.tag ? { tag: payload.tag } : {}),
       ...(payload.referrerTag ? { referrerTag: payload.referrerTag } : {}),
@@ -296,6 +296,19 @@ export async function submitArcRewardAction({ action, walletAddress, tag, referr
     } catch (signErr) {
       console.warn('[submitArcRewardAction sign error]', signErr.message);
     }
+  }
+
+  // Dual-layer claim persistence: call /api/claims on tag_claimed
+  if (action === 'tag_claimed' && payload.tag && (walletAddress || targetWallet)) {
+    fetch('/api/claims', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tag: payload.tag,
+        wallet: walletAddress || targetWallet,
+        txHash: payload.txHash || null,
+      }),
+    }).catch((e) => console.warn('[Direct claim sync background note]:', e.message));
   }
 
   try {

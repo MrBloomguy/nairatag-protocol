@@ -1,7 +1,7 @@
 import { getArcSessionToken } from './arcSession.js';
 
 const ARC_AGENT_FOLLOWS_API = import.meta.env.VITE_ARC_AGENT_FOLLOWS_API
-  || 'https://nairatag.ng/api/arc-follows';
+  || '/api/social-alerts';
 
 function normalizeTag(tag) {
   return String(tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
@@ -16,17 +16,25 @@ async function readResponse(response) {
 }
 
 export async function getArcAgentFollowState(agentId, walletAddress = '') {
-  const url = new URL(ARC_AGENT_FOLLOWS_API);
-  url.searchParams.set('agentId', String(agentId));
-  if (walletAddress) url.searchParams.set('wallet', walletAddress);
-  const token = walletAddress ? getArcSessionToken(walletAddress) : null;
-  const payload = await readResponse(await fetch(url, {
-    headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-  }));
-  return {
-    followerCount: Number(payload.followerCount) || 0,
-    following: Boolean(payload.following),
-  };
+  try {
+    const base = typeof window !== 'undefined' ? window.location.origin : 'https://arc.nairatag.ng';
+    const url = new URL(ARC_AGENT_FOLLOWS_API, base);
+    url.searchParams.set('agentId', String(agentId));
+    if (walletAddress) url.searchParams.set('wallet', walletAddress);
+    const token = walletAddress ? getArcSessionToken(walletAddress) : null;
+    const payload = await readResponse(await fetch(url, {
+      headers: { Accept: 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    }));
+    return {
+      followerCount: Number(payload.followerCount) || 0,
+      following: Boolean(payload.following),
+    };
+  } catch {
+    return {
+      followerCount: 0,
+      following: false,
+    };
+  }
 }
 
 export async function setArcAgentFollow({ action, agentId, tag, walletAddress }) {
@@ -36,7 +44,9 @@ export async function setArcAgentFollow({ action, agentId, tag, walletAddress })
   if (!token) throw new Error('Your sign-in session expired. Please sign in again.');
   const cleanTag = normalizeTag(tag);
   const id = String(agentId);
-  const payload = await readResponse(await fetch(ARC_AGENT_FOLLOWS_API, {
+  const base = typeof window !== 'undefined' ? window.location.origin : 'https://arc.nairatag.ng';
+  const url = new URL(ARC_AGENT_FOLLOWS_API, base);
+  const payload = await readResponse(await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify({ action, agentId: id, tag: cleanTag, walletAddress }),

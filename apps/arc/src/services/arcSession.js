@@ -1,4 +1,4 @@
-const AUTH_API = import.meta.env.VITE_ARC_AUTH_API || 'https://nairatag.ng/api/arc-auth';
+const AUTH_API = import.meta.env.VITE_ARC_AUTH_API || '/api/arc-auth';
 const STORAGE_KEY = 'nairatag_arc_session_v1';
 
 async function postAuth(body) {

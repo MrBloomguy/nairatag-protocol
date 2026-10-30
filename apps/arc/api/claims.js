@@ -192,6 +192,59 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, claims: allClaims || [] });
     }
 
+    // 4. POST: Persist / Record new claimed tag and sync into arc_agents
+    if (req.method === 'POST') {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
+      const tag = String(body.tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
+      const wallet = String(body.wallet || body.walletAddress || '').trim().toLowerCase();
+      const email = body.email ? String(body.email).trim().toLowerCase() : null;
+      const txHash = body.txHash || null;
+      const authProvider = body.authProvider || 'wallet';
+      const avatarUrl = body.avatarUrl || null;
+
+      if (!tag || !wallet) {
+        return res.status(400).json({ ok: false, error: 'Both tag and wallet address are required.' });
+      }
+
+      if (RESERVED_PROTOCOL_AGENTS[tag]) {
+        const reserved = RESERVED_PROTOCOL_AGENTS[tag];
+        if (reserved.address.toLowerCase() !== wallet) {
+          return res.status(400).json({ ok: false, error: `₦${tag.toUpperCase()} is an official sovereign protocol agent on Arc.` });
+        }
+      }
+
+      // Call arc_enforce_claim RPC in Supabase (persists claim and immediately creates/activates row in arc_agents)
+      const url = `${SUPABASE_URL}/rest/v1/rpc/arc_enforce_claim`;
+      const rpcRes = await fetch(url, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          p_tag: tag,
+          p_wallet: wallet,
+          p_email: email,
+          p_tx_hash: txHash,
+          p_auth_provider: authProvider,
+          p_avatar_url: avatarUrl || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(tag)}`,
+        }),
+      });
+
+      const rpcData = await rpcRes.json().catch(() => ({}));
+      if (!rpcRes.ok || rpcData?.ok === false) {
+        return res.status(400).json({ ok: false, error: rpcData?.error || 'Claim could not be recorded.' });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        message: `₦${tag.toUpperCase()} successfully claimed and listed as an active agent on Arc.`,
+        claim: rpcData,
+      });
+    }
+
     return res.status(405).json({ ok: false, error: 'Method not allowed.' });
   } catch (err) {
     console.error('[claims API error]:', err);

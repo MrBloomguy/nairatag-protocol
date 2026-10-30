@@ -3083,6 +3083,31 @@ function ArcAppShell() {
         localStorage.setItem('nairatag_claimed_tag_v1', JSON.stringify({ tag: cleanTag, owner: walletAddress }));
       } catch {}
 
+      // Immediately add the new agent to chatAgents state so the Agents directory displays it in real-time
+      const newAgentObj = {
+        id: `agent_${cleanTag}`,
+        tag: cleanTag,
+        canonicalTag: `₦${cleanTag.toUpperCase()}`,
+        name: `₦${cleanTag.toUpperCase()}`,
+        displayName: `₦${cleanTag.toUpperCase()}`,
+        category: 'User Agent',
+        role: 'Sovereign NairaTag user on Arc Mainnet',
+        avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(cleanTag)}`,
+        owner: walletAddress,
+        status: 'active',
+        points: 20,
+        earnings: 0,
+        earningsCurrency: 'USDC',
+        entityType: 'autonomous_agent',
+        invocationMethods: ['text', 'voice'],
+        tools: [],
+        callableTools: [],
+      };
+      setChatAgents((prev) => {
+        const existing = prev.filter((a) => a.tag.toLowerCase() !== cleanTag);
+        return [...existing, newAgentObj];
+      });
+
       // Clear input, close claim modals, and clear claiming spinner immediately
       setClaimInput('');
       setIsClaiming(false);
@@ -3095,6 +3120,28 @@ function ArcAppShell() {
 
       // Run background integrations non-blocking so claim UI never hangs
       (async () => {
+        // Direct claim sync to /api/claims to guarantee immediate persistence in Supabase arc_agents & arc_claims
+        try {
+          await fetch('/api/claims', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              tag: cleanTag,
+              wallet: walletAddress,
+              email: accountEmail || null,
+              txHash: res.txHash || null,
+              authProvider: authProvider || 'wallet',
+            }),
+          });
+        } catch (claimSyncErr) {
+          console.warn('[Direct claim sync error]:', claimSyncErr.message);
+        }
+
+        // Re-sync agent directory so all components have full server-synced metadata
+        try {
+          loadAgentDirectory();
+        } catch {}
+
         let agentRegistration = null;
         try {
           if (typeof completeArcAgentLink === 'function') {
