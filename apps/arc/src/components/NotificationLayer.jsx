@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Bell,
@@ -123,10 +123,13 @@ function InAppNotificationCard({ item, onDismiss, onAction }) {
 }
 
 /**
- * ─────────────────────────────────────────────────────────────────────────────
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * MAIN NOTIFICATION LAYER (IN-APP STACK + PUSH PERMISSION PROMPT)
- * ─────────────────────────────────────────────────────────────────────────────
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  */
+const dismissedPushBanners = new Set();
+const rewardNudgesShown = new Set();
+
 export default function NotificationLayer({ onNavigateTab, onOpenRewards, accountKey = '', userTag = '', hasBlockingModal = false }) {
   const [notifications, setNotifications] = useState([]);
   const [showPushBanner, setShowPushBanner] = useState(false);
@@ -136,8 +139,8 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards, accoun
   useEffect(() => {
     if (!isPushSupported()) return;
 
-    const isDismissed = localStorage.getItem('nairatag_push_banner_dismissed');
-    const isSubscribed = localStorage.getItem('nairatag_browser_alerts');
+    const isDismissed = dismissedPushBanners.has('dismissed');
+    const isSubscribed = getNotificationPermission() === 'granted';
     const permission = getNotificationPermission();
 
     if (permission === 'default' && !isDismissed && !isSubscribed) {
@@ -158,12 +161,12 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards, accoun
       if (!active) return;
       const today = localDayKey();
       const reminderKey = `nairatag_reward_nudge:${walletKey}:${today}`;
-      try { if (localStorage.getItem(reminderKey)) return; } catch {}
+      if (rewardNudgesShown.has(reminderKey)) return;
       const streakAvailable = !state.streak.claimedToday;
       if (state.spins.available <= 0 && !streakAvailable) return;
-      try { localStorage.setItem(reminderKey, '1'); } catch {}
+      rewardNudgesShown.add(reminderKey);
       const reminders = [];
-      if (streakAvailable) reminders.push('Claim today’s streak points');
+      if (streakAvailable) reminders.push('Claim todayâ€™s streak points');
       if (state.spins.available > 0) reminders.push('use your free spin');
       sendNotificationAlert({
         title: 'Your daily Arc rewards are waiting',
@@ -176,7 +179,7 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards, accoun
 
   // Referral milestones are sent to the inviter's active browser profile.
   useEffect(() => {
-    const tag = String(userTag || '').replace(/^[$₦@#]/, '').trim().toLowerCase();
+    const tag = String(userTag || '').replace(/^[$â‚¦@#]/, '').trim().toLowerCase();
     if (!tag) return undefined;
     const handleReferralCredit = (event) => {
       const detail = event.detail || {};
@@ -236,22 +239,20 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards, accoun
     if (res.success) {
       setShowPushBanner(false);
       sendNotificationAlert({
-        title: '🔔 Browser alerts enabled',
-        body: 'You’ll get browser alerts for reward updates while NairaTag is open, plus a saved in-app notification history.',
+        title: 'ðŸ”” Browser alerts enabled',
+        body: 'Youâ€™ll get browser alerts for reward updates while NairaTag is open, plus a saved in-app notification history.',
         type: 'success',
         actionLabel: 'Explore Rewards',
         url: '/#rewards',
       });
     } else if (res.reason === 'denied') {
       setShowPushBanner(false);
-      localStorage.setItem('nairatag_push_banner_dismissed', 'true');
     }
   };
 
   const handleDismissBanner = () => {
     playMicroSound('pop');
     setShowPushBanner(false);
-    localStorage.setItem('nairatag_push_banner_dismissed', 'true');
   };
 
   return (
@@ -276,8 +277,8 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards, accoun
               <Bell size={16} />
             </div>
             <div>
-              <div className="push-pill-title">Stay in the loop</div>
-              <div className="push-pill-sub">Rewards, streaks and referrals.</div>
+          <div className="push-pill-title">Stay in the rewards loop</div>
+              <div className="push-pill-sub">Get browser alerts for spins, streaks, referrals and Arc payments</div>
             </div>
           </div>
 
@@ -304,3 +305,5 @@ export default function NotificationLayer({ onNavigateTab, onOpenRewards, accoun
     </>
   );
 }
+
+

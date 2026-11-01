@@ -121,6 +121,12 @@ export default defineConfig(({ mode }) => {
       },
       host: true,
       proxy: {
+        '/api/arc-chat': { target: 'https://nairatag.ng', changeOrigin: true, secure: true },
+        '/api/arc': { target: 'https://nairatag.ng', changeOrigin: true, secure: true },
+        '/api/arc-personal-agent': { target: 'https://nairatag.ng', changeOrigin: true, secure: true },
+        '/api/arc-auth': { target: 'https://nairatag.ng', changeOrigin: true, secure: true },
+        '/api/arc-follows': { target: 'https://nairatag.ng', changeOrigin: true, secure: true },
+        '/api/arc-admin': { target: 'https://nairatag.ng', changeOrigin: true, secure: true },
         '/api/arc-agents': { target: 'https://nairatag.ng', changeOrigin: true, secure: true },
         '/api/arc-rewards': { target: 'https://nairatag.ng', changeOrigin: true, secure: true },
         '/api/arc-tasks': { target: 'https://nairatag.ng', changeOrigin: true, secure: true },

@@ -119,13 +119,14 @@ export default async function handler(req, res) {
     if (req.method !== 'GET') return unavailable(res, 'Legacy bounty writes and settlement');
     try {
       const { data, error } = await supabase.from('arc_tasks')
-        .select('id, title, description, category, reward_usdc, reward_token, status, assigned_agent_tag, deliverable, deadline_label, created_at')
+        .select('id, title, description, category, creator_tag, reward_usdc, reward_token, status, escrow_status, assigned_agent_tag, deliverable, deadline_label, created_at')
         .in('chain_id', [5042, 5042002]).eq('status', 'open').order('created_at', { ascending: false });
       if (error) throw error;
       const bounties = (data || []).map((task) => ({
         id: task.id, title: task.title, description: task.description, category: task.category,
+        creator_tag: task.creator_tag,
         reward: Number(task.reward_usdc) || 0, token: task.reward_token || 'USDC',
-        status: task.status, assigned_agent: task.assigned_agent_tag || null,
+        status: task.status, escrow_status: task.escrow_status || null, assigned_agent: task.assigned_agent_tag || null,
         deliverable: task.deliverable, deadline: task.deadline_label,
       }));
       return respond(res, 200, { ok: true, bounties });

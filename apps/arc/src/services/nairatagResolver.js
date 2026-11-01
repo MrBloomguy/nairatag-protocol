@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file nairatagResolver.js
  * @description Canonical NairaTag Identity and Address-Resolution Adapter.
  * Bridges Arc payment workflows to the canonical NairaTag registry & Supabase identity layer.
@@ -17,18 +17,18 @@ const RESOLVER_API_BASE = (typeof import.meta !== 'undefined' && import.meta.env
 const SUPABASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL) || 'https://bbpdupijsgdghemfpijr.supabase.co';
 
 export const KNOWN_AGENTS = {
-  nairatag: { address: '0x653f773C9062e71A6554b42a9525fcD47fCC1693', name: 'NairaTag Core Protocol', tag: '₦NAIRATAG' },
-  bloom: { address: '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26', name: 'NairaTag Sovereign Agent', tag: '₦BLOOM' },
-  defillama: { address: '0xbfA1f73F632a54bFd04e9925dB6006135FcA6Ce6', name: 'DefiLlama Oracle', tag: '₦DEFILLAMA' },
-  meteo: { address: '0x235d0Aa81F1c375c3325214f2dd7F205487eae36', name: 'Open-Meteo Weather', tag: '₦METEO' },
-  coingecko: { address: '0x1abfC727335489f2914Effd7e19C19C309850Ef8', name: 'CoinGecko FX', tag: '₦COINGECKO' },
-  ola: { address: '0x033d1fa7b2a3a25c9cc24254eacd47f0bdb83dfa', name: 'Ola', tag: '₦OLA' },
-  arc: { address: '0x653f773C9062e71A6554b42a9525fcD47fCC1693', name: 'Arc Protocol', tag: '₦ARC' },
+  nairatag: { address: '0x653f773C9062e71A6554b42a9525fcD47fCC1693', name: 'NairaTag Core Protocol', tag: 'â‚¦NAIRATAG' },
+  bloom: { address: '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26', name: 'NairaTag Sovereign Agent', tag: 'â‚¦BLOOM' },
+  defillama: { address: '0xbfA1f73F632a54bFd04e9925dB6006135FcA6Ce6', name: 'DefiLlama Oracle', tag: 'â‚¦DEFILLAMA' },
+  meteo: { address: '0x235d0Aa81F1c375c3325214f2dd7F205487eae36', name: 'Open-Meteo Weather', tag: 'â‚¦METEO' },
+  coingecko: { address: '0x1abfC727335489f2914Effd7e19C19C309850Ef8', name: 'CoinGecko FX', tag: 'â‚¦COINGECKO' },
+  ola: { address: '0x033d1fa7b2a3a25c9cc24254eacd47f0bdb83dfa', name: 'Ola', tag: 'â‚¦OLA' },
+  arc: { address: '0x653f773C9062e71A6554b42a9525fcD47fCC1693', name: 'Arc Protocol', tag: 'â‚¦ARC' },
 };
 
 /**
  * Normalizes user-entered NairaTag into canonical format.
- * Strips ₦ prefix, whitespace, and validates safe alphanumeric / underscore format.
+ * Strips â‚¦ prefix, whitespace, and validates safe alphanumeric / underscore format.
  * Prevents homoglyphs / Unicode spoofing.
  */
 export function normalizeTag(rawInput) {
@@ -37,8 +37,8 @@ export function normalizeTag(rawInput) {
   }
 
   const trimmed = rawInput.trim();
-  // Strip optional leading currency or at symbols: ₦, N, @, #
-  const clean = trimmed.replace(/^[₦Nn@#]/, '').toLowerCase();
+  // Strip optional leading currency or at symbols: â‚¦, N, @, #
+  const clean = trimmed.replace(/^[â‚¦Nn@#]/, '').toLowerCase();
 
   if (clean.length < 2) {
     return { valid: false, error: 'Tag must be at least 2 characters long.' };
@@ -59,8 +59,8 @@ export function normalizeTag(rawInput) {
   return {
     valid: true,
     cleanTag: clean,
-    canonicalTag: `₦${clean}`,
-    displayTag: `₦${clean}`
+    canonicalTag: `â‚¦${clean}`,
+    displayTag: `â‚¦${clean}`
   };
 }
 
@@ -95,7 +95,7 @@ export function classifyInput(input) {
 /**
  * Resolves a canonical NairaTag to its verified recipient wallet address.
  * 
- * @param {string} rawTag - e.g. "₦michael" or "michael"
+ * @param {string} rawTag - e.g. "â‚¦michael" or "michael"
  * @param {string} [network='arc'] - Target payment network
  * @returns {Promise<{
  *   success: boolean,
@@ -134,26 +134,7 @@ export async function resolveTag(rawTag, network = 'arc') {
     };
   }
 
-  // 2. Check local client cache
-  if (typeof window !== 'undefined') {
-    try {
-      const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
-      if (localClaims[clean]?.owner && isAddress(localClaims[clean].owner)) {
-        return {
-          success: true,
-          canonicalTag: norm.canonicalTag,
-          cleanTag: clean,
-          resolvedAddress: getAddress(localClaims[clean].owner),
-          network: 'Arc Mainnet',
-          isVerified: true,
-          source: 'local-claims-cache',
-          reputation: 100,
-        };
-      }
-    } catch {}
-  }
-
-  // 3. Query native API
+  // Query the canonical API
   try {
     const url = `${RESOLVER_API_BASE}?action=resolve&tag=${encodeURIComponent(clean)}`;
     const res = await fetch(url, { cache: 'no-store' });
@@ -252,7 +233,7 @@ export async function checkTagAvailability(rawTag, walletAddress = null) {
     return {
       available: false,
       isTaken: true,
-      reason: `₦${clean.toUpperCase()} is an official sovereign protocol agent on Arc.`,
+      reason: `â‚¦${clean.toUpperCase()} is an official sovereign protocol agent on Arc.`,
     };
   }
 
@@ -313,27 +294,7 @@ export async function getTagForWallet(walletAddress) {
     };
   }
 
-  // 2. Check local client cache
-  if (typeof window !== 'undefined') {
-    try {
-      const activeClaim = JSON.parse(window.localStorage.getItem('nairatag_claimed_tag_v1') || 'null');
-      if (activeClaim?.tag) {
-        const clean = String(activeClaim.tag).replace(/^[₦$@#]/, '').toLowerCase();
-        if (clean !== 'bloom') {
-          return {
-            hasTag: true,
-            tag: `₦${clean.toUpperCase()}`,
-            cleanTag: clean,
-            network: 'Arc Mainnet',
-            claimedAt: Date.now(),
-            reputation: 100,
-          };
-        }
-      }
-    } catch {}
-  }
-
-  // 3. Query native API
+  // Query the canonical API
   try {
     const url = `${RESOLVER_API_BASE}?wallet=${encodeURIComponent(norm)}`;
     const res = await fetch(url, { cache: 'no-store' });
@@ -343,7 +304,7 @@ export async function getTagForWallet(walletAddress) {
         return {
           hasTag: true,
           tag: data.claim.tag,
-          cleanTag: data.claim.cleanTag || data.claim.tag.replace(/^₦/, ''),
+          cleanTag: data.claim.cleanTag || data.claim.tag.replace(/^â‚¦/, ''),
           network: data.claim.network || 'Arc Mainnet',
           claimedAt: data.claim.timestamp || Date.now(),
           reputation: data.claim.reputation || 100,
@@ -489,4 +450,5 @@ export async function claimTag({
     };
   }
 }
+
 

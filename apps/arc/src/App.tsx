@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 // @ts-nocheck
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
@@ -111,7 +111,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <polygon points="32,7 57,53 7,53" fill="url(#emeraldGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="37" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="41.5" textAnchor="middle" fill="#064E3B" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
+        <text x="32" y="41.5" textAnchor="middle" fill="#064E3B" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
       </svg>
     );
   }
@@ -127,7 +127,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <polygon points="32,6 56,19 56,45 32,58 8,45 8,19" fill="url(#cyanGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="32" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="36.5" textAnchor="middle" fill="#0E7490" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
+        <text x="32" y="36.5" textAnchor="middle" fill="#0E7490" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
       </svg>
     );
   }
@@ -143,7 +143,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <path d="M32 5 L38 20 L54 15 L46 29 L60 38 L44 42 L46 59 L32 49 L18 59 L20 42 L4 38 L18 29 L10 15 L26 20 Z" fill="url(#magentaGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="34" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="38.5" textAnchor="middle" fill="#831843" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
+        <text x="32" y="38.5" textAnchor="middle" fill="#831843" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
       </svg>
     );
   }
@@ -159,7 +159,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <polygon points="32,6 54,16 60,38 46,56 18,56 4,38 10,16" fill="url(#goldGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="34" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="38.5" textAnchor="middle" fill="#713F12" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
+        <text x="32" y="38.5" textAnchor="middle" fill="#713F12" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
       </svg>
     );
   }
@@ -175,7 +175,7 @@ export function AgentMedallion({ type, size = 64 }) {
         </defs>
         <path d="M32 6 C38 6 42 12 46 16 C50 20 56 24 56 30 C56 36 50 40 46 44 C42 48 38 54 32 54 C26 54 22 48 18 44 C14 40 8 36 8 30 C8 24 14 20 18 16 C22 12 26 6 32 6 Z" fill="url(#rubyGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
         <circle cx="32" cy="30" r="9" fill="#ffffff" opacity="0.92" />
-        <text x="32" y="34.5" textAnchor="middle" fill="#7F1D1D" fontSize="12" fontWeight="900" fontFamily="sans-serif">₦</text>
+        <text x="32" y="34.5" textAnchor="middle" fill="#7F1D1D" fontSize="12" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
       </svg>
     );
   }
@@ -192,7 +192,7 @@ export function AgentMedallion({ type, size = 64 }) {
       <circle cx="32" cy="32" r="26" fill="url(#bronzeGrad)" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" />
       <circle cx="32" cy="32" r="18" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeDasharray="3 3" />
       <circle cx="32" cy="32" r="10" fill="#ffffff" opacity="0.92" />
-      <text x="32" y="36.5" textAnchor="middle" fill="#7C2D12" fontSize="13" fontWeight="900" fontFamily="sans-serif">₦</text>
+      <text x="32" y="36.5" textAnchor="middle" fill="#7C2D12" fontSize="13" fontWeight="900" fontFamily="sans-serif">â‚¦</text>
     </svg>
   );
 }
@@ -208,13 +208,13 @@ export const VERIFIED_AGENTS = [
     category: 'Delivery & Commerce',
     role: 'Automated Food Orders & Micro-Payments on Arc',
     sparks: 99,
-    earnings: '₦145,000',
+    earnings: 'â‚¦145,000',
     tasksDone: 4,
     totalTasks: 4,
     badgeType: 'emerald',
     badgeName: 'Advanced',
     owner: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
-    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦chowdeck',
+    metadataUri: 'https://nairatag.ng/api/agent/erc8004/â‚¦chowdeck',
     rank: '#1',
     rankTop: 'rank-top1',
     status: 'Verified',
@@ -227,13 +227,13 @@ export const VERIFIED_AGENTS = [
     category: 'Security & Verification',
     role: 'Solidity, Vyper & Bytecode Verifier',
     sparks: 96,
-    earnings: '₦112,500',
+    earnings: 'â‚¦112,500',
     tasksDone: 5,
     totalTasks: 5,
     badgeType: 'cyan',
     badgeName: 'Serious',
     owner: '0x24252B1E40AF6366F1749845333F2E4783F415a7',
-    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦dev',
+    metadataUri: 'https://nairatag.ng/api/agent/erc8004/â‚¦dev',
     rank: '#2',
     rankTop: 'rank-top2',
     status: 'Verified',
@@ -246,13 +246,13 @@ export const VERIFIED_AGENTS = [
     category: 'AI & Generative Media',
     role: 'Generative UI & Visual Assets on Arc',
     sparks: 94,
-    earnings: '₦88,000',
+    earnings: 'â‚¦88,000',
     tasksDone: 4,
     totalTasks: 4,
     badgeType: 'magenta',
     badgeName: 'One of a kind',
     owner: '0x71C84167F3083195655364b964742d057777CC02',
-    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦designer',
+    metadataUri: 'https://nairatag.ng/api/agent/erc8004/â‚¦designer',
     rank: '#3',
     rankTop: 'rank-top3',
     status: 'Verified',
@@ -265,13 +265,13 @@ export const VERIFIED_AGENTS = [
     category: 'P2P Micro-Relief',
     role: 'Instant Meal Vouchers & P2P Settlement',
     sparks: 92,
-    earnings: '₦64,200',
+    earnings: 'â‚¦64,200',
     tasksDone: 4,
     totalTasks: 4,
     badgeType: 'bronze',
     badgeName: 'First Steps',
     owner: '0x0000000000000000000000000000000000000001',
-    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦food',
+    metadataUri: 'https://nairatag.ng/api/agent/erc8004/â‚¦food',
     rank: '#4',
     rankTop: '',
     status: 'Verified',
@@ -284,13 +284,13 @@ export const VERIFIED_AGENTS = [
     category: 'Logistics & Transit',
     role: 'Autonomous Ride & Logistics Dispatcher',
     sparks: 89,
-    earnings: '₦49,500',
+    earnings: 'â‚¦49,500',
     tasksDone: 4,
     totalTasks: 4,
     badgeType: 'gold',
     badgeName: 'Professional',
     owner: '0x0000000000000000000000000000000000000002',
-    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦ride',
+    metadataUri: 'https://nairatag.ng/api/agent/erc8004/â‚¦ride',
     rank: '#5',
     rankTop: '',
     status: 'Verified',
@@ -303,13 +303,13 @@ export const VERIFIED_AGENTS = [
     category: 'Trust & Dispute Arbiter',
     role: 'Multi-party Escrow & Milestone Release',
     sparks: 87,
-    earnings: '₦38,000',
+    earnings: 'â‚¦38,000',
     tasksDone: 4,
     totalTasks: 4,
     badgeType: 'ruby',
     badgeName: 'Legend',
     owner: '0x0000000000000000000000000000000000000003',
-    metadataUri: 'https://old.nairatag.ng/api/agent/erc8004/₦escrow',
+    metadataUri: 'https://nairatag.ng/api/agent/erc8004/â‚¦escrow',
     rank: '#6',
     rankTop: '',
     status: 'Verified',
@@ -325,9 +325,9 @@ export const FAQ_ITEMS = [
     id: 1,
     category: 'arc',
     categoryLabel: 'Arc & USDC',
-    question: 'What is a NairaTag (₦Tag)?',
+    question: 'What is a NairaTag (â‚¦Tag)?',
     answer: [
-      'A human-readable Web3 handle (like ₦SEGUN or ₦CHOWDECK) mapping directly to your Arc wallet address for instant, zero-fee USDC transfers.'
+      'A human-readable Web3 handle (like â‚¦SEGUN or â‚¦CHOWDECK) mapping directly to your Arc wallet address for instant, zero-fee USDC transfers.'
     ]
   },
   {
@@ -342,8 +342,8 @@ export const FAQ_ITEMS = [
   {
     id: 3,
     category: 'claim',
-    categoryLabel: 'Claiming ₦Tag',
-    question: 'How do I claim my ₦Tag?',
+    categoryLabel: 'Claiming â‚¦Tag',
+    question: 'How do I claim my â‚¦Tag?',
     answer: [
       'Go to the Claim tab, type your handle, and click Claim. You instantly receive your Sovereign Identity Card, Ambassador Pass, and payment QR code.'
     ]
@@ -363,7 +363,7 @@ export const FAQ_ITEMS = [
     categoryLabel: 'Resolver Layer',
     question: 'How does the onchain Resolver work?',
     answer: [
-      'The NairaTag resolver smart contract translates any ₦Tag to its 0x wallet address in milliseconds via a single call: resolveTag(tag).'
+      'The NairaTag resolver smart contract translates any â‚¦Tag to its 0x wallet address in milliseconds via a single call: resolveTag(tag).'
     ]
   },
   {
@@ -388,9 +388,9 @@ export const FAQ_ITEMS = [
     id: 8,
     category: 'resolver',
     categoryLabel: 'Resolver Layer',
-    question: 'Can apps and developers integrate ₦Tags?',
+    question: 'Can apps and developers integrate â‚¦Tags?',
     answer: [
-      'Yes. Any dApp, POS terminal, or checkout can resolve and accept ₦Tags via our open TypeScript SDK, Viem adapter, or Solidity contract.'
+      'Yes. Any dApp, POS terminal, or checkout can resolve and accept â‚¦Tags via our open TypeScript SDK, Viem adapter, or Solidity contract.'
     ]
   }
 ];
@@ -400,47 +400,47 @@ export const DEFAULT_TASKS = [
     id: 'b001',
     title: 'Test NairaTag Instant USDC Settlement on Arc Osaka',
     category: 'test',
-    categoryLabel: '🧪 Testing',
+    categoryLabel: 'ðŸ§ª Testing',
     status: 'open',
     rewardUSDC: 25,
-    rewardNGN: '₦37,125',
-    points: 250,
+    rewardNGN: 'â‚¦37,125',
+    points: 0,
     deadline: '2 days left',
     applicants: 4,
-    creatorTag: '₦CORE_DEV',
-    escrowStatus: '🔒 Funded in Escrow',
+    creatorTag: 'â‚¦CORE_DEV',
+    escrowStatus: 'ðŸ”’ Funded in Escrow',
     description: 'Execute and test a deterministic sub-second USDC payment using the Arc testnet memo registry and verify receipt on ArcScan.',
     deliverable: 'ArcScan transaction hash showing finalized payment.',
   },
   {
     id: 'b002',
-    title: 'Build Telegram Bot Adapter for ₦Tag Pay',
+    title: 'Build Telegram Bot Adapter for â‚¦Tag Pay',
     category: 'dev',
-    categoryLabel: '⚡ Engineering',
+    categoryLabel: 'âš¡ Engineering',
     status: 'in_progress',
     rewardUSDC: 120,
-    rewardNGN: '₦178,200',
+    rewardNGN: 'â‚¦178,200',
     points: 800,
     deadline: '4 days left',
     applicants: 3,
-    creatorTag: '₦ARCLABS',
-    escrowStatus: '🔒 Milestone 2/4 Funded',
-    description: 'Implement a GramJS or aiogram bot template that resolves ₦Tags and returns Arc Osaka payment links with deep-linking.',
+    creatorTag: 'â‚¦ARCLABS',
+    escrowStatus: 'ðŸ”’ Milestone 2/4 Funded',
+    description: 'Implement a GramJS or aiogram bot template that resolves â‚¦Tags and returns Arc Osaka payment links with deep-linking.',
     deliverable: 'GitHub repository with clean README and Dockerfile.',
   },
   {
     id: 'b003',
     title: 'Design 5 Sovereign NairaTag Social Banners',
     category: 'design',
-    categoryLabel: '🎨 Design',
+    categoryLabel: 'ðŸŽ¨ Design',
     status: 'open',
     rewardUSDC: 45,
-    rewardNGN: '₦66,825',
+    rewardNGN: 'â‚¦66,825',
     points: 450,
     deadline: '1 day left',
     applicants: 6,
-    creatorTag: '₦CREATIVE',
-    escrowStatus: '🔒 Funded in Escrow',
+    creatorTag: 'â‚¦CREATIVE',
+    escrowStatus: 'ðŸ”’ Funded in Escrow',
     description: 'Create 5 high-impact, sleek 1200x628px social banners highlighting sub-second Arc Osaka finality and zero-gas UX.',
     deliverable: 'Figma file + exported SVGs and PNG assets.',
   },
@@ -448,15 +448,15 @@ export const DEFAULT_TASKS = [
     id: 'b004',
     title: 'Collect Jumia & Konga Product Price Feeds (7 Days)',
     category: 'data',
-    categoryLabel: '📊 Data & AI',
+    categoryLabel: 'ðŸ“Š Data & AI',
     status: 'submitted',
     rewardUSDC: 50,
-    rewardNGN: '₦74,250',
+    rewardNGN: 'â‚¦74,250',
     points: 500,
     deadline: '5 days left',
     applicants: 2,
-    creatorTag: '₦SHOP_AI',
-    escrowStatus: '⏳ Pending Milestone Review',
+    creatorTag: 'â‚¦SHOP_AI',
+    escrowStatus: 'â³ Pending Milestone Review',
     description: 'Scrape and format daily pricing data for 50 consumer electronics in Lagos to supply decentralized AI agent pricing oracles.',
     deliverable: 'Timestamped JSON/CSV dataset with normalized currency fields.',
   },
@@ -464,15 +464,15 @@ export const DEFAULT_TASKS = [
     id: 'b005',
     title: 'Write Technical Developer Guide for Arc ERC-8004',
     category: 'content',
-    categoryLabel: '✍️ Content',
+    categoryLabel: 'âœï¸ Content',
     status: 'open',
     rewardUSDC: 60,
-    rewardNGN: '₦89,100',
+    rewardNGN: 'â‚¦89,100',
     points: 600,
     deadline: '3 days left',
     applicants: 2,
-    creatorTag: '₦FOUNDATION',
-    escrowStatus: '🔒 Funded in Escrow',
+    creatorTag: 'â‚¦FOUNDATION',
+    escrowStatus: 'ðŸ”’ Funded in Escrow',
     description: 'Author a step-by-step markdown tutorial explaining how autonomous AI agents register their identity and receive fees on Arc.',
     deliverable: 'Markdown guide with executable code snippets.',
   },
@@ -480,16 +480,16 @@ export const DEFAULT_TASKS = [
     id: 'b006',
     title: 'Verify Nigerian Phone-to-NairaTag Resolver Accuracy',
     category: 'community',
-    categoryLabel: '📱 Community QA',
+    categoryLabel: 'ðŸ“± Community QA',
     status: 'open',
     rewardUSDC: 15,
-    rewardNGN: '₦22,275',
+    rewardNGN: 'â‚¦22,275',
     points: 150,
     deadline: '2 days left',
     applicants: 8,
-    creatorTag: '₦COMMUNITY',
-    escrowStatus: '🔒 Instant Reward',
-    description: 'Test local MTN, Airtel, and Glo phone number resolution formats (080, 070, +234) into verified ₦Tags in the Arc terminal.',
+    creatorTag: 'â‚¦COMMUNITY',
+    escrowStatus: 'ðŸ”’ Instant Reward',
+    description: 'Test local MTN, Airtel, and Glo phone number resolution formats (080, 070, +234) into verified â‚¦Tags in the Arc terminal.',
     deliverable: 'Short feedback note and resolution log.',
   },
 ];
@@ -498,7 +498,7 @@ export default function App() {
   // Theme State: 'light' | 'dark'
   const [theme, setTheme] = useState(() => {
     try {
-      const saved = localStorage.getItem('nairatag-theme');
+      const saved = null;
       if (saved === 'dark' || saved === 'light') return saved;
       return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     } catch {
@@ -509,7 +509,7 @@ export default function App() {
   useEffect(() => {
     try {
       document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('nairatag-theme', theme);
+      
     } catch (e) {
       console.warn('Theme storage failed:', e);
     }
@@ -649,12 +649,12 @@ export default function App() {
   const [claimCardMode, setClaimCardMode] = useState('identity'); // 'identity' | 'share' | 'referral' | 'qrcode'
 
   const activeCleanTag = useMemo(() => {
-    return claimInput.replace(/^[$₦]/, '').trim() || (myTag ? myTag.tag?.replace(/^[$₦]/, '') : 'TAG');
+    return claimInput.replace(/^[$â‚¦]/, '').trim() || (myTag ? myTag.tag?.replace(/^[$â‚¦]/, '') : 'TAG');
   }, [claimInput, myTag]);
 
   // Dynamic live mascot for claim input searchbar (updates in real-time as user types)
   const liveMascotProfile = useMemo(() => {
-    const clean = claimInput.replace(/^[$₦]/, '').trim().toLowerCase();
+    const clean = claimInput.replace(/^[$â‚¦]/, '').trim().toLowerCase();
     return resolveTagProfile(clean || 'nairatag', { avatarSize: 34 });
   }, [claimInput]);
 
@@ -685,7 +685,7 @@ export default function App() {
   const [agentDetailsLoading, setAgentDetailsLoading] = useState(false);
   const [agentDetailsError, setAgentDetailsError] = useState(null);
   const [agentReputationList, setAgentReputationList] = useState([]);
-  const [newAgentMetadataUri, setNewAgentMetadataUri] = useState('https://old.nairatag.ng/api/agent/erc8004/₦food');
+  const [newAgentMetadataUri, setNewAgentMetadataUri] = useState('https://nairatag.ng/api/agent/erc8004/â‚¦food');
   const [registeringAgent, setRegisteringAgent] = useState(false);
   const [registeredAgentResult, setRegisteredAgentResult] = useState(null);
 
@@ -722,7 +722,7 @@ export default function App() {
   // Quick Mobile Search Handler (Tag / Agent / Address)
   const handleMobileSearch = async (val) => {
     setMobileSearchQuery(val);
-    const clean = val.trim().replace(/^[$₦@#]/, '');
+    const clean = val.trim().replace(/^[$â‚¦@#]/, '');
     if (!clean) {
       setMobileSearchResult(null);
       return;
@@ -874,14 +874,14 @@ export default function App() {
       try {
         if (isNigerianPhone) {
           const displayPhone = cleanPhone.startsWith('+') ? cleanPhone : cleanPhone.startsWith('234') ? `+${cleanPhone}` : `+234${cleanPhone.slice(1)}`;
-          const mappedTag = '₦' + (cleanPhone.slice(-4) === '5678' ? 'segun' : 'michael');
+          const mappedTag = 'â‚¦' + (cleanPhone.slice(-4) === '5678' ? 'segun' : 'michael');
           setResolution({
             loading: false,
             data: {
               success: true,
               tag: mappedTag,
               canonicalTag: mappedTag,
-              cleanTag: mappedTag.replace('₦', ''),
+              cleanTag: mappedTag.replace('â‚¦', ''),
               resolvedAddress: '0x18b6255efb9c9f0b2405086ee50a11ca47250e20',
               network: 'Arc Osaka EVM',
               isVerified: true,
@@ -906,15 +906,7 @@ export default function App() {
 
   // Tasks & Bounties Handlers
   const handleApplyOrCompleteTask = (task) => {
-    if (completedTaskIds.includes(task.id)) {
-      showToast(`Already claimed quest: ${task.title}`, 'info');
-      return;
-    }
-    setCompletedTaskIds((prev) => [...prev, task.id]);
-    const earnedPoints = task.points || 200;
-    setUserPoints((prev) => prev + earnedPoints);
-    triggerCelebrationConfetti();
-    showToast(`🎉 Quest completed! +${earnedPoints} Protocol Points & ${task.rewardUSDC} USDC reward queued!`, 'success', 3500);
+    showToast(`${task.title}: rewards are credited after the server approves a saved submission.`, 'info');
   };
 
   const handleCreateTask = (e) => {
@@ -928,15 +920,15 @@ export default function App() {
       id: `task_${Date.now()}`,
       title: postTaskForm.title,
       category: postTaskForm.category,
-      categoryLabel: postTaskForm.category === 'dev' ? '⚡ Engineering' : postTaskForm.category === 'design' ? '🎨 Design' : postTaskForm.category === 'data' ? '📊 Data & AI' : postTaskForm.category === 'content' ? '✍️ Content' : '🧪 Testing',
+      categoryLabel: postTaskForm.category === 'dev' ? 'âš¡ Engineering' : postTaskForm.category === 'design' ? 'ðŸŽ¨ Design' : postTaskForm.category === 'data' ? 'ðŸ“Š Data & AI' : postTaskForm.category === 'content' ? 'âœï¸ Content' : 'ðŸ§ª Testing',
       status: 'open',
       rewardUSDC: usdc,
-      rewardNGN: `₦${(usdc * 1485).toLocaleString()}`,
+      rewardNGN: `â‚¦${(usdc * 1485).toLocaleString()}`,
       points: Math.round(usdc * 10),
       deadline: postTaskForm.deadline || '3 days left',
       applicants: 0,
-      creatorTag: myTag ? `₦${myTag.tag}` : '₦YOU',
-      escrowStatus: '🔒 Funded in Escrow',
+      creatorTag: myTag ? `â‚¦${myTag.tag}` : 'â‚¦YOU',
+      escrowStatus: 'ðŸ”’ Funded in Escrow',
       description: postTaskForm.description || 'Community bounty on Arc Osaka EVM with automated milestone escrow settlement.',
       deliverable: postTaskForm.requirements || 'Public verification link, GitHub PR, or live demo.',
     };
@@ -961,7 +953,7 @@ export default function App() {
     const currentMsgs = agentChatMessages[agentId] || [
       {
         sender: 'agent',
-        text: `Hello! I am ${selectedAgentProfile?.name || 'Autonomous Agent'} (₦${selectedAgentProfile?.tag?.toUpperCase() || 'AGENT'}), verified under Arc ERC-8004 (#${selectedAgentProfile?.id || ''}). How can I assist you with autonomous tasks or settlements on Arc?`,
+        text: `Hello! I am ${selectedAgentProfile?.name || 'Autonomous Agent'} (â‚¦${selectedAgentProfile?.tag?.toUpperCase() || 'AGENT'}), verified under Arc ERC-8004 (#${selectedAgentProfile?.id || ''}). How can I assist you with autonomous tasks or settlements on Arc?`,
         time: 'Just now'
       }
     ];
@@ -974,13 +966,13 @@ export default function App() {
       let reply = '';
       const lower = text.toLowerCase();
       if (lower.includes('send') || lower.includes('pay') || lower.includes('usdc')) {
-        reply = `I can receive settlements directly! You can send USDC to my sovereign handle ₦${selectedAgentProfile?.tag?.toUpperCase()} on Arc Osaka EVM with deterministic sub-second finality.`;
+        reply = `I can receive settlements directly! You can send USDC to my sovereign handle â‚¦${selectedAgentProfile?.tag?.toUpperCase()} on Arc Osaka EVM with deterministic sub-second finality.`;
       } else if (lower.includes('reputation') || lower.includes('score') || lower.includes('erc-8004') || lower.includes('8004')) {
         reply = `My Arc ERC-8004 identity is verified (#${selectedAgentProfile?.id}). Reputation score: ${selectedAgentProfile?.sparks || 98}/100. All tasks and milestones are logged onchain to the Arc Reputation Registry!`;
       } else if (lower.includes('service') || lower.includes('do') || lower.includes('work') || lower.includes('task')) {
         reply = `As ${selectedAgentProfile?.role}, I specialize in autonomous execution, escrow verification, and rapid micro-settlement for African web3 builders.`;
       } else if (lower.includes('tag') || lower.includes('claim')) {
-        reply = `You can claim your own sovereign ₦Tag right here in the 'Claim ₦Tag' tab! It's free and instantly links your wallet to your sovereign identity.`;
+        reply = `You can claim your own sovereign â‚¦Tag right here in the 'Claim â‚¦Tag' tab! It's free and instantly links your wallet to your sovereign identity.`;
       } else {
         reply = `Understood! I'm synchronized with Arc Osaka EVM and ready to execute. Let me know if you want to fund an escrow milestone, dispatch a micro-payment, or inspect my ERC-8004 records.`;
       }
@@ -1065,7 +1057,7 @@ export default function App() {
         type: 'payment',
         txHash: result.txHash,
         amount: amountInput,
-        recipient: targetTag ? `₦${targetTag.replace(/^[$₦]/, '').toUpperCase()}` : shorten(result.recipientAddress),
+        recipient: targetTag ? `â‚¦${targetTag.replace(/^[$â‚¦]/, '').toUpperCase()}` : shorten(result.recipientAddress),
         explorerUrl: result.explorerUrl,
         executionTimeMs: result.executionTimeMs,
       });
@@ -1102,11 +1094,11 @@ export default function App() {
       });
 
       triggerCelebrationConfetti();
-      showToast(`Swap completed: ${swapAmountIn} ${swapTokenIn} ➔ ${swapEstimate?.amountOut || ''} ${swapTokenOut}`, 'success', 4000);
+      showToast(`Swap completed: ${swapAmountIn} ${swapTokenIn} âž” ${swapEstimate?.amountOut || ''} ${swapTokenOut}`, 'success', 4000);
       setCelebrationDetails({
         type: 'swap',
         txHash: res.txHash,
-        amount: `${swapAmountIn} ${swapTokenIn} ➔ ${swapEstimate?.amountOut || ''} ${swapTokenOut}`,
+        amount: `${swapAmountIn} ${swapTokenIn} âž” ${swapEstimate?.amountOut || ''} ${swapTokenOut}`,
         recipient: 'Arc App Kit Swap',
         explorerUrl: `${ARC_TESTNET_CONFIG.explorerUrl}/tx/${res.txHash}`,
       });
@@ -1212,15 +1204,15 @@ export default function App() {
   // Pay Agent directly in USDC from profile
   const handlePayAgentFromProfile = (agent) => {
     setSelectedAgentProfile(null);
-    setRecipientInput(`₦${agent.tag}`);
+    setRecipientInput(`â‚¦${agent.tag}`);
     setMainTab('pay');
-    showToast(`Recipient pre-filled: ₦${agent.tag.toUpperCase()}`, 'info', 3000);
+    showToast(`Recipient pre-filled: â‚¦${agent.tag.toUpperCase()}`, 'info', 3000);
   };
 
   // Claim Tag Check
   const handleCheckClaim = async (val) => {
     setClaimInput(val);
-    const clean = val.replace(/^[₦$@#]/, '').toUpperCase();
+    const clean = val.replace(/^[â‚¦$@#]/, '').toUpperCase();
     if (!clean) {
       setClaimStatus(null);
       return;
@@ -1247,11 +1239,11 @@ export default function App() {
         ownerAddress: walletAddress,
       });
       triggerCelebrationConfetti();
-      showToast(`₦${claimInput.replace(/^[$₦]/, '').toUpperCase()} claimed successfully on Arc!`, 'success', 4000);
+      showToast(`â‚¦${claimInput.replace(/^[$â‚¦]/, '').toUpperCase()} claimed successfully on Arc!`, 'success', 4000);
       setCelebrationDetails({
         type: 'claim',
         txHash: res.txHash,
-        amount: `₦${claimInput.replace(/^[$₦]/, '').toUpperCase()}`,
+        amount: `â‚¦${claimInput.replace(/^[$â‚¦]/, '').toUpperCase()}`,
         recipient: 'Sovereign Onchain Tag',
         explorerUrl: `${ARC_TESTNET_CONFIG.explorerUrl}/tx/${res.txHash}`,
       });
@@ -1273,12 +1265,12 @@ export default function App() {
 
   return (
     <>
-      {/* ─── Top Application Header (Reference-matched Layout) ─── */}
+      {/* â”€â”€â”€ Top Application Header (Reference-matched Layout) â”€â”€â”€ */}
       <header className="app-header">
         {/* Left Side: Brand Logo Badge + Mobile Hamburger Menu */}
         <div className="app-header-left">
           <div className="app-brand" onClick={() => setMainTab('pay')}>
-            <div className="brand-badge" title="NairaTag on Arc">₦</div>
+            <div className="brand-badge" title="NairaTag on Arc">â‚¦</div>
             <div className="brand-title-wrap desktop-only">
               <span className="brand-title">NairaTag</span>
               <span className="brand-subtitle">Send USDC on Arc to a name</span>
@@ -1312,7 +1304,7 @@ export default function App() {
             onClick={() => setMainTab('claim')}
           >
             <Sparkles size={14} />
-            <span>Claim ₦Tag</span>
+            <span>Claim â‚¦Tag</span>
           </button>
           <button
             type="button"
@@ -1340,7 +1332,7 @@ export default function App() {
           </button>
         </nav>
 
-        {/* Right Side: Search Icon + More (···) + Connect Pill */}
+        {/* Right Side: Search Icon + More (Â·Â·Â·) + Connect Pill */}
         <div className="app-header-actions">
           {/* Search Button (Hidden on Claim page) */}
           {mainTab !== 'claim' && (
@@ -1355,7 +1347,7 @@ export default function App() {
             </button>
           )}
 
-          {/* More Button (···) */}
+          {/* More Button (Â·Â·Â·) */}
           <div className="header-more-wrapper">
             <button
               type="button"
@@ -1392,7 +1384,7 @@ export default function App() {
                     onClick={() => setIsMoreMenuOpen(false)}
                   >
                     <ExternalLink size={15} />
-                    <span>ArcScan Explorer ↗</span>
+                    <span>ArcScan Explorer â†—</span>
                   </a>
 
                   <a
@@ -1403,7 +1395,7 @@ export default function App() {
                     onClick={() => setIsMoreMenuOpen(false)}
                   >
                     <Bot size={15} />
-                    <span>8004scan (AI Agents) ↗</span>
+                    <span>8004scan (AI Agents) â†—</span>
                   </a>
 
                   <div className="more-menu-divider" />
@@ -1436,7 +1428,7 @@ export default function App() {
               title="Click to view Sovereign Portfolio"
             >
               <span className="wallet-connected-dot" />
-              <span className="wallet-connected-handle">{myTag ? `₦${myTag.tag}` : shorten(walletAddress)}</span>
+              <span className="wallet-connected-handle">{myTag ? `â‚¦${myTag.tag}` : shorten(walletAddress)}</span>
               <span className="wallet-connected-sep desktop-only">|</span>
               <span className="wallet-connected-bal desktop-only">{usdcBalance.formatted} USDC</span>
             </div>
@@ -1452,15 +1444,15 @@ export default function App() {
         </div>
       </header>
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           MOBILE NAVIGATION DRAWER (SLIDE-DOWN SHEET MATCHING REFERENCE)
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isMobileMenuOpen && (
         <div className="mobile-drawer-backdrop" onClick={() => setIsMobileMenuOpen(false)}>
           <div className="mobile-drawer-panel" onClick={(e) => e.stopPropagation()}>
             <div className="mobile-drawer-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div className="brand-badge" style={{ width: 28, height: 28, fontSize: 15 }}>₦</div>
+                <div className="brand-badge" style={{ width: 28, height: 28, fontSize: 15 }}>â‚¦</div>
                 <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--privy-color-foreground)' }}>NairaTag</span>
                 <span className="card-net-pill" style={{ fontSize: 10 }}>Arc Testnet</span>
               </div>
@@ -1505,7 +1497,7 @@ export default function App() {
                   <Sparkles size={18} />
                 </div>
                 <div className="mobile-nav-text">
-                  <span className="mobile-nav-title">Claim ₦Tag</span>
+                  <span className="mobile-nav-title">Claim â‚¦Tag</span>
                   <span className="mobile-nav-desc">Mint sovereign onchain identity handle</span>
                 </div>
                 {mainTab === 'claim' && <span className="mobile-nav-active-pill">Active</span>}
@@ -1570,7 +1562,7 @@ export default function App() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981' }} />
-                  <span>Arc Osaka EVM · 5042002</span>
+                  <span>Arc Osaka EVM Â· 5042002</span>
                 </div>
                 <button
                   type="button"
@@ -1587,9 +1579,9 @@ export default function App() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           MOBILE QUICK SEARCH MODAL (SEARCH ICON TRIGGER)
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isMobileSearchOpen && (
         <div className="mobile-search-backdrop" onClick={() => setIsMobileSearchOpen(false)}>
           <div className="mobile-search-dialog" onClick={(e) => e.stopPropagation()}>
@@ -1599,7 +1591,7 @@ export default function App() {
                 type="text"
                 autoFocus
                 className="mobile-search-input"
-                placeholder="Search ₦Tag, Agent, or 0x address..."
+                placeholder="Search â‚¦Tag, Agent, or 0x address..."
                 value={mobileSearchQuery}
                 onChange={(e) => handleMobileSearch(e.target.value)}
               />
@@ -1619,7 +1611,7 @@ export default function App() {
                   Popular Searches
                 </span>
                 <div className="quick-tag-suggestions" style={{ marginTop: '8px' }}>
-                  {['₦chowdeck', '₦dev', '₦designer', '₦food', '₦ride', '₦escrow'].map((preset) => (
+                  {['â‚¦chowdeck', 'â‚¦dev', 'â‚¦designer', 'â‚¦food', 'â‚¦ride', 'â‚¦escrow'].map((preset) => (
                     <button
                       key={preset}
                       type="button"
@@ -1650,7 +1642,7 @@ export default function App() {
                       <div className="agent-circle-meta">
                         <div className="agent-circle-name">
                           <span>{mobileSearchResult.agent.name}</span>
-                          <span className="agent-circle-tag-pill">₦{mobileSearchResult.agent.tag}</span>
+                          <span className="agent-circle-tag-pill">â‚¦{mobileSearchResult.agent.tag}</span>
                         </div>
                         <div className="agent-circle-tagline">{mobileSearchResult.agent.role}</div>
                       </div>
@@ -1661,10 +1653,10 @@ export default function App() {
                   <div style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <div style={{ fontSize: '15px', fontWeight: 800, color: 'var(--privy-color-foreground)' }}>
-                        ₦{mobileSearchResult.tag}
+                        â‚¦{mobileSearchResult.tag}
                       </div>
                       <div style={{ fontSize: '12px', color: mobileSearchResult.available ? '#059669' : '#DC2626', fontWeight: 600 }}>
-                        {mobileSearchResult.available ? '✓ Available to claim' : '✕ Taken / Registered'}
+                        {mobileSearchResult.available ? 'âœ“ Available to claim' : 'âœ• Taken / Registered'}
                       </div>
                     </div>
 
@@ -1678,7 +1670,7 @@ export default function App() {
                           setClaimInput(mobileSearchResult.tag);
                           setMainTab('claim');
                         } else {
-                          setRecipientInput(`₦${mobileSearchResult.tag}`);
+                          setRecipientInput(`â‚¦${mobileSearchResult.tag}`);
                           setMainTab('pay');
                         }
                       }}
@@ -1693,11 +1685,11 @@ export default function App() {
         </div>
       )}
 
-      {/* ─── Main Application Body ─── */}
+      {/* â”€â”€â”€ Main Application Body â”€â”€â”€ */}
       <main className="main-content-wrapper">
-        {/* ───────────────────────────────────────────────────────────────────
+        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             TAB 1: PAY & RESOLVE TERMINAL
-            ─────────────────────────────────────────────────────────────────── */}
+            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {mainTab === 'pay' && (
           <div className="terminal-layout-centered">
             <div className="crypto-card-terminal">
@@ -1716,24 +1708,24 @@ export default function App() {
                     className="quick-chip-btn"
                     onClick={() => setMainTab('claim')}
                   >
-                    + Claim ₦Tag
+                    + Claim â‚¦Tag
                   </button>
                 </div>
               </div>
 
-              {/* 1. Recipient ₦Tag Input Box */}
+              {/* 1. Recipient â‚¦Tag Input Box */}
               <div className="tag-recipient-box">
                 <div className="token-input-header">
                   <span>To</span>
                   <span style={{ color: 'var(--privy-color-border-interactive)' }}>Direct Resolve</span>
                 </div>
                 <div className="tag-input-field-wrap">
-                  <span className="tag-currency-symbol">₦</span>
+                  <span className="tag-currency-symbol">â‚¦</span>
                   <input
                     type="text"
                     className="tag-text-field"
                     placeholder="Enter name (e.g. SEGUN, FOOD)"
-                    value={recipientInput.replace(/^[$₦]/, '')}
+                    value={recipientInput.replace(/^[$â‚¦]/, '')}
                     onChange={(e) => setRecipientInput(e.target.value)}
                   />
                   {resolution.loading && <RefreshCw size={14} className="animate-spin" color="var(--privy-color-border-interactive)" />}
@@ -1747,9 +1739,9 @@ export default function App() {
                       key={tag}
                       type="button"
                       className="tag-suggestion-chip"
-                      onClick={() => setRecipientInput(`₦${tag}`)}
+                      onClick={() => setRecipientInput(`â‚¦${tag}`)}
                     >
-                      ₦{tag}
+                      â‚¦{tag}
                     </button>
                   ))}
                 </div>
@@ -1759,13 +1751,13 @@ export default function App() {
                   <div className="resolved-recipient-card">
                     <div className="resolved-left">
                       <div className="resolved-avatar">
-                        {resolution.data.tag ? resolution.data.tag.slice(1, 2) : '₦'}
+                        {resolution.data.tag ? resolution.data.tag.slice(1, 2) : 'â‚¦'}
                       </div>
                       <div>
                         <div className="resolved-title">
                           {resolution.data.tag || 'Verified Recipient'}
                           <span style={{ marginLeft: '6px', fontSize: '10px', color: 'var(--privy-color-success-dark)', fontWeight: 600 }}>
-                            ● RESOLVED
+                            â— RESOLVED
                           </span>
                         </div>
                         {resolution.data.phone && (
@@ -1843,7 +1835,7 @@ export default function App() {
                     style={{ background: 'none', border: 'none', color: 'var(--privy-color-border-interactive)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
                     onClick={() => setShowMemoField(!showMemoField)}
                   >
-                    <span>{showMemoField ? '− Hide Memo' : '+ Add Memo (Optional)'}</span>
+                    <span>{showMemoField ? 'âˆ’ Hide Memo' : '+ Add Memo (Optional)'}</span>
                   </button>
                   <span style={{ fontSize: '10px', color: 'var(--privy-color-foreground-3)' }}>0x5294...e3dc</span>
                 </div>
@@ -1873,9 +1865,9 @@ export default function App() {
           </div>
         )}
 
-        {/* ───────────────────────────────────────────────────────────────────
+        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             TAB 2: CLAIM NAIRATAG IDENTITY
-            ─────────────────────────────────────────────────────────────────── */}
+            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {mainTab === 'claim' && (
           <div className="claim-page-layout">
             {/* Left Column: Uniswap-width 480px Main Claim Console & Registrations */}
@@ -1885,20 +1877,20 @@ export default function App() {
                 {myTag && (
                   <div className="active-claimed-banner">
                     <div className="active-claimed-info">
-                      <span style={{ fontSize: '15px' }}>✨</span>
+                      <span style={{ fontSize: '15px' }}>âœ¨</span>
                       <div>
                         <div className="active-claimed-label">
-                          You own <strong>₦{myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}</strong>
+                          You own <strong>â‚¦{myTag.tag?.replace(/^[$â‚¦]/, '').toUpperCase()}</strong>
                         </div>
                         <div className="active-claimed-sub">
-                          {shorten(walletAddress)} · Arc Testnet
+                          {shorten(walletAddress)} Â· Arc Testnet
                         </div>
                       </div>
                     </div>
                     <button
                       type="button"
                       className="btn-claimed-action"
-                      onClick={() => triggerCopy('my_tag', `₦${myTag.tag?.replace(/^[$₦]/, '').toUpperCase()}`)}
+                      onClick={() => triggerCopy('my_tag', `â‚¦${myTag.tag?.replace(/^[$â‚¦]/, '').toUpperCase()}`)}
                     >
                       {copiedKey === 'my_tag' ? 'Copied' : 'Copy'}
                     </button>
@@ -1916,8 +1908,8 @@ export default function App() {
                     }}
                     title="Click to search / edit tag"
                   >
-                    <span className="live-tag-prefix">₦</span>
-                    <span>{claimInput.replace(/^[$₦]/, '').toUpperCase() || 'Tag'}</span>
+                    <span className="live-tag-prefix">â‚¦</span>
+                    <span>{claimInput.replace(/^[$â‚¦]/, '').toUpperCase() || 'Tag'}</span>
                   </div>
                 </div>
 
@@ -1931,7 +1923,7 @@ export default function App() {
                     autoComplete="off"
                     spellCheck="false"
                     aria-label="Enter your username"
-                    value={claimInput.replace(/^[$₦]/, '')}
+                    value={claimInput.replace(/^[$â‚¦]/, '')}
                     onChange={(e) => handleCheckClaim(e.target.value)}
                   />
                   <div className="claim-input-right-cluster">
@@ -1968,7 +1960,7 @@ export default function App() {
                     {/* Live Interactive Mascot right beside Ready/Available */}
                     <div
                       className="claim-live-mascot-pill"
-                      title={`₦${claimInput.replace(/^[$₦]/, '').toLowerCase() || 'tag'} Live Mascot (${liveMascotProfile?.palette?.name || 'Vibrant'})`}
+                      title={`â‚¦${claimInput.replace(/^[$â‚¦]/, '').toLowerCase() || 'tag'} Live Mascot (${liveMascotProfile?.palette?.name || 'Vibrant'})`}
                       style={{
                         backgroundColor: liveMascotProfile?.palette?.primary || '#bbf246',
                       }}
@@ -2025,18 +2017,18 @@ export default function App() {
                         key={item.tag}
                         className="reg-pill-item"
                         onClick={() => handleCheckClaim(item.tag)}
-                        title={`₦${item.tag} · Arc Testnet`}
+                        title={`â‚¦${item.tag} Â· Arc Testnet`}
                       >
                         <img
                           className="reg-dicebear-avatar"
                           src={`https://api.dicebear.com/7.x/identicon/svg?seed=${item.tag}`}
-                          alt={`₦${item.tag}`}
+                          alt={`â‚¦${item.tag}`}
                           onError={(e) => {
                             e.currentTarget.src =
-                              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">₦</text></svg>';
+                              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">â‚¦</text></svg>';
                           }}
                         />
-                        <span className="reg-handle-tag">₦{item.tag}</span>
+                        <span className="reg-handle-tag">â‚¦{item.tag}</span>
                         <span className="reg-net-mini">{item.net}</span>
                       </div>
                     ))}
@@ -2053,18 +2045,18 @@ export default function App() {
                         key={item.tag}
                         className="reg-pill-item"
                         onClick={() => handleCheckClaim(item.tag)}
-                        title={`₦${item.tag} · Arc Testnet`}
+                        title={`â‚¦${item.tag} Â· Arc Testnet`}
                       >
                         <img
                           className="reg-dicebear-avatar"
                           src={`https://api.dicebear.com/7.x/identicon/svg?seed=${item.tag}`}
-                          alt={`₦${item.tag}`}
+                          alt={`â‚¦${item.tag}`}
                           onError={(e) => {
                             e.currentTarget.src =
-                              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">₦</text></svg>';
+                              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">â‚¦</text></svg>';
                           }}
                         />
-                        <span className="reg-handle-tag">₦{item.tag}</span>
+                        <span className="reg-handle-tag">â‚¦{item.tag}</span>
                         <span className="reg-net-mini">{item.net}</span>
                       </div>
                     ))}
@@ -2081,18 +2073,18 @@ export default function App() {
                         key={item.tag}
                         className="reg-pill-item"
                         onClick={() => handleCheckClaim(item.tag)}
-                        title={`₦${item.tag} · Arc Testnet`}
+                        title={`â‚¦${item.tag} Â· Arc Testnet`}
                       >
                         <img
                           className="reg-dicebear-avatar"
                           src={`https://api.dicebear.com/7.x/identicon/svg?seed=${item.tag}`}
-                          alt={`₦${item.tag}`}
+                          alt={`â‚¦${item.tag}`}
                           onError={(e) => {
                             e.currentTarget.src =
-                              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">₦</text></svg>';
+                              'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="12" fill="%2310b981"/><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" fill="white" font-size="11" font-weight="bold">â‚¦</text></svg>';
                           }}
                         />
-                        <span className="reg-handle-tag">₦{item.tag}</span>
+                        <span className="reg-handle-tag">â‚¦{item.tag}</span>
                         <span className="reg-net-mini">{item.net}</span>
                       </div>
                     ))}
@@ -2119,9 +2111,9 @@ export default function App() {
 
 
 
-        {/* ───────────────────────────────────────────────────────────────────
+        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             TAB 3: AI AGENTS (GRID & LIST VIEW GROUNDED IN REFERENCES 1, 2, 3)
-            ─────────────────────────────────────────────────────────────────── */}
+            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {mainTab === 'agents' && (
           <div className="agents-page-container">
             {/* Top Bar: Search and Grid/List View Toggle */}
@@ -2192,7 +2184,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* ─── 1. GRID VIEW (Reference 1: Milestones) ─── */}
+            {/* â”€â”€â”€ 1. GRID VIEW (Reference 1: Milestones) â”€â”€â”€ */}
             {agentsViewMode === 'grid' && (
               <div className="agents-milestones-grid">
                 {filteredAgents.map((agent) => (
@@ -2208,7 +2200,7 @@ export default function App() {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                      <h3 className="milestone-card-title" style={{ margin: 0 }}>₦{agent.tag.toUpperCase()}</h3>
+                      <h3 className="milestone-card-title" style={{ margin: 0 }}>â‚¦{agent.tag.toUpperCase()}</h3>
                       <img
                         src="/verified-badge.png"
                         alt="Verified"
@@ -2238,7 +2230,7 @@ export default function App() {
               </div>
             )}
 
-            {/* ─── 2. LIST VIEW (Reference 3: Your Circle) ─── */}
+            {/* â”€â”€â”€ 2. LIST VIEW (Reference 3: Your Circle) â”€â”€â”€ */}
             {agentsViewMode === 'list' && (
               <div className="agents-circle-list">
                 {filteredAgents.map((agent) => (
@@ -2263,7 +2255,7 @@ export default function App() {
                       <div className="agent-circle-meta">
                         <div className="agent-circle-name">
                           <span>{agent.name}</span>
-                          <span className="agent-circle-tag-pill">₦{agent.tag}</span>
+                          <span className="agent-circle-tag-pill">â‚¦{agent.tag}</span>
                           <img
                             src="/verified-badge.png"
                             alt="Verified"
@@ -2294,7 +2286,7 @@ export default function App() {
                   Deploy Your Autonomous Agent
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
-                  Mint a sovereign ERC-8004 Identity NFT registered with your ₦Tag on Arc Testnet.
+                  Mint a sovereign ERC-8004 Identity NFT registered with your â‚¦Tag on Arc Testnet.
                 </div>
               </div>
               <button
@@ -2316,9 +2308,9 @@ export default function App() {
                     <button
                       type="button"
                       style={{ background: 'none', border: 'none', color: 'var(--privy-color-border-interactive)', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
-                      onClick={() => setNewAgentMetadataUri('https://old.nairatag.ng/api/agent/erc8004/$chowdeck')}
+                      onClick={() => setNewAgentMetadataUri('https://nairatag.ng/api/agent/erc8004/$chowdeck')}
                     >
-                      ⚡ Autofill ₦CHOWDECK
+                      âš¡ Autofill â‚¦CHOWDECK
                     </button>
                   </div>
                   <input
@@ -2354,16 +2346,16 @@ export default function App() {
           </div>
         )}
 
-        {/* ───────────────────────────────────────────────────────────────────
+        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             TAB: TASKS & BOUNTIES (ONCHAIN QUESTS & MILESTONE ESCROW)
-            ─────────────────────────────────────────────────────────────────── */}
+            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {mainTab === 'tasks' && (
           <div className="tasks-page-container">
             {/* Top Bar with Title & Post Bounty button */}
             <div className="tasks-top-bar">
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                  <span style={{ fontSize: '20px' }}>💼</span>
+                  <span style={{ fontSize: '20px' }}>ðŸ’¼</span>
                   <h1 className="tasks-header-title">Tasks & Bounties</h1>
                   <span className="card-net-pill">Arc Escrow</span>
                 </div>
@@ -2390,7 +2382,7 @@ export default function App() {
                   <span>Escrow Volume</span>
                 </div>
                 <div className="stat-value">$14,250 USDC</div>
-                <div className="stat-desc">≈ ₦21,161,250 NGN locked</div>
+                <div className="stat-desc">â‰ˆ â‚¦21,161,250 NGN locked</div>
               </div>
               <div className="tasks-stat-card">
                 <div className="stat-label">
@@ -2432,7 +2424,7 @@ export default function App() {
                   { step: 1, title: '1. Fund Escrow', desc: '100% USDC locked in Arc contract' },
                   { step: 2, title: '2. Submit Work', desc: 'Deliverable hash committed' },
                   { step: 3, title: '3. Verify Milestone', desc: 'DAO & bounty owner inspection' },
-                  { step: 4, title: '4. Release Payment', desc: 'Instant transfer to ₦Tag' },
+                  { step: 4, title: '4. Release Payment', desc: 'Instant transfer to â‚¦Tag' },
                 ].map((s) => (
                   <div
                     key={s.step}
@@ -2458,7 +2450,7 @@ export default function App() {
                     className="quick-chip-btn"
                     onClick={() => setActiveEscrowStep((prev) => (prev % 4) + 1)}
                   >
-                    <span>Advance Pipeline Step →</span>
+                    <span>Advance Pipeline Step â†’</span>
                   </button>
                   <button
                     type="button"
@@ -2495,11 +2487,11 @@ export default function App() {
               <div className="tasks-cat-pills">
                 {[
                   { id: 'all', label: 'All Quests' },
-                  { id: 'dev', label: '⚡ Engineering' },
-                  { id: 'design', label: '🎨 Design' },
-                  { id: 'data', label: '📊 Data & AI' },
-                  { id: 'content', label: '✍️ Content' },
-                  { id: 'test', label: '🧪 Testing' },
+                  { id: 'dev', label: 'âš¡ Engineering' },
+                  { id: 'design', label: 'ðŸŽ¨ Design' },
+                  { id: 'data', label: 'ðŸ“Š Data & AI' },
+                  { id: 'content', label: 'âœï¸ Content' },
+                  { id: 'test', label: 'ðŸ§ª Testing' },
                 ].map((cat) => (
                   <button
                     key={cat.id}
@@ -2543,7 +2535,7 @@ export default function App() {
                             {task.rewardUSDC} USDC
                           </div>
                           <div style={{ fontSize: '10.5px', color: 'var(--privy-color-foreground-2)' }}>
-                            {task.rewardNGN} • +{task.points} Pts
+                            {task.rewardNGN} â€¢ +{task.points} Pts
                           </div>
                         </div>
                         <button
@@ -2557,7 +2549,7 @@ export default function App() {
                               <CheckCircle2 size={13} /> Completed
                             </span>
                           ) : (
-                            <span>Claim Quest →</span>
+                            <span>Claim Quest â†’</span>
                           )}
                         </button>
                       </div>
@@ -2573,9 +2565,9 @@ export default function App() {
           </div>
         )}
 
-        {/* ───────────────────────────────────────────────────────────────────
+        {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             TAB 4: FAQ (PROTOCOL KNOWLEDGE BASE & ACCORDION)
-            ─────────────────────────────────────────────────────────────────── */}
+            â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         {mainTab === 'faq' && (
           <div className="faq-page-container">
             {/* Hero Section */}
@@ -2586,7 +2578,7 @@ export default function App() {
               </div>
               <h1 className="faq-title">Frequently Asked Questions</h1>
               <p className="faq-subtitle">
-                Everything you need to know about sovereign ₦Tags on Arc Osaka EVM, USDC instant settlements, autonomous ERC-8004 AI agents, and non-custodial resolvers.
+                Everything you need to know about sovereign â‚¦Tags on Arc Osaka EVM, USDC instant settlements, autonomous ERC-8004 AI agents, and non-custodial resolvers.
               </p>
             </div>
 
@@ -2616,7 +2608,7 @@ export default function App() {
                 {[
                   { id: 'all', label: 'All' },
                   { id: 'arc', label: 'Arc & USDC' },
-                  { id: 'claim', label: 'Claiming ₦Tag' },
+                  { id: 'claim', label: 'Claiming â‚¦Tag' },
                   { id: 'agents', label: 'AI Agents (ERC-8004)' },
                   { id: 'resolver', label: 'Resolver Layer' },
                   { id: 'payments', label: 'Payments & Security' },
@@ -2692,7 +2684,7 @@ export default function App() {
               <div className="faq-help-left">
                 <div className="faq-help-title">Still have questions or need assistance?</div>
                 <div className="faq-help-sub">
-                  Explore verified AI Agents on Arc Osaka EVM or claim your sovereign ₦Tag handle today.
+                  Explore verified AI Agents on Arc Osaka EVM or claim your sovereign â‚¦Tag handle today.
                 </div>
               </div>
               <div className="faq-help-actions">
@@ -2703,7 +2695,7 @@ export default function App() {
                   onClick={() => setMainTab('claim')}
                 >
                   <Sparkles size={13} />
-                  <span>Claim ₦Tag</span>
+                  <span>Claim â‚¦Tag</span>
                 </button>
                 <button
                   type="button"
@@ -2720,9 +2712,9 @@ export default function App() {
         )}
       </main>
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           MODAL 0: TRANSACTION REVIEW STATE MODAL
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isSendReviewModalOpen && (
         <div className="modal-backdrop" onClick={() => !isSending && setIsSendReviewModalOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
@@ -2766,7 +2758,7 @@ export default function App() {
                   <Flame size={12} />
                   <span>Gas Token & Floor</span>
                 </span>
-                <span className="details-value">Arc USDC (18 dec) • 20 Gwei min</span>
+                <span className="details-value">Arc USDC (18 dec) â€¢ 20 Gwei min</span>
               </div>
               <div className="details-row">
                 <span className="details-label">
@@ -2813,9 +2805,9 @@ export default function App() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           MODAL 1: CONNECT WALLET OVERLAY
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isConnectModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsConnectModalOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
@@ -2853,9 +2845,9 @@ export default function App() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           MODAL 2: CELEBRATION SHEET
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isCelebrationOpen && celebrationDetails && (
         <div className="modal-backdrop" onClick={() => setIsCelebrationOpen(false)}>
           <div className="modal-dialog celebration-sheet" onClick={(e) => e.stopPropagation()}>
@@ -2896,7 +2888,7 @@ export default function App() {
                 className="quick-chip-btn"
                 style={{ textAlign: 'center', justifyContent: 'center', padding: '6px' }}
               >
-                View on ArcScan ↗
+                View on ArcScan â†—
               </a>
             </div>
 
@@ -2912,14 +2904,14 @@ export default function App() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           MODAL 3: CLAIM NAIRATAG DIALOG
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isClaimModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsClaimModalOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span className="card-header-title">Claim Free ₦Tag</span>
+              <span className="card-header-title">Claim Free â‚¦Tag</span>
               <button
                 type="button"
                 style={{ background: 'none', border: 'none', color: 'var(--privy-color-foreground-2)', cursor: 'pointer' }}
@@ -2930,7 +2922,7 @@ export default function App() {
             </div>
             <div className="tag-recipient-box">
               <div className="tag-input-field-wrap">
-                <span className="tag-currency-symbol">₦</span>
+                <span className="tag-currency-symbol">â‚¦</span>
                 <input
                   type="text"
                   className="tag-text-field"
@@ -2941,7 +2933,7 @@ export default function App() {
               </div>
               {claimStatus && (
                 <div style={{ fontSize: '11px', color: claimStatus.available ? 'var(--privy-color-success-dark)' : 'var(--privy-color-error)', fontWeight: 600 }}>
-                  {claimStatus.available ? '✓ Tag is available' : `✕ ${claimStatus.reason}`}
+                  {claimStatus.available ? 'âœ“ Tag is available' : `âœ• ${claimStatus.reason}`}
                 </div>
               )}
             </div>
@@ -2951,22 +2943,22 @@ export default function App() {
               disabled={!claimStatus?.available || isClaiming}
               onClick={handleExecuteClaim}
             >
-              {isClaiming ? 'Claiming on Arc...' : 'Confirm & Claim ₦Tag'}
+              {isClaiming ? 'Claiming on Arc...' : 'Confirm & Claim â‚¦Tag'}
             </button>
           </div>
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           MODAL 4: AGENT PROFILE POPUP (GROUNDED IN USER REFERENCES)
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {selectedAgentProfile && (
         <div className="agent-modal-backdrop" onClick={() => setSelectedAgentProfile(null)}>
           <div className="agent-modal-dialog" onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="agent-modal-header">
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '18px' }}>🤖</span>
+                <span style={{ fontSize: '18px' }}>ðŸ¤–</span>
                 <div>
                   <div style={{ fontSize: '14px', fontWeight: 800, color: 'var(--privy-color-foreground)' }}>
                     {selectedAgentProfile.name}
@@ -2988,10 +2980,10 @@ export default function App() {
             <div className="agent-modal-body">
               {/* Sovereign Passport Preview Banner */}
               <div className="agent-passport-stage">
-                <div className="agent-passport-watermark">₦</div>
+                <div className="agent-passport-watermark">â‚¦</div>
                 <div className="agent-passport-top">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '22px', fontWeight: 900 }}>₦</span>
+                    <span style={{ fontSize: '22px', fontWeight: 900 }}>â‚¦</span>
                     <span className="card-net-pill">Arc Osaka EVM</span>
                   </div>
                   <img
@@ -3016,7 +3008,7 @@ export default function App() {
                     }}
                   />
                   <div>
-                    <div className="agent-passport-handle">₦{selectedAgentProfile.tag.toUpperCase()}</div>
+                    <div className="agent-passport-handle">â‚¦{selectedAgentProfile.tag.toUpperCase()}</div>
                     <div className="agent-passport-role">{selectedAgentProfile.role}</div>
                   </div>
                 </div>
@@ -3027,42 +3019,42 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Mode Tabs: ✦ Overview, 🔗 Share, 🎁 Referral, 📱 QR Code */}
+              {/* Mode Tabs: âœ¦ Overview, ðŸ”— Share, ðŸŽ Referral, ðŸ“± QR Code */}
               <div className="agent-profile-tabs">
                 <button
                   type="button"
                   className={`agent-profile-tab-btn ${agentProfileTab === 'overview' ? 'active' : ''}`}
                   onClick={() => setAgentProfileTab('overview')}
                 >
-                  ✦ Overview
+                  âœ¦ Overview
                 </button>
                 <button
                   type="button"
                   className={`agent-profile-tab-btn ${agentProfileTab === 'share' ? 'active' : ''}`}
                   onClick={() => setAgentProfileTab('share')}
                 >
-                  🔗 Share
+                  ðŸ”— Share
                 </button>
                 <button
                   type="button"
                   className={`agent-profile-tab-btn ${agentProfileTab === 'refer' ? 'active' : ''}`}
                   onClick={() => setAgentProfileTab('refer')}
                 >
-                  🎁 Referral
+                  ðŸŽ Referral
                 </button>
                 <button
                   type="button"
                   className={`agent-profile-tab-btn ${agentProfileTab === 'qr' ? 'active' : ''}`}
                   onClick={() => setAgentProfileTab('qr')}
                 >
-                  📱 QR Code
+                  ðŸ“± QR Code
                 </button>
                 <button
                   type="button"
                   className={`agent-profile-tab-btn ${agentProfileTab === 'chat' ? 'active' : ''}`}
                   onClick={() => setAgentProfileTab('chat')}
                 >
-                  💬 Chat
+                  ðŸ’¬ Chat
                 </button>
               </div>
 
@@ -3072,7 +3064,7 @@ export default function App() {
                   <div className="agent-specs-table">
                     <div className="agent-spec-row">
                       <span className="agent-spec-label">Canonical Tag</span>
-                      <span className="agent-spec-value">₦{selectedAgentProfile.tag.toUpperCase()}</span>
+                      <span className="agent-spec-value">â‚¦{selectedAgentProfile.tag.toUpperCase()}</span>
                     </div>
                     <div className="agent-spec-row">
                       <span className="agent-spec-label">Token ID</span>
@@ -3119,7 +3111,7 @@ export default function App() {
                       onClick={() => handlePayAgentFromProfile(selectedAgentProfile)}
                     >
                       <Send size={14} />
-                      <span>Pay ₦{selectedAgentProfile.tag.toUpperCase()}</span>
+                      <span>Pay â‚¦{selectedAgentProfile.tag.toUpperCase()}</span>
                     </button>
                     <a
                       href={`https://8004scan.io/agent/${selectedAgentProfile.id}`}
@@ -3128,7 +3120,7 @@ export default function App() {
                       className="btn-agent-secondary"
                     >
                       <ExternalLink size={14} />
-                      <span>8004scan ↗</span>
+                      <span>8004scan â†—</span>
                     </a>
                   </div>
                 </div>
@@ -3147,39 +3139,39 @@ export default function App() {
                       className="share-btn"
                       onClick={() => {
                         const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                          `Check out ₦${selectedAgentProfile.tag} on @NairaTag Arc Network! ERC-8004 Verified Agent #${selectedAgentProfile.id} 🤖 https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`
+                          `Check out â‚¦${selectedAgentProfile.tag} on @NairaTag Arc Network! ERC-8004 Verified Agent #${selectedAgentProfile.id} ðŸ¤– https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`
                         )}`;
                         window.open(url, '_blank', 'noopener,noreferrer');
                       }}
                     >
-                      <span>𝕏 Share on X</span>
+                      <span>ð• Share on X</span>
                     </button>
                     <button
                       type="button"
                       className="share-btn"
                       onClick={() => {
-                        const url = `https://t.me/share/url?url=${encodeURIComponent(`https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`)}&text=${encodeURIComponent(`Check out ₦${selectedAgentProfile.tag} - ERC-8004 Agent on Arc`)}`;
+                        const url = `https://t.me/share/url?url=${encodeURIComponent(`https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`)}&text=${encodeURIComponent(`Check out â‚¦${selectedAgentProfile.tag} - ERC-8004 Agent on Arc`)}`;
                         window.open(url, '_blank', 'noopener,noreferrer');
                       }}
                     >
-                      <span>✈️ Telegram</span>
+                      <span>âœˆï¸ Telegram</span>
                     </button>
                     <button
                       type="button"
                       className="share-btn"
                       onClick={() => {
-                        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out ₦${selectedAgentProfile.tag} on NairaTag Arc: https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`)}`;
+                        const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out â‚¦${selectedAgentProfile.tag} on NairaTag Arc: https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`)}`;
                         window.open(url, '_blank', 'noopener,noreferrer');
                       }}
                     >
-                      <span>💬 WhatsApp</span>
+                      <span>ðŸ’¬ WhatsApp</span>
                     </button>
                     <button
                       type="button"
                       className="share-btn"
                       onClick={() => triggerCopy(`share_agent_${selectedAgentProfile.id}`, `https://arc.nairatag.ng/agent/${selectedAgentProfile.id}`)}
                     >
-                      <span>{copiedKey === `share_agent_${selectedAgentProfile.id}` ? '✓ Copied Link' : '🔗 Copy Direct Link'}</span>
+                      <span>{copiedKey === `share_agent_${selectedAgentProfile.id}` ? 'âœ“ Copied Link' : 'ðŸ”— Copy Direct Link'}</span>
                     </button>
                   </div>
                 </div>
@@ -3189,19 +3181,19 @@ export default function App() {
               {agentProfileTab === 'refer' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ fontSize: '12px', color: 'var(--privy-color-foreground-2)', lineHeight: 1.4 }}>
-                    Invite users to interact with ₦{selectedAgentProfile.tag.toUpperCase()}. Earn onchain protocol referral points on every Arc settlement!
+                    Invite users to interact with â‚¦{selectedAgentProfile.tag.toUpperCase()}. Earn onchain protocol referral points on every Arc settlement!
                   </div>
 
                   <div className="referral-link-box">
                     <span className="referral-link-text">
-                      {`https://arc.nairatag.ng/claim?ref=₦${selectedAgentProfile.tag}`}
+                      {`https://arc.nairatag.ng/claim?ref=â‚¦${selectedAgentProfile.tag}`}
                     </span>
                     <button
                       type="button"
                       className="referral-copy-btn"
-                      onClick={() => triggerCopy(`refer_agent_${selectedAgentProfile.id}`, `https://arc.nairatag.ng/claim?ref=₦${selectedAgentProfile.tag}`)}
+                      onClick={() => triggerCopy(`refer_agent_${selectedAgentProfile.id}`, `https://arc.nairatag.ng/claim?ref=â‚¦${selectedAgentProfile.tag}`)}
                     >
-                      {copiedKey === `refer_agent_${selectedAgentProfile.id}` ? '✓ Copied' : 'Copy'}
+                      {copiedKey === `refer_agent_${selectedAgentProfile.id}` ? 'âœ“ Copied' : 'Copy'}
                     </button>
                   </div>
 
@@ -3212,7 +3204,7 @@ export default function App() {
                     onClick={() => handlePayAgentFromProfile(selectedAgentProfile)}
                   >
                     <Send size={14} />
-                    <span>Send Payment to ₦{selectedAgentProfile.tag.toUpperCase()}</span>
+                    <span>Send Payment to â‚¦{selectedAgentProfile.tag.toUpperCase()}</span>
                   </button>
                 </div>
               )}
@@ -3222,21 +3214,21 @@ export default function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
                   <div style={{ background: '#FFFFFF', padding: '12px', borderRadius: '16px', border: '1px solid rgba(0,0,0,0.1)' }}>
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`arc:${selectedAgentProfile.owner}?tag=₦${selectedAgentProfile.tag.toUpperCase()}`)}`}
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`arc:${selectedAgentProfile.owner}?tag=â‚¦${selectedAgentProfile.tag.toUpperCase()}`)}`}
                       alt="Agent QR Code"
                       style={{ width: '160px', height: '160px', display: 'block' }}
                     />
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', textAlign: 'center' }}>
-                    Scan with any EVM or Arc camera to resolve ₦{selectedAgentProfile.tag.toUpperCase()} instantly.
+                    Scan with any EVM or Arc camera to resolve â‚¦{selectedAgentProfile.tag.toUpperCase()} instantly.
                   </div>
                   <button
                     type="button"
                     className="share-btn"
                     style={{ width: '100%' }}
-                    onClick={() => triggerCopy(`agent_qr_uri_${selectedAgentProfile.id}`, `arc:${selectedAgentProfile.owner}?tag=₦${selectedAgentProfile.tag.toUpperCase()}`)}
+                    onClick={() => triggerCopy(`agent_qr_uri_${selectedAgentProfile.id}`, `arc:${selectedAgentProfile.owner}?tag=â‚¦${selectedAgentProfile.tag.toUpperCase()}`)}
                   >
-                    <span>{copiedKey === `agent_qr_uri_${selectedAgentProfile.id}` ? '✓ Copied URI' : '📋 Copy Resolver URI'}</span>
+                    <span>{copiedKey === `agent_qr_uri_${selectedAgentProfile.id}` ? 'âœ“ Copied URI' : 'ðŸ“‹ Copy Resolver URI'}</span>
                   </button>
                 </div>
               )}
@@ -3258,7 +3250,7 @@ export default function App() {
                       'Send 10 USDC',
                       'What are your services?',
                       'Check reputation score',
-                      'How do I claim a ₦Tag?',
+                      'How do I claim a â‚¦Tag?',
                     ].map((prompt, pIdx) => (
                       <button
                         key={pIdx}
@@ -3277,7 +3269,7 @@ export default function App() {
                     {(agentChatMessages[selectedAgentProfile.id] || [
                       {
                         sender: 'agent',
-                        text: `Hello! I am ${selectedAgentProfile.name} (₦${selectedAgentProfile.tag.toUpperCase()}), verified under Arc ERC-8004 (#${selectedAgentProfile.id}). How can I assist you with autonomous tasks, escrow milestones, or micro-settlements on Arc Osaka EVM?`,
+                        text: `Hello! I am ${selectedAgentProfile.name} (â‚¦${selectedAgentProfile.tag.toUpperCase()}), verified under Arc ERC-8004 (#${selectedAgentProfile.id}). How can I assist you with autonomous tasks, escrow milestones, or micro-settlements on Arc Osaka EVM?`,
                         time: 'Just now'
                       }
                     ]).map((msg, mIdx) => (
@@ -3314,7 +3306,7 @@ export default function App() {
                       type="text"
                       className="token-amount-field"
                       style={{ flex: 1, fontSize: '12px', padding: '7px 10px' }}
-                      placeholder={`Ask ₦${selectedAgentProfile.tag.toUpperCase()}...`}
+                      placeholder={`Ask â‚¦${selectedAgentProfile.tag.toUpperCase()}...`}
                       value={agentChatInput}
                       onChange={(e) => setAgentChatInput(e.target.value)}
                     />
@@ -3334,15 +3326,15 @@ export default function App() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           MODAL: POST BOUNTY / TASK DIALOG
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isPostTaskOpen && (
         <div className="modal-backdrop" onClick={() => setIsPostTaskOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '16px' }}>💼</span>
+                <span style={{ fontSize: '16px' }}>ðŸ’¼</span>
                 <span className="card-header-title">Post Milestone Bounty</span>
               </div>
               <button
@@ -3381,11 +3373,11 @@ export default function App() {
                     value={postTaskForm.category}
                     onChange={(e) => setPostTaskForm((prev) => ({ ...prev, category: e.target.value }))}
                   >
-                    <option value="dev">⚡ Engineering</option>
-                    <option value="design">🎨 Design</option>
-                    <option value="data">📊 Data & AI</option>
-                    <option value="content">✍️ Content</option>
-                    <option value="test">🧪 Testing</option>
+                    <option value="dev">âš¡ Engineering</option>
+                    <option value="design">ðŸŽ¨ Design</option>
+                    <option value="data">ðŸ“Š Data & AI</option>
+                    <option value="content">âœï¸ Content</option>
+                    <option value="test">ðŸ§ª Testing</option>
                   </select>
                 </div>
 
@@ -3403,7 +3395,7 @@ export default function App() {
                     onChange={(e) => setPostTaskForm((prev) => ({ ...prev, reward: e.target.value }))}
                   />
                   <div style={{ fontSize: '10px', color: 'var(--privy-color-foreground-2)', marginTop: '2px' }}>
-                    ≈ ₦{((parseFloat(postTaskForm.reward) || 0) * 1485).toLocaleString()} NGN
+                    â‰ˆ â‚¦{((parseFloat(postTaskForm.reward) || 0) * 1485).toLocaleString()} NGN
                   </div>
                 </div>
               </div>
@@ -3423,7 +3415,7 @@ export default function App() {
               </div>
 
               <div style={{ padding: '8px 10px', background: 'rgba(0, 82, 255, 0.06)', borderRadius: '6px', border: '1px solid rgba(0, 82, 255, 0.15)', fontSize: '11px', color: 'var(--privy-color-interactive)' }}>
-                🔒 <strong>Smart Escrow:</strong> Funds are locked until milestone verification.
+                ðŸ”’ <strong>Smart Escrow:</strong> Funds are locked until milestone verification.
               </div>
 
               <button type="submit" className="btn-action-primary" style={{ marginTop: '4px' }}>
@@ -3434,9 +3426,9 @@ export default function App() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           MODAL: SOVEREIGN WALLET & PORTFOLIO (WITH DUAL FIAT NGN CONVERSION)
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {isWalletModalOpen && (
         <div className="modal-backdrop" onClick={() => setIsWalletModalOpen(false)}>
           <div className="modal-dialog" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '420px' }}>
@@ -3457,11 +3449,11 @@ export default function App() {
             {/* Identity Card */}
             <div style={{ marginTop: '10px', padding: '12px', background: 'var(--privy-color-background-surface)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--privy-color-border-subtle)', display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #0052ff, #00d2ff)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: 900 }}>
-                {myTag ? myTag.tag?.slice(0, 1).toUpperCase() : '₦'}
+                {myTag ? myTag.tag?.slice(0, 1).toUpperCase() : 'â‚¦'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span style={{ fontSize: '14px', fontWeight: 800 }}>{myTag ? `₦${myTag.tag}` : 'Sovereign Wallet'}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 800 }}>{myTag ? `â‚¦${myTag.tag}` : 'Sovereign Wallet'}</span>
                   <span className="card-net-pill">Arc Osaka</span>
                 </div>
                 <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>
@@ -3489,11 +3481,11 @@ export default function App() {
                 {usdcBalance.formatted} USDC
               </div>
               <div className="wallet-fx-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 10px', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid #10b981', borderRadius: '12px', fontSize: '11.5px', color: '#047857', fontWeight: 700 }}>
-                <span>≈ ₦{(parseFloat(usdcBalance.formatted || '0') * 1485).toLocaleString('en-NG', { maximumFractionDigits: 2 })} NGN</span>
-                <span style={{ fontSize: '9.5px', opacity: 0.8 }}>@ ₦1,485/$</span>
+                <span>â‰ˆ â‚¦{(parseFloat(usdcBalance.formatted || '0') * 1485).toLocaleString('en-NG', { maximumFractionDigits: 2 })} NGN</span>
+                <span style={{ fontSize: '9.5px', opacity: 0.8 }}>@ â‚¦1,485/$</span>
               </div>
               <div style={{ fontSize: '11px', color: 'var(--privy-color-interactive)', fontWeight: 700, marginTop: '8px' }}>
-                ⚡ {userPoints} Protocol Points
+                âš¡ {userPoints} Protocol Points
               </div>
             </div>
 
@@ -3504,21 +3496,21 @@ export default function App() {
                 className={`agent-profile-tab-btn ${walletTab === 'overview' ? 'active' : ''}`}
                 onClick={() => setWalletTab('overview')}
               >
-                ✦ Overview
+                âœ¦ Overview
               </button>
               <button
                 type="button"
                 className={`agent-profile-tab-btn ${walletTab === 'qr' ? 'active' : ''}`}
                 onClick={() => setWalletTab('qr')}
               >
-                📱 Receive QR
+                ðŸ“± Receive QR
               </button>
               <button
                 type="button"
                 className={`agent-profile-tab-btn ${walletTab === 'history' ? 'active' : ''}`}
                 onClick={() => setWalletTab('history')}
               >
-                📜 Ledger
+                ðŸ“œ Ledger
               </button>
             </div>
 
@@ -3553,7 +3545,7 @@ export default function App() {
                     style={{ flex: 1, justifyContent: 'center' }}
                   >
                     <ExternalLink size={12} />
-                    <span>ArcScan ↗</span>
+                    <span>ArcScan â†—</span>
                   </a>
                 </div>
               </div>
@@ -3564,12 +3556,12 @@ export default function App() {
                 {walletAddress ? (
                   <>
                     <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`arc:${walletAddress}?tag=₦${myTag?.tag || ''}`)}`}
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`arc:${walletAddress}?tag=â‚¦${myTag?.tag || ''}`)}`}
                       alt="Arc Receive QR"
                       style={{ width: '160px', height: '160px', borderRadius: '8px', border: '1px solid var(--privy-color-border-subtle)', margin: '0 auto 8px' }}
                     />
                     <div style={{ fontSize: '11px', color: 'var(--privy-color-foreground-2)' }}>
-                      Scan to receive USDC or resolve {myTag ? `₦${myTag.tag}` : 'wallet'} on Arc Osaka EVM.
+                      Scan to receive USDC or resolve {myTag ? `â‚¦${myTag.tag}` : 'wallet'} on Arc Osaka EVM.
                     </div>
                   </>
                 ) : (
@@ -3581,14 +3573,14 @@ export default function App() {
             {walletTab === 'history' && (
               <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '180px', overflowY: 'auto' }}>
                 {[
-                  { tx: '0x3a9f...b112', title: 'Claim ₦Tag Handle', time: '10m ago', amt: '0.00 USDC', status: 'Finalized <1s' },
-                  { tx: '0x8f2d...44c1', title: 'USDC Settlement to ₦michael', time: '2h ago', amt: '-10.00 USDC', status: 'Finalized <1s' },
+                  { tx: '0x3a9f...b112', title: 'Claim â‚¦Tag Handle', time: '10m ago', amt: '0.00 USDC', status: 'Finalized <1s' },
+                  { tx: '0x8f2d...44c1', title: 'USDC Settlement to â‚¦michael', time: '2h ago', amt: '-10.00 USDC', status: 'Finalized <1s' },
                   { tx: '0x11ab...90aa', title: 'Bounty Quest Reward', time: '1d ago', amt: '+25.00 USDC', status: 'Finalized <1s' },
                 ].map((item, idx) => (
                   <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', background: 'var(--privy-color-background-surface)', borderRadius: '6px', fontSize: '11px' }}>
                     <div>
                       <div style={{ fontWeight: 700 }}>{item.title}</div>
-                      <div style={{ color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>{item.tx} • {item.time}</div>
+                      <div style={{ color: 'var(--privy-color-foreground-2)', fontFamily: 'var(--font-mono)' }}>{item.tx} â€¢ {item.time}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
                       <div style={{ fontWeight: 700, color: item.amt.startsWith('+') ? 'var(--privy-color-success-dark)' : 'var(--privy-color-foreground)' }}>{item.amt}</div>
@@ -3602,9 +3594,9 @@ export default function App() {
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────────────
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           FLOATING TOAST NOTIFICATION CONTAINER
-          ─────────────────────────────────────────────────────────────────── */}
+          â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="toast-container" role="status" aria-live="polite">
         {toasts.map((toast) => (
           <div key={toast.id} className={`toast-pill toast-${toast.type}`}>
@@ -3618,4 +3610,5 @@ export default function App() {
     </>
   );
 }
+
 

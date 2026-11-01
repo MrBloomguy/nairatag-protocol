@@ -1,84 +1,81 @@
-const AUTH_API = import.meta.env.VITE_ARC_AUTH_API || '/api/arc-auth';
-const STORAGE_KEY = 'nairatag_arc_session_v1';
+﻿const AUTH_API = import.meta.env.VITE_ARC_AUTH_API || '/api/arc-auth';
+let session = null;
 
-async function postAuth(body) {
+async function postAuth(body, sessionToken = null) {
   const response = await fetch(AUTH_API, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    headers: {
+      'Content-Type': 'application/json', Accept: 'application/json',
+      ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
+    },
     body: JSON.stringify(body),
   });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok || !result.ok) {
-    throw new Error(result.error || `Account sign-in returned ${response.status}.`);
-  }
+  if (!response.ok || !result.ok) throw new Error(result.error || `Account sign-in returned ${response.status}.`);
   return result;
 }
 
 function saveSession(result, walletAddress) {
-  const session = {
-    token: result.token,
-    walletAddress: String(walletAddress).toLowerCase(),
-    expiresAt: Number(result.expiresAt),
-  };
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  if (!result?.token) throw new Error('The server did not create an authenticated session.');
+  session = { token: result.token, walletAddress: String(walletAddress).toLowerCase(), expiresAt: Number(result.expiresAt) };
   return session;
 }
 
 export async function establishCircleArcSession({ userToken, walletAddress }) {
   if (!userToken || !walletAddress) return null;
-  if (userToken.startsWith('sovereign_')) {
-    const session = {
-      token: 'arc_session_' + Date.now().toString(36),
-      walletAddress: String(walletAddress).toLowerCase(),
-      expiresAt: Date.now() + 86400 * 30 * 1000,
-    };
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    return session;
-  }
-  try {
-    const result = await postAuth({ action: 'circle', userToken, walletAddress });
-    if (result?.token) return saveSession(result, walletAddress);
-  } catch (e) {
-    console.warn('[establishCircleArcSession] Remote session sync note:', e.message);
-  }
-  const fallback = {
-    token: 'arc_session_' + Date.now().toString(36),
-    walletAddress: String(walletAddress).toLowerCase(),
-    expiresAt: Date.now() + 86400 * 30 * 1000,
-  };
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fallback));
-  return fallback;
+  const result = await postAuth({ action: 'circle', userToken, walletAddress });
+  return saveSession(result, walletAddress);
 }
 
 export async function establishWalletArcSession(walletAddress) {
   if (!walletAddress) return null;
-  const session = {
-    token: 'wallet_session_' + Date.now().toString(36),
-    walletAddress: String(walletAddress).toLowerCase(),
-    expiresAt: Date.now() + 86400 * 30 * 1000,
-  };
-  try {
-    saveSession(session, walletAddress);
-  } catch {}
-  return session;
+  const provider = typeof window !== 'undefined' ? window.ethereum : null;
+  if (!provider?.request) throw new Error('Connect an EVM wallet to sign in.');
+  const challenge = await postAuth({ action: 'wallet_challenge', walletAddress });
+  const signature = await provider.request({ method: 'personal_sign', params: [challenge.message, walletAddress] });
+  const result = await postAuth({ action: 'wallet', walletAddress, challengeToken: challenge.challengeToken, signature });
+  return saveSession(result, walletAddress);
+}
+
+export async function linkArcWallet(primaryWalletAddress) {
+  const primaryWallet = String(primaryWalletAddress || '').toLowerCase();
+  const sessionToken = session?.walletAddress === primaryWallet ? getArcSessionToken() : null;
+  if (!sessionToken) throw new Error('Sign in again before linking a wallet.');
+  const provider = typeof window !== 'undefined' ? window.ethereum : null;
+  if (!provider?.request) throw new Error('Connect an EVM wallet to prove ownership of the wallet you want to link.');
+  const accounts = await provider.request({ method: 'eth_requestAccounts' });
+  const linkedWalletAddress = Array.isArray(accounts)
+    ? accounts.find((address) => String(address).toLowerCase() !== primaryWallet)
+    : null;
+  if (!linkedWalletAddress) throw new Error('Switch your wallet extension to the other wallet, then try linking again.');
+
+  const challenge = await postAuth({
+    action: 'wallet_link_challenge',
+    walletAddress: primaryWallet,
+    linkedWalletAddress,
+  }, sessionToken);
+  const signature = await provider.request({ method: 'personal_sign', params: [challenge.message, linkedWalletAddress] });
+  const result = await postAuth({
+    action: 'wallet_link',
+    walletAddress: primaryWallet,
+    linkedWalletAddress,
+    challengeToken: challenge.challengeToken,
+    signature,
+  }, sessionToken);
+  return result.identity;
 }
 
 export function getArcSessionToken(walletAddress) {
-  try {
-    const session = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null');
-    if (!session?.token || !session.expiresAt || session.expiresAt <= Date.now()) {
-      if (session?.expiresAt <= Date.now()) window.localStorage.removeItem(STORAGE_KEY);
-      return null;
-    }
-    if (walletAddress && String(session.walletAddress).toLowerCase() !== String(walletAddress).toLowerCase()) {
-      return null;
-    }
-    return session.token;
-  } catch {
-    return null;
-  }
+  if (!session?.token || !session.expiresAt || session.expiresAt <= Date.now()) { session = null; return null; }
+  if (walletAddress && session.walletAddress !== String(walletAddress).toLowerCase()) return null;
+  return session.token;
 }
 
-export function clearArcSession() {
-  try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* Storage can be unavailable. */ }
+export function getArcSessionTokenForLinkedWallet(walletAddress) {
+  if (!session?.token || !session.expiresAt || session.expiresAt <= Date.now()) { session = null; return null; }
+  // Only call this for endpoints that verify linked identity membership in Supabase.
+  return session.token;
 }
+
+export function clearArcSession() { session = null; }
+

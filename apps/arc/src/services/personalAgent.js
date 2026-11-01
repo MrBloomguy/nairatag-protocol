@@ -1,4 +1,4 @@
-import { keccak256, stringToHex } from 'viem';
+﻿import { keccak256, stringToHex } from 'viem';
 import { getArcSessionToken } from './arcSession.js';
 
 const CHAIN_ID = 5042;
@@ -18,7 +18,7 @@ async function signedRequest({ walletAddress, tag, action, payload = {} }) {
       const payloadHash = keccak256(stringToHex(JSON.stringify(payload)));
       const message = [
         'NairaTag Personal Agent', `Action: ${action}`, `Wallet: ${walletAddress.toLowerCase()}`,
-        `Tag: ${tag.replace(/^[₦$@#]/, '').toLowerCase()}`, `Chain: ${CHAIN_ID}`,
+        `Tag: ${tag.replace(/^[â‚¦$@#]/, '').toLowerCase()}`, `Chain: ${CHAIN_ID}`,
         `Timestamp: ${timestamp}`, `Payload hash: ${payloadHash}`,
       ].join('\n');
       try {
@@ -27,51 +27,13 @@ async function signedRequest({ walletAddress, tag, action, payload = {} }) {
     }
   }
 
-  try {
-    const response = await fetch(API, {
-      method: 'POST', headers,
-      body: JSON.stringify({ action, walletAddress, tag, payload, ...auth }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (response.ok && result.ok) return result;
-  } catch (e) {
-    // Fallback to local storage
-  }
-
-  // Local-first storage fallback for seamless email and wallet auth parity
-  const cleanTag = tag.replace(/^[₦$@#]/, '').toLowerCase();
-  const storageKey = `nairatag_personal_agent_${cleanTag}`;
-  let localData = { profile: {}, memories: [], goals: [] };
-  if (typeof window !== 'undefined') {
-    try {
-      localData = JSON.parse(window.localStorage.getItem(storageKey) || '{"profile":{},"memories":[],"goals":[]}');
-    } catch {}
-  }
-
-  if (action === 'get') {
-    return { ok: true, data: localData };
-  }
-  if (action === 'update_profile') {
-    localData.profile = { ...(localData.profile || {}), ...payload };
-  } else if (action === 'create_memory') {
-    const mem = { id: `mem_${Date.now()}`, ...payload, confirmed: true };
-    localData.memories = [...(localData.memories || []), mem];
-  } else if (action === 'delete_memory') {
-    localData.memories = (localData.memories || []).filter(m => m.id !== payload.id);
-  } else if (action === 'clear_memories') {
-    localData.memories = [];
-  } else if (action === 'create_goal') {
-    const g = { id: `goal_${Date.now()}`, ...payload };
-    localData.goals = [...(localData.goals || []), g];
-  } else if (action === 'delete_goal') {
-    localData.goals = (localData.goals || []).filter(g => g.id !== payload.id);
-  }
-  if (typeof window !== 'undefined') {
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(localData));
-    } catch {}
-  }
-  return { ok: true, data: localData };
+  const response = await fetch(API, {
+    method: 'POST', headers,
+    body: JSON.stringify({ action, walletAddress, tag, payload, ...auth }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || !result.ok) throw new Error(result.error || `Personal agent service returned ${response.status}.`);
+  return result;
 }
 
 export function getPersonalAgent({ walletAddress, tag }) { return signedRequest({ walletAddress, tag, action: 'get' }); }
@@ -84,3 +46,5 @@ export function clearPersonalMemories({ walletAddress, tag }) { return signedReq
 export function createPersonalGoal({ walletAddress, tag, goal }) { return signedRequest({ walletAddress, tag, action: 'create_goal', payload: goal }); }
 export function updatePersonalGoal({ walletAddress, tag, goal }) { return signedRequest({ walletAddress, tag, action: 'update_goal', payload: goal }); }
 export function deletePersonalGoal({ walletAddress, tag, id }) { return signedRequest({ walletAddress, tag, action: 'delete_goal', payload: { id } }); }
+
+

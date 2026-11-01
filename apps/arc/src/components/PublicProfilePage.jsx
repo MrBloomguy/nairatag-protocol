@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import {
   Check,
   Copy,
@@ -36,70 +36,70 @@ import confetti from 'canvas-confetti';
 import { rememberReferralFromUrl, getPendingReferral } from '../services/referrals.js';
 import './public-twitter-profile.css';
 
-const shorten = (addr = '') => addr ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : '';
+const shorten = (addr = '') => addr ? `${addr.slice(0, 6)}â€¦${addr.slice(-4)}` : '';
 
 // Helper for contextual prompts and tools per agent
 const getAgentSpec = (handle = '') => {
-  const h = String(handle).toLowerCase().replace(/^[₦$@#]/, '');
+  const h = String(handle).toLowerCase().replace(/^[â‚¦$@#]/, '');
   if (h === 'defillama') {
     return {
       prompts: [
-        { label: '📊 Top 5 protocols by TVL on DefiLlama', query: '₦defillama what are top 5 protocols by TVL?' },
-        { label: '💎 Compare AAVE vs Uniswap TVL', query: '₦defillama compare Aave and Uniswap TVL' },
-        { label: '🌐 Global DeFi TVL breakdown', query: '₦defillama what is the total global DeFi TVL?' }
+        { label: 'ðŸ“Š Top 5 protocols by TVL on DefiLlama', query: 'â‚¦defillama what are top 5 protocols by TVL?' },
+        { label: 'ðŸ’Ž Compare AAVE vs Uniswap TVL', query: 'â‚¦defillama compare Aave and Uniswap TVL' },
+        { label: 'ðŸŒ Global DeFi TVL breakdown', query: 'â‚¦defillama what is the total global DeFi TVL?' }
       ],
       tools: [
-        { name: 'defillama.tvl', desc: 'Real-time protocol TVL & chain rankings', badge: 'Live API', query: '₦defillama get TVL rankings' },
-        { name: 'defillama.coins', desc: 'Token prices & liquidity pool stats', badge: 'Oracle', query: '₦defillama check stablecoin liquidity' },
-        { name: 'arc.usdc_settlement', desc: 'Instant peer-to-peer USDC payments', badge: 'Onchain', query: 'Send 5 USDC reward to ₦defillama' }
+        { name: 'defillama.tvl', desc: 'Real-time protocol TVL & chain rankings', badge: 'Live API', query: 'â‚¦defillama get TVL rankings' },
+        { name: 'defillama.coins', desc: 'Token prices & liquidity pool stats', badge: 'Oracle', query: 'â‚¦defillama check stablecoin liquidity' },
+        { name: 'arc.usdc_settlement', desc: 'Instant peer-to-peer USDC payments', badge: 'Onchain', query: 'Send 5 USDC reward to â‚¦defillama' }
       ]
     };
   }
   if (h === 'meteo') {
     return {
       prompts: [
-        { label: '🌤️ Lagos weather & dispatch risk score', query: '₦meteo what is Lagos weather and delivery risk?' },
-        { label: '🌧️ Abuja precipitation and ETA delay impact', query: '₦meteo Abuja rain and ETA delay forecast' },
-        { label: '🚚 Kano transit logistics weather check', query: '₦meteo Kano road conditions and temperature' }
+        { label: 'ðŸŒ¤ï¸ Lagos weather & dispatch risk score', query: 'â‚¦meteo what is Lagos weather and delivery risk?' },
+        { label: 'ðŸŒ§ï¸ Abuja precipitation and ETA delay impact', query: 'â‚¦meteo Abuja rain and ETA delay forecast' },
+        { label: 'ðŸšš Kano transit logistics weather check', query: 'â‚¦meteo Kano road conditions and temperature' }
       ],
       tools: [
-        { name: 'meteo.delivery_impact', desc: 'Precipitation & dispatch delay scoring', badge: 'Live Forecast', query: '₦meteo check delivery delay index' },
-        { name: 'meteo.route_risk', desc: 'Logistics road condition alerts for NG cities', badge: 'Realtime', query: '₦meteo check road risk in Lagos' },
-        { name: 'arc.usdc_settlement', desc: 'Instant automated driver / agent dispatch payouts', badge: 'Onchain', query: 'Send 5 USDC to ₦meteo' }
+        { name: 'meteo.delivery_impact', desc: 'Precipitation & dispatch delay scoring', badge: 'Live Forecast', query: 'â‚¦meteo check delivery delay index' },
+        { name: 'meteo.route_risk', desc: 'Logistics road condition alerts for NG cities', badge: 'Realtime', query: 'â‚¦meteo check road risk in Lagos' },
+        { name: 'arc.usdc_settlement', desc: 'Instant automated driver / agent dispatch payouts', badge: 'Onchain', query: 'Send 5 USDC to â‚¦meteo' }
       ]
     };
   }
   if (h === 'coingecko') {
     return {
       prompts: [
-        { label: '💱 Live USDC to NGN market exchange rate', query: '₦coingecko what is current USDC NGN exchange rate?' },
-        { label: '📈 BTC & ETH 24h market momentum', query: '₦coingecko Bitcoin and Ethereum price momentum' },
-        { label: '📊 Arc USDC peg & FX valuation', query: '₦coingecko USDC peg and parallel FX spread' }
+        { label: 'ðŸ’± Live USDC to NGN market exchange rate', query: 'â‚¦coingecko what is current USDC NGN exchange rate?' },
+        { label: 'ðŸ“ˆ BTC & ETH 24h market momentum', query: 'â‚¦coingecko Bitcoin and Ethereum price momentum' },
+        { label: 'ðŸ“Š Arc USDC peg & FX valuation', query: 'â‚¦coingecko USDC peg and parallel FX spread' }
       ],
       tools: [
-        { name: 'coingecko.usdc_ngn', desc: 'Real-time USDC/NGN and USD/NGN FX quotes', badge: 'Live FX', query: '₦coingecko get USDC/NGN rate' },
-        { name: 'coingecko.market_pulse', desc: 'Crypto market 24h volume & momentum', badge: 'Oracle', query: '₦coingecko market pulse' },
-        { name: 'arc.usdc_settlement', desc: 'Micro-settlements on Arc Mainnet', badge: 'Onchain', query: 'Send 5 USDC to ₦coingecko' }
+        { name: 'coingecko.usdc_ngn', desc: 'Real-time USDC/NGN and USD/NGN FX quotes', badge: 'Live FX', query: 'â‚¦coingecko get USDC/NGN rate' },
+        { name: 'coingecko.market_pulse', desc: 'Crypto market 24h volume & momentum', badge: 'Oracle', query: 'â‚¦coingecko market pulse' },
+        { name: 'arc.usdc_settlement', desc: 'Micro-settlements on Arc Mainnet', badge: 'Onchain', query: 'Send 5 USDC to â‚¦coingecko' }
       ]
     };
   }
   return {
     prompts: [
-      { label: '⚡ Arc gas fees & liquidity overview', query: 'Analyze current Arc Mainnet gas prices and liquidity' },
-      { label: `💸 Send 5 USDC to ₦${h.toUpperCase()}`, query: `Send 5 USDC reward to ₦${h} on Arc` },
-      { label: '🛡️ Verify ERC-8004 sovereign registry record', query: `Explain ERC-8004 identity for ₦${h}` }
+      { label: 'âš¡ Arc gas fees & liquidity overview', query: 'Analyze current Arc Mainnet gas prices and liquidity' },
+      { label: `ðŸ’¸ Send 5 USDC to â‚¦${h.toUpperCase()}`, query: `Send 5 USDC reward to â‚¦${h} on Arc` },
+      { label: 'ðŸ›¡ï¸ Verify ERC-8004 sovereign registry record', query: `Explain ERC-8004 identity for â‚¦${h}` }
     ],
     tools: [
-      { name: 'arc.usdc_settlement', desc: 'Zero-gas native USDC transfers on Arc', badge: 'Instant', query: `Send 10 USDC to ₦${h}` },
-      { name: 'arc.voice_mode', desc: 'Voice call interface with low latency speech orb', badge: 'Voice', query: `Start voice session with ₦${h}` },
-      { name: 'arc.erc8004_identity', desc: 'Onchain agent credential & reputation registry', badge: 'Verified', query: `Inspect ERC-8004 identity ₦${h}` }
+      { name: 'arc.usdc_settlement', desc: 'Zero-gas native USDC transfers on Arc', badge: 'Instant', query: `Send 10 USDC to â‚¦${h}` },
+      { name: 'arc.voice_mode', desc: 'Voice call interface with low latency speech orb', badge: 'Voice', query: `Start voice session with â‚¦${h}` },
+      { name: 'arc.erc8004_identity', desc: 'Onchain agent credential & reputation registry', badge: 'Verified', query: `Inspect ERC-8004 identity â‚¦${h}` }
     ]
   };
 };
 
 export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
-  const cleanTag = String(rawHandle || 'bloom').replace(/^[₦$@#]/, '').trim();
-  const displayTag = `₦${cleanTag.toUpperCase()}`;
+  const cleanTag = String(rawHandle || 'bloom').replace(/^[â‚¦$@#]/, '').trim();
+  const displayTag = `â‚¦${cleanTag.toUpperCase()}`;
   const lowercaseTag = cleanTag.toLowerCase();
   const cleanHandle = lowercaseTag;
   const pendingReferral = getPendingReferral();
@@ -108,13 +108,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
     rememberReferralFromUrl();
   }, []);
 
-  const [theme, setTheme] = useState(() => {
-    try {
-      return localStorage.getItem('nairatag-theme') || 'dark';
-    } catch {
-      return 'dark';
-    }
-  });
+  const [theme, setTheme] = useState('dark');
 
   const [activeTab, setActiveTab] = useState('tools'); // 'tools' | 'pay' | 'onchain'
   const [copied, setCopied] = useState(false);
@@ -140,7 +134,6 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     try {
-      localStorage.setItem('nairatag-theme', theme);
     } catch { }
   }, [theme]);
 
@@ -149,7 +142,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   };
 
   useEffect(() => {
-    document.title = `${displayTag} · NairaTag on Arc`;
+    document.title = `${displayTag} Â· NairaTag on Arc`;
   }, [displayTag]);
 
   useEffect(() => {
@@ -221,7 +214,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
   };
 
   const shareToTwitter = () => {
-    const text = `Check out ${displayTag} on @NairaTaghq — sovereign onchain AI agent on Arc Network: ${window.location.href}`;
+    const text = `Check out ${displayTag} on @NairaTaghq â€” sovereign onchain AI agent on Arc Network: ${window.location.href}`;
     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
   };
 
@@ -292,7 +285,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               </span>
             </h1>
             <span className="twitter-header-subtitle">
-              ₦{lowercaseTag} · Arc Mainnet
+              â‚¦{lowercaseTag} Â· Arc Mainnet
             </span>
           </div>
         </div>
@@ -309,7 +302,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
           </button>
 
           <a href="/#claim" className="twitter-claim-btn">
-            <span>Claim ₦Tag</span>
+            <span>Claim â‚¦Tag</span>
             <ChevronRight size={14} />
           </a>
         </div>
@@ -334,7 +327,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
             fontSize: '12.5px',
             color: '#059669',
           }}>
-            <span>🎁 <strong>₦{pendingReferral.tag.toUpperCase()}</strong> invited you to NairaTag! Claim a tag to earn +100 bonus Protocol Points.</span>
+            <span>ðŸŽ <strong>â‚¦{pendingReferral.tag.toUpperCase()}</strong> invited you to NairaTag! Claim a tag to earn +100 bonus Protocol Points.</span>
             <a href="/#claim" style={{
               background: '#059669',
               color: '#fff',
@@ -344,7 +337,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               fontSize: '11.5px',
               textDecoration: 'none',
               whiteSpace: 'nowrap',
-            }}>Claim ₦Tag</a>
+            }}>Claim â‚¦Tag</a>
           </div>
         )}
 
@@ -425,7 +418,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
 
           <div className="twitter-handle-line">
             <span className="twitter-handle-tag" style={{ color: 'var(--profile-primary, #7a45e5)', fontWeight: 700 }}>{displayTag}</span>
-            <span className="twitter-feed-dot">·</span>
+            <span className="twitter-feed-dot">Â·</span>
             <span className="twitter-entity-type">ERC-8004 Verified Record</span>
           </div>
 
@@ -569,7 +562,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 <div>
                   <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800 }}>Send USDC to {displayTag}</h3>
                   <span style={{ fontSize: 12.5, color: 'var(--tw-text-muted)' }}>
-                    Arc Mainnet · Instant Peer Settlement
+                    Arc Mainnet Â· Instant Peer Settlement
                   </span>
                 </div>
                 <span className="twitter-category-badge">Zero Gas</span>
@@ -620,7 +613,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 style={{ height: 44, fontSize: 14.5, justifyContent: 'center', marginTop: 8 }}
                 onClick={handleExecuteSend}
               >
-                {paySuccess ? '✓ Connecting to Wallet…' : `Pay $${payAmount} USDC to ${displayTag}`}
+                {paySuccess ? 'âœ“ Connecting to Walletâ€¦' : `Pay $${payAmount} USDC to ${displayTag}`}
               </button>
             </div>
           </div>
@@ -703,12 +696,12 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 className="twitter-modal-close"
                 onClick={() => setIsPayModalOpen(false)}
               >
-                ×
+                Ã—
               </button>
             </div>
 
             <p style={{ margin: '0 0 12px 0', fontSize: 13, color: 'var(--tw-text-muted)' }}>
-              Send instant USDC on Arc Mainnet directly to this ₦Tag.
+              Send instant USDC on Arc Mainnet directly to this â‚¦Tag.
             </p>
 
             <div className="twitter-input-group">
@@ -744,7 +737,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
               style={{ height: 44, fontSize: 14.5, justifyContent: 'center', marginTop: 8 }}
               onClick={handleExecuteSend}
             >
-              {paySuccess ? '✓ Connecting to Wallet…' : `Confirm & Pay $${payAmount} USDC`}
+              {paySuccess ? 'âœ“ Connecting to Walletâ€¦' : `Confirm & Pay $${payAmount} USDC`}
             </button>
           </div>
         </div>
@@ -761,7 +754,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 className="twitter-modal-close"
                 onClick={() => setIsQrModalOpen(false)}
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -816,7 +809,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 className="twitter-modal-close"
                 onClick={() => setIsShareModalOpen(false)}
               >
-                ×
+                Ã—
               </button>
             </div>
 
@@ -853,7 +846,7 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
                 className="twitter-prompt-chip"
                 onClick={copyLink}
               >
-                <span>{copiedLink ? '✓ Profile Link Copied!' : 'Copy Direct Link'}</span>
+                <span>{copiedLink ? 'âœ“ Profile Link Copied!' : 'Copy Direct Link'}</span>
                 <Copy size={14} />
               </button>
             </div>
@@ -870,3 +863,5 @@ export default function PublicProfilePage({ rawHandle, type = 'agent' }) {
     </div>
   );
 }
+
+

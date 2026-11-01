@@ -10,10 +10,15 @@ export async function recordConfirmedPaymentSpin({ accountKey, txHash }) {
   return submitArcRewardAction({ action: 'payment_confirmed', walletAddress: accountKey, txHash });
 }
 
+const pendingSpinRequests = new Map();
+
 /** The server checks availability, selects the prize and credits it atomically. */
 export async function consumeDailySpin(accountKey) {
-  const requestId = crypto.randomUUID();
-  const response = await submitArcRewardAction({ action: 'spin', walletAddress: accountKey, requestId });
+  const wallet = String(accountKey || '').toLowerCase();
+  const requestId = pendingSpinRequests.get(wallet) || crypto.randomUUID();
+  pendingSpinRequests.set(wallet, requestId);
+  const response = await submitArcRewardAction({ action: 'spin', walletAddress: wallet, requestId });
+  pendingSpinRequests.delete(wallet);
   const prize = response.result?.prize;
   return { ok: Boolean(prize), prize, stats: response.state.spins, state: response.state };
 }

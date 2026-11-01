@@ -1,4 +1,4 @@
-import { keccak256, stringToHex } from 'viem';
+﻿import { keccak256, stringToHex } from 'viem';
 import { getEthereumProvider } from './arcPayment.js';
 
 const ARC_AGENTS_API = import.meta.env?.VITE_ARC_AGENTS_API || '/api/arc-agents';
@@ -14,7 +14,7 @@ export function getOriginalAgentLogo(agentOrTag) {
     return `https://api.dicebear.com/7.x/identicon/svg?seed=agent-${Math.random().toString(36).slice(2, 8)}`;
   }
   if (typeof agentOrTag === 'string') {
-    const clean = agentOrTag.trim().replace(/^[₦$@#]/, '').toLowerCase();
+    const clean = agentOrTag.trim().replace(/^[â‚¦$@#]/, '').toLowerCase();
     if (KNOWN_AGENT_LOGOS[clean]) return KNOWN_AGENT_LOGOS[clean];
     if (clean.includes('defillama')) return KNOWN_AGENT_LOGOS.defillama;
     if (clean.includes('coingecko')) return KNOWN_AGENT_LOGOS.coingecko;
@@ -22,7 +22,7 @@ export function getOriginalAgentLogo(agentOrTag) {
     if ((agentOrTag.startsWith('http') || agentOrTag.startsWith('/')) && !agentOrTag.includes('bloom.png')) return agentOrTag;
     return `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(clean || 'agent')}`;
   }
-  const tag = String(agentOrTag.tag || agentOrTag.agentTag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
+  const tag = String(agentOrTag.tag || agentOrTag.agentTag || '').trim().replace(/^[â‚¦$@#]/, '').toLowerCase();
   if (KNOWN_AGENT_LOGOS[tag]) return KNOWN_AGENT_LOGOS[tag];
   if (agentOrTag.avatar && !agentOrTag.avatar.includes('dicebear') && !agentOrTag.avatar.includes('bloom.png')) return agentOrTag.avatar;
   if (agentOrTag.avatarUrl && !agentOrTag.avatarUrl.includes('dicebear') && !agentOrTag.avatarUrl.includes('bloom.png')) return agentOrTag.avatarUrl;
@@ -30,7 +30,7 @@ export function getOriginalAgentLogo(agentOrTag) {
 }
 
 export function mapArcAgentRecord(agent = {}) {
-  const tag = String(agent.tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
+  const tag = String(agent.tag || '').trim().replace(/^[â‚¦$@#]/, '').toLowerCase();
   if (!/^[a-z0-9_-]{2,32}$/.test(tag)) return null;
   const stats = agent.stats && typeof agent.stats === 'object' ? agent.stats : {};
   const metrics = agent.metrics && typeof agent.metrics === 'object' ? agent.metrics : {};
@@ -40,7 +40,7 @@ export function mapArcAgentRecord(agent = {}) {
   return {
     id: agent.id == null ? null : String(agent.id),
     tag,
-    canonicalTag: `₦${tag.toUpperCase()}`,
+    canonicalTag: `â‚¦${tag.toUpperCase()}`,
     name: String(agent.displayName || agent.name || tag),
     owner: agent.owner || agent.ownerAddress || agent.owner_address || agent.walletAddress || agent.wallet_address || agent.identity?.owner || null,
     category: String(agent.category || ''),
@@ -86,9 +86,9 @@ const MARKETPLACE_AGENTS = [
   {
     id: 'agent_official_nairatag',
     tag: 'nairatag',
-    canonicalTag: '₦NAIRATAG',
-    name: '₦nairatag',
-    displayName: '₦nairatag (Official Protocol Agent)',
+    canonicalTag: 'â‚¦NAIRATAG',
+    name: 'â‚¦nairatag',
+    displayName: 'â‚¦nairatag (Official Protocol Agent)',
     category: 'Core Protocol',
     role: 'Official sovereign in-house AI agent of the NairaTag Network on Arc Mainnet. Orchestrates tag resolution, escrow payouts, and autonomous agent-to-agent USDC transfers.',
     avatar: 'https://api.dicebear.com/7.x/identicon/svg?seed=nairatag',
@@ -119,7 +119,7 @@ const MARKETPLACE_AGENTS = [
     id: 'agent_sovereign_bloom',
     tag: 'bloom',
     owner: '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26',
-    canonicalTag: '₦BLOOM',
+    canonicalTag: 'â‚¦BLOOM',
     name: 'NairaTag',
     displayName: 'NairaTag',
     category: '',
@@ -149,7 +149,7 @@ const MARKETPLACE_AGENTS = [
     id: 'agent_marketplace_defillama',
     tag: 'defillama',
     owner: '0xbfA1f73F632a54bFd04e9925dB6006135FcA6Ce6',
-    canonicalTag: '₦DEFILLAMA',
+    canonicalTag: 'â‚¦DEFILLAMA',
     name: 'DefiLlama DeFi Oracle',
     displayName: 'DefiLlama DeFi Oracle',
     category: 'DeFi & Analytics',
@@ -177,7 +177,7 @@ const MARKETPLACE_AGENTS = [
     id: 'agent_marketplace_meteo',
     tag: 'meteo',
     owner: '0x235d0Aa81F1c375c3325214f2dd7F205487eae36',
-    canonicalTag: '₦METEO',
+    canonicalTag: 'â‚¦METEO',
     name: 'Open-Meteo Logistics Weather',
     displayName: 'Open-Meteo Logistics Weather',
     category: 'Logistics & Weather',
@@ -205,7 +205,7 @@ const MARKETPLACE_AGENTS = [
     id: 'agent_marketplace_coingecko',
     tag: 'coingecko',
     owner: '0x1abfC727335489f2914Effd7e19C19C309850Ef8',
-    canonicalTag: '₦COINGECKO',
+    canonicalTag: 'â‚¦COINGECKO',
     name: 'CoinGecko FX Benchmark',
     displayName: 'CoinGecko FX Benchmark',
     category: 'FX & Pricing',
@@ -258,32 +258,8 @@ export async function fetchArcAgentDirectory({ signal } = {}) {
     }
   }
 
-  // One-time background sync: ensure any local claims are synced to Supabase database
-  if (typeof window !== 'undefined') {
-    try {
-      const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
-      const activeClaim = JSON.parse(window.localStorage.getItem('nairatag_claimed_tag_v1') || 'null');
-      const allLocal = { ...localClaims };
-      if (activeClaim?.tag) {
-        const clean = String(activeClaim.tag).replace(/^[₦$@#]/, '').toLowerCase();
-        allLocal[clean] = { tag: clean, owner: activeClaim.owner };
-      }
-      for (const [key, claim] of Object.entries(allLocal)) {
-        const cleanTag = String(claim.tag || key || '').replace(/^[₦$@#]/, '').toLowerCase();
-        if (!cleanTag || cleanTag === 'bloom' || cleanTag === 'nairatag') continue;
-        if (!existingTags.has(cleanTag) && claim.owner) {
-          fetch('/api/claims', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tag: cleanTag, wallet: claim.owner, txHash: claim.txHash || null }),
-          }).catch(() => {});
-        }
-      }
-    } catch {}
-  }
-
   for (const agent of merged) {
-    const cleanTag = String(agent.tag || '').replace(/^[₦$@#]/, '').toLowerCase();
+    const cleanTag = String(agent.tag || '').replace(/^[â‚¦$@#]/, '').toLowerCase();
     if (PROTOCOL_AGENT_POINTS[cleanTag] !== undefined) {
       agent.points = PROTOCOL_AGENT_POINTS[cleanTag];
       agent.earnings = 0;
@@ -330,17 +306,17 @@ export async function getAdminArcAgentRegistry({ walletAddress }) {
 }
 
 export async function transitionArcAgent({ walletAddress, tag, action }) {
-  return sendAdminPayload({ walletAddress, action, payload: { action, tag: String(tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase() } });
+  return sendAdminPayload({ walletAddress, action, payload: { action, tag: String(tag || '').trim().replace(/^[â‚¦$@#]/, '').toLowerCase() } });
 }
 
 export async function enableArcMcpTool({ walletAddress, tag, toolKey }) {
   const action = 'enable_mcp_tool';
-  return sendAdminPayload({ walletAddress, action, payload: { action, tag: String(tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase(), toolKey } });
+  return sendAdminPayload({ walletAddress, action, payload: { action, tag: String(tag || '').trim().replace(/^[â‚¦$@#]/, '').toLowerCase(), toolKey } });
 }
 
 export async function createArcPlatformAgent({ walletAddress, agent }) {
   const payload = {
-    tag: String(agent.tag || '').trim().replace(/^[₦$@#]/, '').toLowerCase(),
+    tag: String(agent.tag || '').trim().replace(/^[â‚¦$@#]/, '').toLowerCase(),
     displayName: String(agent.displayName || '').trim(),
     category: String(agent.category || '').trim(),
     description: String(agent.description || '').trim(),
@@ -367,4 +343,5 @@ export async function createArcPlatformAgent({ walletAddress, agent }) {
   if (!response.ok || !result.ok) throw new Error(result.error || `Platform agent provisioning failed (${response.status}).`);
   return result.agent;
 }
+
 

@@ -12,8 +12,6 @@ import {
 import { getUsdcBalance, publicClient } from './arcPayment.js';
 
 const APP_ID = import.meta.env.VITE_CIRCLE_APP_ID || '';
-const LEGACY_STORAGE_KEY = 'nairatag_circle_wallet_v1';
-const CIRCLE_STORAGE_KEY = 'nairatag_circle_wallet_v2';
 let sdkPromise;
 let sdkInstance;
 let loginCallback;
@@ -67,38 +65,27 @@ async function circleAction(action, params = {}) {
   return data;
 }
 
-export function deriveDeterministicArcAddress(identifier) {
-  const clean = String(identifier || '').trim().toLowerCase();
-  const salt = `nairatag_arc_5042_email_${clean}`;
-  const hash = keccak256(stringToHex(salt));
-  return getAddress('0x' + hash.slice(-40));
-}
-
 export async function requestCircleEmailOtp(email) {
   const normalizedEmail = String(email || '').trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
     throw new Error('Enter a valid email address.');
   }
-  try {
-    const sdk = await getSdk();
-    const deviceId = await sdk.getDeviceId();
-    const otp = await circleAction('requestEmailOtp', { deviceId, email: normalizedEmail });
-    if (otp?.deviceToken && otp?.deviceEncryptionKey && otp?.otpToken) {
-      sdk.updateConfigs({
-        appSettings: { appId: APP_ID },
-        loginConfigs: {
-          deviceToken: otp.deviceToken,
-          deviceEncryptionKey: otp.deviceEncryptionKey,
-          otpToken: otp.otpToken,
-          email: { email: normalizedEmail },
-        },
-      });
-      return { email: normalizedEmail, isCircle: true };
-    }
-  } catch (err) {
-    console.warn('[Circle Email] Service restricted, falling back to sovereign smart account:', err?.message || err);
+  const sdk = await getSdk();
+  const deviceId = await sdk.getDeviceId();
+  const otp = await circleAction('requestEmailOtp', { deviceId, email: normalizedEmail });
+  if (!otp?.deviceToken || !otp?.deviceEncryptionKey || !otp?.otpToken) {
+    throw new Error('Circle did not return the email verification session.');
   }
-  return { email: normalizedEmail, isSovereignFallback: true };
+  sdk.updateConfigs({
+    appSettings: { appId: APP_ID },
+    loginConfigs: {
+      deviceToken: otp.deviceToken,
+      deviceEncryptionKey: otp.deviceEncryptionKey,
+      otpToken: otp.otpToken,
+      email: { email: normalizedEmail },
+    },
+  });
+  return { email: normalizedEmail };
 }
 
 async function _legacyRequestCircleEmailOtp_unused(email) {
@@ -339,169 +326,27 @@ export async function sendUsdcWithCircle({ session, fromAddress, toAddress, amou
 
 const RESERVED_PROTOCOL_TAGS = new Set(['nairatag', 'bloom', 'defillama', 'meteo', 'coingecko', 'arc']);
 
-export async function claimTagWithCircle({ session, walletAddress, rawTag, email = null }) {
+export async function claimTagWithCircle({ session, walletAddress, rawTag }) {
   const cleanTag = String(rawTag || '').trim().replace(/^[₦$@#]/, '').toLowerCase();
-  if (!/^[a-z0-9][a-z0-9_]{1,30}[a-z0-9]$/.test(cleanTag) || cleanTag.includes('__')) {
-    throw new Error('NairaTags must be 3–32 letters, numbers, or single underscores inside the name.');
-  }
-  if (RESERVED_PROTOCOL_TAGS.has(cleanTag)) {
-    throw new Error(`₦${cleanTag.toUpperCase()} is an official sovereign protocol agent on Arc.`);
-  }
-  if (!isAddress(walletAddress) || getAddress(walletAddress) !== getAddress(session?.walletAddress)) {
-    throw new Error('The Circle session does not own the connected wallet.');
-  }
-
-  // Strict 1-tag-per-account check locally
-  if (typeof window !== 'undefined') {
-    const norm = String(walletAddress).toLowerCase();
-    const activeClaim = JSON.parse(window.localStorage.getItem('nairatag_claimed_tag_v1') || 'null');
-    if (activeClaim?.tag && String(activeClaim.tag).replace(/^[₦$@#]/, '').toLowerCase() !== cleanTag) {
-      throw new Error(`This account already owns ₦${String(activeClaim.tag).replace(/^[₦$@#]/, '').toUpperCase()}. Each sovereign account is limited to 1 NairaTag.`);
-    }
-    const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
-    const existing = Object.values(localClaims).find(
-      (item) => String(item.owner).toLowerCase() === norm && item.tag.toLowerCase() !== 'bloom'
-    );
-    if (existing && existing.tag.toLowerCase() !== cleanTag) {
-      throw new Error(`This account already owns ₦${existing.tag.toUpperCase()}. Each sovereign account is limited to 1 NairaTag.`);
-    }
-  }
-
-  // Authoritative Database check for both wallet and email
-  try {
-    const params = new URLSearchParams({ action: 'check_claim', tag: cleanTag });
-    if (walletAddress) params.set('wallet', walletAddress);
-    if (email) params.set('email', email);
-    const dbRes = await fetch(`/api/arc-rewards?${params.toString()}`, { cache: 'no-store' });
-    const dbData = await dbRes.json().catch(() => ({}));
-    if (dbData?.check && dbData.check.can_claim === false) {
-      throw new Error(dbData.check.reason || 'This account cannot claim another NairaTag.');
-    }
-  } catch (apiErr) {
-    if (apiErr.message?.includes('already owns') || apiErr.message?.includes('claimed') || apiErr.message?.includes('account') || apiErr.message?.includes('limit')) {
-      throw apiErr;
-    }
-  }
-
-  try {
-    const execution = await executeCircleContract({
-      session,
-      contractAddress: ARC_NAIRATAG_REGISTRY_ADDRESS,
-      abiFunctionSignature: 'claim(string,address)',
-      abiParameters: [cleanTag, ARC_NAIRATAG_RESOLVER_ADDRESS],
-    });
-    const receipt = await publicClient.waitForTransactionReceipt({ hash: execution.txHash, confirmations: 1, timeout: 120_000 });
-    if (receipt.status !== 'success') throw new Error(`Circle wallet tag claim failed on Arc. Transaction: ${execution.txHash}`);
-    if (typeof window !== 'undefined') {
-      const norm = String(walletAddress).toLowerCase();
-      const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
-      // Purge any stale duplicate tags for this same owner
-      for (const [k, v] of Object.entries(localClaims)) {
-        if (String(v.owner).toLowerCase() === norm && k !== cleanTag && k !== 'bloom') {
-          delete localClaims[k];
-        }
-      }
-      localClaims[cleanTag] = {
-        tag: cleanTag,
-        owner: getAddress(walletAddress),
-        claimedAt: Date.now(),
-        txHash: execution.txHash,
-      };
-      if (localClaims.bloom && String(localClaims.bloom.owner).toLowerCase() !== '0x7c26a1f03339e2ea74d261d97f5ab9c38181af26') {
-        localClaims.bloom.owner = '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26';
-      }
-      window.localStorage.setItem('nairatag_local_claims_v1', JSON.stringify(localClaims));
-    }
-    return {
-      ...execution,
-      success: true,
-      cleanTag,
-      tag: cleanTag,
-      owner: getAddress(walletAddress),
-      receipt,
-    };
-  } catch (err) {
-    if (
-      err.message?.includes('already owns') ||
-      err.message?.includes('sovereign protocol agent') ||
-      err.message?.includes('already claimed') ||
-      err.message?.includes('account') ||
-      err.message?.includes('limit') ||
-      err.message?.includes('cannot claim')
-    ) {
-      throw err;
-    }
-    console.warn('[Circle Claim Tag fallback]:', err.message);
-    const syntheticHash = '0x' + Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join('');
-    try {
-      if (typeof window !== 'undefined') {
-        const norm = String(walletAddress).toLowerCase();
-        const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
-        // Purge any stale duplicate tags for this same owner
-        for (const [k, v] of Object.entries(localClaims)) {
-          if (String(v.owner).toLowerCase() === norm && k !== cleanTag && k !== 'bloom') {
-            delete localClaims[k];
-          }
-        }
-        localClaims[cleanTag] = {
-          tag: cleanTag,
-          owner: getAddress(walletAddress),
-          claimedAt: Date.now(),
-          txHash: syntheticHash,
-        };
-        if (localClaims.bloom && String(localClaims.bloom.owner).toLowerCase() !== '0x7c26a1f03339e2ea74d261d97f5ab9c38181af26') {
-          localClaims.bloom.owner = '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26';
-        }
-        window.localStorage.setItem('nairatag_local_claims_v1', JSON.stringify(localClaims));
-      }
-    } catch {}
-    return {
-      txHash: syntheticHash,
-      success: true,
-      cleanTag,
-      tag: cleanTag,
-      owner: getAddress(walletAddress),
-      explorerUrl: `${isArcMainnet ? 'https://explorer.arc.io' : 'https://explorer.testnet.arc.io'}/tx/${syntheticHash}`,
-    };
-  }
+  if (!/^[a-z0-9][a-z0-9_]{1,30}[a-z0-9]$/.test(cleanTag) || cleanTag.includes('__')) throw new Error('NairaTags must be 3–32 letters, numbers, or single underscores inside the name.');
+  if (RESERVED_PROTOCOL_TAGS.has(cleanTag)) throw new Error(`₦${cleanTag.toUpperCase()} is an official sovereign protocol agent on Arc.`);
+  if (!isAddress(walletAddress) || getAddress(walletAddress) !== getAddress(session?.walletAddress)) throw new Error('The Circle session does not own the connected wallet.');
+  const execution = await executeCircleContract({ session, contractAddress: ARC_NAIRATAG_REGISTRY_ADDRESS, abiFunctionSignature: 'claim(string,address)', abiParameters: [cleanTag, ARC_NAIRATAG_RESOLVER_ADDRESS] });
+  const receipt = await publicClient.waitForTransactionReceipt({ hash: execution.txHash, confirmations: 1, timeout: 120_000 });
+  if (receipt.status !== 'success') throw new Error(`Circle wallet tag claim failed on Arc. Transaction: ${execution.txHash}`);
+  return { ...execution, success: true, cleanTag, tag: cleanTag, owner: getAddress(walletAddress), receipt };
 }
-
-// Circle session persistence
-export function saveCircleSession(session) {
-  if (typeof window === 'undefined' || !session) return;
-  try {
-    window.localStorage.setItem(CIRCLE_STORAGE_KEY, JSON.stringify(session));
-  } catch (e) {
-    console.warn('[CircleWallet] Failed to persist session:', e);
-  }
-}
-
-export function getStoredCircleSession() {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(CIRCLE_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.walletAddress) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
+// Circle session tokens are kept in memory and re-established through Circle after refresh.
+let currentCircleSession = null;
+export function saveCircleSession(session) { currentCircleSession = session || null; return currentCircleSession; }
+export function getStoredCircleSession() { return currentCircleSession; }
 export function clearCircleSession() {
-  try {
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(CIRCLE_STORAGE_KEY);
-      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
-    }
-  } catch { /* Browser storage may be disabled. */ }
+  currentCircleSession = null;
   if (loginCallback) loginCallback.reject(new Error('Circle sign-in was cancelled.'));
   loginCallback = null;
   sdkInstance = null;
   sdkPromise = null;
 }
-
 export async function getAgentCircleSpendingPolicy(key) {
   return circleAction('getAgentWalletPolicy', { walletAddress: key });
 }
@@ -523,5 +368,3 @@ export async function executeAgentCircleTransfer({ session, walletAddress, recip
     memo,
   });
 }
-
-

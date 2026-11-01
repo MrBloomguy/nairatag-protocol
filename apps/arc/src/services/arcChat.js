@@ -1,4 +1,4 @@
-import { keccak256, stringToHex } from 'viem';
+﻿import { keccak256, stringToHex } from 'viem';
 import { getArcSessionToken } from './arcSession.js';
 
 const ARC_CHAIN_ID = 5042;
@@ -9,13 +9,11 @@ export function createArcChatConversationId() {
   return crypto.randomUUID();
 }
 
+const conversations = new Map();
 export function getOrCreateArcChatConversationId(walletAddress, agentTag = 'arc') {
-  const key = `nairatag:arc-chat:${String(walletAddress || '').toLowerCase()}:${String(agentTag || 'arc').toLowerCase()}`;
-  const current = window.localStorage.getItem(key);
-  if (current && /^[0-9a-f-]{36}$/i.test(current)) return current;
-  const conversationId = createArcChatConversationId();
-  window.localStorage.setItem(key, conversationId);
-  return conversationId;
+  const key = `${String(walletAddress || '').toLowerCase()}:${String(agentTag || 'arc').toLowerCase()}`;
+  if (!conversations.has(key)) conversations.set(key, createArcChatConversationId());
+  return conversations.get(key);
 }
 
 async function signArcChatAction({ action, walletAddress, conversationId = '', turnId = '', prompt = '', agentTag = '' }) {
@@ -42,7 +40,7 @@ async function signArcChatAction({ action, walletAddress, conversationId = '', t
   ].join('\n');
   try {
     const signature = await provider.request({ method: 'personal_sign', params: [message, walletAddress] });
-    return { action, walletAddress, conversationId, turnId, timestamp, signature };
+  return { action, walletAddress, conversationId, turnId, timestamp, chainId: ARC_CHAIN_ID, signature };
   } catch {
     return { action, walletAddress: walletAddress.toLowerCase(), conversationId, turnId, timestamp, authMode: 'fallback' };
   }
@@ -80,7 +78,7 @@ export async function sendArcChatMessage({ walletAddress, conversationId, turnId
     console.error('[ArcChat] Service error:', err.message);
     return {
       ok: false,
-      reply: `⚠️ Chat service notice: ${err.message}. Please try again shortly.`,
+      reply: `âš ï¸ Chat service notice: ${err.message}. Please try again shortly.`,
       toolEvents: [],
     };
   }
@@ -142,3 +140,4 @@ export async function createArcVoiceSession({ walletAddress, conversationId, age
   if (!response.ok || !result.ok) throw new Error(result.error || `Voice service returned ${response.status}.`);
   return result;
 }
+

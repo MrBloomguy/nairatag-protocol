@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+﻿import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Bot,
   Cpu,
@@ -100,7 +100,6 @@ export default function PlatformAgentAdminPage() {
     setTheme(next);
     document.documentElement.setAttribute('data-theme', next);
     try {
-      localStorage.setItem('nairatag-theme', next);
     } catch {}
   };
 
@@ -181,7 +180,7 @@ export default function PlatformAgentAdminPage() {
         : '';
       setNotice({
         type: 'success',
-        text: `₦${created.tag} created as private draft.${mcpResult} Review its capabilities before publishing.`,
+        text: `â‚¦${created.tag} created as private draft.${mcpResult} Review its capabilities before publishing.`,
       });
       await refreshAgents();
     } catch (error) {
@@ -195,7 +194,7 @@ export default function PlatformAgentAdminPage() {
     if (!walletAddress) return;
     if (
       action === 'retire' &&
-      !window.confirm(`Retire ₦${agent.tag}? Its identity will remain permanently reserved.`)
+      !window.confirm(`Retire â‚¦${agent.tag}? Its identity will remain permanently reserved.`)
     ) {
       return;
     }
@@ -207,8 +206,8 @@ export default function PlatformAgentAdminPage() {
         type: 'success',
         text:
           action === 'test_mcp'
-            ? `MCP server for ₦${agent.tag} is ${result.connectionStatus}. ${result.toolCount} tools verified.`
-            : `₦${agent.tag} is now ${result.status}.`,
+            ? `MCP server for â‚¦${agent.tag} is ${result.connectionStatus}. ${result.toolCount} tools verified.`
+            : `â‚¦${agent.tag} is now ${result.status}.`,
       });
       await refreshAgents();
     } catch (error) {
@@ -276,12 +275,12 @@ export default function PlatformAgentAdminPage() {
 
   return (
     <div className="admin-fintech-layout">
-      {/* ───────────────── LEFT SIDEBAR ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ LEFT SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <aside className="admin-fintech-sidebar">
         <div className="admin-sidebar-header">
           <div className="admin-brand-cluster">
             <div className="admin-brand-symbol">
-              <span>₦</span>
+              <span>â‚¦</span>
             </div>
             <div className="admin-brand-copy">
               <strong>NairaTag Admin</strong>
@@ -298,7 +297,7 @@ export default function PlatformAgentAdminPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          <kbd className="admin-search-kbd">⌘K</kbd>
+          <kbd className="admin-search-kbd">âŒ˜K</kbd>
         </div>
 
         <div className="admin-sidebar-nav">
@@ -358,14 +357,14 @@ export default function PlatformAgentAdminPage() {
           <div className="admin-footer-status">
             <span className="admin-pulse-dot" />
             <div>
-              <strong>Arc Mainnet · 5042</strong>
+              <strong>Arc Mainnet Â· 5042</strong>
               <span>{walletAddress ? 'Admin data loaded on demand' : 'Connect an authorized admin wallet'}</span>
             </div>
           </div>
           {walletAddress ? (
             <div className="admin-wallet-pill-box">
               <span className="admin-wallet-address">
-                {walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}
+                {walletAddress.slice(0, 6)}â€¦{walletAddress.slice(-4)}
               </span>
               <button
                 type="button"
@@ -384,13 +383,13 @@ export default function PlatformAgentAdminPage() {
               disabled={walletConnecting}
             >
               <Wallet size={14} />
-              <span>{walletConnecting ? 'Connecting…' : 'Connect Admin Wallet'}</span>
+              <span>{walletConnecting ? 'Connectingâ€¦' : 'Connect Admin Wallet'}</span>
             </button>
           )}
         </div>
       </aside>
 
-      {/* ───────────────── MAIN DASHBOARD CONTENT ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ MAIN DASHBOARD CONTENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="admin-fintech-body">
         {/* Top Header Bar */}
         <header className="admin-topbar">
@@ -486,7 +485,7 @@ export default function PlatformAgentAdminPage() {
                 </div>
               </div>
               <div className="admin-stat-value-row">
-                <span className="admin-stat-number">{loading ? '…' : totalAgents}</span>
+                <span className="admin-stat-number">{loading ? 'â€¦' : totalAgents}</span>
                   <span className="admin-stat-trend-pill">{agents.filter((agent) => ['active', 'chat_only'].includes(agent.status)).length} published</span>
               </div>
               <div className="admin-stat-footer-link">
@@ -507,7 +506,7 @@ export default function PlatformAgentAdminPage() {
                 </div>
               </div>
               <div className="admin-stat-value-row">
-                <span className="admin-stat-number">{loading ? '…' : enabledToolCount}</span>
+                <span className="admin-stat-number">{loading ? 'â€¦' : enabledToolCount}</span>
                   <span className="admin-stat-badge safe">Live</span>
               </div>
               <div className="admin-stat-footer-link sub">
@@ -574,8 +573,8 @@ export default function PlatformAgentAdminPage() {
                   <button className="admin-btn-primary" disabled={submitting}>Create task</button>
                 </form>
                 <div className="admin-table-responsive"><table className="admin-data-table"><thead><tr><th>Task</th><th>Status</th><th>Submissions</th><th>Reward</th><th>Manage</th></tr></thead><tbody>
-                  {(operations?.tasks || []).map((task) => { const rows = (operations?.progress || []).filter((entry) => entry.task_id === task.id); return <React.Fragment key={task.id}><tr><td><strong>{task.title}</strong><br /><small>{task.category_label} · {task.id}</small></td><td>{task.status}</td><td>{rows.length}</td><td>{Number(task.reward_usdc)} USDC · {task.points} pts</td><td><button className="admin-action-btn secondary" disabled={submitting} onClick={() => runOperation('save_task', { task: { ...task, categoryLabel: task.category_label, rewardUSDC: task.reward_usdc, deadline: task.deadline_label, status: task.status === 'open' ? 'closed' : 'open' } })}>{task.status === 'open' ? 'Close' : 'Reopen'}</button></td></tr>
-                    {rows.filter((entry) => entry.status === 'submitted').map((entry) => <tr key={`${task.id}:${entry.wallet_address}`}><td colSpan="2">Submission · {entry.wallet_address.slice(0, 8)}…{entry.wallet_address.slice(-4)}<br /><small>{entry.deliverable_submission}</small></td><td>Pending review</td><td colSpan="2"><button className="admin-action-btn primary" disabled={submitting} onClick={() => runOperation('review_task', { taskId: task.id, userWallet: entry.wallet_address, status: 'approved' })}>Approve</button> <button className="admin-action-btn danger" disabled={submitting} onClick={() => runOperation('review_task', { taskId: task.id, userWallet: entry.wallet_address, status: 'rejected' })}>Reject</button></td></tr>)}</React.Fragment>; })}
+                  {(operations?.tasks || []).map((task) => { const rows = (operations?.progress || []).filter((entry) => entry.task_id === task.id); return <React.Fragment key={task.id}><tr><td><strong>{task.title}</strong><br /><small>{task.category_label} Â· {task.id}</small></td><td>{task.status}</td><td>{rows.length}</td><td>{Number(task.reward_usdc)} USDC Â· {task.points} pts</td><td><button className="admin-action-btn secondary" disabled={submitting} onClick={() => runOperation('save_task', { task: { ...task, categoryLabel: task.category_label, rewardUSDC: task.reward_usdc, deadline: task.deadline_label, status: task.status === 'open' ? 'closed' : 'open' } })}>{task.status === 'open' ? 'Close' : 'Reopen'}</button></td></tr>
+                    {rows.filter((entry) => entry.status === 'submitted').map((entry) => <tr key={`${task.id}:${entry.wallet_address}`}><td colSpan="2">Submission Â· {entry.wallet_address.slice(0, 8)}â€¦{entry.wallet_address.slice(-4)}<br /><small>{entry.deliverable_submission}</small></td><td>Pending review</td><td colSpan="2"><button className="admin-action-btn primary" disabled={submitting} onClick={() => runOperation('review_task', { taskId: task.id, userWallet: entry.wallet_address, status: 'approved' })}>Approve</button> <button className="admin-action-btn danger" disabled={submitting} onClick={() => runOperation('review_task', { taskId: task.id, userWallet: entry.wallet_address, status: 'rejected' })}>Reject</button></td></tr>)}</React.Fragment>; })}
                 </tbody></table></div>
               </>}
             </section>
@@ -593,7 +592,7 @@ export default function PlatformAgentAdminPage() {
                   <button className="admin-btn-primary" disabled={submitting}>Create voucher task</button>
                 </form>
                 <div className="admin-table-responsive"><table className="admin-data-table"><thead><tr><th>Voucher task</th><th>Status</th><th>Points</th><th>Claims</th><th>Manage</th></tr></thead><tbody>{(operations?.vouchers || []).map((voucher) => <tr key={voucher.id}><td><strong>{voucher.title}</strong><br /><small>{voucher.id}</small></td><td>{voucher.status}</td><td>{voucher.points}</td><td>{(operations?.claims || []).filter((claim) => claim.voucher_id === voucher.id).length}</td><td><button className="admin-action-btn secondary" disabled={submitting} onClick={() => runOperation('save_voucher', { voucher: { id: voucher.id, title: voucher.title, description: voucher.description, category: voucher.category, points: voucher.points, actionUrl: voucher.action_url, status: voucher.status === 'active' ? 'paused' : 'active' } })}>{voucher.status === 'active' ? 'Pause' : 'Activate'}</button></td></tr>)}</tbody></table></div>
-                <div className="admin-table-responsive"><table className="admin-data-table"><thead><tr><th>Wallet</th><th>Task</th><th>Proof</th><th>Status</th><th>Review</th></tr></thead><tbody>{(operations?.claims || []).map((claim) => <tr key={claim.id}><td>{claim.wallet_address.slice(0, 8)}…{claim.wallet_address.slice(-4)}</td><td>{operations?.vouchers?.find((item) => item.id === claim.voucher_id)?.title || claim.voucher_id}</td><td>{claim.proof}</td><td>{claim.status}</td><td>{claim.status === 'pending' && <><button className="admin-action-btn primary" disabled={submitting} onClick={() => runOperation('review_voucher', { claimId: claim.id, status: 'approved' })}>Approve</button> <button className="admin-action-btn danger" disabled={submitting} onClick={() => runOperation('review_voucher', { claimId: claim.id, status: 'rejected' })}>Reject</button></>}</td></tr>)}</tbody></table></div>
+                <div className="admin-table-responsive"><table className="admin-data-table"><thead><tr><th>Wallet</th><th>Task</th><th>Proof</th><th>Status</th><th>Review</th></tr></thead><tbody>{(operations?.claims || []).map((claim) => <tr key={claim.id}><td>{claim.wallet_address.slice(0, 8)}â€¦{claim.wallet_address.slice(-4)}</td><td>{operations?.vouchers?.find((item) => item.id === claim.voucher_id)?.title || claim.voucher_id}</td><td>{claim.proof}</td><td>{claim.status}</td><td>{claim.status === 'pending' && <><button className="admin-action-btn primary" disabled={submitting} onClick={() => runOperation('review_voucher', { claimId: claim.id, status: 'approved' })}>Approve</button> <button className="admin-action-btn danger" disabled={submitting} onClick={() => runOperation('review_voucher', { claimId: claim.id, status: 'rejected' })}>Reject</button></>}</td></tr>)}</tbody></table></div>
               </>}
             </section>
           )}
@@ -601,7 +600,7 @@ export default function PlatformAgentAdminPage() {
           {activeNav === 'referrals' && (
             <section className="admin-card-container table-card" style={{ marginBottom: 20 }}>
               <div className="admin-table-title-group"><h2>Referral monitor</h2><p>Live records from the Arc referral ledger, including signup and first-payment milestones.</p></div>
-              {operationsError ? <div className="admin-table-error">{operationsError}</div> : <div className="admin-table-responsive"><table className="admin-data-table"><thead><tr><th>Referrer</th><th>New user</th><th>Signup points</th><th>First payment</th><th>Payment points</th><th>Joined</th></tr></thead><tbody>{(operations?.referrals || []).map((referral) => <tr key={referral.referred_wallet}><td>{referral.referrer_tag} · {referral.referrer_wallet.slice(0, 8)}…</td><td>{referral.referred_tag} · {referral.referred_wallet.slice(0, 8)}…</td><td>{referral.signup_points}</td><td>{referral.first_payment_hash ? `${referral.first_payment_hash.slice(0, 12)}…` : 'Not yet'}</td><td>{referral.payment_points}</td><td>{new Date(referral.created_at).toLocaleDateString()}</td></tr>)}</tbody></table></div>}
+              {operationsError ? <div className="admin-table-error">{operationsError}</div> : <div className="admin-table-responsive"><table className="admin-data-table"><thead><tr><th>Referrer</th><th>New user</th><th>Signup points</th><th>First payment</th><th>Payment points</th><th>Joined</th></tr></thead><tbody>{(operations?.referrals || []).map((referral) => <tr key={referral.referred_wallet}><td>{referral.referrer_tag} Â· {referral.referrer_wallet.slice(0, 8)}â€¦</td><td>{referral.referred_tag} Â· {referral.referred_wallet.slice(0, 8)}â€¦</td><td>{referral.signup_points}</td><td>{referral.first_payment_hash ? `${referral.first_payment_hash.slice(0, 12)}â€¦` : 'Not yet'}</td><td>{referral.payment_points}</td><td>{new Date(referral.created_at).toLocaleDateString()}</td></tr>)}</tbody></table></div>}
             </section>
           )}
 
@@ -611,11 +610,11 @@ export default function PlatformAgentAdminPage() {
               {walletAddress && <form className="admin-form-body" onSubmit={(event) => { event.preventDefault(); const requestId = `grant-${Date.now()}`; runOperation('grant_points', { ...rewardForm, points: Number(rewardForm.points), requestId }).then((saved) => { if (saved) setRewardForm({ userWallet: '', points: 100, reason: '' }); }); }}>
                 <h3>Grant a reward</h3><div className="admin-form-row two-col"><div className="admin-input-group"><label>User wallet</label><input required pattern="0x[a-fA-F0-9]{40}" value={rewardForm.userWallet} onChange={(e) => setRewardForm({ ...rewardForm, userWallet: e.target.value })} /></div><div className="admin-input-group"><label>Protocol Points</label><input type="number" min="1" max="100000" required value={rewardForm.points} onChange={(e) => setRewardForm({ ...rewardForm, points: e.target.value })} /></div></div><div className="admin-input-group"><label>Reason</label><input required minLength={4} value={rewardForm.reason} onChange={(e) => setRewardForm({ ...rewardForm, reason: e.target.value })} /></div><button className="admin-btn-primary" disabled={submitting}>Grant points</button>
               </form>}
-              <div className="admin-table-responsive"><table className="admin-data-table"><thead><tr><th>Wallet</th><th>Event</th><th>Points</th><th>Reference</th><th>Date</th></tr></thead><tbody>{(operations?.rewards || []).map((reward) => <tr key={`${reward.wallet_address}:${reward.idempotency_key}`}><td>{reward.wallet_address.slice(0, 8)}…{reward.wallet_address.slice(-4)}</td><td>{reward.event_type}</td><td>{reward.points}</td><td>{reward.idempotency_key}</td><td>{new Date(reward.created_at).toLocaleString()}</td></tr>)}</tbody></table></div>
+              <div className="admin-table-responsive"><table className="admin-data-table"><thead><tr><th>Wallet</th><th>Event</th><th>Points</th><th>Reference</th><th>Date</th></tr></thead><tbody>{(operations?.rewards || []).map((reward) => <tr key={`${reward.wallet_address}:${reward.idempotency_key}`}><td>{reward.wallet_address.slice(0, 8)}â€¦{reward.wallet_address.slice(-4)}</td><td>{reward.event_type}</td><td>{reward.points}</td><td>{reward.idempotency_key}</td><td>{new Date(reward.created_at).toLocaleString()}</td></tr>)}</tbody></table></div>
             </section>
           )}
 
-          {/* ───────────────── MID SECTION: CREATION FORM & PREVIEW (Two Columns) ───────────────── */}
+          {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ MID SECTION: CREATION FORM & PREVIEW (Two Columns) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           <section className="admin-mid-grid" id="register" style={{ display: ['registry', 'mcp', 'capabilities'].includes(activeNav) ? undefined : 'none' }}>
             {/* Left Card: Create Agent or MCP Server (Styled like "My Wallet" card) */}
             <div className="admin-card-container">
@@ -650,7 +649,7 @@ export default function PlatformAgentAdminPage() {
                   <div className="admin-input-group">
                     <label>Canonical Agent Tag</label>
                     <div className="admin-tag-input-wrap">
-                      <span className="admin-tag-prefix">₦</span>
+                      <span className="admin-tag-prefix">â‚¦</span>
                       <input
                         required
                         minLength={2}
@@ -754,7 +753,7 @@ export default function PlatformAgentAdminPage() {
 
                       {form.mcpAuthType === 'api_key' && (
                         <div className="admin-input-group">
-                          <label>Header Name (x-…)</label>
+                          <label>Header Name (x-â€¦)</label>
                           <input
                             required
                             pattern="x-[A-Za-z0-9-]{1,60}"
@@ -814,7 +813,7 @@ export default function PlatformAgentAdminPage() {
                     {submitting ? (
                       <>
                         <RefreshCw size={15} className="animate-spin" />
-                        <span>Provisioning…</span>
+                        <span>Provisioningâ€¦</span>
                       </>
                     ) : (
                       <>
@@ -840,7 +839,7 @@ export default function PlatformAgentAdminPage() {
                 {/* Visual Identity Card Card */}
                 <div className="admin-identity-card-mockup" style={{ borderColor: previewColor }}>
                   <div className="admin-card-mockup-top">
-                    <span className="admin-mockup-naira">₦</span>
+                    <span className="admin-mockup-naira">â‚¦</span>
                     <span className="admin-mockup-net">Arc Network</span>
                   </div>
 
@@ -849,12 +848,12 @@ export default function PlatformAgentAdminPage() {
                       className="admin-mockup-avatar-circle"
                       style={{ background: previewColor }}
                     >
-                      <span>{form.tag ? form.tag.slice(0, 2).toUpperCase() : '₦T'}</span>
+                      <span>{form.tag ? form.tag.slice(0, 2).toUpperCase() : 'â‚¦T'}</span>
                     </div>
                   </div>
 
                   <div className="admin-mockup-bottom">
-                    <strong>₦{form.tag || 'yourtag'}</strong>
+                    <strong>â‚¦{form.tag || 'yourtag'}</strong>
                     <span>{form.displayName || 'Agent Display Name'}</span>
                   </div>
                 </div>
@@ -909,7 +908,7 @@ export default function PlatformAgentAdminPage() {
             </div>
           </section>
 
-          {/* ───────────────── BOTTOM FULL-WIDTH: AGENT REGISTRY TABLE ───────────────── */}
+          {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ BOTTOM FULL-WIDTH: AGENT REGISTRY TABLE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           <section className="admin-card-container table-card" style={{ display: ['registry', 'mcp', 'capabilities'].includes(activeNav) ? undefined : 'none' }}>
             <div className="admin-table-toolbar">
               <div className="admin-table-title-group">
@@ -994,7 +993,7 @@ export default function PlatformAgentAdminPage() {
                                     <span className="admin-onchain-badge">ERC-8004</span>
                                   )}
                                 </div>
-                                <span className="admin-tag-badge">₦{agent.tag}</span>
+                                <span className="admin-tag-badge">â‚¦{agent.tag}</span>
                               </div>
                             </div>
                           </td>
@@ -1159,7 +1158,7 @@ export default function PlatformAgentAdminPage() {
         </main>
       </div>
 
-      {/* ───────────────── CAPABILITIES INSPECTION MODAL ───────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ CAPABILITIES INSPECTION MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {inspectingAgent && (
         <div className="admin-modal-backdrop" onClick={() => setInspectingAgent(null)}>
           <div
@@ -1170,7 +1169,7 @@ export default function PlatformAgentAdminPage() {
           >
             <div className="admin-modal-topbar">
               <div className="admin-modal-heading">
-                <span className="admin-tag-badge">₦{inspectingAgent.tag}</span>
+                <span className="admin-tag-badge">â‚¦{inspectingAgent.tag}</span>
                 <h2>{inspectingAgent.name} Capabilities</h2>
               </div>
               <button
@@ -1248,3 +1247,4 @@ export default function PlatformAgentAdminPage() {
     </div>
   );
 }
+

@@ -99,7 +99,6 @@ import {
 } from './services/arcPayment.js';
 import {
   requestCircleEmailOtp,
-  deriveDeterministicArcAddress,
   verifyCircleEmailOtp,
   connectCircleWallet,
   sendUsdcWithCircle,
@@ -108,7 +107,7 @@ import {
   saveCircleSession,
   clearCircleSession,
 } from './services/circleWallet.js';
-import { clearArcSession, establishCircleArcSession, establishWalletArcSession, getArcSessionToken } from './services/arcSession.js';
+import { clearArcSession, establishCircleArcSession, establishWalletArcSession, getArcSessionToken, linkArcWallet } from './services/arcSession.js';
 import {
   resolveTag,
 } from './services/nairatagResolver.js';
@@ -149,7 +148,6 @@ import { discoverAgentsByCapability, isAgentDiscoveryRequest, resolveAgentMentio
 import {
   clearPendingReferral,
   getPendingReferral,
-  recordReferralSignup,
   rememberReferralFromUrl,
   REFERRAL_SIGNUP_POINTS,
 } from './services/referrals.js';
@@ -442,7 +440,7 @@ function ArcAppShell() {
   // Theme State: 'light' | 'dark'
   const [theme, setTheme] = useState(() => {
     try {
-      const saved = localStorage.getItem('nairatag-theme');
+      const saved = null;
       if (saved === 'dark' || saved === 'light') return saved;
       return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     } catch {
@@ -453,7 +451,7 @@ function ArcAppShell() {
   useEffect(() => {
     try {
       document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('nairatag-theme', theme);
+
     } catch (e) {
       console.warn('Theme storage failed:', e);
     }
@@ -747,7 +745,7 @@ function ArcAppShell() {
             id: 'sys-' + Date.now(),
             sender: 'agent',
             agentName: 'NairaTag',
-            text: 'âš ï¸ Microphone recording is not supported in this browser environment.',
+            text: 'Ã¢Å¡Â Ã¯Â¸Â Microphone recording is not supported in this browser environment.',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           }
         ]);
@@ -805,7 +803,7 @@ function ArcAppShell() {
           id: 'sys-' + Date.now(),
           sender: 'agent',
           agentName: 'NairaTag',
-          text: 'âš ï¸ Microphone permission is required to record voice directives. Please enable microphone permissions in your browser settings.',
+          text: 'Ã¢Å¡Â Ã¯Â¸Â Microphone permission is required to record voice directives. Please enable microphone permissions in your browser settings.',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         }
       ]);
@@ -853,7 +851,7 @@ function ArcAppShell() {
       const newVoiceMsg = {
         id: userMsgId,
         sender: 'user',
-        text: finalTranscript ? `🎙️ï¸ "${finalTranscript}"` : `Voice directive (${formatDuration})`,
+        text: finalTranscript ? `ðŸŽ™ï¸Ã¯Â¸Â "${finalTranscript}"` : `Voice directive (${formatDuration})`,
         transcript: finalTranscript,
         audioUrl,
         audioDuration: formatDuration,
@@ -1045,7 +1043,7 @@ function ArcAppShell() {
             replyText = `**Weather in ${data.city || "Lagos"}**: ${data.temperatureC}°C · ${data.windSpeedKmH} km/h wind · Risk: **${data.riskLevel}**`;
             toolEvents = [{ tool: 'meteo.delivery_impact', status: 'success', summary: `Calculated ${data.riskLevel} delivery risk for ${data.city}` }];
           } catch (e) {
-            replyText = `🌤️ **Open-Meteo**: Connected to Arc Testnet. Real-time meteorological dispatch risk analysis active.`;
+            replyText = `ðŸŒ¤ï¸ **Open-Meteo**: Connected to Arc Testnet. Real-time meteorological dispatch risk analysis active.`;
           }
         } else if (cleanTag === 'coingecko') {
           replyAgentTag = 'coingecko';
@@ -1198,10 +1196,7 @@ function ArcAppShell() {
       setChatMessages(messages);
       setActiveChatConversationId(conversation.id);
       setCurrentTaggedAgent(activeAgent);
-      window.localStorage.setItem(
-        `nairatag:arc-chat:${walletAddress.toLowerCase()}:${String(conversation.agent_tag || 'arc').toLowerCase()}`,
-        conversation.id,
-      );
+
       setIsChatConversationOpen(true);
       setIsTaskChatDraft(false);
       setIsHistoryModalOpen(false);
@@ -1221,11 +1216,6 @@ function ArcAppShell() {
     setChatHistoryLoading(true);
     try {
       await clearArcChatHistory({ walletAddress });
-      const keyPrefix = `nairatag:arc-chat:${walletAddress.toLowerCase()}:`;
-      for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
-        const key = window.localStorage.key(index);
-        if (key?.startsWith(keyPrefix)) window.localStorage.removeItem(key);
-      }
       setChatHistoryEntries([]);
       setChatMessages([]);
       setAgentChatMessages({});
@@ -1277,13 +1267,6 @@ function ArcAppShell() {
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
   }, []);
-
-  // Daily Bonus Missions Tracking (Report Market Price, Agent Mission, Commodity Alert)
-  const [dailyMissionsDone, setDailyMissionsDone] = useState({
-    price: false,
-    agent: false,
-    alert: false,
-  });
 
   // Price Report Dialog
   const [isPriceReportModalOpen, setIsPriceReportModalOpen] = useState(false);
@@ -1345,6 +1328,7 @@ function ArcAppShell() {
 
   // Modals
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const [isLinkingWallet, setIsLinkingWallet] = useState(false);
   const [authScreen, setAuthScreen] = useState('welcome'); // 'welcome' | 'create' | 'signin' | 'wallets'
   const [isSendReviewModalOpen, setIsSendReviewModalOpen] = useState(false);
   const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
@@ -1630,14 +1614,8 @@ function ArcAppShell() {
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimRegSlide, setClaimRegSlide] = useState(0);
   const [recentArcTags, setRecentArcTags] = useState([]);
-  const [arcTagAgentLinks, setArcTagAgentLinks] = useState(() => {
-    try { return JSON.parse(window.localStorage.getItem('nairatag_arc_agent_links_v1') || '{}'); }
-    catch { return {}; }
-  });
-  const [pendingArcAgentLink, setPendingArcAgentLink] = useState(() => {
-    try { return JSON.parse(window.localStorage.getItem('nairatag_pending_arc_agent_link_v1') || 'null'); }
-    catch { return null; }
-  });
+  const [arcTagAgentLinks, setArcTagAgentLinks] = useState({});
+  const [pendingArcAgentLink, setPendingArcAgentLink] = useState(null);
   const [isRetryingArcAgentLink, setIsRetryingArcAgentLink] = useState(false);
   const [claimCardMode, setClaimCardMode] = useState('identity'); // 'identity' | 'share' | 'referral' | 'qrcode'
 
@@ -1862,7 +1840,7 @@ function ArcAppShell() {
     let timer;
     let cancelled = false;
     let lastReminder = 0;
-    try { lastReminder = Number(window.localStorage.getItem(key)) || 0; } catch { /* Continue with an in-memory reminder. */ }
+
 
     const schedule = (delay) => {
       timer = window.setTimeout(() => {
@@ -1875,13 +1853,13 @@ function ArcAppShell() {
         if (!current || current.completed || !current.submittedAt || isAgentOnboardingOpen) return;
         const remaining = Math.max(0, 100 - Number(current.points || 0));
         if (!remaining) return;
-        try { window.localStorage.setItem(key, String(Date.now())); } catch { /* The reminder still appears this session. */ }
+
         showToast(`You're at ${current.points}/100 Pts. Finish your setup to earn ${remaining} more—pick up where you left off.`, 'info', 7000, () => { onboardingDismissedKeyRef.current = null; setIsAgentOnboardingOpen(true); });
         schedule(repeatDelay);
       }, Math.max(0, delay));
     };
 
-    const nextAt = lastReminder ? lastReminder + repeatDelay : submittedAt + firstDelay;
+    const nextAt = submittedAt + firstDelay;
     schedule(nextAt - Date.now());
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [walletAddress, myTag?.tag, agentOnboarding?.submittedAt, agentOnboarding?.completed, agentOnboarding?.points, isAgentOnboardingOpen, showToast]);
@@ -1977,6 +1955,11 @@ function ArcAppShell() {
       const tag = await getArcTagForWallet(address);
       if (tag?.hasTag && tag.cleanTag) {
         setMyTag({ tag: tag.cleanTag, owner: address });
+        if (getArcSessionToken(address)) {
+          submitArcRewardAction({ action: 'tag_claimed', walletAddress: address, tag: tag.cleanTag })
+            .then((sync) => { if (sync?.state) applyArcRewardState(sync.state); })
+            .catch((syncError) => console.warn('[Arc claim repair]:', syncError.message));
+        }
       } else {
         setMyTag(null);
       }
@@ -1988,57 +1971,10 @@ function ArcAppShell() {
     }
   }, []);
 
-  // Auto-restore session on mount (Circle email or Injected EVM wallet)
   useEffect(() => {
-    let cancelled = false;
-    const restoreSession = async () => {
-      try {
-        const stored = getStoredCircleSession();
-        if (stored && stored.walletAddress) {
-          try {
-            if (!getArcSessionToken(stored.walletAddress)) {
-              await establishCircleArcSession({ userToken: stored.userToken, walletAddress: stored.walletAddress });
-            }
-          } catch (sessionErr) {
-            console.warn('[App] Optional session restore:', sessionErr);
-          }
-          if (cancelled) return;
-          setWalletAddress(stored.walletAddress);
-          setAuthProvider('circle');
-          setCircleSession(stored);
-          setChainId(activeArcChain.id);
-      setIsArcNetwork(true);
-          const savedEmail = window.localStorage.getItem('nairatag_account_email') || stored.email;
-          if (savedEmail) setAccountEmail(savedEmail);
-          refreshBalance(stored.walletAddress);
-          return;
-        }
-
-        const authMode = window.localStorage.getItem('nairatag_auth_provider');
-        if (authMode === 'injected' && typeof window !== 'undefined' && window.ethereum?.request) {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(() => []);
-          if (accounts && accounts[0] && !cancelled) {
-            const addr = accounts[0];
-            setWalletAddress(addr);
-            setAuthProvider('injected');
-            window.localStorage.setItem('nairatag_auth_provider', 'injected');
-            window.localStorage.setItem('nairatag_last_wallet', addr);
-            const netChainId = await window.ethereum.request({ method: 'eth_chainId' }).catch(() => null);
-            if (netChainId) {
-              const numId = parseInt(netChainId, 16);
-              setChainId(numId);
-              setIsArcNetwork(numId === activeArcChain.id);
-            }
-            refreshBalance(addr);
-          }
-        }
-      } catch (e) {
-        console.warn('[App] Restoring session error:', e);
-      }
-    };
-    restoreSession();
-    return () => { cancelled = true; };
-  }, [refreshBalance]);
+    clearArcSession();
+    clearCircleSession();
+  }, []);
 
   // Listen for wallet chain and account changes
   useEffect(() => {
@@ -2079,40 +2015,6 @@ function ArcAppShell() {
     setCircleStatus('Signing in with your Arc account...');
     try {
       const res = await requestCircleEmailOtp(email);
-      if (res?.isSovereignFallback) {
-        const sovereignAddress = deriveDeterministicArcAddress(email);
-        const session = {
-          userToken: 'sovereign_' + (Date.now().toString(36)) + '_' + email.replace(/[^a-z0-9]/g, '').slice(0, 16),
-          walletAddress: sovereignAddress,
-          email,
-          authProvider: 'circle',
-          blockchain: 'ARC',
-          chainId: 5042,
-          isNewWallet: true,
-        };
-        saveCircleSession(session);
-        setAccountEmail(email);
-        try {
-          window.localStorage.setItem('nairatag_auth_provider', 'circle');
-          window.localStorage.setItem('nairatag_account_email', email);
-          window.localStorage.setItem('nairatag_last_wallet', sovereignAddress);
-        } catch {}
-        setWalletAddress(sovereignAddress);
-        setAuthProvider('circle');
-        setCircleSession(session);
-        setChainId(activeArcChain.id);
-      setIsArcNetwork(true);
-        const [accountResult, rewardResult] = await Promise.allSettled([
-          refreshBalance(sovereignAddress),
-          getArcRewardState(sovereignAddress),
-        ]);
-        if (rewardResult.status === 'fulfilled') applyArcRewardState(rewardResult.value);
-        setIsConnectModalOpen(false);
-        setCircleStatus('');
-        setCircleOtpSent(false);
-        showToast(`Welcome! Signed in as ${email}`, 'success', 3500);
-        return;
-      }
       setCircleOtpSent(true);
       setCircleStatus('');
       showToast('Circle sent a verification code to your email.', 'success', 3500);
@@ -2131,14 +2033,8 @@ function ArcAppShell() {
     try {
       const login = await verifyCircleEmailOtp();
       const res = await connectCircleWallet(login, ({ message }) => setCircleStatus(message));
-      try {
-        await establishCircleArcSession({ userToken: res.userToken, walletAddress: res.walletAddress });
-      } catch (sessionError) {
-        console.warn('[App] Optional session token establishment:', sessionError);
-      }
+      await establishCircleArcSession({ userToken: res.userToken, walletAddress: res.walletAddress });
       setAccountEmail(circleInput.trim().toLowerCase());
-      window.localStorage.setItem('nairatag_auth_provider', 'circle');
-      window.localStorage.setItem('nairatag_account_email', circleInput.trim().toLowerCase());
       setWalletAddress(res.walletAddress);
       setAuthProvider('circle');
       setCircleSession(res);
@@ -2176,11 +2072,6 @@ function ArcAppShell() {
     }
     clearArcSession();
     try {
-      window.localStorage.removeItem('nairatag_auth_provider');
-      window.localStorage.removeItem('nairatag_account_email');
-      window.localStorage.removeItem('nairatag_last_wallet');
-      window.localStorage.removeItem('nairatag_claimed_tag_v1');
-      window.localStorage.removeItem('nairatag_local_claims_v1');
     } catch {}
     setWalletAddress(null);
     setAuthProvider(null);
@@ -2204,11 +2095,7 @@ function ArcAppShell() {
     setIsConnecting(true);
     try {
       const { address, chainId: cId } = await connectWallet();
-      try {
-        await establishWalletArcSession(address);
-      } catch (sessionErr) {
-        console.warn('[App] Optional session token establishment:', sessionErr);
-      }
+      await establishWalletArcSession(address);
       setWalletAddress(address);
       setAuthProvider('injected');
       setChainId(cId);
@@ -2450,43 +2337,9 @@ function ArcAppShell() {
   };
 
   const handleTaskChat = (task) => {
-    setChatInputText(`Hi @₦${task.creatorTag.replace(/^₦/, '')}, I’m working on “${task.title}”. `);
+    setChatInputText(`Hi @₦${task.creatorTag.replace(/^₦/, '')}, I’m working on “${task.title}â€. `);
     setIsTaskChatDraft(true);
     setMainTab('chat');
-  };
-
-  // Daily Bonus Mission Actions (Matching Reference Screen)
-  const handleDailyPriceReport = () => {
-    if (dailyMissionsDone.price) {
-      showToast("Today's price report already submitted!", 'info');
-      return;
-    }
-    setDailyMissionsDone((prev) => ({ ...prev, price: true }));
-    setUserPoints((prev) => prev + 100);
-    triggerCelebrationConfetti();
-    showToast('📊 Market Price Verified! +100 Protocol Points added to your balance.', 'success', 3500);
-  };
-
-  const handleDailyAgentMission = () => {
-    if (dailyMissionsDone.agent) {
-      showToast("Today's agent mission already completed!", 'info');
-      return;
-    }
-    setDailyMissionsDone((prev) => ({ ...prev, agent: true }));
-    setUserPoints((prev) => prev + 150);
-    triggerCelebrationConfetti();
-    showToast('🤖 Agent Mission Completed! High-gap coverage verified. +150 Points.', 'success', 3500);
-  };
-
-  const handleDailyCommodityAlert = () => {
-    if (dailyMissionsDone.alert) {
-      showToast('Commodity alert already active for today!', 'info');
-      return;
-    }
-    setDailyMissionsDone((prev) => ({ ...prev, alert: true }));
-    setUserPoints((prev) => prev + 50);
-    triggerCelebrationConfetti();
-    showToast('🔔 Price Alert Set on Arc Commodities! +50 Points.', 'success', 3500);
   };
 
   const handleInviteToEarn = () => {
@@ -2863,10 +2716,8 @@ function ArcAppShell() {
     };
     setArcTagAgentLinks((current) => {
       const next = { ...current, [cleanTag]: linkedAgent };
-      window.localStorage.setItem('nairatag_arc_agent_links_v1', JSON.stringify(next));
       return next;
     });
-    window.localStorage.removeItem('nairatag_pending_arc_agent_link_v1');
     setPendingArcAgentLink(null);
     return linkedAgent;
   };
@@ -2875,7 +2726,6 @@ function ArcAppShell() {
     const cleanTag = String(tag).replace(/^[₦$@#]/, '').toLowerCase();
     const pending = { tag: cleanTag, owner, ...(retryLink || {}) };
     setPendingArcAgentLink(pending);
-    window.localStorage.setItem('nairatag_pending_arc_agent_link_v1', JSON.stringify(pending));
     let registration;
     if (pending.agentId && pending.metadataURI) {
       const linked = await updateArcAgentRegistrationUri({ fromAddress: owner, agentId: pending.agentId, metadataURI: pending.metadataURI });
@@ -2904,7 +2754,6 @@ function ArcAppShell() {
       if (error.partialRegistration) {
         const pending = { ...pendingArcAgentLink, ...error.partialRegistration };
         setPendingArcAgentLink(pending);
-        window.localStorage.setItem('nairatag_pending_arc_agent_link_v1', JSON.stringify(pending));
       }
       setCelebrationDetails((current) => ({ ...current, erc8004LinkError: error.message }));
     } finally {
@@ -3066,31 +2915,36 @@ function ArcAppShell() {
       if (authProvider === 'circle') {
         const availability = await checkArcTagAvailability(claimInput, walletAddress, accountEmail);
         if (!availability.available) throw new Error(availability.reason || 'This NairaTag cannot be claimed.');
-        res = await claimTagWithCircle({ session: circleSession, walletAddress, rawTag: claimInput, email: accountEmail });
+        res = await claimTagWithCircle({ session: circleSession, walletAddress, rawTag: claimInput });
       } else {
         const availabilityOther = await checkArcTagAvailability(claimInput, walletAddress, accountEmail);
         if (!availabilityOther.available) throw new Error(availabilityOther.reason || 'This NairaTag cannot be claimed.');
         res = await claimArcNairaTag({ rawTag: claimInput, walletAddress });
       }
 
-      // Synchronously persist the claim directly to Supabase so it is in the database immediately
       const cleanTag = res.cleanTag;
-      setMyTag({ tag: cleanTag, owner: walletAddress });
-      try {
-        await fetch('/api/claims', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+      let claimSync = null;
+      let claimSyncError = null;
+      for (let attempt = 0; attempt < 3 && !claimSync; attempt += 1) {
+        try {
+          claimSync = await submitArcRewardAction({
+            action: 'tag_claimed',
+            walletAddress,
             tag: cleanTag,
-            wallet: walletAddress,
-            email: accountEmail || null,
             txHash: res.txHash || null,
-            authProvider: authProvider || 'wallet',
-          }),
-        });
-      } catch (syncErr) {
-        console.warn('[Direct Supabase claim sync error]:', syncErr.message);
+          });
+        } catch (syncError) {
+          claimSyncError = syncError;
+          if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
+        }
       }
+      if (!claimSync && claimSyncError) {
+        // The on-chain claim is final. Keep the identity visible, but do not
+        // report points until a server-confirmed reward write is available.
+        console.error('[Arc claim persistence]:', claimSyncError.message);
+      }
+      setMyTag({ tag: cleanTag, owner: walletAddress });
+      if (claimSync?.state) applyArcRewardState(claimSync.state);
 
       // Immediately refresh the agent directory from Supabase so the new agent is listed
       await loadAgentDirectory().catch(() => {});
@@ -3105,34 +2959,20 @@ function ArcAppShell() {
         tag: cleanTag,
         variant: 'claimed',
         progress: {
-          points: 20,
+          points: Number(claimSync?.result?.pointsAwarded) || 0,
           earnedUsdc: '0.00',
         },
       });
 
       triggerCelebrationConfetti();
-      showToast(`🎉 ₦${cleanTag.toUpperCase()} is officially yours on Arc Mainnet! +20 Pts earned.`, 'success', 5000);
+      showToast(claimSync
+        ? `🎉 ₦${cleanTag.toUpperCase()} is officially yours on Arc Mainnet!${Number(claimSync.result?.pointsAwarded) > 0 ? ` +${claimSync.result.pointsAwarded} Pts earned.` : ''}`
+        : `🎉 ₦${cleanTag.toUpperCase()} is yours on Arc Mainnet. Reward sync is temporarily unavailable; no points were added.`,
+      claimSync ? 'success' : 'info', 5000);
       getArcRewardState(walletAddress).then(applyArcRewardState).catch(() => {});
 
       // Run background integrations non-blocking so claim UI never hangs
       (async () => {
-        // Direct claim sync to /api/claims to guarantee immediate persistence in Supabase arc_agents & arc_claims
-        try {
-          await fetch('/api/claims', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              tag: cleanTag,
-              wallet: walletAddress,
-              email: accountEmail || null,
-              txHash: res.txHash || null,
-              authProvider: authProvider || 'wallet',
-            }),
-          });
-        } catch (claimSyncErr) {
-          console.warn('[Direct claim sync error]:', claimSyncErr.message);
-        }
-
         // Re-sync agent directory so all components have full server-synced metadata
         try {
           loadAgentDirectory();
@@ -3149,18 +2989,15 @@ function ArcAppShell() {
 
         const pendingReferral = getPendingReferral();
         const hasReferralAttribution = Boolean(pendingReferral?.tag);
-        try {
-          const claimNotice = await submitArcRewardAction({
-            action: 'tag_claimed',
-            walletAddress,
-            tag: cleanTag,
-            email: accountEmail || null,
-            authProvider: authProvider || 'wallet',
-            txHash: res.txHash || null,
-            ...(hasReferralAttribution ? { referrerTag: pendingReferral.tag } : {}),
-          });
-          if (claimNotice?.state) applyArcRewardState(claimNotice.state);
-          if (hasReferralAttribution) {
+        if (hasReferralAttribution) {
+          try {
+            const referralReward = await submitArcRewardAction({
+              action: 'referral_signup',
+              walletAddress,
+              tag: cleanTag,
+              referrerTag: pendingReferral.tag,
+            });
+            if (referralReward?.state) applyArcRewardState(referralReward.state);
             clearPendingReferral();
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('nairatag:referrals-updated', {
@@ -3173,16 +3010,8 @@ function ArcAppShell() {
               tag: cleanTag,
               referrerTag: pendingReferral.tag,
             }).catch((err) => console.warn('[Telegram referral alert]', err.message));
-          }
-        } catch (rewardError) {
-          console.warn('[Reward background sync]:', rewardError.message);
-          if (hasReferralAttribution) {
-            try {
-              const referralReward = await recordReferralSignup({ referredTag: cleanTag, referredWallet: walletAddress });
-              if (referralReward?.state) applyArcRewardState(referralReward.state);
-            } catch (refErr) {
-              console.warn('[Referral fallback error]', refErr.message);
-            }
+          } catch (referralError) {
+            console.warn('[Referral reward sync]:', referralError.message);
           }
         }
 
@@ -3822,6 +3651,21 @@ function ArcAppShell() {
             userPoints={userPoints}
             onSendUsdc={() => setMainTab('pay')}
             onClaimTag={() => setMainTab('claim')}
+            isLinkingWallet={isLinkingWallet}
+            onLinkWallet={async () => {
+              if (!window.confirm('Linking is permanent. Both wallets will share rewards, streaks, notifications, and the one-tag limit. Continue?')) return;
+              setIsLinkingWallet(true);
+              try {
+                await linkArcWallet(walletAddress);
+                const rewards = await getArcRewardState(walletAddress);
+                applyArcRewardState(rewards);
+                showToast('Wallet linked. It now shares this account’s rewards and tag limit.', 'success', 5000);
+              } catch (error) {
+                showToast(error.message || 'Wallet could not be linked.', 'error', 5000);
+              } finally {
+                setIsLinkingWallet(false);
+              }
+            }}
             onOpenRewards={() => setMainTab('rewards')}
             onOpenPersonalAgent={() => setIsPersonalAgentOpen(true)}
             onOpenNotifications={() => setIsNotificationOpen(true)}
@@ -3904,7 +3748,7 @@ function ArcAppShell() {
                         <div className="resolved-title">
                           {resolution.data.tag || 'Verified Recipient'}
                           <span style={{ marginLeft: '6px', fontSize: '10px', color: 'var(--privy-color-success-dark)', fontWeight: 600 }}>
-                            ● RESOLVED
+                            â— RESOLVED
                           </span>
                         </div>
                         {resolution.data.phone && (
@@ -4652,7 +4496,7 @@ function ArcAppShell() {
                 { id: 'dev', label: '⚡ Engineering' },
                 { id: 'design', label: '🎨 Design' },
                 { id: 'data', label: '📊 Data & AI' },
-                { id: 'content', label: '✍️ Content' },
+                { id: 'content', label: 'âœï¸ Content' },
                 { id: 'test', label: '🧪 Testing' },
                 { id: 'community', label: '📱 Community' },
                 { id: 'social', label: 'Social' },
@@ -5176,7 +5020,7 @@ function ArcAppShell() {
                       {Math.floor(recordingSeconds / 60)}:{String(recordingSeconds % 60).padStart(2, '0')}
                     </span>
                     <span className="recording-hint">
-                      {voiceTranscribedText ? `“${voiceTranscribedText}”` : "Listening... speak your directive"}
+                      {voiceTranscribedText ? `“${voiceTranscribedText}â€` : "Listening... speak your directive"}
                     </span>
                   </div>
 
@@ -5844,7 +5688,7 @@ function ArcAppShell() {
             <p className="welcome-rewards-copy">Your wallet is connected and ready to send USDC.</p>
             <div className="welcome-points-card">
               <span>Protocol Points</span>
-              <strong>{Number(welcomeDetails.points) > 0 ? `+${Number(welcomeDetails.points).toLocaleString()}` : '🎁 Free Spin Ready'}</strong>
+              <strong>{Number(welcomeDetails.points) > 0 ? `+${Number(welcomeDetails.points).toLocaleString()}` : 'ðŸŽ Free Spin Ready'}</strong>
             </div>
             <button type="button" className="auth-main-cta" onClick={() => { setWelcomeDetails(null); setMainTab('rewards'); }}>Claim Daily Rewards</button>
             <button type="button" className="welcome-rewards-link" onClick={() => setWelcomeDetails(null)}>Continue to Wallet</button>
@@ -6162,7 +6006,7 @@ function ArcAppShell() {
                     <option value="dev">⚡ Engineering</option>
                     <option value="design">🎨 Design</option>
                     <option value="data">📊 Data & AI</option>
-                    <option value="content">✍️ Content</option>
+                    <option value="content">âœï¸ Content</option>
                     <option value="test">🧪 Testing</option>
                   </select>
                 </div>
@@ -6618,5 +6462,3 @@ export default function App() {
 
   return <ArcAppShell />;
 }
-
-

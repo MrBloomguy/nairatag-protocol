@@ -1,6 +1,7 @@
 import { createWalletClient, custom, decodeEventLog, isAddress, parseAbiItem } from 'viem';
 import { ARC_NAIRATAG_REGISTRY_ADDRESS, ARC_NAIRATAG_RESOLVER_ADDRESS } from '../config/arc.js';
 import { activeArcChain, getEthereumProvider, publicClient, switchOrAddArcNetwork } from './arcPayment.js';
+import { getArcSessionTokenForLinkedWallet } from './arcSession.js';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 const ZERO_NODE = `0x${'0'.repeat(64)}`;
@@ -72,6 +73,27 @@ export async function checkArcTagAvailability(rawTag, walletAddress = null, emai
   // 2. Authoritative Database Check (Strict 1-Tag-Per-Account in Supabase via /api/claims)
   try {
     if (walletAddress) {
+      const sessionToken = getArcSessionTokenForLinkedWallet(walletAddress);
+      if (sessionToken) {
+        const linkedUrl = new URL('/api/arc-rewards', window.location.origin);
+        linkedUrl.searchParams.set('wallet', String(walletAddress).toLowerCase());
+        const linkedResponse = await fetch(linkedUrl, {
+          headers: { Accept: 'application/json', Authorization: `Bearer ${sessionToken}` },
+          cache: 'no-store',
+        });
+        const linkedPayload = await linkedResponse.json().catch(() => ({}));
+        const linkedClaim = linkedPayload?.identity?.claim;
+        if (linkedResponse.ok && linkedPayload.ok && linkedClaim?.tag) {
+          const existingTag = String(linkedClaim.tag).replace(/^[\u00a3$@#]/, '').toLowerCase();
+          return {
+            available: false,
+            walletRestricted: true,
+            existingTag,
+            cleanTag,
+            reason: `This account already owns ₦${existingTag.toUpperCase()}. Linked wallets share one NairaTag limit.`,
+          };
+        }
+      }
       const norm = String(walletAddress).toLowerCase();
       const userClaimRes = await fetch(`/api/claims?wallet=${encodeURIComponent(norm)}`, { cache: 'no-store' });
       const userClaimData = await userClaimRes.json().catch(() => ({}));
@@ -128,6 +150,33 @@ export async function checkArcTagAvailability(rawTag, walletAddress = null, emai
 export async function getArcTagForWallet(walletAddress) {
   if (!walletAddress) return { hasTag: false, tag: null };
   const norm = String(walletAddress).toLowerCase();
+
+  const sessionToken = getArcSessionTokenForLinkedWallet(norm);
+  if (sessionToken) {
+    try {
+      const linkedUrl = new URL('/api/arc-rewards', window.location.origin);
+      linkedUrl.searchParams.set('wallet', norm);
+      const linkedResponse = await fetch(linkedUrl, {
+        headers: { Accept: 'application/json', Authorization: `Bearer ${sessionToken}` },
+        cache: 'no-store',
+      });
+      const linkedPayload = await linkedResponse.json().catch(() => ({}));
+      const claim = linkedPayload?.identity?.claim;
+      if (linkedResponse.ok && linkedPayload.ok && claim?.tag) {
+        const clean = String(claim.tag).replace(/^[\u00a3$@#]/, '').toLowerCase();
+        return {
+          hasTag: true,
+          tag: `₦${clean.toUpperCase()}`,
+          cleanTag: clean,
+          owner: claim.walletAddress,
+          network: 'Arc Mainnet',
+          claimedAt: claim.claimedAt ? new Date(claim.claimedAt).getTime() : Date.now(),
+        };
+      }
+    } catch (error) {
+      console.warn('[getArcTagForWallet linked identity check]:', error.message);
+    }
+  }
 
   // 1. Authoritative Database claim check (Supabase via /api/claims)
   try {

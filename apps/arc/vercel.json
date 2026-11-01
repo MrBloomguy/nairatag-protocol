@@ -1,66 +1,82 @@
-{
-  "buildCommand": "npm run vercel-build",
-  "outputDirectory": "dist",
-  "rewrites": [
-    {
-      "source": "/agent/:handle",
-      "destination": "/api/tag?handle=:handle&isAgent=true"
-    },
-    {
-      "source": "/tag/:handle",
-      "destination": "/api/tag?handle=:handle"
-    },
-    {
-      "source": "/cards/:handle",
-      "destination": "/api/cards?handle=:handle"
-    },
-    {
-      "source": "/api/arc-chat(.*)",
-      "destination": "/api/arc-chat$1"
-    },
-    {
-      "source": "/api/arc-agents(.*)",
-      "destination": "/api/arc-agents$1"
-    },
-    {
-      "source": "/api/agent-service(.*)",
-      "destination": "/api/agent-service$1"
-    },
-    {
-      "source": "/api/circle(.*)",
-      "destination": "/api/circle$1"
-    },
-    {
-      "source": "/api/social-alerts(.*)",
-      "destination": "/api/social-alerts$1"
-    },
-    {
-      "source": "/api/social-graph(.*)",
-      "destination": "https://nairatag.ng/api/arc-social-graph$1"
-    },
-    {
-      "source": "/api/arc-rewards(.*)",
-      "destination": "/api/arc-rewards$1"
-    },
-    {
-      "source": "/api/arc-auth(.*)",
-      "destination": "/api/arc-auth$1"
-    },
-    {
-      "source": "/api/arc-tasks(.*)",
-      "destination": "/api/arc-tasks$1"
-    },
-    {
-      "source": "/api/claims(.*)",
-      "destination": "/api/claims$1"
-    },
-    {
-      "source": "/openapi.json",
-      "destination": "/openapi.json"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ]
+﻿{
+    "buildCommand":  "npm run vercel-build",
+    "outputDirectory":  "dist",
+    "rewrites":  [
+                     {
+                         "source":  "/agent/:handle",
+                         "destination":  "/api/tag?handle=:handle\u0026isAgent=true"
+                     },
+                     {
+                         "source":  "/tag/:handle",
+                         "destination":  "/api/tag?handle=:handle"
+                     },
+                     {
+                         "source":  "/cards/:handle",
+                         "destination":  "/api/cards?handle=:handle"
+                     },
+                     {
+                         "source":  "/api/arc-chat(.*)",
+                         "destination":  "https://nairatag.ng/api/arc-chat$1"
+                     },
+                     {
+                         "source":  "/api/arc-agents(.*)",
+                         "destination":  "https://nairatag.ng/api/arc-agents$1"
+                     },
+                     {
+                         "source":  "/api/arc-auth(.*)",
+                         "destination":  "https://nairatag.ng/api/arc-auth$1"
+                     },
+                     {
+                         "source":  "/api/arc-personal-agent(.*)",
+                         "destination":  "https://nairatag.ng/api/arc-personal-agent$1"
+                     },
+                     {
+                         "source":  "/api/arc-rewards(.*)",
+                         "destination":  "https://nairatag.ng/api/arc-rewards$1"
+                     },
+                     {
+                         "source":  "/api/arc-tasks(.*)",
+                         "destination":  "https://nairatag.ng/api/arc-tasks$1"
+                     },
+                     {
+                         "source":  "/api/arc-follows(.*)",
+                         "destination":  "https://nairatag.ng/api/arc-follows$1"
+                     },
+                     {
+                         "source":  "/api/arc-admin(.*)",
+                         "destination":  "https://nairatag.ng/api/arc-admin$1"
+                     },
+                     {
+                         "source":  "/api/arc(.*)",
+                         "destination":  "https://nairatag.ng/api/arc$1"
+                     },
+                     {
+                         "source":  "/api/agent-service(.*)",
+                         "destination":  "/api/agent-service$1"
+                     },
+                     {
+                         "source":  "/api/circle(.*)",
+                         "destination":  "/api/circle$1"
+                     },
+                     {
+                         "source":  "/api/social-alerts(.*)",
+                         "destination":  "/api/social-alerts$1"
+                     },
+                     {
+                         "source":  "/api/social-graph(.*)",
+                         "destination":  "https://nairatag.ng/api/arc-social-graph$1"
+                     },
+                     {
+                         "source":  "/api/claims(.*)",
+                         "destination":  "https://nairatag.ng/api/claims$1"
+                     },
+                     {
+                         "source":  "/openapi.json",
+                         "destination":  "/openapi.json"
+                     },
+                     {
+                         "source":  "/(.*)",
+                         "destination":  "/index.html"
+                     }
+                 ]
 }

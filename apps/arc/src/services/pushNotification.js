@@ -1,4 +1,4 @@
-// @ts-nocheck
+﻿// @ts-nocheck
 /**
  * ============================================================================
  * NAIRATAG x ARC OSAKA - WEB PUSH & IN-APP NOTIFICATION ENGINE
@@ -34,28 +34,13 @@ export function urlBase64ToUint8Array(base64String) {
  * Checks if Web Push & Service Workers are supported in the current environment
  */
 export function isPushSupported() {
-  return (
-    typeof window !== 'undefined' &&
-    'serviceWorker' in navigator &&
-    'Notification' in window
-  );
+  return typeof window !== 'undefined' && 'Notification' in window;
 }
 
 /**
  * Registers the background Service Worker
  */
-export async function registerServiceWorker() {
-  if (!isPushSupported()) return null;
-  try {
-    const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-    });
-    return registration;
-  } catch (error) {
-    console.warn('[PushNotification] Service worker registration error:', error);
-    return null;
-  }
-}
+export async function registerServiceWorker() { return null; }
 
 /**
  * Returns current browser notification permission ('default' | 'granted' | 'denied')
@@ -82,7 +67,7 @@ export async function subscribeToPushNotifications() {
 
     // Background Web Push needs a trusted server. This app only requests
     // browser notification permission and displays alerts while it is active.
-    localStorage.setItem('nairatag_browser_alerts', 'true');
+
 
     playMicroSound('chime');
     triggerHaptic([30, 40, 30]);
@@ -113,8 +98,6 @@ export async function unsubscribeFromPushNotifications() {
         await subscription.unsubscribe();
       }
     }
-    localStorage.removeItem('nairatag_push_subscribed');
-    localStorage.removeItem('nairatag_push_subscription');
     window.dispatchEvent(
       new CustomEvent('nairatag:push-status-changed', {
         detail: { isSubscribed: false },
@@ -134,7 +117,7 @@ export async function sendNotificationAlert({
   title,
   body,
   type = 'info',
-  icon = '🔔',
+  icon = 'ðŸ””',
   actionLabel = 'View',
   onAction = null,
   url = '/#rewards',
@@ -174,7 +157,7 @@ export async function sendNotificationAlert({
   // Web Push requires a trusted server to send to the saved subscription.
   if (showSystemNotification && typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
     try {
-      if ('serviceWorker' in navigator) {
+      if (false && 'serviceWorker' in navigator) {
         const reg = await navigator.serviceWorker.ready;
         if (reg && reg.showNotification) {
           reg.showNotification(title, {
@@ -200,10 +183,10 @@ export async function sendNotificationAlert({
 }
 
 /**
- * ─────────────────────────────────────────────────────────────────────────────
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  * WEB AUDIO API SYNTHESIZER FOR RICH MICRO-INTERACTION SOUNDS
  * Pure browser audio generation with zero dependencies or network lag
- * ─────────────────────────────────────────────────────────────────────────────
+ * â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
  */
 let audioCtx = null;
 
@@ -319,3 +302,5 @@ export function triggerHaptic(pattern = [20]) {
     }
   } catch (e) {}
 }
+
+

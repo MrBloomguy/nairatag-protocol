@@ -15,7 +15,6 @@ export default async function handler(req, res) {
   }
 
   const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : (req.body || {});
-  const wallet = String(body.walletAddress || req.query?.wallet || '').trim().toLowerCase();
 
   if (TARGET_API) {
     try {
@@ -51,12 +50,5 @@ export default async function handler(req, res) {
     }
   }
 
-  // Native self-contained Arc session issuer
-  const token = 'arc_sess_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-  return res.status(200).json({
-    ok: true,
-    token,
-    walletAddress: wallet || '0x0000000000000000000000000000000000000000',
-    expiresAt: Date.now() + 86400 * 30 * 1000,
-  });
+  return res.status(503).json({ ok: false, error: 'Account sign-in is temporarily unavailable.' });
 }

@@ -39,6 +39,8 @@ export default function RedesignedProfilePage({
   userPoints = 0,
   onSendUsdc,
   onClaimTag,
+  onLinkWallet,
+  isLinkingWallet = false,
   onOpenRewards,
   onOpenPersonalAgent,
   onOpenNotifications,
@@ -171,6 +173,16 @@ export default function RedesignedProfilePage({
                 <div className="settings-item-right">
                   <span>${usdcBalance.formatted} USDC</span>
                   {copied ? <Check size={14} color="#10b981" /> : <ChevronRight size={16} />}
+                </div>
+              </button>
+              <button type="button" className="settings-item-row" onClick={onLinkWallet} disabled={isLinkingWallet}>
+                <div className="settings-item-left">
+                  <span className="settings-item-icon"><Wallet size={18} /></span>
+                  <span>{isLinkingWallet ? 'Waiting for wallet signature…' : 'Link another wallet'}</span>
+                </div>
+                <div className="settings-item-right">
+                  <span>{isLinkingWallet ? 'Pending' : 'Share rewards'}</span>
+                  <ChevronRight size={16} />
                 </div>
               </button>
             </div>
