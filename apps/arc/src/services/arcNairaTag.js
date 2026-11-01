@@ -69,73 +69,42 @@ export async function checkArcTagAvailability(rawTag, walletAddress = null, emai
     };
   }
 
-  // 2. Strict 1-Tag-Per-Account check across local storage & session
-  if (typeof window !== 'undefined' && walletAddress) {
-    const norm = String(walletAddress).toLowerCase();
-    try {
-      const activeClaim = JSON.parse(window.localStorage.getItem('nairatag_claimed_tag_v1') || 'null');
-      if (activeClaim?.tag) {
-        const activeClean = String(activeClaim.tag).replace(/^[₦$@#]/, '').toLowerCase();
-        if (activeClean !== cleanTag) {
+  // 2. Authoritative Database Check (Strict 1-Tag-Per-Account in Supabase via /api/claims)
+  try {
+    if (walletAddress) {
+      const norm = String(walletAddress).toLowerCase();
+      const userClaimRes = await fetch(`/api/claims?wallet=${encodeURIComponent(norm)}`, { cache: 'no-store' });
+      const userClaimData = await userClaimRes.json().catch(() => ({}));
+      if (userClaimData?.hasClaim && userClaimData.claim?.cleanTag) {
+        const existingTag = userClaimData.claim.cleanTag.toLowerCase();
+        if (existingTag !== cleanTag) {
           return {
             available: false,
             walletRestricted: true,
-            existingTag: activeClaim.tag,
+            existingTag,
             cleanTag,
-            reason: `This account already owns ₦${activeClean.toUpperCase()} on Arc. Each sovereign account is limited to 1 NairaTag.`,
+            reason: `This wallet already owns ₦${existingTag.toUpperCase()} on Arc. Each sovereign account is limited to 1 NairaTag.`,
           };
         }
       }
+    }
 
-      const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
-      if (localClaims[cleanTag]) {
-        return {
-          available: false,
-          isTaken: true,
-          owner: localClaims[cleanTag].owner,
-          cleanTag,
-          canonicalTag: `₦${cleanTag.toUpperCase()}`,
-          reason: `₦${cleanTag.toUpperCase()} is already claimed on Arc.`,
-        };
-      }
-      const existing = Object.values(localClaims).find(
-        (item) => String(item.owner).toLowerCase() === norm && item.tag.toLowerCase() !== 'bloom'
-      );
-      if (existing && existing.tag.toLowerCase() !== cleanTag) {
-        return {
-          available: false,
-          walletRestricted: true,
-          existingTag: existing.tag,
-          cleanTag,
-          reason: `This account already owns ₦${existing.tag.toUpperCase()} on Arc. Each sovereign account is limited to 1 NairaTag.`,
-        };
-      }
-    } catch {}
-  }
-
-  // 3. Centralized Database Check (enforces strict 1-tag limit across devices/emails/wallets)
-  try {
-    const params = new URLSearchParams({ action: 'check_claim', tag: cleanTag });
-    if (walletAddress) params.set('wallet', walletAddress);
-    if (email) params.set('email', email);
-    const dbRes = await fetch(`/api/arc-rewards?${params.toString()}`, { cache: 'no-store' });
-    const dbData = await dbRes.json().catch(() => ({}));
-    if (dbData?.check && dbData.check.can_claim === false) {
+    const tagCheckRes = await fetch(`/api/claims?action=check&tag=${encodeURIComponent(cleanTag)}`, { cache: 'no-store' });
+    const tagCheckData = await tagCheckRes.json().catch(() => ({}));
+    if (tagCheckData && tagCheckData.ok === false) {
       return {
         available: false,
-        walletRestricted: Boolean(dbData.check.reason?.includes('owns') || dbData.check.reason?.includes('account') || dbData.check.reason?.includes('claimed')),
-        isTaken: Boolean(dbData.check.taken),
+        isTaken: true,
         cleanTag,
         canonicalTag: `₦${cleanTag.toUpperCase()}`,
-        existingTag: dbData.check.existing_tag || null,
-        reason: dbData.check.reason,
+        reason: tagCheckData.reason || `₦${cleanTag.toUpperCase()} is already claimed on Arc.`,
       };
     }
   } catch (apiErr) {
     console.warn('[checkArcTagAvailability DB check]:', apiErr.message);
   }
 
-  // 4. Onchain registry checks
+  // 3. Onchain registry checks
   try {
     const [owner, walletTag] = await Promise.all([
       publicClient.readContract({ address: ARC_NAIRATAG_REGISTRY_ADDRESS, abi: ARC_NAIRATAG_ABI, functionName: 'ownerOf', args: [cleanTag] }),
@@ -160,7 +129,25 @@ export async function getArcTagForWallet(walletAddress) {
   if (!walletAddress) return { hasTag: false, tag: null };
   const norm = String(walletAddress).toLowerCase();
 
-  // 1. Onchain record check
+  // 1. Authoritative Database claim check (Supabase via /api/claims)
+  try {
+    const dbRes = await fetch(`/api/claims?wallet=${encodeURIComponent(norm)}`, { cache: 'no-store' });
+    const dbData = await dbRes.json().catch(() => ({}));
+    if (dbData?.hasClaim && dbData.claim?.tag) {
+      const clean = String(dbData.claim.cleanTag || dbData.claim.tag).toLowerCase().replace(/^[₦$@#]/, '');
+      return {
+        hasTag: true,
+        tag: `₦${clean.toUpperCase()}`,
+        cleanTag: clean,
+        network: dbData.claim.network || 'Arc Mainnet',
+        claimedAt: dbData.claim.timestamp || Date.now(),
+      };
+    }
+  } catch (dbErr) {
+    console.warn('[getArcTagForWallet db check]:', dbErr.message);
+  }
+
+  // 2. Onchain record check
   try {
     const result = await getWalletTagRecord(walletAddress);
     if (result) {
@@ -172,50 +159,6 @@ export async function getArcTagForWallet(walletAddress) {
     console.warn('[getArcTagForWallet onchain check]', error.shortMessage || error.message);
   }
 
-  // 2. Database claim check (syncs tag across all devices/incognito for this wallet)
-  try {
-    const dbRes = await fetch(`/api/arc-rewards?action=check_claim&wallet=${norm}&tag=probe_tag`, { cache: 'no-store' });
-    const dbData = await dbRes.json().catch(() => ({}));
-    if (dbData?.check?.existing_tag) {
-      const clean = String(dbData.check.existing_tag).toLowerCase();
-      if (clean !== 'bloom' || norm === '0x7c26a1f03339e2ea74d261d97f5ab9c38181af26') {
-        return { hasTag: true, tag: `₦${clean.toUpperCase()}`, cleanTag: clean, network: 'Arc Mainnet', claimedAt: Date.now() };
-      }
-    }
-  } catch (dbErr) {
-    console.warn('[getArcTagForWallet db check]:', dbErr.message);
-  }
-
-  // 3. Local claims fallback with strict protocol agent protection
-  if (typeof window !== 'undefined') {
-    try {
-      const localClaims = JSON.parse(window.localStorage.getItem('nairatag_local_claims_v1') || '{}');
-
-      // Sanitize: ₦bloom is the protocol agent (0x7c26...AF26), not a user tag
-      if (localClaims.bloom && String(localClaims.bloom.owner).toLowerCase() !== '0x7c26a1f03339e2ea74d261d97f5ab9c38181af26') {
-        localClaims.bloom.owner = '0x7c26a1F03339E2Ea74D261D97f5ab9C38181AF26';
-        window.localStorage.setItem('nairatag_local_claims_v1', JSON.stringify(localClaims));
-      }
-
-      // Check user's sovereign claim
-      const activeClaim = JSON.parse(window.localStorage.getItem('nairatag_claimed_tag_v1') || 'null');
-      if (activeClaim?.tag) {
-        const clean = String(activeClaim.tag).replace(/^[₦$@#]/, '').toLowerCase();
-        // If bloom was mistakenly stored in claimed_tag_v1 for this user, sanitize it to ola if ola was claimed
-        if (clean !== 'bloom') {
-          return { hasTag: true, tag: `₦${clean.toUpperCase()}`, cleanTag: clean, network: 'Arc Mainnet', claimedAt: Date.now() };
-        }
-      }
-
-      // Find user-owned non-system tag in local claims
-      const match = Object.values(localClaims).find(
-        (item) => String(item.owner).toLowerCase() === norm && item.tag.toLowerCase() !== 'bloom'
-      );
-      if (match) {
-        return { hasTag: true, tag: `₦${match.tag.toUpperCase()}`, cleanTag: match.tag.toLowerCase(), network: 'Arc Mainnet', claimedAt: match.claimedAt || Date.now() };
-      }
-    } catch {}
-  }
   return { hasTag: false, tag: null };
 }
 

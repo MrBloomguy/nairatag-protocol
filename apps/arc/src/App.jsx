@@ -1324,20 +1324,7 @@ function ArcAppShell() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [copiedKey, setCopiedKey] = useState(null);
-  const [myTag, setMyTag] = useState(() => {
-    try {
-      const saved = localStorage.getItem('nairatag_claimed_tag_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        const cleanTag = String(parsed?.tag || '').replace(/^[₦$@#]/, '').toLowerCase();
-        if (cleanTag === 'bloom' && parsed?.owner && parsed.owner.toLowerCase() !== '0x7c26a1f03339e2ea74d261d97f5ab9c38181af26') {
-          return { tag: 'ola', owner: parsed.owner };
-        }
-        return parsed;
-      }
-    } catch {}
-    return null;
-  });
+  const [myTag, setMyTag] = useState(null);
   const displayUserTag = myTag?.tag ? `₦${String(myTag.tag).replace(/^[$₦]/, '').toUpperCase()}` : null;
   const [accountEmail, setAccountEmail] = useState('');
   const accountUsername = accountEmail.includes('@') ? accountEmail.slice(0, accountEmail.indexOf('@')) : accountEmail;
@@ -1988,7 +1975,11 @@ function ArcAppShell() {
       const bal = await getUsdcBalance(address);
       setUsdcBalance(bal);
       const tag = await getArcTagForWallet(address);
-      setMyTag(tag);
+      if (tag?.hasTag && tag.cleanTag) {
+        setMyTag({ tag: tag.cleanTag, owner: address });
+      } else {
+        setMyTag(null);
+      }
       return { balance: bal, tag };
     } catch (e) {
       console.warn('Balance refresh failed:', e);
@@ -2061,9 +2052,12 @@ function ArcAppShell() {
     const handleAccountsChanged = (accounts) => {
       if (!accounts || accounts.length === 0) {
         handleDisconnect();
-      } else if (accounts[0] !== walletAddress) {
-        setWalletAddress(accounts[0]);
-        refreshBalance(accounts[0]);
+      } else if (accounts[0]?.toLowerCase() !== walletAddress?.toLowerCase()) {
+        const nextAddr = accounts[0];
+        setWalletAddress(nextAddr);
+        setMyTag(null);
+        refreshBalance(nextAddr);
+        getArcRewardState(nextAddr).then(applyArcRewardState).catch(() => {});
       }
     };
     window.ethereum.on('chainChanged', handleChainChanged);
@@ -2185,6 +2179,8 @@ function ArcAppShell() {
       window.localStorage.removeItem('nairatag_auth_provider');
       window.localStorage.removeItem('nairatag_account_email');
       window.localStorage.removeItem('nairatag_last_wallet');
+      window.localStorage.removeItem('nairatag_claimed_tag_v1');
+      window.localStorage.removeItem('nairatag_local_claims_v1');
     } catch {}
     setWalletAddress(null);
     setAuthProvider(null);
@@ -2229,6 +2225,7 @@ function ArcAppShell() {
         setIsArcNetwork(true);
       }
       await refreshBalance(address);
+      getArcRewardState(address).then(applyArcRewardState).catch(() => {});
       setIsConnectModalOpen(false);
       showToast("You're signed in.", 'success', 2500);
     } catch (err) {
@@ -3101,12 +3098,21 @@ function ArcAppShell() {
       // Clear input, close claim modals, and clear claiming spinner immediately
       setClaimInput('');
       setIsClaiming(false);
-      setIsCelebrationOpen(false);
       setIsClaimModalOpen(false);
-      setIsAgentOnboardingOpen(false);
+
+      // Trigger AgentSuccessModal (+20 Points & Onboarding flow)
+      setAgentSuccessDetails({
+        tag: cleanTag,
+        variant: 'claimed',
+        progress: {
+          points: 20,
+          earnedUsdc: '0.00',
+        },
+      });
 
       triggerCelebrationConfetti();
       showToast(`🎉 ₦${cleanTag.toUpperCase()} is officially yours on Arc Mainnet! +20 Pts earned.`, 'success', 5000);
+      getArcRewardState(walletAddress).then(applyArcRewardState).catch(() => {});
 
       // Run background integrations non-blocking so claim UI never hangs
       (async () => {
