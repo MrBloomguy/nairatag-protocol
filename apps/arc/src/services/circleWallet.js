@@ -184,7 +184,7 @@ async function loadArcWallet(userToken, onStatusUpdate) {
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const result = await circleAction('listWallets', { userToken });
     const wallets = result.wallets || [];
-    const wallet = wallets.find((item) => item.blockchain === expectedChain || item.blockchain === 'ARC' || item.blockchain === 'ARC-TESTNET') || wallets[0];
+    const wallet = wallets.find((item) => String(item.blockchain || '').toUpperCase() === expectedChain);
     if (wallet?.id && wallet?.address) return wallet;
     if (attempt < maxAttempts - 1) {
       notifyStatus(onStatusUpdate, 'wallets', 'Your Arc wallet is being prepared...');
